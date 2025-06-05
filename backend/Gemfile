@@ -1,0 +1,16 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# APIサーバーの基本構成
+gem "rails", "~> 8.0.0"
+gem "sqlite3", "~> 1.4"
+gem "puma", "~> 6.0"
+gem "rack-cors"  # CORS対応用
+gem "jbuilder"
+
+# 開発環境用のgemは除外
+# group :development, :test do
+#   gem "debug"
+#   gem "rspec-rails"
+# end

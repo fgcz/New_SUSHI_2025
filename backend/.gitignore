@@ -1,0 +1,21 @@
+# Bundler
+.bundle/
+vendor/
+
+# Rails
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# SQLite
+*.sqlite3
+*.sqlite3-*
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db 
