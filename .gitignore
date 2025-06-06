@@ -5,6 +5,8 @@ backend/storage/*
 backend/.env
 backend/.env.*
 backend/config/master.key
+backend/coverage/*
+backend/vendor/bundle/*
 
 # Frontend (Next.js)
 frontend/node_modules/
