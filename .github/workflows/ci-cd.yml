@@ -1,0 +1,194 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  RUBY_VERSION: 3.2.3
+  NODE_VERSION: 22.16.0
+
+jobs:
+  test-backend:
+    name: Backend Tests (Rails)
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+        working-directory: ./backend
+    
+    - name: Setup Database
+      run: |
+        bundle exec rails db:create RAILS_ENV=test
+        bundle exec rails db:migrate RAILS_ENV=test
+      env:
+        RAILS_ENV: test
+    
+    - name: Run Backend Tests
+      run: bundle exec rspec --format progress
+      env:
+        RAILS_ENV: test
+    
+    - name: Upload Backend Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-coverage
+        path: backend/coverage/
+
+  test-frontend:
+    name: Frontend Tests (Next.js)
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Install Dependencies
+      run: npm ci
+    
+    - name: Run Frontend Tests
+      run: npm run test:ci
+    
+    - name: Build Frontend
+      run: npm run build
+    
+    - name: Upload Frontend Coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-coverage
+        path: frontend/coverage/
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+        working-directory: ./backend
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Install Frontend Dependencies
+      run: npm ci
+      working-directory: ./frontend
+    
+    - name: Setup Database
+      run: |
+        bundle exec rails db:create RAILS_ENV=test
+        bundle exec rails db:migrate RAILS_ENV=test
+      working-directory: ./backend
+      env:
+        RAILS_ENV: test
+    
+    - name: Start Backend Server
+      run: |
+        bundle exec rails server -e test -p 4000 &
+        sleep 10
+      working-directory: ./backend
+      env:
+        RAILS_ENV: test
+    
+    - name: Test API Connectivity
+      run: |
+        curl -f http://localhost:4000/api/v1/hello || exit 1
+        echo "✅ API connectivity test passed"
+
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ env.RUBY_VERSION }}
+        bundler-cache: true
+        working-directory: ./backend
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+    
+    - name: Install Frontend Dependencies
+      run: npm ci
+      working-directory: ./frontend
+    
+    - name: Run Backend Linting
+      run: bundle exec rubocop
+      working-directory: ./backend
+      continue-on-error: true  # 最初は警告として実行
+    
+    - name: Run Frontend Linting
+      run: npm run lint
+      working-directory: ./frontend
+
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, integration-test, lint]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to Production
+      run: |
+        echo "🚀 Deploying to production..."
+        echo "✅ Backend tests passed!"
+        echo "✅ Frontend tests passed!"
+        echo "✅ Integration tests passed!"
+        echo "✅ Code quality checks passed!"
+        echo "🎉 Ready for deployment!"
+        # ここに実際のデプロイメントスクリプトを追加
+    
+    - name: Deployment Summary
+      run: |
+        echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- Backend: ✅ Tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "- Frontend: ✅ Tests passed" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration: ✅ API connectivity verified" >> $GITHUB_STEP_SUMMARY
+        echo "- Quality: ✅ Linting completed" >> $GITHUB_STEP_SUMMARY 
