@@ -1,0 +1,23 @@
+# Backend (Rails)
+backend/log/*
+backend/tmp/*
+backend/storage/*
+backend/.env
+backend/.env.*
+backend/config/master.key
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*
+frontend/*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~ 
