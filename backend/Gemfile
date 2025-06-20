@@ -35,6 +35,9 @@ gem "thruster", require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
+gem 'devise', '4.9.4'
+gem 'devise_ldap_authenticatable', '>= 0.8.6.1', :path => '/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
