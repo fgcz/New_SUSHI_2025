@@ -1,103 +1,135 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import Home from './page';
 
-// Mock fetch globally
-const mockFetch = jest.fn();
-global.fetch = mockFetch;
+// Mock Next.js components
+jest.mock('next/image', () => {
+  return function MockImage({ src, alt, ...props }: any) {
+    // Remove fill prop to avoid React warning
+    const { fill, ...restProps } = props;
+    return <img src={src} alt={alt} {...restProps} />;
+  };
+});
+
+jest.mock('next/link', () => {
+  return function MockLink({ href, children, ...props }: any) {
+    return <a href={href} {...props}>{children}</a>;
+  };
+});
 
 describe('Home Page', () => {
-  beforeEach(() => {
-    mockFetch.mockClear();
-  });
-
-  it('renders SUSHI System title', () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ message: 'Hello, World!' }),
-    });
-
+  it('renders Sushi title', () => {
     render(<Home />);
     
-    const title = screen.getByText('SUSHI System');
+    const title = screen.getByText('Sushi');
     expect(title).toBeInTheDocument();
   });
 
-  it('shows loading state initially', () => {
-    mockFetch.mockImplementationOnce(() => new Promise(() => {})); // Never resolves
-
+  it('displays project number in header', () => {
     render(<Home />);
     
-    const loadingText = screen.getByText('読み込み中...');
-    expect(loadingText).toBeInTheDocument();
+    // Use getAllByText to get all instances and check the header one
+    const projectElements = screen.getAllByText(/Project 38222/);
+    expect(projectElements.length).toBeGreaterThan(0);
+    
+    // Check that at least one is in the header (span element)
+    const headerProject = screen.getByText('Project 38222', { selector: 'span' });
+    expect(headerProject).toBeInTheDocument();
   });
 
-  it('displays API message when fetch succeeds', async () => {
-    const testMessage = 'Hello, World!';
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ message: testMessage }),
-    });
-
+  it('displays project number in main content', () => {
     render(<Home />);
     
-    await waitFor(() => {
-      const apiMessage = screen.getByText(`APIからのメッセージ: ${testMessage}`);
-      expect(apiMessage).toBeInTheDocument();
+    // Check the main content heading
+    const mainProject = screen.getByText('Project 38222', { selector: 'h2' });
+    expect(mainProject).toBeInTheDocument();
+  });
+
+  it('displays user name', () => {
+    render(<Home />);
+    
+    const userText = screen.getByText(/Hi, masaomi/);
+    expect(userText).toBeInTheDocument();
+  });
+
+  it('renders all menu items in cards', () => {
+    render(<Home />);
+    
+    const menuItems = [
+      'DataSets',
+      'Import DataSet', 
+      'Check Jobs',
+      'gStore'
+    ];
+    
+    menuItems.forEach(item => {
+      // Use getAllByText and check that at least one is an h3 (card title)
+      const menuElements = screen.getAllByText(item);
+      const cardTitle = menuElements.find(element => element.tagName === 'H3');
+      expect(cardTitle).toBeInTheDocument();
     });
   });
 
-  it('displays error message when fetch fails', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
+  it('renders navigation links in header', () => {
     render(<Home />);
     
-    await waitFor(() => {
-      const errorMessage = screen.getByText('エラーが発生しました：');
-      expect(errorMessage).toBeInTheDocument();
+    const navLinks = [
+      'DataSets',
+      'Import',
+      'Jobs', 
+      'gStore',
+      'Help'
+    ];
+    
+    navLinks.forEach(link => {
+      // Use getAllByText and check that at least one is a link in nav
+      const linkElements = screen.getAllByText(link);
+      const navLink = linkElements.find(element => 
+        element.tagName === 'A' && element.closest('nav')
+      );
+      expect(navLink).toBeInTheDocument();
     });
   });
 
-  it('displays retry button on error', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
+  it('displays footer text', () => {
     render(<Home />);
     
-    await waitFor(() => {
-      const retryButton = screen.getByText('再試行');
-      expect(retryButton).toBeInTheDocument();
-    });
+    const footerText = screen.getByText('SUSHI - produced by Functional Genomics Center Zurich and SIB');
+    expect(footerText).toBeInTheDocument();
   });
 
-  it('retries API call when retry button is clicked', async () => {
-    const user = userEvent.setup();
-    
-    // First call fails
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-    
+  it('renders menu cards with correct descriptions', () => {
     render(<Home />);
     
-    // Wait for error to appear
-    await waitFor(() => {
-      expect(screen.getByText('エラーが発生しました：')).toBeInTheDocument();
-    });
+    // Check for specific descriptions
+    expect(screen.getByText(/You can see, edit and delete DataSets/)).toBeInTheDocument();
+    expect(screen.getByText(/Import a DataSet from .tsv file/)).toBeInTheDocument();
+    expect(screen.getByText(/Check your submitted jobs and the status/)).toBeInTheDocument();
+    expect(screen.getByText(/Show result folder/)).toBeInTheDocument();
+  });
 
-    // Second call succeeds
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ message: 'Success!' }),
-    });
+  it('renders sign out link', () => {
+    render(<Home />);
+    
+    const signOutLink = screen.getByText('Sign out');
+    expect(signOutLink).toBeInTheDocument();
+    expect(signOutLink.closest('a')).toHaveAttribute('href', '/logout');
+  });
 
-    // Click retry button with act wrapper
-    const retryButton = screen.getByText('再試行');
-    await act(async () => {
-      await user.click(retryButton);
-    });
-
-    // Wait for the second call to complete
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+  it('renders all menu card images', () => {
+    render(<Home />);
+    
+    const expectedImages = [
+      { alt: 'DataSets icon', src: '/images/tamago.png' },
+      { alt: 'Import DataSet icon', src: '/images/tako.png' },
+      { alt: 'Check Jobs icon', src: '/images/maguro.png' },
+      { alt: 'gStore icon', src: '/images/uni.png' }
+    ];
+    
+    expectedImages.forEach(({ alt, src }) => {
+      const image = screen.getByAltText(alt);
+      expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute('src', src);
     });
   });
 }); 
