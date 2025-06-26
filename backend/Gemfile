@@ -36,7 +36,9 @@ gem "thruster", require: false
 gem "rack-cors"
 
 gem 'devise', '4.9.4'
-gem 'devise_ldap_authenticatable', '>= 0.8.6.1', :path => '/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712'
+if File.exist?("/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712")
+  gem 'devise_ldap_authenticatable', '>= 0.8.6.1', :path => '/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712'
+end
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
