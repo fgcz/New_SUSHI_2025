@@ -4,11 +4,13 @@ class DataSet < ActiveRecord::Base
   has_many :jobs, :foreign_key => :next_dataset_id
   belongs_to :project
   has_many :data_sets, :foreign_key => :parent_id
-  belongs_to :data_set, :foreign_key => :parent_id
+  belongs_to :data_set, :foreign_key => :parent_id, optional: true
   serialize :runnable_apps, coder: YAML
   belongs_to :user
   serialize :order_ids, coder: YAML
   serialize :job_parameters, coder: YAML
+
+  validates :name, presence: true
 
   def headers
     self.samples.map{|sample| sample.to_hash.keys}.flatten.uniq
