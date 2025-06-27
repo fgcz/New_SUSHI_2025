@@ -1,0 +1,44 @@
+FROM ruby:3.3.7-slim
+
+# Install system dependencies
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    git \
+    libvips \
+    sqlite3 \
+    nodejs \
+    npm \
+    default-mysql-client \
+    libmariadb-dev \
+    libyaml-dev && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Create a non-root user for better security and compatibility
+RUN groupadd -r rails && useradd -r -g rails rails
+
+# Set working directory
+WORKDIR /rails
+
+# Install gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Copy application code
+COPY . .
+
+# Set proper ownership
+RUN chown -R rails:rails /rails
+
+# Add a script to be executed every time the container starts
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
+
+EXPOSE 3000
+
+# Switch to non-root user
+USER rails
+
+# Configure the main process to run when running the image
+CMD ["rails", "server", "-b", "0.0.0.0"] 

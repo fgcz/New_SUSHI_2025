@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   async rewrites() {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://fgcz-h-037.fgcz-net.unizh.ch:4000/api/:path*',
+        destination: 'http://backend:3000/api/:path*',
       },
     ];
   },
