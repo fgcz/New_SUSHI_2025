@@ -26,15 +26,21 @@ RAILS_ENV=development bundle exec rails db:migrate
 bundle exec rspec
 
 cd ../frontend
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
 nvm use
 # expected v22.16.0 (npm v10.9.2)
-nvm install
+npm install
 #cp -r $COMMON_SUSHI_DIR/frontend/node_modules .
 
 npm test
 
 echo ""
 echo "To start your test-new-SUSHI instance"
+echo " $ cd $ROOT_DIR"
 echo " $ bash start-dev.sh"
 echo "or"
 echo " $ bash start-dev.sh 4051 4050"
