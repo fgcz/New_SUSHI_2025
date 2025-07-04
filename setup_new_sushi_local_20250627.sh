@@ -16,6 +16,7 @@ ROOT_DIR=${USER:0:4}_test_new_sushi_`date +"%Y%m%d"`
 git clone git@github.com:masaomi/new_SUSHI_2025 $ROOT_DIR
 cd $ROOT_DIR/backend
 bundle config set --local path 'vendor/bundle'
+bundle config build.mysql2 --with-ldflags="-L$(brew --prefix zstd)/lib" --with-cppflags="-I$(brew --prefix zstd)/include" --with-opt-dir="$(brew --prefix mysql)"
 bundle install
 #cp -r $COMMON_SUSHI_DIR/backend/vendor .
 #cp -r $COMMON_SUSHI_DIR/backend/db/csv_data db/
