@@ -9,7 +9,9 @@ set -e
 ENVIRONMENT=${1:-staging}
 DEPLOY_HOST=${DEPLOY_HOST}
 DEPLOY_USER=${DEPLOY_USER}
-APP_DIR="/opt/sushi-app"
+BASTION_HOST=${BASTION_HOST}
+BASTION_USER=${BASTION_USER}
+APP_DIR="/srv/sushi/masa_new_sushi_deploy_test"
 DOCKER_COMPOSE_FILE="docker-compose.prod.yml"
 
 # Colors for output
@@ -37,22 +39,61 @@ check_environment() {
         log_error "DEPLOY_HOST and DEPLOY_USER must be set"
         exit 1
     fi
+    
+    # Check if bastion host is configured
+    if [ -n "$BASTION_HOST" ] && [ -n "$BASTION_USER" ]; then
+        log_info "Using bastion host: $BASTION_USER@$BASTION_HOST"
+    else
+        log_warn "No bastion host configured, attempting direct connection"
+    fi
 }
 
-# Create SSH key file
+# Create SSH key file and config
 setup_ssh() {
     if [ -n "$DEPLOY_KEY" ]; then
-        log_info "Setting up SSH key..."
+        log_info "Setting up SSH key and configuration..."
         mkdir -p ~/.ssh
         echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+        
+        # Create SSH config for bastion host access
+        if [ -n "$BASTION_HOST" ] && [ -n "$BASTION_USER" ]; then
+            cat > ~/.ssh/config << EOF
+Host bastion
+    HostName $BASTION_HOST
+    User $BASTION_USER
+    IdentityFile ~/.ssh/id_rsa
+    StrictHostKeyChecking no
+
+Host deploy-target
+    HostName $DEPLOY_HOST
+    User $DEPLOY_USER
+    IdentityFile ~/.ssh/id_rsa
+    ProxyCommand ssh -W %h:%p bastion
+    StrictHostKeyChecking no
+EOF
+            chmod 600 ~/.ssh/config
+            
+            # Add known hosts
+            ssh-keyscan -H "$BASTION_HOST" >> ~/.ssh/known_hosts
+            ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+        else
+            # Direct connection
+            ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+        fi
     fi
 }
 
 # Deploy to server
 deploy() {
     log_info "Deploying to $ENVIRONMENT environment..."
+    
+    # Determine SSH target
+    if [ -n "$BASTION_HOST" ] && [ -n "$BASTION_USER" ]; then
+        SSH_TARGET="deploy-target"
+    else
+        SSH_TARGET="$DEPLOY_USER@$DEPLOY_HOST"
+    fi
     
     # Create deployment script
     cat > deploy_remote.sh << 'EOF'
@@ -88,10 +129,10 @@ docker image prune -f
 EOF
 
     # Copy deployment script to server
-    scp deploy_remote.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+    scp deploy_remote.sh "$SSH_TARGET:/tmp/"
     
     # Execute deployment on server
-    ssh "$DEPLOY_USER@$DEPLOY_HOST" "chmod +x /tmp/deploy_remote.sh && /tmp/deploy_remote.sh"
+    ssh "$SSH_TARGET" "chmod +x /tmp/deploy_remote.sh && /tmp/deploy_remote.sh"
     
     # Clean up local script
     rm deploy_remote.sh
@@ -125,7 +166,14 @@ health_check() {
 rollback() {
     log_warn "Rolling back deployment..."
     
-    ssh "$DEPLOY_USER@$DEPLOY_HOST" << 'EOF'
+    # Determine SSH target
+    if [ -n "$BASTION_HOST" ] && [ -n "$BASTION_USER" ]; then
+        SSH_TARGET="deploy-target"
+    else
+        SSH_TARGET="$DEPLOY_USER@$DEPLOY_HOST"
+    fi
+    
+    ssh "$SSH_TARGET" << 'EOF'
         cd /opt/sushi-app
         
         # Stop current containers
