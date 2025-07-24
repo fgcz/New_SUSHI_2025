@@ -7,17 +7,17 @@ ActiveRecord::Base.connection.disable_referential_integrity do
 
     csv = CSV.read(file, headers: true)
     
-    # テーブル固有の処理
+    # Table-specific processing
     case table
     when 'users'
       csv.each do |row|
-        # usersテーブル用の特別な処理
-        # emailフィールドがCSVにない場合は、login + @example.com で生成
-        # encrypted_passwordフィールドがCSVにない場合はデフォルト値を設定
+        # Special processing for users table
+        # Generate email as login + @example.com if email field is not in CSV
+        # Set default value if encrypted_password field is not in CSV
         email = row['email'] || "#{row['login']}@example.com"
         encrypted_password = row['encrypted_password'] || '$2a$12$dummy.hash.for.imported.users'
         
-        # 必要なフィールドのみを抽出
+        # Extract only required fields
         available_columns = csv.headers + ['email', 'encrypted_password']
         available_columns = available_columns.uniq
         
@@ -38,7 +38,7 @@ ActiveRecord::Base.connection.disable_referential_integrity do
         SQL
       end
     else
-      # その他のテーブルは通常通り処理
+      # Process other tables normally
       csv.each do |row|
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO #{table} (#{csv.headers.join(',')})

@@ -14,7 +14,7 @@ ActiveRecord::Base.connection.tables.each do |table|
   filepath = output_dir.join("#{table}.csv")
 
   CSV.open(filepath, "w") do |csv|
-    csv << records.columns  # ヘッダー
+          csv << records.columns  # Header
     records.rows.each do |row|
       csv << row
     end

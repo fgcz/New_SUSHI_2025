@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Define the type for a menu item
 interface MenuItem {
@@ -57,10 +60,89 @@ const MenuCard = ({ item }: { item: MenuItem }) => (
   </div>
 );
 
-// The main dashboard page component, replacing the existing Home component
+// Authentication status component
+const AuthStatus = () => {
+  const { authStatus, loading, error } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+          <span className="text-blue-800">Loading authentication status...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center">
+          <span className="text-red-800">Error: {error}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authStatus) {
+    return null;
+  }
+
+  if (authStatus.authentication_skipped) {
+    return (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-green-800 font-semibold">✅ Authentication Skipped</h3>
+            <p className="text-green-700 text-sm">
+              Welcome! Authentication is currently disabled. You can access the application without logging in.
+            </p>
+            <p className="text-green-700 text-sm mt-1">
+              <strong>Current User:</strong> {authStatus.current_user || 'Anonymous'}
+            </p>
+          </div>
+          <Link 
+            href="/auth/login_options" 
+            className="text-green-600 hover:text-green-800 text-sm underline"
+            target="_blank"
+          >
+            View Auth Options
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-blue-800 font-semibold">🔐 Authentication Required</h3>
+          <p className="text-blue-700 text-sm">
+            Please sign in to access the application.
+          </p>
+          <p className="text-blue-700 text-sm mt-1">
+            <strong>Enabled Methods:</strong> {authStatus.enabled_methods.join(', ') || 'None'}
+          </p>
+        </div>
+        <Link 
+          href="/auth/login_options" 
+          className="text-blue-600 hover:text-blue-800 text-sm underline"
+          target="_blank"
+        >
+          View Auth Options
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+// The main dashboard page component
 export default function Home() {
   const projectNumber = 38222; // Hardcoded project number as in the screenshot
-  const userName = "masaomi"; // Hardcoded user name
+  const { authStatus } = useAuth();
+  const userName = authStatus?.current_user || "Guest";
 
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#e0e5e9' }}>
@@ -75,12 +157,20 @@ export default function Home() {
             <Link href="/help" className="text-gray-600 hover:text-blue-600">Help</Link>
             <div className="border-l border-gray-300 h-6"></div>
             <span className="font-semibold">Project {projectNumber}</span>
-            <span className="text-gray-700">Hi, {userName} | <Link href="/logout" className="text-blue-600 hover:underline">Sign out</Link></span>
+            <span className="text-gray-700">
+              Hi, {userName} | 
+              {authStatus?.authentication_skipped ? (
+                <Link href="/auth/login_options" className="text-blue-600 hover:underline ml-1">Auth Status</Link>
+              ) : (
+                <Link href="/logout" className="text-blue-600 hover:underline ml-1">Sign out</Link>
+              )}
+            </span>
           </nav>
         </div>
       </header>
 
       <main className="flex-grow container mx-auto px-6 py-10">
+        <AuthStatus />
         <div className="bg-white p-8 rounded-lg shadow-inner" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
             <h2 className="text-3xl font-bold text-gray-800 mb-8">
               Project {projectNumber}

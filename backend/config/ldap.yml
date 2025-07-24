@@ -1,0 +1,39 @@
+## Authorizations
+# Uncomment out the merging for each enviornment that you'd like to include.
+# You can also just copy and paste the tree (do not include the "authorizations") to each
+# enviornment if you need something different per enviornment.
+authorizations: &AUTHORIZATIONS
+  group_base: OU=OU_Users,OU=OU_Accounts,DC=FGCZ-NET,DC=unizh,DC=ch
+  required_groups:
+    - cn=admins,ou=groups,dc=test,dc=com
+    - cn=users,ou=groups,dc=test,dc=com
+    - ["moreMembers", "cn=users,ou=groups,dc=test,dc=com"]
+  require_attribute:
+    objectClass: inetOrgPerson
+    authorizationRole: postsAdmin
+
+defaults: &default
+  host: fgcz-bfabric-ldap
+  port: 636
+  ssl: true
+
+  base: dc=bfabric,dc=org
+  attribute: cn
+  uid: cn
+
+  try_sasl: false
+  allow_unauthenticated_bind: false
+  tls_options:
+  verify_mode: OpenSSL::SSL::VERIFY_PEER
+
+## Enviornments
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+
+production:
+  <<: *default
+

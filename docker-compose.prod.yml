@@ -14,6 +14,13 @@ services:
       - MYSQL_USER=${MYSQL_USER:-root}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
       - MYSQL_DATABASE=${MYSQL_DATABASE:-sushi_app_production}
+      # LDAP Configuration (bfabric)
+      - LDAP_HOST=${LDAP_HOST:-fgcz-bfabric-ldap}
+      - LDAP_PORT=${LDAP_PORT:-636}
+      - LDAP_ATTRIBUTE=${LDAP_ATTRIBUTE:-cn}
+      - LDAP_BASE=${LDAP_BASE:-dc=bfabric,dc=org}
+      - LDAP_SSL=${LDAP_SSL:-true}
+      - LDAP_SSL_VERIFY=${LDAP_SSL_VERIFY:-true}
     depends_on:
       - db
     volumes:

@@ -7,7 +7,7 @@ require 'simplecov-rcov'
 SimpleCov.formatters = [
   SimpleCov::Formatter::HTMLFormatter,
   SimpleCov::Formatter::RcovFormatter,
-  SimpleCov::Formatter::SimpleFormatter  # ターミナル出力
+  SimpleCov::Formatter::SimpleFormatter  # Terminal output
 ]
 
 SimpleCov.start 'rails' do

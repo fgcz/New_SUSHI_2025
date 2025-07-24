@@ -8,6 +8,9 @@ backend/config/master.key
 backend/coverage/*
 backend/vendor/bundle/*
 
+# Database and CSV data (contains sensitive information)
+backend/db/csv_data/
+
 # Frontend (Next.js)
 frontend/node_modules/
 frontend/.next/

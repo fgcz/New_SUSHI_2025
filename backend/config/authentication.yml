@@ -1,0 +1,64 @@
+# Authentication Configuration
+# 5 types of login methods can be enabled/disabled here
+defaults: &defaults
+  # 1. Standard login (username/email + password)
+  standard_login:
+    enabled: false
+    allow_registration: false
+    allow_password_reset: false
+  
+  # 2. OAuth2 login (Google, GitHub, etc.)
+  oauth2_login:
+    enabled: false
+    providers:
+      google:
+        enabled: false
+        client_id: ""
+        client_secret: ""
+      github:
+        enabled: false
+        client_id: ""
+        client_secret: ""
+  
+  # 3. Two-factor authentication (TOTP)
+  two_factor_auth:
+    enabled: false
+    require_setup: false
+    backup_codes: true
+  
+  # 4. LDAP authentication
+  ldap_auth:
+    enabled: false
+    allow_registration: false
+    allow_password_reset: false
+    auto_create_user: false
+  
+  # 5. Wallet authentication (MetaMask)
+  wallet_auth:
+    enabled: false
+    network: ethereum
+    require_signature: true
+
+development:
+  <<: *defaults
+  # Development environment also skips authentication by default
+  # Uncomment below to enable specific authentication methods
+  # oauth2_login:
+  #   enabled: true
+  #   providers:
+  #     google:
+  #       enabled: true
+  #       client_id: <%= ENV.fetch("GOOGLE_CLIENT_ID", "") %>
+  #       client_secret: <%= ENV.fetch("GOOGLE_CLIENT_SECRET", "") %>
+  #     github:
+  #       enabled: false
+  #       client_id: <%= ENV.fetch("GITHUB_CLIENT_ID", "") %>
+  #       client_secret: <%= ENV.fetch("GITHUB_CLIENT_SECRET", "") %>
+
+test:
+  <<: *defaults
+  ldap_auth:
+    enabled: false
+
+production:
+  <<: *defaults 
