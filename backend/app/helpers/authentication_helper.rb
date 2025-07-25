@@ -4,7 +4,7 @@ module AuthenticationHelper
       config_path = Rails.root.join('config', 'authentication.yml')
       yaml_content = File.read(config_path)
       erb_content = ERB.new(yaml_content).result
-      YAML.load(erb_content)[Rails.env]
+      YAML.load(erb_content, aliases: true)[Rails.env]
     rescue => e
       Rails.logger.error "Error loading authentication config: #{e.message}"
       # Fallback configuration

@@ -20,8 +20,12 @@ class User < ActiveRecord::Base
       devise_modules << :recoverable if AuthenticationHelper.config['standard_login']['allow_password_reset']
     end
     
-    if AuthenticationHelper.ldap_auth_enabled? && File.exist?("/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712")
-      devise_modules << :ldap_authenticatable
+    # For LDAP authentication, we need database_authenticatable as fallback
+    if AuthenticationHelper.ldap_auth_enabled?
+      devise_modules << :database_authenticatable unless devise_modules.include?(:database_authenticatable)
+      if File.exist?("/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712")
+        devise_modules << :ldap_authenticatable
+      end
     end
     
     if AuthenticationHelper.oauth2_login_enabled?

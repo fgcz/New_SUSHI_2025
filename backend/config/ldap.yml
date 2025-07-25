@@ -16,6 +16,7 @@ defaults: &default
   host: fgcz-bfabric-ldap
   port: 636
   ssl: true
+  ssl_verify: true
 
   base: dc=bfabric,dc=org
   attribute: cn

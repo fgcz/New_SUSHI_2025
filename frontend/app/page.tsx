@@ -114,25 +114,23 @@ const AuthStatus = () => {
     );
   }
 
+  // If authentication is required but user is not logged in, don't show this component
+  if (!authStatus.current_user) {
+    return null;
+  }
+
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-blue-800 font-semibold">🔐 Authentication Required</h3>
-          <p className="text-blue-700 text-sm">
-            Please sign in to access the application.
+          <h3 className="text-green-800 font-semibold">✅ Authenticated</h3>
+          <p className="text-green-700 text-sm">
+            Welcome! You are successfully logged in.
           </p>
-          <p className="text-blue-700 text-sm mt-1">
-            <strong>Enabled Methods:</strong> {authStatus.enabled_methods.join(', ') || 'None'}
+          <p className="text-green-700 text-sm mt-1">
+            <strong>Current User:</strong> {authStatus.current_user}
           </p>
         </div>
-        <Link 
-          href="/auth/login_options" 
-          className="text-blue-600 hover:text-blue-800 text-sm underline"
-          target="_blank"
-        >
-          View Auth Options
-        </Link>
       </div>
     </div>
   );
@@ -141,8 +139,43 @@ const AuthStatus = () => {
 // The main dashboard page component
 export default function Home() {
   const projectNumber = 38222; // Hardcoded project number as in the screenshot
-  const { authStatus } = useAuth();
+  const { authStatus, logout, loading } = useAuth();
   const userName = authStatus?.current_user || "Guest";
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    logout();
+  };
+
+  // Show loading screen while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if authentication is required but user is not logged in
+  // This prevents the flash of content before redirect
+  if (authStatus && !authStatus.authentication_skipped && !authStatus.current_user) {
+    return null;
+  }
+
+  // If no auth status yet, show loading
+  if (!authStatus) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#e0e5e9' }}>
@@ -162,7 +195,12 @@ export default function Home() {
               {authStatus?.authentication_skipped ? (
                 <Link href="/auth/login_options" className="text-blue-600 hover:underline ml-1">Auth Status</Link>
               ) : (
-                <Link href="/logout" className="text-blue-600 hover:underline ml-1">Sign out</Link>
+                <button 
+                  onClick={handleLogout}
+                  className="text-blue-600 hover:underline ml-1 bg-transparent border-none cursor-pointer"
+                >
+                  Sign out
+                </button>
               )}
             </span>
           </nav>

@@ -105,7 +105,7 @@ class ApiClient {
     return response.json();
   }
 
-  // Public API - JWT authentication related (no authentication required)
+  // Public API - JWT authentication (supports both standard and LDAP)
   async login(login: string, password: string): Promise<LoginResponse> {
     const response = await this.request<LoginResponse>('/api/v1/auth/login', {
       method: 'POST',

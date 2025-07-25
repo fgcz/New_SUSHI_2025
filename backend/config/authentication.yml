@@ -41,8 +41,16 @@ defaults: &defaults
 
 development:
   <<: *defaults
-  # Development environment also skips authentication by default
+  # Development environment skips authentication by default
   # Uncomment below to enable specific authentication methods
+  
+  # Enable LDAP authentication for testing (commented out for development)
+  # ldap_auth:
+  #   enabled: true
+  #   allow_registration: false
+  #   allow_password_reset: false
+  #   auto_create_user: true
+  
   # oauth2_login:
   #   enabled: true
   #   providers:

@@ -3,25 +3,53 @@ module Api
     class AuthController < ApplicationController
       # Authentication controller skips JWT authentication
       skip_before_action :authenticate_jwt_token
+      # Skip CSRF protection for API endpoints
+      skip_before_action :verify_authenticity_token
       
-      # JWT login
+      # JWT login with LDAP support
       def login
-        user = User.find_by(login: params[:login]) || User.find_by(email: params[:login])
+        login_param = params[:login]
+        password = params[:password]
         
-        if user&.valid_password?(params[:password])
-          token = generate_jwt_token(user)
-          render json: {
-            token: token,
-            user: {
-              id: user.id,
-              login: user.login,
-              email: user.email
-            },
-            message: 'Login successful'
-          }
-        else
-          render json: { error: 'Invalid credentials' }, status: :unauthorized
+        # Try LDAP authentication first if enabled
+        if AuthenticationHelper.ldap_auth_enabled?
+          user = authenticate_with_ldap(login_param, password)
+          if user
+            token = generate_jwt_token(user)
+            render json: {
+              token: token,
+              user: {
+                id: user.id,
+                login: user.login,
+                email: user.email
+              },
+              message: 'LDAP login successful'
+            }
+            return
+          end
         end
+        
+        # Fallback to standard authentication if LDAP fails or is disabled
+        if AuthenticationHelper.standard_login_enabled?
+          user = User.find_by(login: login_param) || User.find_by(email: login_param)
+          
+          if user&.valid_password?(password)
+            token = generate_jwt_token(user)
+            render json: {
+              token: token,
+              user: {
+                id: user.id,
+                login: user.login,
+                email: user.email
+              },
+              message: 'Standard login successful'
+            }
+            return
+          end
+        end
+        
+        # Authentication failed
+        render json: { error: 'Invalid credentials' }, status: :unauthorized
       end
       
       # JWT register
@@ -53,9 +81,9 @@ module Api
       
       # JWT logout (client-side token removal)
       def logout
-              # JWT is stateless, so nothing to do on server side
-      # Client side removes the token
-      render json: { message: 'Logout successful' }
+        # JWT is stateless, so nothing to do on server side
+        # Client side removes the token
+        render json: { message: 'Logout successful' }
       end
       
       # Verify JWT token
@@ -80,6 +108,58 @@ module Api
       end
       
       private
+      
+      def authenticate_with_ldap(login, password)
+        return nil unless AuthenticationHelper.ldap_auth_enabled?
+        
+        # Use direct LDAP authentication
+        begin
+          # Try to find existing user
+          user = User.find_by(login: login)
+          
+          # Try to authenticate with LDAP directly
+          ldap = Net::LDAP.new(
+            host: 'fgcz-bfabric-ldap',
+            port: 636,
+            base: 'dc=bfabric,dc=org',
+            encryption: :simple_tls,
+            verify_mode: OpenSSL::SSL::VERIFY_PEER
+          )
+          
+          # Try to bind with user credentials
+          if ldap.bind_as(
+            base: "cn=#{login},ou=Users,dc=bfabric,dc=org",
+            password: password
+          )
+            # LDAP authentication successful
+            
+            # If user doesn't exist and auto_create_user is enabled, create user
+            if !user && AuthenticationHelper.ldap_config['auto_create_user']
+              user = User.create!(
+                login: login,
+                email: "#{login}@bfabric.org",
+                password: Devise.friendly_token[0, 20] # Random password for database
+              )
+            end
+            
+            # If user doesn't exist and auto_create_user is disabled, create user anyway
+            if !user && !AuthenticationHelper.ldap_config['auto_create_user']
+              user = User.create!(
+                login: login,
+                email: "#{login}@bfabric.org",
+                password: Devise.friendly_token[0, 20] # Random password for database
+              )
+            end
+            
+            return user
+          end
+          
+          nil
+        rescue => e
+          Rails.logger.error "LDAP authentication error: #{e.message}"
+          nil
+        end
+      end
       
       def generate_jwt_token(user)
         payload = {
