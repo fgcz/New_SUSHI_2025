@@ -69,6 +69,7 @@ module AuthenticationHelper
   end
   
   def self.get_default_user
-    User.find_by(login: 'anonymous') || User.first
+    # Return non-persistent anonymous user when not found
+    User.find_by(login: 'anonymous') || User.new(login: 'anonymous', email: 'anonymous@example.com')
   end
 end 

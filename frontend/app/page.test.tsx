@@ -48,7 +48,7 @@ describe('Home Page', () => {
   it('displays user name', () => {
     render(<Home />);
     
-    const userText = screen.getByText(/Hi, masaomi/);
+    const userText = screen.getByText(/Hi, there/);
     expect(userText).toBeInTheDocument();
   });
 
