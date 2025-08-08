@@ -1,11 +1,23 @@
 #!/bin/bash
 
 # Development environment startup script
-# Usage: ./start-dev.sh [frontend-port] [backend-port]
+# Usage:
+#   ./start-dev.sh [frontend-port] [backend-port]
+#   FRONTEND_PORT=3001 BACKEND_PORT=3000 ./start-dev.sh
 
-# Default port settings
-FRONTEND_PORT=${1:-4051}
-BACKEND_PORT=${2:-4050}
+set -e
+
+# Default ports
+DEFAULT_FRONTEND_PORT=4051
+DEFAULT_BACKEND_PORT=4050
+
+# Read from env with defaults
+FRONTEND_PORT="${FRONTEND_PORT:-$DEFAULT_FRONTEND_PORT}"
+BACKEND_PORT="${BACKEND_PORT:-$DEFAULT_BACKEND_PORT}"
+
+# Positional args override env
+[ -n "$1" ] && FRONTEND_PORT="$1"
+[ -n "$2" ] && BACKEND_PORT="$2"
 
 # Function to cleanup processes
 cleanup() {
@@ -25,8 +37,8 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 echo "🚀 Starting development environment..."
+echo "🔧 Backend:  http://localhost:$BACKEND_PORT"
 echo "📱 Frontend: http://localhost:$FRONTEND_PORT"
-echo "🔧 Backend: http://localhost:$BACKEND_PORT"
 echo ""
 
 # Start backend
@@ -42,14 +54,16 @@ sleep 3
 # Start frontend
 echo "📱 Starting frontend..."
 cd frontend
-NEXT_PUBLIC_API_PORT=$BACKEND_PORT npm run dev -- --port $FRONTEND_PORT &
+API_URL="http://localhost:$BACKEND_PORT"
+NEXT_PUBLIC_API_URL="$API_URL" NEXT_PUBLIC_API_PORT="$BACKEND_PORT" npm run dev -- --port "$FRONTEND_PORT" &
 FRONTEND_PID=$!
 cd ..
 
 echo ""
 echo "✅ Development environment started!"
+echo "🔧 Backend:  http://localhost:$BACKEND_PORT"
 echo "📱 Frontend: http://localhost:$FRONTEND_PORT"
-echo "🔧 Backend: http://localhost:$BACKEND_PORT"
+echo "ℹ️  Frontend will call API at $API_URL"
 echo ""
 echo "Press Ctrl+C to stop"
 

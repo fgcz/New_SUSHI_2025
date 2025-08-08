@@ -76,5 +76,10 @@ test:
   skip_endpoints:
     - "/api/v1/hello"
 
+development:
+  <<: *defaults
+  ldap_auth:
+    enabled: false
+ 
 production:
   <<: *defaults 
