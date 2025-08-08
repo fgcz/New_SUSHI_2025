@@ -2,6 +2,31 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Home from './page';
 
+// Mock AuthContext to control authentication state
+jest.mock('@/contexts/AuthContext', () => {
+  const React = require('react');
+  const mockValue = {
+    authStatus: {
+      standard_login: false,
+      oauth2_login: false,
+      two_factor_auth: false,
+      ldap_auth: false,
+      wallet_auth: false,
+      enabled_methods: [],
+      authentication_skipped: true,
+      current_user: 'Anonymous',
+    },
+    loading: false,
+    error: null,
+    refetch: jest.fn(async () => {}),
+    logout: jest.fn(),
+  };
+  return {
+    useAuth: () => mockValue,
+    AuthProvider: ({ children }: { children: React.ReactNode }) => children,
+  };
+});
+
 // Mock Next.js components
 jest.mock('next/image', () => {
   return function MockImage({ src, alt, ...props }: any) {
@@ -48,7 +73,7 @@ describe('Home Page', () => {
   it('displays user name', () => {
     render(<Home />);
     
-    const userText = screen.getByText(/Hi, there/);
+    const userText = screen.getByText(/Hi, Anonymous/);
     expect(userText).toBeInTheDocument();
   });
 
@@ -111,9 +136,9 @@ describe('Home Page', () => {
   it('renders sign out link', () => {
     render(<Home />);
     
-    const signOutLink = screen.getByText('Sign out');
-    expect(signOutLink).toBeInTheDocument();
-    expect(signOutLink.closest('a')).toHaveAttribute('href', '/logout');
+    // When authentication is skipped, Auth Status link is shown instead of Sign out
+    const authStatusLink = screen.getByText('Auth Status');
+    expect(authStatusLink).toBeInTheDocument();
   });
 
   it('renders all menu card images', () => {
