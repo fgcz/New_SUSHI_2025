@@ -28,20 +28,9 @@ module Api
       end
       
       # List of APIs that don't require user identification (for BaseController)
+      # Delegate to ApplicationController (Concern) for unified skip logic
       def skip_jwt_authentication?
-        # Authentication-related APIs (login, register, etc.)
-        return true if controller_name == 'auth' && ['login', 'register'].include?(action_name)
-        
-        # Get authentication options
-        return true if controller_name == 'authentication' && action_name == 'login_options'
-        
-        # Get authentication configuration
-        return true if controller_name == 'authentication_config' && action_name == 'index'
-        
-        # Health check
-        return true if request.path == '/up'
-        
-        false
+        super
       end
     end
   end

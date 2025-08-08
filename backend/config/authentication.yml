@@ -65,8 +65,16 @@ development:
 
 test:
   <<: *defaults
+  # Enable standard login for testing
+  standard_login:
+    enabled: true
+    allow_registration: true
+    allow_password_reset: true
   ldap_auth:
     enabled: false
+  # Endpoints to skip JWT only in test environment
+  skip_endpoints:
+    - "/api/v1/hello"
 
 production:
   <<: *defaults 

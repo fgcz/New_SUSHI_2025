@@ -63,6 +63,12 @@ module JwtAuthenticatable
     # Root page
     return true if request.path == '/' && controller_name == 'home'
     
+    # Test-only configurable exclusions
+    if Rails.env.test?
+      skip_paths = Array(AuthenticationHelper.config['skip_endpoints'])
+      return true if skip_paths.include?(request.path)
+    end
+    
     false
   end
 end 
