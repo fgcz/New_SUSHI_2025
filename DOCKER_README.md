@@ -19,14 +19,14 @@ This document explains how to run the Sushi application using Docker Compose.
 2. Start the development environment:
    ```bash
    # Using default ports (4050, 4051)
-   docker-compose up --build
+    docker compose -f compose.dev.yml up --build
    
    # Or using custom ports
-   BACKEND_PORT=3000 FRONTEND_PORT=3001 docker-compose up --build
+    BACKEND_PORT=3000 FRONTEND_PORT=3001 docker compose -f compose.dev.yml up --build
    
    # Or using the helper script
-   ./docker-dev.sh up
-   ./docker-dev.sh up 3000 3001  # Custom ports
+    ./docker-dev.sh up
+    ./docker-dev.sh up 3000 3001  # Custom ports
    ```
 
 3. Access the applications:
@@ -45,10 +45,10 @@ This document explains how to run the Sushi application using Docker Compose.
 2. Start the production environment:
    ```bash
    # Using default ports
-   docker-compose -f docker-compose.prod.yml up --build
+    docker compose -f compose.prod.yml up --build
    
    # Or using custom ports
-   BACKEND_PORT=3000 FRONTEND_PORT=3001 docker-compose -f docker-compose.prod.yml up --build
+    BACKEND_PORT=3000 FRONTEND_PORT=3001 docker compose -f compose.prod.yml up --build
    ```
 
 ## Services
@@ -102,42 +102,42 @@ BACKEND_PORT=3000 FRONTEND_PORT=3001 docker-compose up
 
 ```bash
 # Start all services (default ports)
-docker-compose up
+docker compose -f compose.dev.yml up
 
 # Start with custom ports
-BACKEND_PORT=3000 FRONTEND_PORT=3001 docker-compose up
+BACKEND_PORT=3000 FRONTEND_PORT=3001 docker compose -f compose.dev.yml up
 
 # Start in background
-docker-compose up -d
+docker compose -f compose.dev.yml up -d
 
 # View logs
-docker-compose logs -f
+docker compose -f compose.dev.yml logs -f
 
 # Stop services
-docker-compose down
+docker compose -f compose.dev.yml down
 ```
 
 ### Database Operations
 
 ```bash
 # Run migrations
-docker-compose exec backend rails db:migrate
+docker compose -f compose.dev.yml exec backend rails db:migrate
 
 # Create database
-docker-compose exec backend rails db:create
+docker compose -f compose.dev.yml exec backend rails db:create
 
 # Reset database
-docker-compose exec backend rails db:reset
+docker compose -f compose.dev.yml exec backend rails db:reset
 
 # Access SQLite database (development)
-docker-compose exec backend sqlite3 storage/development.sqlite3
+docker compose -f compose.dev.yml exec backend sqlite3 storage/development.sqlite3
 ```
 
 ### Rails Console
 
 ```bash
 # Access Rails console
-docker-compose exec backend rails console
+docker compose -f compose.dev.yml exec backend rails console
 ```
 
 ### Frontend Development
@@ -195,10 +195,10 @@ The backend code is mounted as a volume, so changes are reflected immediately. Y
 2. **Database connection issues (production)**:
    ```bash
    # Check if database is running
-   docker-compose -f docker-compose.prod.yml ps
+docker compose -f compose.prod.yml ps
    
    # Restart database
-   docker-compose -f docker-compose.prod.yml restart db
+docker compose -f compose.prod.yml restart db
    ```
 
 3. **Permission issues**:
@@ -210,33 +210,33 @@ The backend code is mounted as a volume, so changes are reflected immediately. Y
 4. **Clean rebuild**:
    ```bash
    # Remove all containers and volumes
-   docker-compose down -v
+docker compose -f compose.dev.yml down -v
    docker system prune -a
    
    # Rebuild from scratch
-   docker-compose up --build
+docker compose -f compose.dev.yml up --build
    ```
 
 ### Logs
 
 ```bash
 # View all logs
-docker-compose logs
+docker compose -f compose.dev.yml logs
 
 # View specific service logs
-docker-compose logs backend
-docker-compose logs frontend
+docker compose -f compose.dev.yml logs backend
+docker compose -f compose.dev.yml logs frontend
 
 # Follow logs in real-time
-docker-compose logs -f
+docker compose -f compose.dev.yml logs -f
 ```
 
 ## File Structure
 
 ```
 .
-├── docker-compose.yml          # Development environment (SQLite3)
-├── docker-compose.prod.yml     # Production environment (MySQL)
+├── compose.dev.yml             # Development environment (SQLite3)
+├── compose.prod.yml            # Production environment (MySQL)
 ├── env.example                 # Environment variables template
 ├── docker-dev.sh               # Development helper script
 ├── backend/
@@ -258,3 +258,44 @@ docker-compose logs -f
 - The production environment uses multi-stage builds for optimized images
 - Database data is persisted using Docker volumes (production only)
 - The frontend proxies API requests to the backend automatically 
+
+Here’s the English translation:
+
+---
+
+### LDAP (devise\_ldap\_authenticatable) Setup
+
+* **Build-time flag (`ENABLE_LDAP`)**: Controls whether the LDAP gem is installed into the image.
+
+  * Default is OFF: `ENABLE_LDAP=0` (also `0` when unspecified)
+  * To enable, specify `ENABLE_LDAP=1` at build time.
+* **Runtime behavior**: Actual Rails behavior is controlled in `backend/config/authentication.yml` (whether to use LDAP or not).
+
+  * Example: If `authentication.yml` enables LDAP but the build is done with `ENABLE_LDAP=0` (gem not installed), it will cause a runtime error.
+  * Even if the gem is installed with `ENABLE_LDAP=1`, it is harmless if LDAP is disabled in the configuration (only increases image size).
+
+#### Startup Examples (Development)
+
+```bash
+# LDAP OFF (default)
+bash docker-dev.sh up
+
+# LDAP ON (build includes gem installation)
+ENABLE_LDAP=1 bash docker-dev.sh up
+
+# Using docker compose directly (development)
+ENABLE_LDAP=1 docker compose -f compose.dev.yml up --build
+```
+
+#### Startup Examples (Production)
+
+```bash
+# Build and start with LDAP ON (production)
+ENABLE_LDAP=1 docker compose -f compose.prod.yml up -d --build
+```
+
+Notes:
+
+* Rebuild is required when toggling `ENABLE_LDAP` (the above commands include `--build`).
+* Make sure the settings in `backend/config/authentication.yml` are consistent with the `ENABLE_LDAP` value.
+

@@ -21,8 +21,15 @@ RUN groupadd -r rails && useradd -r -g rails rails
 WORKDIR /rails
 
 # Install gems
+ARG ENABLE_LDAP=0
 COPY Gemfile Gemfile.lock ./
-RUN bundle install
+RUN if [ "$ENABLE_LDAP" = "1" ]; then \
+      echo "Installing gems with LDAP enabled"; \
+      bundle install; \
+    else \
+      echo "Installing gems with LDAP excluded"; \
+      BUNDLE_WITHOUT=ldap bundle install; \
+    fi
 
 # Copy application code
 COPY . .

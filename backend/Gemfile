@@ -38,8 +38,13 @@ gem "thruster", require: false
 gem "rack-cors"
 
 gem 'devise', '4.9.4'
-if File.exist?("/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712")
-  gem 'devise_ldap_authenticatable', '>= 0.8.6.1', :path => '/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712'
+group :ldap do
+  # LDAP authentication support (default excluded via BUNDLE_WITHOUT)
+  ldap_path = '/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712'
+  # Include only when explicitly enabled and the local path exists
+  if ENV['ENABLE_LDAP'] == '1' && File.exist?(ldap_path)
+    gem 'devise_ldap_authenticatable', '>= 0.8.6.1', :path => ldap_path
+  end
 end
 
 # OAuth2 authentication

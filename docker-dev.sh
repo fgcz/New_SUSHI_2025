@@ -8,75 +8,80 @@ set -e
 DEFAULT_BACKEND_PORT=4050
 DEFAULT_FRONTEND_PORT=4051
 
+# Resolve DEV_HOST if not provided (used by frontend to reach backend from browser)
+DEV_HOST="${DEV_HOST:-$(hostname -f)}"
+# Default ENABLE_LDAP to 0 unless explicitly set by user
+ENABLE_LDAP="${ENABLE_LDAP:-0}"
+
 case "$1" in
   "up")
     echo "Starting development environment..."
     if [ -n "$2" ] && [ -n "$3" ]; then
-      echo "Using custom ports: Backend=$2, Frontend=$3"
-      BACKEND_PORT=$2 FRONTEND_PORT=$3 docker-compose up --build
+      echo "Using custom ports: Backend=$2, Frontend=$3 (DEV_HOST=$DEV_HOST)"
+      DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
     else
-      echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT"
-      docker-compose up --build
+      echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT (DEV_HOST=$DEV_HOST)"
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
     fi
     ;;
   "down")
     echo "Stopping development environment..."
-    docker-compose down
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
     ;;
   "restart")
     echo "Restarting development environment..."
-    docker-compose down
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
     if [ -n "$2" ] && [ -n "$3" ]; then
-      echo "Using custom ports: Backend=$2, Frontend=$3"
-      BACKEND_PORT=$2 FRONTEND_PORT=$3 docker-compose up --build
+      echo "Using custom ports: Backend=$2, Frontend=$3 (DEV_HOST=$DEV_HOST)"
+      DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
     else
-      echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT"
-      docker-compose up --build
+      echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT (DEV_HOST=$DEV_HOST)"
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
     fi
     ;;
   "logs")
     echo "Showing logs..."
-    docker-compose logs -f
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f
     ;;
   "backend-logs")
     echo "Showing backend logs..."
-    docker-compose logs -f backend
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f backend
     ;;
   "frontend-logs")
     echo "Showing frontend logs..."
-    docker-compose logs -f frontend
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f frontend
     ;;
   "console")
     echo "Opening Rails console..."
-    docker-compose exec backend rails console
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails console
     ;;
   "migrate")
     echo "Running database migrations..."
-    docker-compose exec backend rails db:migrate
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails db:migrate
     ;;
   "reset")
     echo "Resetting database..."
-    docker-compose exec backend rails db:reset
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails db:reset
     ;;
   "sqlite")
     echo "Opening SQLite console..."
-    docker-compose exec backend sqlite3 storage/development.sqlite3
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend sqlite3 storage/development.sqlite3
     ;;
   "clean")
     echo "Cleaning up Docker resources..."
-    docker-compose down -v
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down -v
     docker system prune -a -f
     ;;
   "rebuild")
     echo "Rebuilding all containers..."
-    docker-compose down
-    docker-compose build --no-cache
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
+    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml build --no-cache
     if [ -n "$2" ] && [ -n "$3" ]; then
-      echo "Using custom ports: Backend=$2, Frontend=$3"
-      BACKEND_PORT=$2 FRONTEND_PORT=$3 docker-compose up
+      echo "Using custom ports: Backend=$2, Frontend=$3 (DEV_HOST=$DEV_HOST)"
+      DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up
     else
-      echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT"
-      docker-compose up
+      echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT (DEV_HOST=$DEV_HOST)"
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up
     fi
     ;;
   *)
@@ -96,13 +101,15 @@ case "$1" in
     echo "  clean                                 - Clean up Docker resources"
     echo "  rebuild [backend_port] [frontend_port] - Rebuild all containers"
     echo ""
+    echo "Env vars:"
+    echo "  DEV_HOST                               - Hostname/IP used by the browser to reach backend (default: $(hostname -f))"
+    echo ""
     echo "Default ports:"
     echo "  Backend:  $DEFAULT_BACKEND_PORT"
     echo "  Frontend: $DEFAULT_FRONTEND_PORT"
     echo ""
     echo "Examples:"
-    echo "  $0 up                    # Use default ports"
-    echo "  $0 up 3000 3001          # Use custom ports"
+    echo "  sudo DEV_HOST=$(hostname -f) ENABLE_LDAP=1 $0 up 3000 3001  # Enable LDAP with custom ports and explicit host"
     echo "  $0 restart 8080 8081     # Restart with custom ports"
     exit 1
     ;;

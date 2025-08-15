@@ -103,10 +103,11 @@ jobs:
         cd frontend
         docker build -f Dockerfile.dev -t sushi-frontend:test .
     
-    - name: Test Docker Compose
+    - name: Test Docker Compose (dev/prod)
       run: |
-        docker compose -f docker-compose.yml config
-        echo "✅ Docker Compose configuration is valid"
+        docker compose -f compose.dev.yml config
+        docker compose -f compose.prod.yml config
+        echo "✅ Docker Compose configurations (dev/prod) are valid"
 
   integration-test:
     name: Integration Tests

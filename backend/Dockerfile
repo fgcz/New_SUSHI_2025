@@ -22,8 +22,7 @@ RUN apt-get update -qq && \
 # Set production environment
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_PATH="/usr/local/bundle"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -34,8 +33,15 @@ RUN apt-get update -qq && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Install application gems
+ARG ENABLE_LDAP=0
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
+RUN if [ "$ENABLE_LDAP" = "1" ]; then \
+      echo "Installing gems with LDAP enabled (keeping development excluded)"; \
+      BUNDLE_WITHOUT=development bundle install; \
+    else \
+      echo "Installing gems with LDAP excluded (and development)"; \
+      BUNDLE_WITHOUT=development:ldap bundle install; \
+    fi && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 

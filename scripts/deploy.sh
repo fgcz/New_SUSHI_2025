@@ -12,7 +12,7 @@ DEPLOY_USER=${DEPLOY_USER}
 BASTION_HOST=${BASTION_HOST}
 BASTION_USER=${BASTION_USER}
 APP_DIR="/srv/sushi/masa_new_sushi_deploy_test"
-DOCKER_COMPOSE_FILE="docker-compose.prod.yml"
+DOCKER_COMPOSE_FILE="compose.prod.yml"
 
 # Colors for output
 RED='\033[0;31m'
@@ -106,18 +106,18 @@ cd /opt/sushi-app
 git pull origin main
 
 # Backup current deployment
-if [ -f docker-compose.prod.yml ]; then
-    docker-compose -f docker-compose.prod.yml down || true
+if [ -f compose.prod.yml ]; then
+    docker compose -f compose.prod.yml down || true
 fi
 
 # Build and start new containers
-docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f compose.prod.yml up -d --build
 
 # Wait for services to be healthy
 sleep 30
 
 # Check if services are running
-if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+if docker compose -f compose.prod.yml ps | grep -q "Up"; then
     echo "✅ Deployment successful"
 else
     echo "❌ Deployment failed"
@@ -125,7 +125,7 @@ else
 fi
 
 # Clean up old images
-docker image prune -f
+    docker image prune -f
 EOF
 
     # Copy deployment script to server

@@ -20,7 +20,7 @@ This project consists of a Rails 8 API server and Next.js frontend, with automat
 
 3. **Docker Build Test**
    - Backend and frontend Docker image builds
-   - docker-compose.yml configuration validation
+   - compose.dev.yml / compose.prod.yml configuration validation
 
 4. **Integration Tests**
    - Backend server startup
@@ -138,7 +138,7 @@ Example:
     ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} << 'EOF'
       cd /path/to/your/app
       git pull origin main
-      docker-compose -f docker-compose.prod.yml up -d
+       docker compose -f compose.prod.yml up -d
     EOF
 ```
 
