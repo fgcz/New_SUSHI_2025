@@ -114,16 +114,33 @@ module Api
         
         # Use direct LDAP authentication
         begin
+          begin
+            require 'net/ldap'
+          rescue LoadError => e
+            Rails.logger.error "LDAP library not available: #{e.message}"
+            return nil
+          end
+          
+          # Load connection settings from config/ldap.yml
+          ldap_cfg = YAML.load(ERB.new(File.read(Rails.root.join('config', 'ldap.yml'))).result, aliases: true)[Rails.env]
+          host = ldap_cfg['host'] || 'fgcz-bfabric-ldap'
+          port = ldap_cfg['port'] || 636
+          base = ldap_cfg['base'] || 'dc=bfabric,dc=org'
+          ssl  = ldap_cfg['ssl']
+          verify_peer = ldap_cfg['ssl_verify']
+          encryption = ssl ? :simple_tls : nil
+          verify_mode = verify_peer ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
+          
           # Try to find existing user
           user = User.find_by(login: login)
           
           # Try to authenticate with LDAP directly
           ldap = Net::LDAP.new(
-            host: 'fgcz-bfabric-ldap',
-            port: 636,
-            base: 'dc=bfabric,dc=org',
-            encryption: :simple_tls,
-            verify_mode: OpenSSL::SSL::VERIFY_PEER
+            host: host,
+            port: port,
+            base: base,
+            encryption: encryption,
+            verify_mode: verify_mode
           )
           
           # Try to bind with user credentials

@@ -45,6 +45,7 @@ group :ldap do
   if ENV['ENABLE_LDAP'] == '1' && File.exist?(ldap_path)
     gem 'devise_ldap_authenticatable', '>= 0.8.6.1', :path => ldap_path
   end
+  gem 'net-ldap', '>= 0.16.0'
 end
 
 # OAuth2 authentication

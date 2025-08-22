@@ -23,7 +23,7 @@ class User < ActiveRecord::Base
     # For LDAP authentication, we need database_authenticatable as fallback
     if AuthenticationHelper.ldap_auth_enabled?
       devise_modules << :database_authenticatable unless devise_modules.include?(:database_authenticatable)
-      if File.exist?("/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712")
+      if defined?(Devise::Models::LdapAuthenticatable)
         devise_modules << :ldap_authenticatable
       end
     end
@@ -65,6 +65,7 @@ class User < ActiveRecord::Base
   # LDAP attribute mapping for bfabric LDAP
   def ldap_before_save
     return unless AuthenticationHelper.ldap_auth_enabled?
+    return unless defined?(Devise::LDAP::Adapter)
     
     # Map LDAP attributes to user model
     if Devise::LDAP::Adapter.get_ldap_param(self.login, "mail")

@@ -28,7 +28,7 @@ defaults: &defaults
   
   # 4. LDAP authentication
   ldap_auth:
-    enabled: false
+    enabled: <%= ENV.fetch("ENABLE_LDAP", "0") == "1" %>
     allow_registration: false
     allow_password_reset: false
     auto_create_user: false
@@ -76,10 +76,5 @@ test:
   skip_endpoints:
     - "/api/v1/hello"
 
-development:
-  <<: *defaults
-  ldap_auth:
-    enabled: false
- 
 production:
   <<: *defaults 

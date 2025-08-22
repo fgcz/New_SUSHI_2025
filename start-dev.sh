@@ -4,6 +4,7 @@
 # Usage:
 #   ./start-dev.sh [backend-port] [frontend-port]
 #   BACKEND_PORT=4000 FRONTEND_PORT=4001 ./start-dev.sh
+#   ./start-dev.sh ENABLE_LDAP [backend-port] [frontend-port]  # enable LDAP (sets ENABLE_LDAP=1)
 
 set -e
 
@@ -15,9 +16,26 @@ DEFAULT_FRONTEND_PORT=4051
 FRONTEND_PORT="${FRONTEND_PORT:-$DEFAULT_FRONTEND_PORT}"
 BACKEND_PORT="${BACKEND_PORT:-$DEFAULT_BACKEND_PORT}"
 
+# Optional flag to enable LDAP: allow `./start-dev.sh ENABLE_LDAP`
+if [ "${1:-}" = "ENABLE_LDAP" ]; then
+  export ENABLE_LDAP=1
+  echo "🔐 ENABLE_LDAP=1 (via flag)"
+else
+  if [ -z "${ENABLE_LDAP+x}" ]; then
+    echo "🔐 ENABLE_LDAP is unset (default)"
+  else
+    echo "🔐 ENABLE_LDAP=${ENABLE_LDAP} (pre-set)"
+  fi
+fi
+
 # Positional args override env
-[ -n "$1" ] && BACKEND_PORT="$1"
-[ -n "$2" ] && FRONTEND_PORT="$2"
+if [ "${1:-}" = "ENABLE_LDAP" ]; then
+  [ -n "$2" ] && BACKEND_PORT="$2"
+  [ -n "$3" ] && FRONTEND_PORT="$3"
+else
+  [ -n "$1" ] && BACKEND_PORT="$1"
+  [ -n "$2" ] && FRONTEND_PORT="$2"
+fi
 
 # Function to cleanup processes
 cleanup() {
@@ -43,8 +61,26 @@ echo ""
 # Start backend
 echo "🔧 Starting backend..."
 cd backend
+# If LDAP is requested and available, ensure the LDAP group is installed
+if [ "${ENABLE_LDAP:-0}" = "1" ]; then
+  echo "🔎 LDAP requested (ENABLE_LDAP=1)"
+  LDAP_PATH="/usr/local/ngseq/gems/devise_ldap_authenticatable_forked_20190712"
+  if [ -d "$LDAP_PATH" ]; then
+    if ! bundle show devise_ldap_authenticatable >/dev/null 2>&1; then
+      echo "⬇️  Installing gems for group :ldap ..."
+      bundle config set --local path 'vendor/bundle'
+      bundle install --with ldap
+    fi
+  else
+    echo "⚠️  LDAP gem path not found at $LDAP_PATH. Continuing without LDAP."
+  fi
+fi
 # Bind to 0.0.0.0 so it is reachable from remote browsers
-RAILS_ENV=development bundle exec rails s -p $BACKEND_PORT -b 0.0.0.0 &
+if [ "${ENABLE_LDAP:-0}" = "1" ]; then
+  BUNDLE_WITH=ldap RAILS_ENV=development bundle exec rails s -p $BACKEND_PORT -b 0.0.0.0 &
+else
+  RAILS_ENV=development bundle exec rails s -p $BACKEND_PORT -b 0.0.0.0 &
+fi
 BACKEND_PID=$!
 cd ..
 
