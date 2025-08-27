@@ -299,3 +299,18 @@ Notes:
 * Rebuild is required when toggling `ENABLE_LDAP` (the above commands include `--build`).
 * Make sure the settings in `backend/config/authentication.yml` are consistent with the `ENABLE_LDAP` value.
 
+#### Additional requirements when LDAP is enabled (development)
+
+When running with LDAP enabled via:
+
+```bash
+sudo ENABLE_LDAP=1 bash docker-dev.sh up
+```
+
+the following local files must be present on the host (they are volume-mounted into the backend container):
+
+- `docker_files/gems/` (contains the local fork of `devise_ldap_authenticatable` used in development)
+- `docker_files/FGCZ_CA_2019.crt` (CA certificate used for connecting to the host-side LDAP server)
+
+These files are environment-specific and are not committed to the repository. If they are missing, LDAP startup will fail or TLS verification may not work as expected.
+

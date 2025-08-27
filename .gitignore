@@ -26,3 +26,7 @@ Thumbs.db
 *.swp
 *.swo
 *~ 
+ 
+# LDAP dev-only assets (not committed)
+docker_files/gems/
+docker_files/FGCZ_CA_2019.crt

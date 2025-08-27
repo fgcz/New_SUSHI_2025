@@ -18,70 +18,139 @@ case "$1" in
     echo "Starting development environment..."
     if [ -n "$2" ] && [ -n "$3" ]; then
       echo "Using custom ports: Backend=$2, Frontend=$3 (DEV_HOST=$DEV_HOST)"
-      DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      if [ "$ENABLE_LDAP" = "1" ]; then
+        DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
+      else
+        DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      fi
     else
       echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT (DEV_HOST=$DEV_HOST)"
-      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      if [ "$ENABLE_LDAP" = "1" ]; then
+        sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
+      else
+        sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      fi
     fi
     ;;
   "down")
     echo "Stopping development environment..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml down
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
+    fi
     ;;
   "restart")
     echo "Restarting development environment..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml down
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
+    fi
     if [ -n "$2" ] && [ -n "$3" ]; then
       echo "Using custom ports: Backend=$2, Frontend=$3 (DEV_HOST=$DEV_HOST)"
-      DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      if [ "$ENABLE_LDAP" = "1" ]; then
+        DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
+      else
+        DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      fi
     else
       echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT (DEV_HOST=$DEV_HOST)"
-      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      if [ "$ENABLE_LDAP" = "1" ]; then
+        sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
+      else
+        sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up --build
+      fi
     fi
     ;;
   "logs")
     echo "Showing logs..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml logs -f
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f
+    fi
     ;;
   "backend-logs")
     echo "Showing backend logs..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f backend
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml logs -f backend
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f backend
+    fi
     ;;
   "frontend-logs")
     echo "Showing frontend logs..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f frontend
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml logs -f frontend
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml logs -f frontend
+    fi
     ;;
   "console")
     echo "Opening Rails console..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails console
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml exec backend rails console
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails console
+    fi
     ;;
   "migrate")
     echo "Running database migrations..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails db:migrate
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml exec backend rails db:migrate
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails db:migrate
+    fi
     ;;
   "reset")
     echo "Resetting database..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails db:reset
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml exec backend rails db:reset
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend rails db:reset
+    fi
     ;;
   "sqlite")
     echo "Opening SQLite console..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend sqlite3 storage/development.sqlite3
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml exec backend sqlite3 storage/development.sqlite3
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml exec backend sqlite3 storage/development.sqlite3
+    fi
     ;;
   "clean")
     echo "Cleaning up Docker resources..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down -v
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml down -v
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down -v
+    fi
     docker system prune -a -f
     ;;
   "rebuild")
     echo "Rebuilding all containers..."
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
-    sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml build --no-cache
+    if [ "$ENABLE_LDAP" = "1" ]; then
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml down
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml build --no-cache
+    else
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml down
+      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml build --no-cache
+    fi
     if [ -n "$2" ] && [ -n "$3" ]; then
       echo "Using custom ports: Backend=$2, Frontend=$3 (DEV_HOST=$DEV_HOST)"
-      DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up
+      if [ "$ENABLE_LDAP" = "1" ]; then
+        DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml up
+      else
+        DEV_HOST=$DEV_HOST BACKEND_PORT=$2 FRONTEND_PORT=$3 sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up
+      fi
     else
       echo "Using default ports: Backend=$DEFAULT_BACKEND_PORT, Frontend=$DEFAULT_FRONTEND_PORT (DEV_HOST=$DEV_HOST)"
-      sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up
+      if [ "$ENABLE_LDAP" = "1" ]; then
+        sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml -f compose.dev.ldap.yml up
+      else
+        sudo --preserve-env=DEV_HOST,BACKEND_PORT,FRONTEND_PORT,ENABLE_LDAP docker compose -f compose.dev.yml up
+      fi
     fi
     ;;
   *)
