@@ -1,0 +1,19 @@
+name: Mirror to fgcz git
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror
+        run: |
+          git clone --mirror git@github.com:fgcz/New_SUSHI_2025.git
+          cd New_SUSHI_2025.git
+          git remote set-url --push origin git@github.com:fgcz/New_SUSHI_2025.git
+          git push --mirror
+    env:
+      GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
+
