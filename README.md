@@ -22,7 +22,7 @@ module load Dev/node/22.16.0
 ### 2. Clone Repository
 ```bash
 cd /misc/fgcz01/sushi/
-git clone git@github.com:masaomi/new_SUSHI_2025
+git clone git@github.com:fgcz/new_SUSHI_2025
 cd new_sushi_2025
 ```
 
@@ -50,7 +50,7 @@ npm install
 1. **Prepare Libraries on Compilation-Capable Machine**:
 ```bash
 # Clone repository
-git clone git@github.com:masaomi/new_SUSHI_2025
+git clone git@github.com:fgcz/new_SUSHI_2025
 cd new_sushi_2025
 
 # Load required modules
