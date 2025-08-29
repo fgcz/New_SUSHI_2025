@@ -24,9 +24,10 @@ This document explains how to run the Sushi application using Docker Compose.
    # Or using custom ports
     BACKEND_PORT=3000 FRONTEND_PORT=3001 docker compose -f compose.dev.yml up --build
    
-   # Or using the helper script
-    ./docker-dev.sh up
-    ./docker-dev.sh up 3000 3001  # Custom ports
+   # Or using the helper script (no build by default; DEV_HOST is auto-detected)
+    sudo bash docker-dev.sh up
+    sudo bash docker-dev.sh up 3000 3001  # Custom ports (no build)
+    sudo bash docker-dev.sh up --build    # Build explicitly
    ```
 
 3. Access the applications:
@@ -88,12 +89,17 @@ BACKEND_PORT=3000 FRONTEND_PORT=3001 docker-compose up
 
 ### Helper Script Usage
 ```bash
-# Default ports
-./docker-dev.sh up
+# Default ports (no build). DEV_HOST is auto-detected
+sudo bash docker-dev.sh up
 
-# Custom ports
-./docker-dev.sh up 3000 3001
-./docker-dev.sh restart 8080 8081
+# Default ports with build
+sudo bash docker-dev.sh up --build
+
+# Custom ports (no build)
+sudo bash docker-dev.sh up 3000 3001
+
+# Restart with custom ports
+sudo bash docker-dev.sh restart 8080 8081
 ```
 
 ## Development Workflow
@@ -277,14 +283,17 @@ Here’s the English translation:
 #### Startup Examples (Development)
 
 ```bash
-# LDAP OFF (default)
-bash docker-dev.sh up
+# LDAP OFF (default). No build. DEV_HOST auto-detected
+sudo bash docker-dev.sh up
 
-# LDAP ON (build includes gem installation)
-ENABLE_LDAP=1 bash docker-dev.sh up
+# LDAP ON. No build by default
+sudo ENABLE_LDAP=1 bash docker-dev.sh up
 
 # Using docker compose directly (development)
-ENABLE_LDAP=1 docker compose -f compose.dev.yml up --build
+# No build
+sudo ENABLE_LDAP=1 docker compose -f compose.dev.yml -f compose.dev.ldap.yml up
+# With build
+sudo ENABLE_LDAP=1 docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
 ```
 
 #### Startup Examples (Production)
@@ -313,4 +322,33 @@ the following local files must be present on the host (they are volume-mounted i
 - `docker_files/FGCZ_CA_2019.crt` (CA certificate used for connecting to the host-side LDAP server)
 
 These files are environment-specific and are not committed to the repository. If they are missing, LDAP startup will fail or TLS verification may not work as expected.
+
+#### Recommended build strategy (supports both LDAP ON/OFF at runtime)
+
+- Build the image once with LDAP gems included:
+
+  ```bash
+  # Build once with LDAP enabled so the image contains LDAP gems
+  sudo ENABLE_LDAP=1 bash docker-dev.sh up --build
+  # or
+  sudo ENABLE_LDAP=1 docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
+  ```
+
+- Then, toggle LDAP at runtime without rebuilding:
+
+  ```bash
+  # LDAP OFF (no build; DEV_HOST auto-detected)
+  sudo bash docker-dev.sh up
+
+  # LDAP ON (no build; requires local LDAP files)
+  sudo ENABLE_LDAP=1 bash docker-dev.sh up
+  ```
+
+- Notes:
+  - If you originally built with `ENABLE_LDAP=0`, attempting to run with `ENABLE_LDAP=1` will fail because LDAP gems are missing; rebuild with `--build` and `ENABLE_LDAP=1`.
+  - When LDAP is OFF, no additional host files are required.
+  - When LDAP is ON, ensure the following host files exist before startup:
+    - `docker_files/gems/devise_ldap_authenticatable_forked_20190712`
+    - `docker_files/FGCZ_CA_2019.crt`
+  - On startup with LDAP ON, the container runs `update-ca-certificates` to trust the mounted CA.
 

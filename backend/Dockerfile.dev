@@ -11,7 +11,8 @@ RUN apt-get update -qq && \
     npm \
     default-mysql-client \
     libmariadb-dev \
-    libyaml-dev && \
+    libyaml-dev \
+    ca-certificates && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Create a non-root user for better security and compatibility

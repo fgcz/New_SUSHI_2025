@@ -30,6 +30,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     platform: linux/amd64
+    user: root
     ports:
       - "${FRONTEND_PORT:-4051}:3000"
     volumes:
