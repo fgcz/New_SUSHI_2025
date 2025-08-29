@@ -24,10 +24,12 @@ This document explains how to run the Sushi application using Docker Compose.
    # Or using custom ports
     BACKEND_PORT=3000 FRONTEND_PORT=3001 docker compose -f compose.dev.yml up --build
    
-   # Or using the helper script (no build by default; DEV_HOST is auto-detected)
-    sudo bash docker-dev.sh up
-    sudo bash docker-dev.sh up 3000 3001  # Custom ports (no build)
-    sudo bash docker-dev.sh up --build    # Build explicitly
+   # Or using the helper script (no build by default; DEV_HOST auto-detected)
+    bash docker-dev.sh up                        # LDAP OFF, default ports
+    bash docker-dev.sh up ENABLE_LDAP            # LDAP ON, default ports
+    bash docker-dev.sh up --build                # LDAP OFF, build
+    bash docker-dev.sh up ENABLE_LDAP --build    # LDAP ON, build
+    bash docker-dev.sh up 3000 3001              # LDAP OFF, custom ports
    ```
 
 3. Access the applications:
@@ -90,16 +92,25 @@ BACKEND_PORT=3000 FRONTEND_PORT=3001 docker-compose up
 ### Helper Script Usage
 ```bash
 # Default ports (no build). DEV_HOST is auto-detected
-sudo bash docker-dev.sh up
+bash docker-dev.sh up
+
+# LDAP ON (no build)
+bash docker-dev.sh up ENABLE_LDAP
 
 # Default ports with build
-sudo bash docker-dev.sh up --build
+bash docker-dev.sh up --build
+
+# LDAP ON with build
+bash docker-dev.sh up ENABLE_LDAP --build
 
 # Custom ports (no build)
-sudo bash docker-dev.sh up 3000 3001
+bash docker-dev.sh up 3000 3001
+
+# Custom ports with LDAP ON and build
+bash docker-dev.sh up ENABLE_LDAP 3000 3001 --build
 
 # Restart with custom ports
-sudo bash docker-dev.sh restart 8080 8081
+bash docker-dev.sh restart 8080 8081
 ```
 
 ## Development Workflow
@@ -291,9 +302,11 @@ sudo ENABLE_LDAP=1 bash docker-dev.sh up
 
 # Using docker compose directly (development)
 # No build
-sudo ENABLE_LDAP=1 docker compose -f compose.dev.yml -f compose.dev.ldap.yml up
+docker compose -f compose.dev.yml up
+docker compose -f compose.dev.yml -f compose.dev.ldap.yml up            # LDAP ON
 # With build
-sudo ENABLE_LDAP=1 docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build
+docker compose -f compose.dev.yml up --build
+docker compose -f compose.dev.yml -f compose.dev.ldap.yml up --build    # LDAP ON
 ```
 
 #### Startup Examples (Production)
