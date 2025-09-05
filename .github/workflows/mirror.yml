@@ -1,4 +1,4 @@
-name: Mirror to fgcz git
+name: Mirror to fgcz/new_SUSHI_2025
 on:
   push:
     branches: ["**"]
@@ -8,12 +8,22 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Mirror
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: |
+            ${{ secrets.FGCZ_MIRROR_SSH_KEY }}
+
+      - name: Mirror current repository to fgcz/new_SUSHI_2025
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
         run: |
-          git clone --mirror git@github.com:fgcz/New_SUSHI_2025.git
-          cd New_SUSHI_2025.git
-          git remote set-url --push origin git@github.com:fgcz/New_SUSHI_2025.git
+          set -euo pipefail
+          SRC_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          DEST_URL="git@github.com:fgcz/new_SUSHI_2025.git"
+          git clone --mirror "$SRC_URL" repo.git
+          cd repo.git
+          git remote set-url --push origin "$DEST_URL"
           git push --mirror
-    env:
-      GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
 
