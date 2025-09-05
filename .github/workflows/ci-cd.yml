@@ -7,13 +7,14 @@ on:
     branches: [ main ]
 
 env:
-  RUBY_VERSION: 3.2.3
+  RUBY_VERSION: 3.3.7
   NODE_VERSION: 22.16.0
+  COMMON_SUSHI_DIR: /misc/fgcz01/sushi/new_SUSHI_2025
 
 jobs:
   test-backend:
     name: Backend Tests (Rails)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
     
     defaults:
       run:
@@ -22,18 +23,29 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ env.RUBY_VERSION }}
-        bundler-cache: true
-        working-directory: ./backend
+
+    - name: Load environment modules (Ruby/Node)
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+
+    - name: Prime backend gems from shared dir (optional)
+      shell: bash
+      run: |
+        rsync -a --delete "$COMMON_SUSHI_DIR/backend/vendor" . || true
+        bundle config set --local path 'vendor/bundle'
+
+    - name: Install backend gems
+      shell: bash
+      run: |
+        bundle install --jobs 4 --retry 3
     
     - name: Setup Database
       run: |
-        bundle exec rails db:create RAILS_ENV=test
-        bundle exec rails db:migrate RAILS_ENV=test
+        bundle exec rails db:prepare
       env:
         RAILS_ENV: test
     
@@ -50,7 +62,7 @@ jobs:
 
   test-frontend:
     name: Frontend Tests (Next.js)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
     
     defaults:
       run:
@@ -59,16 +71,22 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: './frontend/package-lock.json'
+
+    - name: Load environment modules (Ruby/Node)
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+
+    - name: Prime node_modules from shared dir (optional)
+      shell: bash
+      run: |
+        rsync -a --delete "$COMMON_SUSHI_DIR/frontend/node_modules" . || true
     
     - name: Install Dependencies
-      run: npm ci
+      run: npm ci --prefer-offline --no-audit
     
     - name: Run Frontend Tests
       run: npm run test:ci
@@ -111,35 +129,32 @@ jobs:
 
   integration-test:
     name: Integration Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
     needs: [test-backend, test-frontend]
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ env.RUBY_VERSION }}
-        bundler-cache: true
-        working-directory: ./backend
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: './frontend/package-lock.json'
-    
-    - name: Install Frontend Dependencies
-      run: npm ci
-      working-directory: ./frontend
+
+    - name: Load environment modules (Ruby/Node)
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+
+    - name: Prime backend gems from shared dir (optional)
+      shell: bash
+      working-directory: ./backend
+      run: |
+        rsync -a --delete "$COMMON_SUSHI_DIR/backend/vendor" . || true
+        bundle config set --local path 'vendor/bundle'
+        bundle install --jobs 4 --retry 3
     
     - name: Setup Database
       run: |
-        bundle exec rails db:create RAILS_ENV=test
-        bundle exec rails db:migrate RAILS_ENV=test
+        bundle exec rails db:prepare
       working-directory: ./backend
       env:
         RAILS_ENV: test
@@ -159,18 +174,27 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ env.RUBY_VERSION }}
-        bundler-cache: true
-        working-directory: ./backend
+
+    - name: Load environment modules (Ruby/Node)
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+
+    - name: Prepare gems for scan
+      shell: bash
+      working-directory: ./backend
+      run: |
+        rsync -a --delete "$COMMON_SUSHI_DIR/backend/vendor" . || true
+        bundle config set --local path 'vendor/bundle'
+        bundle install --jobs 4 --retry 3
     
     - name: Run Brakeman Security Scan
       run: bundle exec brakeman --no-progress --format json --output brakeman-report.json
@@ -185,34 +209,39 @@ jobs:
 
   lint:
     name: Code Quality & Linting
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ env.RUBY_VERSION }}
-        bundler-cache: true
-        working-directory: ./backend
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: './frontend/package-lock.json'
-    
+
+    - name: Load environment modules (Ruby/Node)
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+
+    - name: Prepare backend gems
+      shell: bash
+      working-directory: ./backend
+      run: |
+        rsync -a --delete "$COMMON_SUSHI_DIR/backend/vendor" . || true
+        bundle config set --local path 'vendor/bundle'
+        bundle install --jobs 4 --retry 3
+
     - name: Install Frontend Dependencies
-      run: npm ci
+      shell: bash
       working-directory: ./frontend
+      run: |
+        rsync -a --delete "$COMMON_SUSHI_DIR/frontend/node_modules" . || true
+        npm ci --prefer-offline --no-audit
     
     - name: Run Backend Linting
       run: bundle exec rubocop
       working-directory: ./backend
-              continue-on-error: true  # Run as warning first
+      continue-on-error: true  # Run as warning first
     
     - name: Run Frontend Linting
       run: npm run lint
