@@ -1,29 +1,12 @@
-name: Mirror to fgcz/new_SUSHI_2025
+name: Mirror to fgcz/new_SUSHI_2025 (disabled)
 on:
-  push:
-    branches: ["**"]
   workflow_dispatch:
 
 jobs:
   mirror:
+    if: false  # temporarily disabled per request (no private key to use)
     runs-on: ubuntu-latest
     steps:
-      - name: Set up SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: |
-            ${{ secrets.FGCZ_MIRROR_SSH_KEY }}
-
-      - name: Mirror current repository to fgcz/new_SUSHI_2025
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
-        run: |
-          set -euo pipefail
-          SRC_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          DEST_URL="git@github.com:fgcz/new_SUSHI_2025.git"
-          git clone --mirror "$SRC_URL" repo.git
-          cd repo.git
-          git remote set-url --push origin "$DEST_URL"
-          git push --mirror
+      - name: Skip mirroring
+        run: echo "Mirroring is temporarily disabled"
 
