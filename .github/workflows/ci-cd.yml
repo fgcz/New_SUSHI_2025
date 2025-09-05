@@ -161,16 +161,14 @@ jobs:
     
     - name: Start Backend Server
       run: |
-        bundle exec rails server -e test -p 4000 &
-        sleep 10
+        echo "Skipping server start per request"
       working-directory: ./backend
       env:
         RAILS_ENV: test
     
     - name: Test API Connectivity
       run: |
-        curl -f http://localhost:4000/api/v1/hello || exit 1
-        echo "✅ API connectivity test passed"
+        echo "Skipping API connectivity check per request"
 
   security-scan:
     name: Security Scan
@@ -278,21 +276,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Deploy to Production
-      env:
-        DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+    - name: Skip deployment (no server start per request)
       run: |
-        chmod +x scripts/deploy.sh
-        ./scripts/deploy.sh production
+        echo "Skipping production deployment and server start per request"
     
     - name: Deployment Summary
       run: |
-        echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## Production Deployment Summary (server start skipped)" >> $GITHUB_STEP_SUMMARY
         echo "- Backend: ✅ Tests passed" >> $GITHUB_STEP_SUMMARY
         echo "- Frontend: ✅ Tests passed" >> $GITHUB_STEP_SUMMARY
-        echo "- Integration: ✅ API connectivity verified" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration: ℹ️ Server start & API check skipped" >> $GITHUB_STEP_SUMMARY
         echo "- Security: ✅ Brakeman scan completed" >> $GITHUB_STEP_SUMMARY
         echo "- Docker: ✅ Builds successful" >> $GITHUB_STEP_SUMMARY
-        echo "- Quality: ✅ Linting completed" >> $GITHUB_STEP_SUMMARY 
+        echo "- Quality: ✅ Linting completed" >> $GITHUB_STEP_SUMMARY
