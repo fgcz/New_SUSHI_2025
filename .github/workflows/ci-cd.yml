@@ -5,6 +5,11 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   RUBY_VERSION: 3.3.7
@@ -15,6 +20,7 @@ jobs:
   test-backend:
     name: Backend Tests (Rails)
     runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    timeout-minutes: 20
     
     defaults:
       run:
@@ -38,6 +44,14 @@ jobs:
         rsync -a --delete "$COMMON_SUSHI_DIR/backend/vendor" . || true
         bundle config set --local path 'vendor/bundle'
 
+    - name: Cache bundler vendor directory
+      uses: actions/cache@v4
+      with:
+        path: backend/vendor
+        key: bundler-${{ runner.os }}-${{ env.RUBY_VERSION }}-${{ hashFiles('backend/Gemfile.lock') }}
+        restore-keys: |
+          bundler-${{ runner.os }}-${{ env.RUBY_VERSION }}-
+
     - name: Install backend gems
       shell: bash
       run: |
@@ -54,15 +68,27 @@ jobs:
       env:
         RAILS_ENV: test
     
-    - name: Upload Backend Coverage
+    - name: Upload Backend Coverage (always)
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: backend-coverage
         path: backend/coverage/
 
+    - name: Upload backend logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: backend-logs
+        path: |
+          backend/log/**
+          backend/tmp/**
+          backend/coverage/**
+
   test-frontend:
     name: Frontend Tests (Next.js)
     runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    timeout-minutes: 20
     
     defaults:
       run:
@@ -84,6 +110,14 @@ jobs:
       shell: bash
       run: |
         rsync -a --delete "$COMMON_SUSHI_DIR/frontend/node_modules" . || true
+
+    - name: Cache npm node_modules
+      uses: actions/cache@v4
+      with:
+        path: frontend/node_modules
+        key: npm-${{ runner.os }}-${{ env.NODE_VERSION }}-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          npm-${{ runner.os }}-${{ env.NODE_VERSION }}-
     
     - name: Install Dependencies
       run: npm ci --prefer-offline --no-audit
@@ -94,7 +128,8 @@ jobs:
     - name: Build Frontend
       run: npm run build
     
-    - name: Upload Frontend Coverage
+    - name: Upload Frontend Coverage (always)
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: frontend-coverage
@@ -103,10 +138,21 @@ jobs:
   docker-build:
     name: Docker Build Test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+    
+    - name: Lint Backend Dockerfile with hadolint
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: backend/Dockerfile.dev
+
+    - name: Lint Frontend Dockerfile with hadolint
+      uses: hadolint/hadolint-action@v3.1.0
+      with:
+        dockerfile: frontend/Dockerfile.dev
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -131,6 +177,7 @@ jobs:
     name: Integration Tests
     runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
     needs: [test-backend, test-frontend]
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
@@ -173,6 +220,7 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
@@ -205,9 +253,22 @@ jobs:
         name: security-report
         path: backend/brakeman-report.json
 
+    - name: Bundler Audit (advisories)
+      working-directory: ./backend
+      shell: bash
+      run: |
+        gem install bundler-audit -N || true
+        bundle audit update || true
+        bundle audit check || true
+
+    - name: npm audit (high and above)
+      working-directory: ./frontend
+      run: npm audit --audit-level=high || true
+
   lint:
     name: Code Quality & Linting
     runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
@@ -251,6 +312,7 @@ jobs:
     needs: [test-backend, test-frontend, integration-test, lint, docker-build]
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     # environment: 'staging'
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
@@ -271,6 +333,7 @@ jobs:
     needs: [test-backend, test-frontend, integration-test, lint, docker-build, security-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     # environment: 'production'
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
