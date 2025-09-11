@@ -1,0 +1,27 @@
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+servers:
+  - url: /
+paths:
+  /api/v1/projects:
+    get:
+      summary: List accessible projects
+      responses:
+        '200':
+          description: OK
+  /api/v1/projects/{project_number}/datasets:
+    get:
+      summary: List datasets in project
+      parameters:
+        - in: path
+          name: project_number
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Forbidden

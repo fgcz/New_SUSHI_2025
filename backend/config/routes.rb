@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount Rswag::Ui::Engine => '/api-docs'
+  mount Rswag::Api::Engine => '/api-docs'
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -39,6 +41,11 @@ Rails.application.routes.draw do
       # These endpoints require a valid JWT token in the Authorization header
       resources :authentication_config, only: [:index, :update]
       resources :datasets, only: [:index, :show, :create]
+
+      # Projects and nested datasets listing
+      resources :projects, only: [:index] do
+        get 'datasets', to: 'projects#datasets'
+      end
       
       # Private test endpoints (JWT authentication required)
       get 'test/protected', to: 'test#protected'
