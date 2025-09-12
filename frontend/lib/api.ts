@@ -59,6 +59,28 @@ export interface Dataset {
   user: string;
 }
 
+export interface Project { number: number }
+export interface UserProjectsResponse { projects: Project[]; current_user: string }
+export interface ProjectDatasetsResponse {
+  datasets: Array<{
+    id: number;
+    name: string;
+    sushi_app_name?: string;
+    completed_samples?: number;
+    samples_length?: number;
+    parent_id?: number | null;
+    children_ids?: number[];
+    user_login?: string | null;
+    created_at: string;
+    bfabric_id?: number | null;
+    project_number: number;
+  }>;
+  total_count: number;
+  page: number;
+  per: number;
+  project_number: number;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fgcz-h-037.fgcz-net.unizh.ch:4000';
 
 class ApiClient {
@@ -179,6 +201,21 @@ class ApiClient {
   // Public API - Hello endpoint (no authentication required)
   async getHello(): Promise<{ message: string }> {
     return this.request<{ message: string }>('/api/v1/hello');
+  }
+
+  // New APIs
+  async getUserProjects(): Promise<UserProjectsResponse> {
+    return this.request<UserProjectsResponse>('/api/v1/projects');
+  }
+
+  async getProjectDatasets(projectNumber: number, params: { q?: string; page?: number; per?: number } = {}): Promise<ProjectDatasetsResponse> {
+    const search = new URLSearchParams();
+    if (params.q) search.set('q', params.q);
+    if (params.page) search.set('page', String(params.page));
+    if (params.per) search.set('per', String(params.per));
+    const qs = search.toString();
+    const endpoint = `/api/v1/projects/${projectNumber}/datasets${qs ? `?${qs}` : ''}`;
+    return this.request<ProjectDatasetsResponse>(endpoint);
   }
 }
 

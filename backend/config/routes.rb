@@ -43,7 +43,7 @@ Rails.application.routes.draw do
       resources :datasets, only: [:index, :show, :create]
 
       # Projects and nested datasets listing
-      resources :projects, only: [:index] do
+      resources :projects, only: [:index], param: :project_number do
         get 'datasets', to: 'projects#datasets'
       end
       
