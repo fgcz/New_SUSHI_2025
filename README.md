@@ -149,7 +149,7 @@ docker-compose ps
 ```
 
 
-## 5. Test
+## 5. Tests
 
 ### 1. Backend Tests
 ```bash
