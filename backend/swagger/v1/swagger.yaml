@@ -11,6 +11,26 @@ paths:
       responses:
         '200':
           description: OK
+  /api/v1/datasets:
+    get:
+      summary: List datasets for current user
+      responses:
+        '200':
+          description: OK
+  /api/v1/datasets/{id}:
+    get:
+      summary: Show dataset detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
   /api/v1/projects/{project_number}/datasets:
     get:
       summary: List datasets in project
