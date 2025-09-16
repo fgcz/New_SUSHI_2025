@@ -15,6 +15,8 @@ jest.mock('next/navigation', () => ({
     get: jest.fn(),
   }),
   usePathname: () => '/',
+  // Provide a default empty useParams; tests can override per-file as needed
+  useParams: () => ({}),
 }));
 
 // Mock fetch globally
