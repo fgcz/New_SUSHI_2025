@@ -81,6 +81,22 @@ export interface ProjectDatasetsResponse {
   project_number: number;
 }
 
+// Tree response types
+export type ProjectDatasetRow = ProjectDatasetsResponse['datasets'][number];
+
+export interface TreeNode {
+  id: number;
+  text: string;
+  parent: number | '#';
+  a_attr: { href: string };
+  dataset_data: ProjectDatasetRow;
+}
+
+export interface ProjectDatasetsTreeResponse {
+  tree: TreeNode[];
+  project_number: number;
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fgcz-h-037.fgcz-net.unizh.ch:4000';
 
 class ApiClient {
@@ -216,6 +232,11 @@ class ApiClient {
     const qs = search.toString();
     const endpoint = `/api/v1/projects/${projectNumber}/datasets${qs ? `?${qs}` : ''}`;
     return this.request<ProjectDatasetsResponse>(endpoint);
+  }
+
+  async getProjectDatasetsTree(projectNumber: number): Promise<ProjectDatasetsTreeResponse> {
+    const endpoint = `/api/v1/projects/${projectNumber}/datasets/tree`;
+    return this.request<ProjectDatasetsTreeResponse>(endpoint);
   }
 }
 

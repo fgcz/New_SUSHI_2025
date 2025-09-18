@@ -47,6 +47,7 @@ Rails.application.routes.draw do
       # Projects and nested datasets listing
       resources :projects, only: [:index], param: :project_number do
         get 'datasets', to: 'projects#datasets'
+        get 'datasets/tree', to: 'projects#datasets_tree'
       end
       
       # Private test endpoints (JWT authentication required)

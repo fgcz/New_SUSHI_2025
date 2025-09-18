@@ -40,6 +40,42 @@ module Api
         }
       end
 
+      # Returns tree structure of datasets for a project
+      def datasets_tree
+        number_param = params[:project_number] || params[:project_id] || params[:project_project_number] || params[:id]
+        number = number_param.to_i
+        unless authorized_project_numbers.include?(number)
+          return render json: { error: 'Project not accessible' }, status: :forbidden
+        end
+
+        project = Project.find_by(number: number)
+        unless project
+          return render json: { error: 'Project not found' }, status: :not_found
+        end
+
+        # Preload associations for efficiency
+        datasets = project.data_sets.includes(:data_sets, :user)
+
+        parent_exists_map = datasets.each_with_object({}) { |ds, h| h[ds.id] = true }
+
+        tree_nodes = datasets.map do |dataset|
+          {
+            id: dataset.id,
+            text: "#{dataset.data_sets.length} #{dataset.name} <small><font color='gray'>#{dataset.comment}</font></small>",
+            parent: (dataset.parent_id && parent_exists_map[dataset.parent_id]) ? dataset.parent_id : "#",
+            a_attr: {
+              href: "/projects/#{number}/datasets/#{dataset.id}"
+            },
+            dataset_data: serialize_dataset_row(dataset)
+          }
+        end
+
+        render json: {
+          tree: tree_nodes.sort_by { |node| -node[:id].to_i },
+          project_number: number
+        }
+      end
+
       private
 
       def serialize_dataset_row(dataset)
