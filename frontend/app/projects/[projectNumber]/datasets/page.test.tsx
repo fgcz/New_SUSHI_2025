@@ -30,7 +30,7 @@ jest.mock('next/navigation', () => {
 
 jest.mock('@/lib/api', () => {
   return {
-    apiClient: {
+    projectApi: {
       getProjectDatasets: jest.fn(async (_projectNumber: number, _params: any) => ({
         datasets: [
           {
