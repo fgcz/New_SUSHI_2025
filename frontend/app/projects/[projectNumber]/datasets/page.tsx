@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
-import DatasetTree from '@/components/DatasetTree';
+import { projectApi } from '@/lib/api';
 
 export default function ProjectDatasetsPage() {
   const params = useParams<{ projectNumber: string }>();
@@ -27,7 +26,7 @@ export default function ProjectDatasetsPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['datasets', projectNumber, { q: qParam, page, per }],
-    queryFn: () => apiClient.getProjectDatasets(projectNumber, { q: qParam, page, per }),
+    queryFn: () => projectApi.getProjectDatasets(projectNumber, { q: qParam, page, per }),
     keepPreviousData: true,
     staleTime: 60_000,
   });

@@ -12,30 +12,29 @@ interface MenuItem {
   icon: string;
 }
 
-// Array of menu items based on the analysis of the old system
 const menuItems: MenuItem[] = [
   {
     title: 'DataSets',
     description: 'You can see, edit and delete DataSets.\nYou can execute a SUSHI application.',
-    link: '/datasets', // Placeholder link
+    link: '/projects/1001/datasets', //TODO Placeholder link
     icon: '/images/tamago.png',
   },
   {
     title: 'Import DataSet',
     description: 'Import a DataSet from .tsv file.',
-    link: '/import', // Placeholder link
+    link: '/import', //TODO Placeholder link
     icon: '/images/tako.png',
   },
   {
     title: 'Check Jobs',
     description: 'Check your submitted jobs and the status.',
-    link: '/jobs', // Placeholder link
+    link: '/jobs', //TODO Placeholder link
     icon: '/images/maguro.png',
   },
   {
     title: 'gStore',
     description: 'Show result folder. You can see and download files of result data.',
-    link: '/gstore', // Placeholder link
+    link: '/gstore', //TODO Placeholder link
     icon: '/images/uni.png',
   },
 ];
@@ -138,7 +137,7 @@ const AuthStatus = () => {
 
 // The main dashboard page component
 export default function Home() {
-  const projectNumber = 38222; // Hardcoded project number as in the screenshot
+  const projectNumber = 1001; //TODO Hardcoded project number 
   const { authStatus, logout, loading } = useAuth();
   const userName = authStatus?.current_user || "Guest";
 
