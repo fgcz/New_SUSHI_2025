@@ -3,16 +3,19 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef } from 'react';
 import { projectApi, datasetApi } from '@/lib/api';
-import { RunnableApp, FolderTreeNode } from '@/lib/types';
-import 'jstree/dist/themes/default/style.min.css';
+import { RunnableApp } from '@/lib/types';
+import dynamic from 'next/dynamic';
+
+const TreeComponent = dynamic(() => import('./TreeComponent'), {
+  ssr: false,
+  loading: () => <div>Loading tree...</div>
+});
 
 export default function DatasetDetailPage() {
   const params = useParams<{ projectNumber: string; datasetId: string }>();
   const projectNumber = Number(params.projectNumber);
   const datasetId = Number(params.datasetId);
-  const treeRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['datasets', projectNumber],
@@ -32,108 +35,6 @@ export default function DatasetDetailPage() {
     staleTime: 60_000,
   });
 
-  useEffect(() => {
-    if (folderTree && treeRef.current) {
-      // Dynamically import jQuery and jsTree
-      import('jquery').then((jqueryModule) => {
-        const $ = jqueryModule.default;
-        
-        // Assign jQuery to global window object
-        (window as any).$ = $;
-        (window as any).jQuery = $;
-        
-        import('jstree').then(() => {
-          // Clear any existing tree
-          $(treeRef.current).jstree('destroy');
-          
-          // Transform the data for jsTree format
-          const treeData = folderTree.map((node: FolderTreeNode) => {
-            const isCurrentDataset = node.id === datasetId;
-            const nodeAttrs: any = {};
-            
-            if (isCurrentDataset) {
-              nodeAttrs.style = "font-weight: bold; color: #2563eb;";
-            }
-            
-            const commentText = node.comment && node.comment.trim() 
-              ? ` <small><font color="gray">${node.comment}</font></small>` 
-              : '';
-            
-            const nodeText = isCurrentDataset 
-              ? `<strong>${node.name}</strong>${commentText}`
-              : `${node.name}${commentText}`;
-            
-            return {
-              id: node.id.toString(),
-              text: nodeText,
-              parent: node.parent === "#" ? "#" : node.parent.toString(),
-              data: {
-                comment: node.comment || '',
-                isCurrentDataset
-              },
-              icon: "jstree-folder",
-              a_attr: nodeAttrs
-            };
-          });
-
-          // Initialize jsTree with proper configuration
-          $(treeRef.current).jstree({
-            'core': {
-              'data': treeData,
-              'themes': {
-                'name': 'default',
-                'responsive': true,
-                'variant': 'small',
-                'stripes': false,
-                'dots': true
-              },
-              'multiple': false,
-              'animation': 200,
-              'check_callback': true
-            },
-            'html_data': {
-              'data': treeData
-            },
-            'plugins': ['state', 'types'],
-            'types': {
-              'default': {
-                'icon': 'jstree-folder'
-              },
-              'file': {
-                'icon': 'jstree-file'
-              }
-            },
-            'state': {
-              'key': 'dataset-folder-tree'
-            }
-          }).on('ready.jstree', function () {
-            // Expand all nodes by default
-            $(this).jstree('open_all');
-          }).on('select_node.jstree', function (e: any, data: any) {
-            // Handle node selection
-            const nodeData = data.node.data;
-            if (nodeData) {
-              const nodeType = nodeData.isCurrentDataset ? ' (Current Dataset)' : '';
-              const comment = nodeData.comment || 'No description';
-              console.log('Selected:', data.node.text, '-', comment + nodeType);
-            }
-          });
-        });
-      });
-    }
-
-    // Cleanup function
-    return () => {
-      if (treeRef.current) {
-        import('jquery').then((jqueryModule) => {
-          const $ = jqueryModule.default;
-          if ($(treeRef.current).jstree) {
-            $(treeRef.current).jstree('destroy');
-          }
-        });
-      }
-    };
-  }, [folderTree]);
 
   const handleAppClick = (category: string, app: string) => {
     console.log(`Running ${app} from ${category} category for dataset ${datasetId}`);
@@ -267,7 +168,7 @@ export default function DatasetDetailPage() {
             ) : folderTreeError ? (
               <div className="text-red-600">Failed to load folder tree</div>
             ) : (
-              <div ref={treeRef} className="folder-tree-container"></div>
+              <TreeComponent folderTree={folderTree} datasetId={datasetId} projectNumber={projectNumber} />
             )}
           </div>
 
