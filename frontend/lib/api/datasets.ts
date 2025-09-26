@@ -41,58 +41,27 @@ export const datasetApi = {
       setTimeout(() => {
         resolve([
           {
-            id: 1,
-            name: "Project Root",
+            id: 130,
+            name: "EzPyzENACTAPP",
             comment: "Main project directory",
             parent: "#"
           },
           {
-            id: 2,
+            id: 129,
             name: "Dataset Analysis",
-            parent: 1
+            parent: 130
           },
           {
-            id: id, // Use the actual dataset ID from the parameter
-            name: `Dataset ${id}`,
-            comment: "Current dataset folder",
-            parent: 2
-          },
-          {
-            id: 100,
+            id: 133,
             name: "Raw Data",
             comment: "Original data files",
-            parent: id
+            parent: 129
           },
           {
-            id: 101,
-            name: "Analysis Results",
-            parent: id
-          },
-          {
-            id: 102,
-            name: "QC Reports",
-            comment: "Quality control reports",
-            parent: id
-          },
-          {
-            id: 200,
-            name: "FASTQ Files",
-            parent: 100
-          },
-          {
-            id: 201,
-            name: "Metadata",
-            parent: 100
-          },
-          {
-            id: 300,
-            name: "Filtered Data",
-            parent: 101
-          },
-          {
-            id: 301,
-            name: "Summary Statistics",
-            parent: 101
+            id: 141,
+            name: "Analysis Results", 
+            comment: "Processed analysis output",
+            parent: 129
           }
         ]);
       }, 500);
