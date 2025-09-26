@@ -3,18 +3,141 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { projectApi } from '@/lib/api';
+import { useEffect, useRef } from 'react';
+import { projectApi, datasetApi } from '@/lib/api';
+import { RunnableApp, FolderTreeNode } from '@/lib/types';
+import 'jstree/dist/themes/default/style.min.css';
 
 export default function DatasetDetailPage() {
   const params = useParams<{ projectNumber: string; datasetId: string }>();
   const projectNumber = Number(params.projectNumber);
   const datasetId = Number(params.datasetId);
+  const treeRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['datasets', projectNumber],
     queryFn: () => projectApi.getProjectDatasets(projectNumber),
     staleTime: 60_000,
   });
+
+  const { data: runnableApps, isLoading: runnableAppsLoading, error: runnableAppsError } = useQuery({
+    queryKey: ['runnableApps', datasetId],
+    queryFn: () => datasetApi.getRunnableApps(datasetId),
+    staleTime: 60_000,
+  });
+
+  const { data: folderTree, isLoading: folderTreeLoading, error: folderTreeError } = useQuery({
+    queryKey: ['folderTree', datasetId],
+    queryFn: () => datasetApi.getFolderTree(datasetId),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (folderTree && treeRef.current) {
+      // Dynamically import jQuery and jsTree
+      import('jquery').then((jqueryModule) => {
+        const $ = jqueryModule.default;
+        
+        // Assign jQuery to global window object
+        (window as any).$ = $;
+        (window as any).jQuery = $;
+        
+        import('jstree').then(() => {
+          // Clear any existing tree
+          $(treeRef.current).jstree('destroy');
+          
+          // Transform the data for jsTree format
+          const treeData = folderTree.map((node: FolderTreeNode) => {
+            const isCurrentDataset = node.id === datasetId;
+            const nodeAttrs: any = {};
+            
+            if (isCurrentDataset) {
+              nodeAttrs.style = "font-weight: bold; color: #2563eb;";
+            }
+            
+            const commentText = node.comment && node.comment.trim() 
+              ? ` <small><font color="gray">${node.comment}</font></small>` 
+              : '';
+            
+            const nodeText = isCurrentDataset 
+              ? `<strong>${node.name}</strong>${commentText}`
+              : `${node.name}${commentText}`;
+            
+            return {
+              id: node.id.toString(),
+              text: nodeText,
+              parent: node.parent === "#" ? "#" : node.parent.toString(),
+              data: {
+                comment: node.comment || '',
+                isCurrentDataset
+              },
+              icon: "jstree-folder",
+              a_attr: nodeAttrs
+            };
+          });
+
+          // Initialize jsTree with proper configuration
+          $(treeRef.current).jstree({
+            'core': {
+              'data': treeData,
+              'themes': {
+                'name': 'default',
+                'responsive': true,
+                'variant': 'small',
+                'stripes': false,
+                'dots': true
+              },
+              'multiple': false,
+              'animation': 200,
+              'check_callback': true
+            },
+            'html_data': {
+              'data': treeData
+            },
+            'plugins': ['state', 'types'],
+            'types': {
+              'default': {
+                'icon': 'jstree-folder'
+              },
+              'file': {
+                'icon': 'jstree-file'
+              }
+            },
+            'state': {
+              'key': 'dataset-folder-tree'
+            }
+          }).on('ready.jstree', function () {
+            // Expand all nodes by default
+            $(this).jstree('open_all');
+          }).on('select_node.jstree', function (e: any, data: any) {
+            // Handle node selection
+            const nodeData = data.node.data;
+            if (nodeData) {
+              const nodeType = nodeData.isCurrentDataset ? ' (Current Dataset)' : '';
+              const comment = nodeData.comment || 'No description';
+              console.log('Selected:', data.node.text, '-', comment + nodeType);
+            }
+          });
+        });
+      });
+    }
+
+    // Cleanup function
+    return () => {
+      if (treeRef.current) {
+        import('jquery').then((jqueryModule) => {
+          const $ = jqueryModule.default;
+          if ($(treeRef.current).jstree) {
+            $(treeRef.current).jstree('destroy');
+          }
+        });
+      }
+    };
+  }, [folderTree]);
+
+  const handleAppClick = (category: string, app: string) => {
+    console.log(`Running ${app} from ${category} category for dataset ${datasetId}`);
+  };
 
   if (isLoading) return <div className="container mx-auto px-6 py-8">Loading dataset...</div>;
   if (error) return <div className="container mx-auto px-6 py-8 text-red-600">Failed to load dataset</div>;
@@ -134,6 +257,49 @@ export default function DatasetDetailPage() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          <div className="mt-8 pt-6 border-t">
+            <h3 className="text-lg font-semibold mb-4">Folder Structure</h3>
+            {folderTreeLoading ? (
+              <div>Loading folder tree...</div>
+            ) : folderTreeError ? (
+              <div className="text-red-600">Failed to load folder tree</div>
+            ) : (
+              <div ref={treeRef} className="folder-tree-container"></div>
+            )}
+          </div>
+
+          {runnableApps && runnableApps.length > 0 && (
+            <div className="mt-8 pt-6 border-t">
+              <h3 className="text-lg font-semibold mb-4">Runnable Applications</h3>
+              {runnableAppsLoading ? (
+                <div>Loading runnable apps...</div>
+              ) : runnableAppsError ? (
+                <div className="text-red-600">Failed to load runnable apps</div>
+              ) : (
+                <div className="space-y-6">
+                  {runnableApps.map((category: RunnableApp, index: number) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4">
+                      <h4 className="text-md font-medium mb-3 text-gray-800 capitalize">
+                        {category.category}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {category.applications.map((app: string) => (
+                          <button
+                            key={app}
+                            onClick={() => handleAppClick(category.category, app)}
+                            className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
+                          >
+                            {app}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
