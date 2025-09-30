@@ -157,30 +157,36 @@ app/projects/[projectNumber]/datasets/[datasetId]/
 
 2. **TreeComponent**: 
    - Client-side only component (`'use client'`)
-   - Receives `folderTree`, `datasetId`, `projectNumber` as props
+   - Receives `datasetTree`, `datasetId`, `projectNumber` as props
    - Transforms data to jsTree format with visual enhancements
    - Handles all jQuery/jsTree initialization and lifecycle
    - Manages click navigation back to parent component
 
 3. **Integration Pattern**:
    ```typescript
-   // page.tsx - Dynamic import with SSR disabled
+   // page.tsx - Dynamic import with SSR disabled and skeleton loading
    const TreeComponent = dynamic(() => import('./TreeComponent'), {
      ssr: false,
-     loading: () => <div>Loading tree...</div>
+     loading: () => (
+       <div className="animate-pulse space-y-2">
+         <div className="flex items-center space-x-2">
+           <div className="h-4 w-4 bg-gray-300 rounded"></div>
+           <div className="h-4 bg-gray-300 rounded w-32"></div>
+         </div>
+         {/* Additional skeleton rows */}
+       </div>
+     )
    });
 
-   // Usage in render
-   {folderTreeLoading ? (
-     <div>Loading folder tree...</div>
-   ) : folderTreeError ? (
-     <div className="text-red-600">Failed to load folder tree</div>
+   // Usage in render - Two-level loading states
+   {isDatasetTreeLoading && !datasetTree ? (
+     <TreeSkeleton />  // React Query loading
+   ) : datasetTreeError ? (
+     <ErrorState />
+   ) : datasetTree ? (
+     <TreeComponent {...props} />  // Shows skeleton during dynamic import
    ) : (
-     <TreeComponent 
-       folderTree={folderTree} 
-       datasetId={datasetId} 
-       projectNumber={projectNumber} 
-     />
+     <EmptyState />
    )}
    ```
 
@@ -191,7 +197,7 @@ The TreeComponent encapsulates all jQuery/jsTree complexity in a clean, reusable
 
 ```typescript
 interface TreeComponentProps {
-  folderTree: FolderTreeNode[];  // Raw API data
+  datasetTree: DatasetTreeNode[];  // Raw API data
   datasetId: number;             // Current dataset for highlighting
   projectNumber: number;         // For navigation URLs
 }
@@ -202,7 +208,7 @@ interface TreeComponentProps {
 #### 1. Data Transformation Pipeline
 ```typescript
 // Transform API data → jsTree format with visual enhancements
-const treeData = folderTree.map((node: FolderTreeNode) => {
+const treeData = datasetTree.map((node: DatasetTreeNode) => {
   const isCurrentDataset = node.id === datasetId;
   
   // Visual styling for current dataset
@@ -234,7 +240,7 @@ const treeData = folderTree.map((node: FolderTreeNode) => {
 #### 2. jQuery/React Lifecycle Management
 ```typescript
 useEffect(() => {
-  if (!folderTree || !treeRef.current) return;
+  if (!datasetTree || !treeRef.current) return;
 
   // 1. Safe cleanup of existing tree
   if ($(treeRef.current).jstree(true)) {
@@ -255,7 +261,7 @@ useEffect(() => {
       $(treeRef.current).jstree('destroy');
     }
   };
-}, [folderTree, datasetId, projectNumber, router]);
+}, [datasetTree, datasetId, projectNumber, router]);
 ```
 
 #### 3. Navigation Integration
@@ -295,20 +301,96 @@ const handleNodeClick = (e: any, data: any) => {
 ## Key Implementation Details
 
 ### Dynamic Import Setup
+
+**Dynamic imports** are a Next.js feature that allows components to be loaded **asynchronously** at runtime instead of being bundled with the initial page. This is essential for jsTree integration.
+
 ```typescript
 // page.tsx
 const TreeComponent = dynamic(() => import('./TreeComponent'), {
   ssr: false,
-  loading: () => <div>Loading tree...</div>
+  loading: () => <TreeSkeletonComponent />
 });
 ```
+
+#### Why Dynamic Import is Required
+
+**1. Server-Side Rendering (SSR) Compatibility**
+- Next.js by default renders components on the **server first**, then **hydrates** them on the client
+- jsTree and jQuery expect a **browser environment** with `window`, `document`, and DOM APIs
+- During SSR, these browser APIs don't exist on the Node.js server
+- Without dynamic import, you get: `ReferenceError: window is not defined`
+
+**2. Code Splitting Benefits**
+- TreeComponent and its dependencies (jQuery, jsTree) are **large** (~250KB)
+- Dynamic import creates a **separate bundle chunk** that only loads when needed
+- Improves **initial page load performance** for users who might not scroll to the tree section
+
+**3. Conditional Loading**
+- Tree component only loads when the data is actually available to display
+- Avoids loading heavy jQuery dependencies unnecessarily
+
+#### The `ssr: false` Parameter
+
+```typescript
+ssr: false  // Completely disables server-side rendering for this component
+```
+
+**What this does:**
+- **Server**: Component doesn't render at all (shows loading state)
+- **Client**: Component renders normally with full browser API access
+- **Result**: No SSR conflicts, clean client-side initialization
+
+**Alternative approaches and why they don't work:**
+```typescript
+// ❌ This still tries to execute imports during SSR
+import TreeComponent from './TreeComponent'
+
+// ❌ This only prevents execution, but imports still get processed
+if (typeof window !== 'undefined') {
+  // Component code
+}
+
+// ✅ This completely isolates the component from SSR
+const TreeComponent = dynamic(() => import('./TreeComponent'), { ssr: false })
+```
+
+#### Loading State During Import
+
+The `loading` parameter provides a **fallback UI** while the component bundle is being fetched and parsed:
+
+```typescript
+loading: () => (
+  <div className="animate-pulse space-y-2">
+    {/* Tree skeleton matching the expected jsTree structure */}
+  </div>
+)
+```
+
+**Timeline:**
+1. **Data loads** → React Query provides tree data
+2. **Component requested** → `<TreeComponent>` tries to render  
+3. **Dynamic import starts** → Bundle fetch begins, shows loading skeleton
+4. **Import completes** → Real TreeComponent renders (~50-100ms later)
+5. **jsTree initializes** → DOM manipulation begins with setTimeout
+
+#### Performance Impact
+
+**Bundle sizes:**
+- Main bundle: **Reduced by ~250KB** (jQuery + jsTree not included)
+- Tree chunk: **~250KB** (loads only when needed)
+- Loading time: **~50-100ms** additional delay for tree initialization
+
+**User experience:**
+- **Improved initial page load** (smaller main bundle)
+- **Smooth progressive loading** (skeleton → tree)
+- **No SSR errors** (clean server/client separation)
 
 ### TreeComponent Core Structure
 ```typescript
 // TreeComponent.tsx
 'use client';
 
-export default function TreeComponent({ folderTree, datasetId, projectNumber }) {
+export default function TreeComponent({ datasetTree, datasetId, projectNumber }) {
   const treeRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -329,7 +411,7 @@ export default function TreeComponent({ folderTree, datasetId, projectNumber }) 
         $(treeRef.current).jstree('destroy');
       } catch (e) {}
     };
-  }, [folderTree, datasetId, projectNumber, router]);
+  }, [datasetTree, datasetId, projectNumber, router]);
   
   return <div ref={treeRef} className="folder-tree-container"></div>;
 }

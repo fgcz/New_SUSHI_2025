@@ -2,23 +2,23 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { FolderTreeNode } from '@/lib/types';
+import { DatasetTreeNode } from '@/lib/types/dataset';
 import $ from 'jquery';
 import 'jstree';
 import 'jstree/dist/themes/default/style.min.css';
 
 interface TreeComponentProps {
-  folderTree: FolderTreeNode[];
+  datasetTree: DatasetTreeNode[];
   datasetId: number;
   projectNumber: number;
 }
 
-export default function TreeComponent({ folderTree, datasetId, projectNumber }: TreeComponentProps) {
+export default function TreeComponent({ datasetTree, datasetId, projectNumber }: TreeComponentProps) {
   const treeRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (!folderTree || !treeRef.current) return;
+    if (!datasetTree || !treeRef.current) return;
 
     // Clear any existing tree safely
     try {
@@ -30,7 +30,7 @@ export default function TreeComponent({ folderTree, datasetId, projectNumber }: 
     }
     
     // Transform the data for jsTree format
-    const treeData = folderTree.map((node: FolderTreeNode) => {
+    const treeData = datasetTree.map((node: DatasetTreeNode) => {
       const isCurrentDataset = node.id === datasetId;
       const nodeAttrs: any = {};
       
@@ -81,14 +81,11 @@ export default function TreeComponent({ folderTree, datasetId, projectNumber }: 
           'animation': 200,
           'check_callback': true
         },
-        'plugins': ['state', 'types'],
+        'plugins': ['types'],
         'types': {
           'default': {
             'icon': 'jstree-folder'
           }
-        },
-        'state': {
-          'key': 'dataset-folder-tree'
         }
       });
 
@@ -122,7 +119,7 @@ export default function TreeComponent({ folderTree, datasetId, projectNumber }: 
         }
       }
     };
-  }, [folderTree, datasetId, projectNumber, router]);
+  }, [datasetTree, datasetId, projectNumber]);
 
   return <div ref={treeRef} className="folder-tree-container"></div>;
 }
