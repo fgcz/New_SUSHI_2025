@@ -4,7 +4,7 @@
 - Shows while Next.js downloads/executes page.tsx component
 - Disappears as soon as page.tsx returns ANY JSX (loading div or content)
 - Only useful on slow connections or heavy bundles
-- Timeline: navigation → loading.tsx → page renders → loading.tsx gone
+- Timeline: navigation -> loading.tsx -> page renders -> loading.tsx gone
 
 ## if-else vs Suspense - Same User Experience
 

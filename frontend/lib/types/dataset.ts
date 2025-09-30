@@ -33,3 +33,28 @@ export interface CreateDatasetResponse {
   dataset: Dataset;
   message: string;
 }
+
+export interface DatasetSample {
+    id: number;
+    name: string;
+    [columnName: string]: any | undefined;
+}
+
+export type DatasetSamplesResponse = DatasetSample[];
+
+export interface DatasetRunnableApp {
+  category: string;
+  applications: string[];
+}
+
+export type DatasetRunnableAppsResponse = DatasetRunnableApp[];
+
+export interface DatasetTreeNode {
+  id: number;
+  name: string;
+  comment?: string;
+  parent: number | "#";
+}
+
+export type DatasetTreeResponse = DatasetTreeNode[];
+
