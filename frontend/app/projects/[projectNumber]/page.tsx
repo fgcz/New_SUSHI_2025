@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useParams } from 'next/navigation';
 
 // Define the type for a menu item
 interface MenuItem {
@@ -12,36 +13,9 @@ interface MenuItem {
   icon: string;
 }
 
-const menuItems: MenuItem[] = [
-  {
-    title: 'DataSets',
-    description: 'You can see, edit and delete DataSets.\nYou can execute a SUSHI application.',
-    link: '/projects/1001/datasets', //TODO Placeholder link
-    icon: '/images/tamago.png',
-  },
-  {
-    title: 'Import DataSet',
-    description: 'Import a DataSet from .tsv file.',
-    link: '/import', //TODO Placeholder link
-    icon: '/images/tako.png',
-  },
-  {
-    title: 'Check Jobs',
-    description: 'Check your submitted jobs and the status.',
-    link: '/jobs', //TODO Placeholder link
-    icon: '/images/maguro.png',
-  },
-  {
-    title: 'gStore',
-    description: 'Show result folder. You can see and download files of result data.',
-    link: '/gstore', //TODO Placeholder link
-    icon: '/images/uni.png',
-  },
-];
-
-// A component for a single menu card (preserved for reference)
+// A component for a single menu card
 // The description is split by newline characters to render <br /> tags
-const PrevMenuCard = ({ item }: { item: MenuItem }) => (
+const MenuCard = ({ item }: { item: MenuItem }) => (
   <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ease-in-out border border-gray-200">
     <Link href={item.link} className="block p-6 text-center">
       <div className="flex flex-col items-center">
@@ -59,8 +33,8 @@ const PrevMenuCard = ({ item }: { item: MenuItem }) => (
   </div>
 );
 
-// Authentication status component (preserved for reference)
-const PrevAuthStatus = () => {
+// Authentication status component
+const AuthStatus = () => {
   const { authStatus, loading, error } = useAuth();
 
   if (loading) {
@@ -135,11 +109,39 @@ const PrevAuthStatus = () => {
   );
 };
 
-// The main dashboard page component (preserved for reference)
-const PrevHome = () => {
-  const projectNumber = 1001; //TODO Hardcoded project number 
+// The main project dashboard page component
+export default function ProjectPage() {
+  const params = useParams<{ projectNumber: string }>();
+  const projectNumber = Number(params.projectNumber);
   const { authStatus, logout, loading } = useAuth();
   const userName = authStatus?.current_user || "Guest";
+
+  const menuItems: MenuItem[] = [
+    {
+      title: 'DataSets',
+      description: 'You can see, edit and delete DataSets.\nYou can execute a SUSHI application.',
+      link: `/projects/${projectNumber}/datasets`,
+      icon: '/images/tamago.png',
+    },
+    {
+      title: 'Import DataSet',
+      description: 'Import a DataSet from .tsv file.',
+      link: '/import',
+      icon: '/images/tako.png',
+    },
+    {
+      title: 'Check Jobs',
+      description: 'Check your submitted jobs and the status.',
+      link: '/jobs',
+      icon: '/images/maguro.png',
+    },
+    {
+      title: 'gStore',
+      description: 'Show result folder. You can see and download files of result data.',
+      link: '/gstore',
+      icon: '/images/uni.png',
+    },
+  ];
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -182,7 +184,7 @@ const PrevHome = () => {
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
           <h1 className="text-3xl font-bold" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>Sushi</h1>
           <nav className="flex items-center space-x-4">
-            <Link href="/datasets" className="text-gray-600 hover:text-blue-600">DataSets</Link>
+            <Link href={`/projects/${projectNumber}/datasets`} className="text-gray-600 hover:text-blue-600">DataSets</Link>
             <Link href="/import" className="text-gray-600 hover:text-blue-600">Import</Link>
             <Link href="/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
             <Link href="/gstore" className="text-gray-600 hover:text-blue-600">gStore</Link>
@@ -207,14 +209,14 @@ const PrevHome = () => {
       </header>
 
       <main className="flex-grow container mx-auto px-6 py-10">
-        <PrevAuthStatus />
+        <AuthStatus />
         <div className="bg-white p-8 rounded-lg shadow-inner" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
             <h2 className="text-3xl font-bold text-gray-800 mb-8">
               Project {projectNumber}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
               {menuItems.map((item) => (
-                <PrevMenuCard key={item.title} item={item} />
+                <MenuCard key={item.title} item={item} />
               ))}
             </div>
         </div>
@@ -225,28 +227,6 @@ const PrevHome = () => {
           SUSHI - produced by Functional Genomics Center Zurich and SIB
         </div>
       </footer>
-    </div>
-  );
-};
-
-// New landing page component that redirects
-export default function Home() {
-  const { useRouter } = require('next/navigation');
-  const { useEffect } = require('react');
-  const router = useRouter();
-  
-  useEffect(() => {
-    // Redirect to default project
-    router.replace('/projects/1001');
-  }, [router]);
-
-  // Show loading screen during redirect
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Redirecting to project...</p>
-      </div>
     </div>
   );
 }

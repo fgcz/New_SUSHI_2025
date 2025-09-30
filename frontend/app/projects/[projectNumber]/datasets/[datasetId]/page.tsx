@@ -132,10 +132,6 @@ export default function DatasetDetailPage() {
       <nav className="mb-6" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm text-gray-500">
           <li>
-            <Link href="/projects" className="hover:text-gray-700">Projects</Link>
-          </li>
-          <li>/</li>
-          <li>
             <Link href={`/projects/${projectNumber}`} className="hover:text-gray-700">Project {projectNumber}</Link>
           </li>
           <li>/</li>
