@@ -353,13 +353,13 @@ export default function DatasetDetailPage() {
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {category.applications.map((app: string) => (
-                        <button
+                        <Link
                           key={app}
-                          onClick={() => handleAppClick(category.category, app)}
+                          href={`/projects/${projectNumber}/datasets/${datasetId}/run-application/${app}`}
                           className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm font-medium"
                         >
                           {app}
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </div>
