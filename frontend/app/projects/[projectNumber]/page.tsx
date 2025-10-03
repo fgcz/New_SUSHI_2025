@@ -20,7 +20,7 @@ const MenuCard = ({ item }: { item: MenuItem }) => (
     <Link href={item.link} className="block p-6 text-center">
       <div className="flex flex-col items-center">
         <div className="w-32 h-32 relative mb-4">
-            <Image src={item.icon} alt={`${item.title} icon`} fill className="object-contain" />
+            <Image src={item.icon} alt={`${item.title} icon`} fill sizes="128px" className="object-contain" />
         </div>
         <h3 className="text-xl font-semibold text-blue-700 mb-2">{item.title}</h3>
         <p className="text-gray-600 text-sm">

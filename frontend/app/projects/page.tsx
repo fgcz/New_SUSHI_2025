@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api';
+import { projectApi } from '@/lib/api';
 
 export default function ProjectsPage() {
   const { loading: authLoading } = useAuth();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['user-projects'],
-    queryFn: () => apiClient.getUserProjects(),
+    queryFn: () => projectApi.getUserProjects(),
     enabled: !authLoading,
     staleTime: 5 * 60 * 1000,
   });
