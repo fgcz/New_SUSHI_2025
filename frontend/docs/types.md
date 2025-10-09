@@ -47,7 +47,7 @@
 | Type | Purpose | Primary Usage |
 |------|---------|---------------|
 | `AppFormField` | Dynamic form field definition | **Components:**<br>• Applications API<br>• Form renderer |
-| `AppFormResponse` | API response structure | **Components:**<br>• Applications API<br>• Run-application page |
+| `AppFormResponse` | API response structure (includes app description) | **Components:**<br>• Applications API<br>• Run-application page |
 
 ## Misc Types (`lib/types/misc.ts`)
 

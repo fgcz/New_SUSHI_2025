@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { projectApi } from '@/lib/api';
 
 export default function ProjectDatasetsPage() {
@@ -20,9 +21,25 @@ export default function ProjectDatasetsPage() {
   const per = useMemo(() => Number(searchParams.get('per') || 50), [searchParams]);
   const qParam = useMemo(() => searchParams.get('q') || '', [searchParams]);
 
-  // Local input state for search box (debounceは後続タスクで)
+  // Local input state for search box with debouncing
   const [qLocal, setQLocal] = useState(qParam);
   useEffect(() => { setQLocal(qParam); }, [qParam]);
+
+  // Debounced search - update URL after 300ms of no typing
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const sp = new URLSearchParams(searchParams);
+      if (qLocal) sp.set('q', qLocal); else sp.delete('q');
+      sp.set('page', '1'); // Reset to page 1 on new search
+      
+      // Only update URL if the search term actually changed
+      if (qLocal !== qParam) {
+        router.push(`?${sp.toString()}`);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [qLocal, qParam, searchParams, router]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['datasets', projectNumber, { q: qParam, page, per }],
@@ -58,10 +75,7 @@ export default function ProjectDatasetsPage() {
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const sp = new URLSearchParams(searchParams);
-    if (qLocal) sp.set('q', qLocal); else sp.delete('q');
-    sp.set('page', '1');
-    router.push(`?${sp.toString()}`);
+    // Search is now handled by debounce, but keep form for accessibility
   };
 
   const onChangePer = (nextPer: number) => {
@@ -207,16 +221,38 @@ export default function ProjectDatasetsPage() {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold mb-6">
-        Project {projectNumber} - DataSets
-        <span className="ml-4 text-base font-normal">
-          <button
-            onClick={() => {
-              const sp = new URLSearchParams(searchParams);
-              sp.delete('view');
-              router.push(`?${sp.toString()}`);
-            }}
-            className={`mr-2 px-3 py-1 rounded ${viewMode === 'table' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+      {/* Breadcrumb navigation */}
+      <nav className="mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center space-x-2 text-sm text-gray-500">
+          <li>
+            <Link href="/projects" className="hover:text-gray-700">Projects</Link>
+          </li>
+          <li>/</li>
+          <li>
+            <Link href={`/projects/${projectNumber}`} className="hover:text-gray-700">Project {projectNumber}</Link>
+          </li>
+          <li>/</li>
+          <li className="text-gray-900 font-medium" aria-current="page">Datasets</li>
+        </ol>
+      </nav>
+
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Project {projectNumber} - Datasets</h1>
+        <Link 
+          href={`/projects/${projectNumber}`} 
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          ← Back to Project
+        </Link>
+      </div>
+
+      <form onSubmit={onSearch} className="mb-4 flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Show</label>
+          <select
+            value={per}
+            onChange={(e) => onChangePer(Number(e.target.value))}
+            className="border rounded px-2 py-1"
           >
             Table View
           </button>

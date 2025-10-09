@@ -184,9 +184,10 @@ export default function ProjectPage() {
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
           <h1 className="text-3xl font-bold" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>Sushi</h1>
           <nav className="flex items-center space-x-4">
+            <Link href="/projects" className="text-gray-600 hover:text-blue-600">Projects</Link>
             <Link href={`/projects/${projectNumber}/datasets`} className="text-gray-600 hover:text-blue-600">DataSets</Link>
             <Link href="/import" className="text-gray-600 hover:text-blue-600">Import</Link>
-            <Link href="/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
+            <Link href="/projects/1001/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
             <Link href="/gstore" className="text-gray-600 hover:text-blue-600">gStore</Link>
             <Link href="/docs" className="text-gray-600 hover:text-blue-600">Docs</Link>
             <Link href="/help" className="text-gray-600 hover:text-blue-600">Help</Link>

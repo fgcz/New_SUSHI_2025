@@ -2,7 +2,7 @@
 
 export interface AppFormField {
   name: string;
-  type: 'text' | 'number' | 'select' | 'textarea';
+  type: "text" | "number" | "select" | "textarea";
   label: string;
   options?: string[];
   default?: any;
@@ -14,6 +14,7 @@ export interface AppFormField {
 
 export interface AppFormResponse {
   appName: string;
+  description: string;
   fields: AppFormField[];
 }
 
@@ -21,4 +22,3 @@ export interface AppFormResponse {
 export interface DynamicFormData {
   [fieldName: string]: any;
 }
-

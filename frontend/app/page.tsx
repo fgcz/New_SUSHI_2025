@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
+
 // Define the type for a menu item
 interface MenuItem {
   title: string;
@@ -221,7 +222,7 @@ const PrevHome = () => {
             <Link href="/import" className="text-gray-600 hover:text-blue-600">
               Import
             </Link>
-            <Link href="/jobs" className="text-gray-600 hover:text-blue-600">
+            <Link href="/projects/1001/jobs" className="text-gray-600 hover:text-blue-600">
               Jobs
             </Link>
             <Link href="/gstore" className="text-gray-600 hover:text-blue-600">
