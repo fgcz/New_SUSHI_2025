@@ -188,6 +188,7 @@ export default function ProjectPage() {
             <Link href="/import" className="text-gray-600 hover:text-blue-600">Import</Link>
             <Link href="/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
             <Link href="/gstore" className="text-gray-600 hover:text-blue-600">gStore</Link>
+            <Link href="/docs" className="text-gray-600 hover:text-blue-600">Docs</Link>
             <Link href="/help" className="text-gray-600 hover:text-blue-600">Help</Link>
             <div className="border-l border-gray-300 h-6"></div>
             <span className="font-semibold">Project {projectNumber}</span>

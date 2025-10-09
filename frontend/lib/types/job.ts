@@ -1,3 +1,5 @@
+import { DynamicFormData } from './app-form';
+
 export interface JobSubmissionRequest {
   project_number: number;
   dataset_id: number;
@@ -6,11 +8,7 @@ export interface JobSubmissionRequest {
     name: string;
     comment?: string;
   };
-  parameters: {
-    cores: number;
-    partition: string;
-    process_mode: string;
-  };
+  parameters: DynamicFormData;
 }
 
 export interface JobSubmissionResponse {
@@ -21,4 +19,4 @@ export interface JobSubmissionResponse {
 }
 
 // Import the dynamic types from app-form
-export type { DynamicJobSubmissionRequest, DynamicFormData } from './app-form';
+export type { DynamicFormData } from './app-form';
