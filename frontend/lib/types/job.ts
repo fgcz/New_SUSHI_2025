@@ -1,4 +1,4 @@
-import { DynamicFormData } from './app-form';
+import { DynamicFormData } from "./app-form";
 
 export interface JobSubmissionRequest {
   project_number: number;
@@ -13,10 +13,25 @@ export interface JobSubmissionRequest {
 
 export interface JobSubmissionResponse {
   id: number;
-  status: 'submitted' | 'running' | 'completed' | 'failed';
+  status: "submitted" | "running" | "completed" | "failed";
   created_at: string;
   message: string;
 }
 
-// Import the dynamic types from app-form
-export type { DynamicFormData } from './app-form';
+export interface Job {
+  id: number;
+  status: "COMPLETED" | "FAILED" | "RUNNING" | "CANCELED+";
+  user: string;
+  dataset: {
+    name: string;
+    id: number;
+  };
+  time: {
+    start_time: string;
+    end_time?: string;
+  };
+}
+
+export interface JobsListResponse {
+  jobs: Job[];
+}

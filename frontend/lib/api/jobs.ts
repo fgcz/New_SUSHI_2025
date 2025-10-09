@@ -1,9 +1,9 @@
 import { httpClient } from "./client";
-import { JobSubmissionRequest, JobSubmissionResponse } from "../types/job";
+import { JobsListResponse, JobSubmissionRequest, JobSubmissionResponse } from "../types/job";
 
 export const jobApi = {
   async submitJob(
-    jobData: JobSubmissionRequest | JobSubmissionRequest,
+    jobData: JobSubmissionRequest,
   ): Promise<JobSubmissionResponse> {
     // Mock implementation - replace with actual API call when backend is ready
     return new Promise((resolve) => {
@@ -24,4 +24,59 @@ export const jobApi = {
     //   body: JSON.stringify(jobData),
     // });
   },
+
+  async getJobsList(projectId: number): Promise<JobsListResponse> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          jobs: [
+            {
+              id: 1001,
+              status: "COMPLETED",
+              user: "rdomi",
+              dataset: {
+                name: "Customer Analytics Q3",
+                id: 273
+              },
+              time: {
+                start_time: "2024-10-08T09:15:30Z",
+                end_time: "2024-10-08T09:18:45Z"
+              }
+            },
+            {
+              id: 1002,
+              status: "RUNNING",
+              user: "fnoe",
+              dataset: {
+                name: "Product Recommendations",
+                id: 266
+              },
+              time: {
+                start_time: "2024-10-09T14:22:10Z"
+              }
+            },
+            {
+              id: 1003,
+              status: "FAILED",
+              user: "rdomi",
+              dataset: {
+                name: "Sales Data ETL",
+                id: 224
+              },
+              time: {
+                start_time: "2024-10-09T11:05:20Z",
+                end_time: "2024-10-09T11:07:33Z"
+              }
+            }
+          ]
+        });
+      }, 1500);
+    });
+
+    // Future implementation when backend is ready:
+    // return httpClient.request<JobsListResponse>(`/api/v1/projects/${projectId}/jobs`, {
+    //   method: 'GET',
+    // });
+  }
 };
+
