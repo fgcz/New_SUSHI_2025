@@ -1,40 +1,51 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
-import { projectApi, jobApi, applicationApi } from '@/lib/api';
-import { JobSubmissionRequest, DynamicJobSubmissionRequest, DynamicFormData } from '@/lib/types';
-import { FormFieldComponent, initializeFormData } from '@/lib/utils/form-renderer';
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { projectApi, jobApi, applicationApi } from "@/lib/api";
+import { JobSubmissionRequest, DynamicFormData } from "@/lib/types";
+import {
+  FormFieldComponent,
+  initializeFormData,
+} from "@/lib/utils/form-renderer";
 
 export default function RunApplicationPage() {
-  const params = useParams<{ 
-    projectNumber: string; 
-    datasetId: string; 
-    appName: string; 
+  const params = useParams<{
+    projectNumber: string;
+    datasetId: string;
+    appName: string;
   }>();
   const projectNumber = Number(params.projectNumber);
   const datasetId = Number(params.datasetId);
   const appName = params.appName;
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['datasets', projectNumber],
+  const {
+    data: projectData,
+    isLoading: isProjectLoading,
+    error: projectError,
+  } = useQuery({
+    queryKey: ["datasets", projectNumber],
     queryFn: () => projectApi.getProjectDatasets(projectNumber),
     staleTime: 60_000,
   });
 
   // Fetch dynamic form schema for the application
-  const { data: appFormSchema, isLoading: isAppFormLoading, error: appFormError } = useQuery({
-    queryKey: ['appForm', appName],
+  const {
+    data: formConfig,
+    isLoading: isFormConfigLoading,
+    error: formConfigError,
+  } = useQuery({
+    queryKey: ["appForm", appName],
     queryFn: () => applicationApi.getFormSchema(appName),
     staleTime: 60_000,
   });
 
   // Form state management
-  const [formData, setFormData] = useState({
+  const [nextDatasetData, setNextDatasetData] = useState({
     datasetName: `this input will change once dataset name is retrieved`,
-    datasetComment: ''
+    datasetComment: "",
   });
   const [dynamicFormData, setDynamicFormData] = useState<DynamicFormData>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,127 +54,149 @@ export default function RunApplicationPage() {
 
   // Update dataset name when data is loaded
   useEffect(() => {
-      const timeoutId = setTimeout(() => {
-          if (data?.datasets) {
-              const dataset = data.datasets.find(ds => ds.id === datasetId);
-              if (dataset) {
-                  setFormData(prev => ({
-                      ...prev,
-                      datasetName: `${appName}_${dataset.name}_${new Date().toISOString().slice(0, 10)}`
-                  }));
-              }
-         }
-      }, 1000);
+    const timeoutId = setTimeout(() => {
+      if (projectData?.datasets) {
+        const dataset = projectData.datasets.find((ds) => ds.id === datasetId);
+        if (dataset) {
+          setNextDatasetData((prev) => ({
+            ...prev,
+            datasetName: `${appName}_${dataset.name}_${new Date().toISOString().slice(0, 10)}`,
+          }));
+        }
+      }
+    }, 1000);
     return () => clearTimeout(timeoutId);
-  }, [data, datasetId, appName]);
+  }, [projectData, datasetId, appName]);
 
   // Initialize dynamic form data when schema loads
   useEffect(() => {
-    if (appFormSchema?.fields) {
-      setDynamicFormData(initializeFormData(appFormSchema.fields));
+    if (formConfig?.fields) {
+      setDynamicFormData(initializeFormData(formConfig.fields));
     }
-  }, [appFormSchema]);
+  }, [formConfig]);
 
   // Form handlers
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setNextDatasetData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleDynamicFieldChange = (fieldName: string, value: any) => {
-    setDynamicFormData(prev => ({
+    setDynamicFormData((prev) => ({
       ...prev,
-      [fieldName]: value
+      [fieldName]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!data?.datasets) return;
-    
-    const dataset = data.datasets.find(ds => ds.id === datasetId);
+
+    if (!projectData?.datasets) return;
+
+    const dataset = projectData.datasets.find((ds) => ds.id === datasetId);
     if (!dataset) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
 
-    const jobData: DynamicJobSubmissionRequest = {
+    const jobData: JobSubmissionRequest = {
       project_number: projectNumber,
       dataset_id: datasetId,
       app_name: appName,
       next_dataset: {
-        name: formData.datasetName,
-        comment: formData.datasetComment || undefined
+        name: nextDatasetData.datasetName,
+        comment: nextDatasetData.datasetComment || undefined,
       },
-      parameters: dynamicFormData
+      parameters: dynamicFormData,
     };
 
     // Log form data to console
-    console.log('Submitting job with data:', jobData);
+    console.log("Submitting job with data:", jobData);
 
     try {
       const response = await jobApi.submitJob(jobData);
-      console.log('Job submission response:', response);
+      console.log("Job submission response:", response);
       setSubmitSuccess(true);
     } catch (error) {
-      console.error('Job submission failed:', error);
-      setSubmitError('Failed to submit job. Please try again.');
+      console.error("Job submission failed:", error);
+      setSubmitError("Failed to submit job. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading || isAppFormLoading) return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="animate-pulse">
-        {/* Breadcrumb skeleton */}
-        <div className="h-4 bg-gray-200 rounded w-64 mb-6"></div>
-        
-        {/* Title skeleton */}
-        <div className="h-8 bg-gray-200 rounded w-96 mb-6"></div>
-        
-        {/* Form skeleton */}
-        <div className="bg-white border rounded-lg p-6">
-          <div className="space-y-6">
-            <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-24"></div>
-                <div className="h-10 bg-gray-200 rounded"></div>
-              </div>
-            ))}
-            <div className="h-10 bg-gray-200 rounded w-32"></div>
+  if (isProjectLoading || isFormConfigLoading)
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="animate-pulse">
+          {/* Breadcrumb skeleton */}
+          <div className="h-4 bg-gray-200 rounded w-64 mb-6"></div>
+
+          {/* Title skeleton */}
+          <div className="h-8 bg-gray-200 rounded w-96 mb-6"></div>
+
+          {/* Form skeleton */}
+          <div className="bg-white border rounded-lg p-6">
+            <div className="space-y-6">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+              <div className="h-10 bg-gray-200 rounded w-32"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-  
-  if (error || appFormError) return (
-    <div className="container mx-auto px-6 py-8">
-      <div className="text-center py-12">
-        <div className="text-red-600 text-lg font-medium mb-2">Failed to load dataset</div>
-        <p className="text-gray-500 mb-4">There was an error loading the dataset information.</p>
-        <Link href={`/projects/${projectNumber}/datasets`} className="text-blue-600 hover:underline">
-          ← Back to Datasets
-        </Link>
-      </div>
-    </div>
-  );
+    );
 
-  const dataset = data?.datasets?.find(ds => ds.id === datasetId);
+  if (projectError || formConfigError)
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <div className="text-center py-12">
+          <div className="text-red-600 text-lg font-medium mb-2">
+            Failed to load dataset
+          </div>
+          <p className="text-gray-500 mb-4">
+            There was an error loading the dataset information.
+          </p>
+          <Link
+            href={`/projects/${projectNumber}/datasets`}
+            className="text-blue-600 hover:underline"
+          >
+            ← Back to Datasets
+          </Link>
+        </div>
+      </div>
+    );
+
+  const dataset = projectData?.datasets?.find((ds) => ds.id === datasetId);
 
   if (!dataset) {
     return (
       <div className="container mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-4 text-red-600">Dataset Not Found</h1>
-        <p className="text-gray-700 mb-6">Dataset {datasetId} was not found in project {projectNumber}.</p>
-        <Link href={`/projects/${projectNumber}/datasets`} className="text-blue-600 hover:underline">← Back to Datasets</Link>
+        <h1 className="text-2xl font-bold mb-4 text-red-600">
+          Dataset Not Found
+        </h1>
+        <p className="text-gray-700 mb-6">
+          Dataset {datasetId} was not found in project {projectNumber}.
+        </p>
+        <Link
+          href={`/projects/${projectNumber}/datasets`}
+          className="text-blue-600 hover:underline"
+        >
+          ← Back to Datasets
+        </Link>
       </div>
     );
   }
@@ -174,18 +207,35 @@ export default function RunApplicationPage() {
       <nav className="mb-6" aria-label="Breadcrumb">
         <ol className="flex items-center space-x-2 text-sm text-gray-500">
           <li>
-            <Link href={`/projects/${projectNumber}`} className="hover:text-gray-700">Project {projectNumber}</Link>
+            <Link
+              href={`/projects/${projectNumber}`}
+              className="hover:text-gray-700"
+            >
+              Project {projectNumber}
+            </Link>
           </li>
           <li>/</li>
           <li>
-            <Link href={`/projects/${projectNumber}/datasets`} className="hover:text-gray-700">Datasets</Link>
+            <Link
+              href={`/projects/${projectNumber}/datasets`}
+              className="hover:text-gray-700"
+            >
+              Datasets
+            </Link>
           </li>
           <li>/</li>
           <li>
-            <Link href={`/projects/${projectNumber}/datasets/${datasetId}`} className="hover:text-gray-700">{dataset.name}</Link>
+            <Link
+              href={`/projects/${projectNumber}/datasets/${datasetId}`}
+              className="hover:text-gray-700"
+            >
+              {dataset.name}
+            </Link>
           </li>
           <li>/</li>
-          <li className="text-gray-900 font-medium" aria-current="page">Run {appName}</li>
+          <li className="text-gray-900 font-medium" aria-current="page">
+            Run {appName}
+          </li>
         </ol>
       </nav>
 
@@ -193,10 +243,12 @@ export default function RunApplicationPage() {
         <div>
           <h1 className="text-2xl font-bold">Run Application: {appName}</h1>
           <p className="text-gray-600 mt-1">Dataset: {dataset.name}</p>
-          <p className="text-gray-600 mt-1">Descripton: QC tool from github.com/.... {  '{app.description}' }</p>
+          <p className="text-gray-600 mt-1">
+            Descripton: QC tool from github.com/.... {"{app.description}"}
+          </p>
         </div>
-        <Link 
-          href={`/projects/${projectNumber}/datasets/${datasetId}`} 
+        <Link
+          href={`/projects/${projectNumber}/datasets/${datasetId}`}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
           ← Back to Dataset
@@ -208,18 +260,21 @@ export default function RunApplicationPage() {
         <div className="bg-white border rounded-lg overflow-hidden">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-6">NextDataset</h3>
-            
+
             <div className="space-y-4">
               {/* Dataset Name */}
               <div>
-                <label htmlFor="datasetName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="datasetName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Name
                 </label>
                 <input
                   type="text"
                   id="datasetName"
                   name="datasetName"
-                  value={formData.datasetName}
+                  value={nextDatasetData.datasetName}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder={`${appName}_${dataset.name}_${new Date().toISOString().slice(0, 10)}`}
@@ -228,14 +283,17 @@ export default function RunApplicationPage() {
 
               {/* Dataset Comment */}
               <div>
-                <label htmlFor="datasetComment" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="datasetComment"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Comment
                 </label>
                 <input
                   type="text"
                   id="datasetComment"
                   name="datasetComment"
-                  value={formData.datasetComment}
+                  value={nextDatasetData.datasetComment}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Optional comment for the resulting dataset..."
@@ -249,11 +307,11 @@ export default function RunApplicationPage() {
         <div className="bg-white border rounded-lg overflow-hidden">
           <div className="p-6">
             <h3 className="text-lg font-semibold mb-6">Parameters</h3>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Dynamic form fields in grid layout */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                {appFormSchema?.fields.map((field) => (
+                {formConfig?.fields.map((field) => (
                   <FormFieldComponent
                     key={field.name}
                     field={field}
@@ -271,7 +329,9 @@ export default function RunApplicationPage() {
               )}
               {submitSuccess && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-green-600 text-sm">Job submitted successfully! Check the console for details.</p>
+                  <p className="text-green-600 text-sm">
+                    Job submitted successfully! Check the console for details.
+                  </p>
                 </div>
               )}
 
@@ -282,7 +342,7 @@ export default function RunApplicationPage() {
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Job'}
+                  {isSubmitting ? "Submitting..." : "Submit Job"}
                 </button>
               </div>
             </form>

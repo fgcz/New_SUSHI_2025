@@ -22,13 +22,3 @@ export interface DynamicFormData {
   [fieldName: string]: any;
 }
 
-export interface DynamicJobSubmissionRequest {
-  project_number: number;
-  dataset_id: number;
-  app_name: string;
-  next_dataset: {
-    name: string;
-    comment?: string;
-  };
-  parameters: DynamicFormData;
-}

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define the type for a menu item
 interface MenuItem {
@@ -14,28 +14,30 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    title: 'DataSets',
-    description: 'You can see, edit and delete DataSets.\nYou can execute a SUSHI application.',
-    link: '/projects/1001/datasets', //TODO Placeholder link
-    icon: '/images/tamago.png',
+    title: "DataSets",
+    description:
+      "You can see, edit and delete DataSets.\nYou can execute a SUSHI application.",
+    link: "/projects/1001/datasets", //TODO Placeholder link
+    icon: "/images/tamago.png",
   },
   {
-    title: 'Import DataSet',
-    description: 'Import a DataSet from .tsv file.',
-    link: '/import', //TODO Placeholder link
-    icon: '/images/tako.png',
+    title: "Import DataSet",
+    description: "Import a DataSet from .tsv file.",
+    link: "/import", //TODO Placeholder link
+    icon: "/images/tako.png",
   },
   {
-    title: 'Check Jobs',
-    description: 'Check your submitted jobs and the status.',
-    link: '/jobs', //TODO Placeholder link
-    icon: '/images/maguro.png',
+    title: "Check Jobs",
+    description: "Check your submitted jobs and the status.",
+    link: "/jobs", //TODO Placeholder link
+    icon: "/images/maguro.png",
   },
   {
-    title: 'gStore',
-    description: 'Show result folder. You can see and download files of result data.',
-    link: '/gstore', //TODO Placeholder link
-    icon: '/images/uni.png',
+    title: "gStore",
+    description:
+      "Show result folder. You can see and download files of result data.",
+    link: "/gstore", //TODO Placeholder link
+    icon: "/images/uni.png",
   },
 ];
 
@@ -46,13 +48,23 @@ const PrevMenuCard = ({ item }: { item: MenuItem }) => (
     <Link href={item.link} className="block p-6 text-center">
       <div className="flex flex-col items-center">
         <div className="w-32 h-32 relative mb-4">
-            <Image src={item.icon} alt={`${item.title} icon`} fill className="object-contain" />
+          <Image
+            src={item.icon}
+            alt={`${item.title} icon`}
+            fill
+            className="object-contain"
+          />
         </div>
-        <h3 className="text-xl font-semibold text-blue-700 mb-2">{item.title}</h3>
+        <h3 className="text-xl font-semibold text-blue-700 mb-2">
+          {item.title}
+        </h3>
         <p className="text-gray-600 text-sm">
-            {item.description.split('\n').map((line, index) => (
-              <span key={index}>{line}{index !== item.description.split('\n').length - 1 && <br />}</span>
-            ))}
+          {item.description.split("\n").map((line, index) => (
+            <span key={index}>
+              {line}
+              {index !== item.description.split("\n").length - 1 && <br />}
+            </span>
+          ))}
         </p>
       </div>
     </Link>
@@ -68,7 +80,9 @@ const PrevAuthStatus = () => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div className="flex items-center">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-          <span className="text-blue-800">Loading authentication status...</span>
+          <span className="text-blue-800">
+            Loading authentication status...
+          </span>
         </div>
       </div>
     );
@@ -93,16 +107,20 @@ const PrevAuthStatus = () => {
       <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-green-800 font-semibold">✅ Authentication Skipped</h3>
+            <h3 className="text-green-800 font-semibold">
+              ✅ Authentication Skipped
+            </h3>
             <p className="text-green-700 text-sm">
-              Welcome! Authentication is currently disabled. You can access the application without logging in.
+              Welcome! Authentication is currently disabled. You can access the
+              application without logging in.
             </p>
             <p className="text-green-700 text-sm mt-1">
-              <strong>Current User:</strong> {authStatus.current_user || 'Anonymous'}
+              <strong>Current User:</strong>{" "}
+              {authStatus.current_user || "Anonymous"}
             </p>
           </div>
-          <Link 
-            href="/auth/login_options" 
+          <Link
+            href="/auth/login_options"
             className="text-green-600 hover:text-green-800 text-sm underline"
             target="_blank"
           >
@@ -137,7 +155,7 @@ const PrevAuthStatus = () => {
 
 // The main dashboard page component (preserved for reference)
 const PrevHome = () => {
-  const projectNumber = 1001; //TODO Hardcoded project number 
+  const projectNumber = 1001; //TODO Hardcoded project number
   const { authStatus, logout, loading } = useAuth();
   const userName = authStatus?.current_user || "Guest";
 
@@ -160,7 +178,11 @@ const PrevHome = () => {
 
   // Don't render anything if authentication is required but user is not logged in
   // This prevents the flash of content before redirect
-  if (authStatus && !authStatus.authentication_skipped && !authStatus.current_user) {
+  if (
+    authStatus &&
+    !authStatus.authentication_skipped &&
+    !authStatus.current_user
+  ) {
     return null;
   }
 
@@ -177,24 +199,50 @@ const PrevHome = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor: '#e0e5e9' }}>
+    <div
+      className="flex flex-col min-h-screen"
+      style={{ backgroundColor: "#e0e5e9" }}
+    >
       <header className="bg-white shadow-sm border-b-2 border-gray-200">
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-          <h1 className="text-3xl font-bold" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>Sushi</h1>
+          <h1
+            className="text-3xl font-bold"
+            style={{ fontFamily: "Comic Sans MS, cursive, sans-serif" }}
+          >
+            Sushi
+          </h1>
           <nav className="flex items-center space-x-4">
-            <Link href="/datasets" className="text-gray-600 hover:text-blue-600">DataSets</Link>
-            <Link href="/import" className="text-gray-600 hover:text-blue-600">Import</Link>
-            <Link href="/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
-            <Link href="/gstore" className="text-gray-600 hover:text-blue-600">gStore</Link>
-            <Link href="/help" className="text-gray-600 hover:text-blue-600">Help</Link>
+            <Link
+              href="/datasets"
+              className="text-gray-600 hover:text-blue-600"
+            >
+              DataSets
+            </Link>
+            <Link href="/import" className="text-gray-600 hover:text-blue-600">
+              Import
+            </Link>
+            <Link href="/jobs" className="text-gray-600 hover:text-blue-600">
+              Jobs
+            </Link>
+            <Link href="/gstore" className="text-gray-600 hover:text-blue-600">
+              gStore
+            </Link>
+            <Link href="/help" className="text-gray-600 hover:text-blue-600">
+              Help
+            </Link>
             <div className="border-l border-gray-300 h-6"></div>
             <span className="font-semibold">Project {projectNumber}</span>
             <span className="text-gray-700">
-              Hi, {userName} | 
+              Hi, {userName} |
               {authStatus?.authentication_skipped ? (
-                <Link href="/auth/login_options" className="text-blue-600 hover:underline ml-1">Auth Status</Link>
+                <Link
+                  href="/auth/login_options"
+                  className="text-blue-600 hover:underline ml-1"
+                >
+                  Auth Status
+                </Link>
               ) : (
-                <button 
+                <button
                   onClick={handleLogout}
                   className="text-blue-600 hover:underline ml-1 bg-transparent border-none cursor-pointer"
                 >
@@ -208,19 +256,25 @@ const PrevHome = () => {
 
       <main className="flex-grow container mx-auto px-6 py-10">
         <PrevAuthStatus />
-        <div className="bg-white p-8 rounded-lg shadow-inner" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
-            <h2 className="text-3xl font-bold text-gray-800 mb-8">
-              Project {projectNumber}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-              {menuItems.map((item) => (
-                <PrevMenuCard key={item.title} item={item} />
-              ))}
-            </div>
+        <div
+          className="bg-white p-8 rounded-lg shadow-inner"
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.8)" }}
+        >
+          <h2 className="text-3xl font-bold text-gray-800 mb-8">
+            Project {projectNumber}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            {menuItems.map((item) => (
+              <PrevMenuCard key={item.title} item={item} />
+            ))}
+          </div>
         </div>
       </main>
 
-      <footer className="py-4 mt-auto" style={{ backgroundColor: '#2c3e50', color: 'white' }}>
+      <footer
+        className="py-4 mt-auto"
+        style={{ backgroundColor: "#2c3e50", color: "white" }}
+      >
         <div className="container mx-auto px-6 text-center text-sm">
           SUSHI - produced by Functional Genomics Center Zurich and SIB
         </div>
@@ -231,13 +285,13 @@ const PrevHome = () => {
 
 // New landing page component that redirects
 export default function Home() {
-  const { useRouter } = require('next/navigation');
-  const { useEffect } = require('react');
+  const { useRouter } = require("next/navigation");
+  const { useEffect } = require("react");
   const router = useRouter();
-  
+
   useEffect(() => {
     // Redirect to default project
-    router.replace('/projects/1001');
+    router.replace("/projects/1001");
   }, [router]);
 
   // Show loading screen during redirect
