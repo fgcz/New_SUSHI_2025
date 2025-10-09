@@ -253,7 +253,15 @@ export default function DatasetDetailPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t">
-            <h3 className="text-lg font-semibold mb-4">Samples</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Samples</h3>
+              <Link 
+                href={`/projects/${projectNumber}/datasets/${datasetId}/samples/edit`}
+                className="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+              >
+                ✏️ Edit Table
+              </Link>
+            </div>
             {isDatasetSamplesLoading && !datasetSamples ? (
               <div className="animate-pulse">
                 <div className="bg-gray-200 rounded-lg">

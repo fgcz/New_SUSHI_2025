@@ -244,7 +244,7 @@ export default function RunApplicationPage() {
           <h1 className="text-2xl font-bold">Run Application: {appName}</h1>
           <p className="text-gray-600 mt-1">Dataset: {dataset.name}</p>
           <p className="text-gray-600 mt-1">
-            Descripton: QC tool from github.com/.... {"{app.description}"}
+            Description: {formConfig?.description || "Loading application description..."}
           </p>
         </div>
         <Link
