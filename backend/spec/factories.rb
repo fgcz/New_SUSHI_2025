@@ -25,6 +25,9 @@ FactoryBot.define do
   end
 
   factory :sushi_application do
-    sequence(:name) { |n| "Test App #{n}" }
+    sequence(:class_name) { |n| "TestApp#{n}" }
+    analysis_category { 'QC' }
+    required_columns { [] }
+    next_dataset_keys { [] }
   end
 end 

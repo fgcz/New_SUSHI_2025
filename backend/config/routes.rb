@@ -42,7 +42,13 @@ Rails.application.routes.draw do
       # Private API routes (JWT authentication required)
       # These endpoints require a valid JWT token in the Authorization header
       resources :authentication_config, only: [:index, :update]
-      resources :datasets, only: [:index, :show, :create]
+      resources :datasets, only: [:index, :show, :create] do
+        member do
+          get 'tree'
+          get 'runnable_apps'
+          get 'samples'
+        end
+      end
 
       # Projects and nested datasets listing
       resources :projects, only: [:index], param: :project_number do
