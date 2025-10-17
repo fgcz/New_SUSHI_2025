@@ -13,8 +13,7 @@ module Api
       # Returns datasets under a project_number with authorization checks
       def datasets
         # Accept various param keys depending on routing/helper
-        number_param = params[:project_number] || params[:project_id] || params[:project_project_number] || params[:id]
-        number = number_param.to_i
+        number = resolve_project_number
         unless authorized_project_numbers.include?(number)
           return render json: { error: 'Project not accessible' }, status: :forbidden
         end
@@ -42,8 +41,7 @@ module Api
 
       # Returns tree structure of datasets for a project
       def datasets_tree
-        number_param = params[:project_number] || params[:project_id] || params[:project_project_number] || params[:id]
-        number = number_param.to_i
+        number = resolve_project_number
         unless authorized_project_numbers.include?(number)
           return render json: { error: 'Project not accessible' }, status: :forbidden
         end
@@ -78,8 +76,7 @@ module Api
 
       # Returns jobs for a project with pagination and filtering
       def jobs
-        number = params[:project_number] || params[:id]
-        project_number = number.to_i
+        project_number = resolve_project_number
         
         unless authorized_project_numbers.include?(project_number)
           return render json: { error: 'Project not accessible' }, status: :forbidden
@@ -93,12 +90,16 @@ module Api
         # Get all dataset IDs for this project
         dataset_ids = project.data_sets.pluck(:id)
         
+        # Pagination (computed early so we can include in early returns)
+        page = (params[:page] || 1).to_i
+        per = [[(params[:per] || 50).to_i, 200].min, 1].max
+
         if dataset_ids.empty?
           return render json: { 
             jobs: [], 
             total_count: 0, 
-            page: 1, 
-            per: 50,
+            page: page, 
+            per: per,
             project_number: project_number 
           }
         end
@@ -106,13 +107,10 @@ module Api
         # Build query with filters
         rel = Job.where(next_dataset_id: dataset_ids)
                  .or(Job.where(input_dataset_id: dataset_ids))
+                 .distinct
         
         # Apply filters
         rel = apply_job_filters(rel)
-        
-        # Pagination
-        page = (params[:page] || 1).to_i
-        per = [[(params[:per] || 50).to_i, 200].min, 1].max
         
         total_count = rel.count
         
@@ -133,6 +131,10 @@ module Api
       end
 
       private
+      
+      def resolve_project_number
+        (params[:project_number] || params[:project_id] || params[:project_project_number] || params[:id]).to_i
+      end
 
       def serialize_dataset_row(dataset)
         {

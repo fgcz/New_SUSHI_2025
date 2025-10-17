@@ -303,7 +303,7 @@ bundle exec rspec spec/requests/api/v1/datasets_controller_spec.rb
 ## Related APIs
 
 ### Implemented - Medium Priority
-- `GET /api/v1/projects/:projectNumber/jobs` - List jobs for a project with pagination and filtering
+- `GET /api/v1/projects/:project_number/jobs` - List jobs for a project with pagination and filtering
   - See [api-project-jobs-endpoint.md](./api-project-jobs-endpoint.md) for detailed documentation
 
 ### Future Plans - Low Priority APIs (Not yet implemented)

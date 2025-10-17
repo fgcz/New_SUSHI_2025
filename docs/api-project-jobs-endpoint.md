@@ -4,7 +4,7 @@ This document describes the medium-priority Project Jobs API endpoint that has b
 
 ## Implemented Endpoint
 
-### GET `/api/v1/projects/:projectNumber/jobs`
+### GET `/api/v1/projects/:project_number/jobs`
 
 Returns jobs for a specific project with pagination and filtering support. This endpoint is designed for high performance even with projects containing thousands of jobs.
 
@@ -432,7 +432,7 @@ GET /api/v1/jobs/:id/details
 ### 3. Job Statistics Endpoint
 For dashboard summary information:
 ```
-GET /api/v1/projects/:projectNumber/jobs/stats
+GET /api/v1/projects/:project_number/jobs/stats
 ```
 
 Response:
