@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { projectApi, datasetApi } from '@/lib/api';
 import EditableTable from './EditableTable';
+import Breadcrumbs from '@/lib/ui/Breadcrumbs';
 
 export default function SamplesEditPage() {
   const params = useParams<{ projectNumber: string; datasetId: string }>();
@@ -132,24 +133,14 @@ export default function SamplesEditPage() {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      {/* Breadcrumb navigation */}
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm text-gray-500">
-          <li>
-            <Link href={`/projects/${projectNumber}`} className="hover:text-gray-700">Project {projectNumber}</Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href={`/projects/${projectNumber}/datasets`} className="hover:text-gray-700">Datasets</Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href={`/projects/${projectNumber}/datasets/${datasetId}`} className="hover:text-gray-700">{dataset.name}</Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium" aria-current="page">Edit Samples</li>
-        </ol>
-      </nav>
+
+      <Breadcrumbs items={[
+        { label: 'Projects', href: '/projects' },
+        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+        { label: 'Datasets', href: `/projects/${projectNumber}/datasets` },
+        { label: dataset.name, href: `/projects/${projectNumber}/datasets/${datasetId}`},
+        { label: "Edit Samples", active: true }
+      ]} />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Edit Samples - {dataset.name}</h1>

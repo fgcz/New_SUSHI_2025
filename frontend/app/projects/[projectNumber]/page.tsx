@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useParams } from 'next/navigation';
+import Breadcrumbs from '@/lib/ui/Breadcrumbs';
 
 // Define the type for a menu item
 interface MenuItem {
@@ -211,6 +212,10 @@ export default function ProjectPage() {
       </header>
 
       <main className="flex-grow container mx-auto px-6 py-10">
+        <Breadcrumbs items={[
+          { label: 'Projects', href: '/projects' },
+          { label: `Project ${projectNumber}`, active: true }
+        ]} />
         <AuthStatus />
         <div className="bg-white p-8 rounded-lg shadow-inner" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
             <h2 className="text-3xl font-bold text-gray-800 mb-8">

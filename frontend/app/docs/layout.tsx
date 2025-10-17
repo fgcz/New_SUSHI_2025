@@ -92,6 +92,22 @@ export default function DocsLayout({
                       Dynamic Forms
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="/docs/providers" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Providers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/pagination" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Pagination Architecture
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </aside>
