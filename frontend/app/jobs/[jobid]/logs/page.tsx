@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Breadcrumbs from '@/lib/ui/Breadcrumbs';
 
 export default function JobLogsPage() {
   const params = useParams<{ jobid: string }>();
@@ -35,27 +36,17 @@ export default function JobLogsPage() {
 2024-10-08 09:15:35,794 - INFO - Job completed successfully
 2024-10-08 09:15:35,795 - INFO - Cleanup: temporary files removed
 2024-10-08 09:15:35,796 - INFO - Exit code: 0`;
-
+  const projectNumber = 12312;
   return (
     <div className="container mx-auto px-6 py-8">
-      {/* Breadcrumb navigation */}
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm text-gray-500">
-          <li>
-            <Link href="/projects" className="hover:text-gray-700">Projects</Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href="/jobs" className="hover:text-gray-700">Jobs</Link>
-          </li>
-          <li>/</li>
-          <li>
-            <span className="hover:text-gray-700">Job {jobId}</span>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium" aria-current="page">Logs</li>
-        </ol>
-      </nav>
+  
+      <Breadcrumbs items={[
+        { label: 'Projects', href: '/projects' },
+        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+        { label: 'Jobs', href: `/projects/${projectNumber}/jobs` },
+        { label: `Job ${jobId}` },
+        { label: "Logs", active: true }
+      ]} />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Job {jobId} - Execution Logs</h1>

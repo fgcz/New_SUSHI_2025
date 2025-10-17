@@ -59,6 +59,33 @@ export default function DocsHomePage() {
             View Dynamic Forms →
           </a>
         </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Providers</h3>
+          <p className="text-gray-600 mb-4">
+            Explanation about providers AuthProvider and QueryProvider used in app/layout.tsx
+          </p>
+          <a 
+            href="/docs/providers" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Providers
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Pagination Architecture</h3>
+          <p className="text-gray-600 mb-4">
+            How our URL-driven pagination and search system works with hooks and TanStack Query.
+          </p>
+          <a 
+            href="/docs/pagination" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Pagination Guide →
+          </a>
+        </div>
+
       </div>
 
     </div>

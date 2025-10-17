@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { jobApi } from '@/lib/api/jobs';
+import Breadcrumbs from '@/lib/ui/Breadcrumbs';
+import { useSearch, usePagination } from '@/lib/hooks';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusStyles = (status: string) => {
@@ -51,33 +53,10 @@ const formatDuration = (startTime: string, endTime?: string) => {
 export default function ProjectJobsPage() {
   const params = useParams<{ projectNumber: string }>();
   const projectNumber = Number(params.projectNumber);
-  const searchParams = useSearchParams();
-  const router = useRouter();
 
-  // URL-driven parameters
-  const page = useMemo(() => Number(searchParams.get('page') || 1), [searchParams]);
-  const per = useMemo(() => Number(searchParams.get('per') || 25), [searchParams]);
-  const qParam = useMemo(() => searchParams.get('q') || '', [searchParams]);
-
-  // Local input state for search box
-  const [qLocal, setQLocal] = useState(qParam);
-  useEffect(() => { setQLocal(qParam); }, [qParam]);
-
-  // Debounced search - update URL after 300ms of no typing
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      const sp = new URLSearchParams(searchParams);
-      if (qLocal) sp.set('q', qLocal); else sp.delete('q');
-      sp.set('page', '1'); // Reset to page 1 on new search
-      
-      // Only update URL if the search term actually changed
-      if (qLocal !== qParam) {
-        router.push(`?${sp.toString()}`);
-      }
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [qLocal, qParam, searchParams, router]);
+  // Use custom hooks for state management
+  const { searchQuery, localQuery, setLocalQuery, onSubmit } = useSearch();
+  const { page, per, goToPage, changePerPage } = usePagination(25); // Default 25 for jobs
 
   const { data: jobsData, isLoading, error } = useQuery({
     queryKey: ['jobs', projectNumber],
@@ -107,11 +86,11 @@ export default function ProjectJobsPage() {
 
   // Filter jobs based on search query (dataset name)
   const filteredJobs = useMemo(() => {
-    if (!qParam) return allJobs;
+    if (!searchQuery) return allJobs;
     return allJobs.filter(job => 
-      job.dataset.name.toLowerCase().includes(qParam.toLowerCase())
+      job.dataset.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [allJobs, qParam]);
+  }, [allJobs, searchQuery]);
 
   // Paginate filtered jobs
   const paginatedJobs = useMemo(() => {
@@ -125,23 +104,6 @@ export default function ProjectJobsPage() {
   const startIndex = (page - 1) * per + Math.min(1, total);
   const endIndex = Math.min(page * per, total);
 
-  const onSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Search is now handled by debounce, but keep form for accessibility
-  };
-
-  const onChangePer = (nextPer: number) => {
-    const sp = new URLSearchParams(searchParams);
-    sp.set('per', String(nextPer));
-    sp.set('page', '1');
-    router.push(`?${sp.toString()}`);
-  };
-
-  const goToPage = (nextPage: number) => {
-    const sp = new URLSearchParams(searchParams);
-    sp.set('page', String(nextPage));
-    router.push(`?${sp.toString()}`);
-  };
 
   if (isLoading) return (
     <div className="container mx-auto px-6 py-8">
@@ -188,20 +150,12 @@ export default function ProjectJobsPage() {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      {/* Breadcrumb navigation */}
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm text-gray-500">
-          <li>
-            <Link href="/projects" className="hover:text-gray-700">Projects</Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href={`/projects/${projectNumber}`} className="hover:text-gray-700">Project {projectNumber}</Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium" aria-current="page">Jobs</li>
-        </ol>
-      </nav>
+
+      <Breadcrumbs items={[
+        { label: 'Projects', href: '/projects' },
+        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+        { label: "Jobs", active: true }
+      ]} />
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Project {projectNumber} - Jobs</h1>
@@ -213,12 +167,12 @@ export default function ProjectJobsPage() {
         </Link>
       </div>
 
-      <form onSubmit={onSearch} className="mb-4 flex items-center gap-4">
+      <form onSubmit={onSubmit} className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Show</label>
           <select
             value={per}
-            onChange={(e) => onChangePer(Number(e.target.value))}
+            onChange={(e) => changePerPage(Number(e.target.value))}
             className="border rounded px-2 py-1"
           >
             <option value={10}>10</option>
@@ -231,8 +185,8 @@ export default function ProjectJobsPage() {
 
         <div className="flex items-center gap-2">
           <input 
-            value={qLocal} 
-            onChange={(e) => setQLocal(e.target.value)} 
+            value={localQuery} 
+            onChange={(e) => setLocalQuery(e.target.value)} 
             placeholder="Search dataset name..." 
             className="border rounded px-3 py-2" 
           />
