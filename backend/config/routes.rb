@@ -59,6 +59,9 @@ Rails.application.routes.draw do
         end
       end
       
+      # Application configurations
+      resources :application_configs, only: [:index, :show], param: :app_name
+      
       # Private test endpoints (JWT authentication required)
       get 'test/protected', to: 'test#protected'
       get 'test/user_info', to: 'test#user_info'
