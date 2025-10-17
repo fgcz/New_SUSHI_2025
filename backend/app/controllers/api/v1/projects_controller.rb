@@ -76,6 +76,62 @@ module Api
         }
       end
 
+      # Returns jobs for a project with pagination and filtering
+      def jobs
+        number = params[:project_number] || params[:id]
+        project_number = number.to_i
+        
+        unless authorized_project_numbers.include?(project_number)
+          return render json: { error: 'Project not accessible' }, status: :forbidden
+        end
+        
+        project = Project.find_by(number: project_number)
+        unless project
+          return render json: { error: 'Project not found' }, status: :not_found
+        end
+        
+        # Get all dataset IDs for this project
+        dataset_ids = project.data_sets.pluck(:id)
+        
+        if dataset_ids.empty?
+          return render json: { 
+            jobs: [], 
+            total_count: 0, 
+            page: 1, 
+            per: 50,
+            project_number: project_number 
+          }
+        end
+        
+        # Build query with filters
+        rel = Job.where(next_dataset_id: dataset_ids)
+                 .or(Job.where(input_dataset_id: dataset_ids))
+        
+        # Apply filters
+        rel = apply_job_filters(rel)
+        
+        # Pagination
+        page = (params[:page] || 1).to_i
+        per = [[(params[:per] || 50).to_i, 200].min, 1].max
+        
+        total_count = rel.count
+        
+        # Optimize query: preload dataset, order by most recent first
+        jobs = rel.includes(:data_set)
+                  .order(created_at: :desc)
+                  .offset((page - 1) * per)
+                  .limit(per)
+        
+        render json: {
+          jobs: jobs.map { |job| serialize_job(job) },
+          total_count: total_count,
+          page: page,
+          per: per,
+          project_number: project_number,
+          filters: active_filters
+        }
+      end
+
       private
 
       def serialize_dataset_row(dataset)
@@ -121,6 +177,78 @@ module Api
 
       def authorized_project_numbers
         @authorized_project_numbers ||= resolve_user_projects
+      end
+
+      def apply_job_filters(relation)
+        # Status filter
+        if params[:status].present?
+          relation = relation.where(status: params[:status])
+        end
+        
+        # User filter
+        if params[:user].present?
+          relation = relation.where(user: params[:user])
+        end
+        
+        # Dataset filter
+        if params[:dataset_id].present?
+          dataset_id = params[:dataset_id].to_i
+          relation = relation.where(next_dataset_id: dataset_id)
+                             .or(relation.where(input_dataset_id: dataset_id))
+        end
+        
+        # Date range filter (start_time)
+        if params[:from_date].present?
+          begin
+            from_date = Date.parse(params[:from_date])
+            relation = relation.where('start_time >= ?', from_date.beginning_of_day)
+          rescue ArgumentError
+            # Invalid date format, ignore filter
+          end
+        end
+        
+        if params[:to_date].present?
+          begin
+            to_date = Date.parse(params[:to_date])
+            relation = relation.where('start_time <= ?', to_date.end_of_day)
+          rescue ArgumentError
+            # Invalid date format, ignore filter
+          end
+        end
+        
+        relation
+      end
+
+      def serialize_job(job)
+        dataset = job.data_set
+        
+        {
+          id: job.id,
+          submit_job_id: job.submit_job_id,
+          status: job.status || 'unknown',
+          user: job.user || 'unknown',
+          dataset: dataset ? {
+            id: dataset.id,
+            name: dataset.name
+          } : nil,
+          time: {
+            start_time: job.start_time&.iso8601,
+            end_time: job.end_time&.iso8601
+          },
+          created_at: job.created_at.iso8601
+          # Note: Intentionally exclude large fields like submit_command, 
+          # script_path to reduce response size
+        }
+      end
+
+      def active_filters
+        filters = {}
+        filters[:status] = params[:status] if params[:status].present?
+        filters[:user] = params[:user] if params[:user].present?
+        filters[:dataset_id] = params[:dataset_id].to_i if params[:dataset_id].present?
+        filters[:from_date] = params[:from_date] if params[:from_date].present?
+        filters[:to_date] = params[:to_date] if params[:to_date].present?
+        filters
       end
     end
   end

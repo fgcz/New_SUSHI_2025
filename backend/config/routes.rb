@@ -54,6 +54,9 @@ Rails.application.routes.draw do
       resources :projects, only: [:index], param: :project_number do
         get 'datasets', to: 'projects#datasets'
         get 'datasets/tree', to: 'projects#datasets_tree'
+        member do
+          get 'jobs'
+        end
       end
       
       # Private test endpoints (JWT authentication required)

@@ -21,7 +21,22 @@ FactoryBot.define do
   end
 
   factory :job do
-    association :data_set
+    sequence(:submit_job_id) { |n| 30000 + n }
+    status { 'COMPLETED' }
+    user { 'testuser' }
+    start_time { Time.current }
+    end_time { Time.current + 1.hour }
+    
+    # Set next_dataset_id manually since Job uses non-standard foreign key
+    transient do
+      data_set { nil }
+    end
+    
+    after(:build) do |job, evaluator|
+      if evaluator.data_set
+        job.next_dataset_id = evaluator.data_set.id
+      end
+    end
   end
 
   factory :sushi_application do

@@ -300,13 +300,14 @@ bundle exec rspec spec/requests/api/v1/datasets_controller_spec.rb
 
 ---
 
-## Future Plans
+## Related APIs
 
-### Medium Priority APIs (Not yet implemented)
-- `GET /api/v1/projects/:projectId/jobs` - List jobs for a project
+### Implemented - Medium Priority
+- `GET /api/v1/projects/:projectNumber/jobs` - List jobs for a project with pagination and filtering
+  - See [api-project-jobs-endpoint.md](./api-project-jobs-endpoint.md) for detailed documentation
 
-### Low Priority APIs (Not yet implemented)
+### Future Plans - Low Priority APIs (Not yet implemented)
 - `GET /api/v1/application-config/:appName` - Application configuration field information
 
-These APIs will be implemented separately.
+These APIs will be implemented as needed.
 
