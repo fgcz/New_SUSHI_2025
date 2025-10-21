@@ -8,7 +8,7 @@ export const projectApi = {
 
   async getProjectDatasets(
     projectNumber: number, 
-    params: { q?: string; page?: number; per?: number } = {}
+    params: { datasetName?: string; user?: string; page?: number; per?: number } = {}
   ): Promise<ProjectDatasetsResponse> {
     const queryString = httpClient.buildQueryString(params);
     const endpoint = `/api/v1/projects/${projectNumber}/datasets${queryString ? `?${queryString}` : ''}`;
