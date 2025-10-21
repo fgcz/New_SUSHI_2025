@@ -116,6 +116,22 @@ export default function DocsLayout({
                       Table Editing System
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="/docs/linting" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Linting System
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/testing" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Testing Philosophy
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </aside>
