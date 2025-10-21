@@ -108,6 +108,14 @@ export default function DocsLayout({
                       Pagination Architecture
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="/docs/table-editing" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Table Editing System
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </aside>

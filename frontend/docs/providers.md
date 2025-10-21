@@ -48,7 +48,7 @@ const { data, isLoading, error } = useQuery({
 The `AuthProvider` manages user authentication state and provides authentication context throughout the entire application.
 
 ### Location
-- **File**: `contexts/AuthContext.tsx`
+- **File**: `providers/AuthContext.tsx`
 - **Wrapper**: Inner provider (wrapped by QueryProvider)
 
 ### Key Features
@@ -104,7 +104,7 @@ interface AuthContextType {
 
 ### Usage in Components
 ```typescript
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 
 function SomeComponent() {
   const { authStatus, loading, logout } = useAuth();
