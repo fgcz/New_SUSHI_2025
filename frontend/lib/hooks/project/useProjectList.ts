@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { projectApi } from '@/lib/api';
 import { UserProjectsResponse } from '@/lib/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 
 interface UseProjectListReturn {
   userProjects: UserProjectsResponse | undefined;
