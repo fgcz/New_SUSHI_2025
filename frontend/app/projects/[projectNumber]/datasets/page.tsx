@@ -10,7 +10,9 @@ export default function ProjectDatasetsPage() {
   const params = useParams<{ projectNumber: string }>();
   const projectNumber = Number(params.projectNumber);
 
-  const { searchQuery, localQuery, setLocalQuery, onSubmit } = useSearch();
+  // Use custom hooks for state management
+  const { searchQuery: datasetNameQuery, localQuery: localDatasetName, setLocalQuery: setLocalDatasetName, onSubmit: onDatasetSubmit } = useSearch('datasetName');
+  const { searchQuery: userQuery, localQuery: localUser, setLocalQuery: setLocalUser, onSubmit: onUserSubmit } = useSearch('user');
   const { page, per, goToPage, changePerPage } = usePagination();
 
   const { 
@@ -22,7 +24,8 @@ export default function ProjectDatasetsPage() {
     isEmpty 
   } = useProjectDatasets({
     projectNumber,
-    q: searchQuery,
+    datasetName: datasetNameQuery,
+    user: userQuery,
     page,
     per
   });
@@ -60,7 +63,7 @@ export default function ProjectDatasetsPage() {
         </Link>
       </div>
 
-      <form onSubmit={onSubmit} className="mb-4 flex items-center gap-4">
+      <div className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Show</label>
           <select

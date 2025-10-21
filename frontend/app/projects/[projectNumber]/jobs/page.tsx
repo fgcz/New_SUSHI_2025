@@ -73,51 +73,28 @@ export default function ProjectJobsPage() {
   const projectNumber = Number(params.projectNumber);
 
   // Use custom hooks for state management
-  const { searchQuery, localQuery, setLocalQuery, onSubmit } = useSearch();
+  const { searchQuery: datasetNameQuery, localQuery: localDatasetName, setLocalQuery: setLocalDatasetName, onSubmit: onDatasetSubmit } = useSearch('datasetName');
+  const { searchQuery: userQuery, localQuery: localUser, setLocalQuery: setLocalUser, onSubmit: onUserSubmit } = useSearch('user');
+  const { searchQuery: statusQuery, localQuery: localStatus, setLocalQuery: setLocalStatus, onSubmit: onStatusSubmit } = useSearch('status');
   const { page, per, goToPage, changePerPage } = usePagination(25); // Default 25 for jobs
 
   const { data: jobsData, isLoading, error } = useQuery({
-    queryKey: ['jobs', projectNumber],
-    queryFn: () => jobApi.getJobsList(projectNumber),
+    queryKey: ['jobs', projectNumber, { datasetName: datasetNameQuery, user: userQuery, status: statusQuery }],
+    queryFn: () => jobApi.getJobsList(projectNumber, { datasetName: datasetNameQuery, user: userQuery, status: statusQuery }),
     staleTime: 30_000,
   });
 
-  // Duplicate jobs 50 times each to get 150 total jobs
-  const allJobs = useMemo(() => {
-    if (!jobsData?.jobs) return [];
-    const duplicatedJobs = [];
-    for (let i = 0; i < 50; i++) {
-      jobsData.jobs.forEach((job, index) => {
-        duplicatedJobs.push({
-          ...job,
-          id: 1000 + (i * 3) + index + 1,
-          dataset: {
-            ...job.dataset,
-            name: `${job.dataset.name} #${i + 1}`,
-            id: job.dataset.id + i
-          }
-        });
-      });
-    }
-    return duplicatedJobs;
-  }, [jobsData]);
-
-  // Filter jobs based on search query (dataset name)
-  const filteredJobs = useMemo(() => {
-    if (!searchQuery) return allJobs;
-    return allJobs.filter(job => 
-      job.dataset.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [allJobs, searchQuery]);
-
-  // Paginate filtered jobs
+  // Jobs are now filtered and duplicated in the API
+  const jobs = jobsData?.jobs || [];
+  
+  // Paginate jobs
   const paginatedJobs = useMemo(() => {
     const startIndex = (page - 1) * per;
     const endIndex = startIndex + per;
-    return filteredJobs.slice(startIndex, endIndex);
-  }, [filteredJobs, page, per]);
+    return jobs.slice(startIndex, endIndex);
+  }, [jobs, page, per]);
 
-  const total = filteredJobs.length;
+  const total = jobs.length;
   const totalPages = Math.max(1, Math.ceil(total / per));
   const startIndex = (page - 1) * per + Math.min(1, total);
   const endIndex = Math.min(page * per, total);
@@ -164,7 +141,7 @@ export default function ProjectJobsPage() {
     </div>
   );
 
-  const jobs = paginatedJobs;
+  const displayJobs = paginatedJobs;
 
   return (
     <div className="container mx-auto px-6 py-8">
@@ -185,7 +162,7 @@ export default function ProjectJobsPage() {
         </Link>
       </div>
 
-      <form onSubmit={onSubmit} className="mb-4 flex items-center gap-4">
+      <div className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-2">
           <label className="text-sm text-gray-600">Show</label>
           <select
@@ -201,16 +178,8 @@ export default function ProjectJobsPage() {
           <span className="text-sm text-gray-600">entries</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input 
-            value={localQuery} 
-            onChange={(e) => setLocalQuery(e.target.value)} 
-            placeholder="Search dataset name..." 
-            className="border rounded px-3 py-2" 
-          />
-          <div className="text-xs text-gray-500">Search updates automatically</div>
-        </div>
-      </form>
+        <div className="text-xs text-gray-500">Search filters are in the table headers below</div>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full border border-gray-200 rounded-lg">
@@ -241,9 +210,40 @@ export default function ProjectJobsPage() {
                 Started
               </th>
             </tr>
+            <tr className="bg-gray-100">
+              <td className="px-4 py-2 border-b border-r"></td>
+              <td className="px-4 py-2 border-b border-r">
+                <input 
+                  value={localStatus} 
+                  onChange={(e) => setLocalStatus(e.target.value)} 
+                  placeholder="Filter status..." 
+                  className="w-full px-2 py-1 text-xs border rounded" 
+                />
+              </td>
+              <td className="px-4 py-2 border-b border-r">
+                <input 
+                  value={localUser} 
+                  onChange={(e) => setLocalUser(e.target.value)} 
+                  placeholder="Filter user..." 
+                  className="w-full px-2 py-1 text-xs border rounded" 
+                />
+              </td>
+              <td className="px-4 py-2 border-b border-r">
+                <input 
+                  value={localDatasetName} 
+                  onChange={(e) => setLocalDatasetName(e.target.value)} 
+                  placeholder="Filter dataset..." 
+                  className="w-full px-2 py-1 text-xs border rounded" 
+                />
+              </td>
+              <td className="px-4 py-2 border-b border-r"></td>
+              <td className="px-4 py-2 border-b border-r"></td>
+              <td className="px-4 py-2 border-b border-r"></td>
+              <td className="px-4 py-2 border-b"></td>
+            </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {jobs.map((job) => (
+            {displayJobs.map((job) => (
               <tr key={job.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r">
                   {job.id}
@@ -293,7 +293,7 @@ export default function ProjectJobsPage() {
         </table>
       </div>
 
-      {jobs.length === 0 && (
+      {displayJobs.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-2">No jobs found</div>
           <p className="text-gray-400">There are no jobs for this project yet.</p>

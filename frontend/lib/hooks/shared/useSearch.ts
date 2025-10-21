@@ -11,15 +11,16 @@ interface UseSearchReturn {
 /**
  * Hook to manage search input with debounced URL updates
  * 
+ * @param paramName - URL parameter name (default: 'q')
  * @param debounceMs - Debounce delay in milliseconds (default: 300)
  * @returns Object containing search state and handlers
  */
-export function useSearch(debounceMs: number = 300): UseSearchReturn {
+export function useSearch(paramName: string = 'q', debounceMs: number = 300): UseSearchReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
   
   // URL-driven search parameter
-  const searchQuery = useMemo(() => searchParams.get('q') || '', [searchParams]);
+  const searchQuery = useMemo(() => searchParams.get(paramName) || '', [searchParams, paramName]);
   
   // Local input state for immediate UI updates
   const [localQuery, setLocalQuery] = useState(searchQuery);
@@ -36,9 +37,9 @@ export function useSearch(debounceMs: number = 300): UseSearchReturn {
       if (localQuery !== searchQuery) {
         const sp = new URLSearchParams(searchParams);
         if (localQuery.trim()) {
-          sp.set('q', localQuery.trim());
+          sp.set(paramName, localQuery.trim());
         } else {
-          sp.delete('q');
+          sp.delete(paramName);
         }
         sp.set('page', '1'); // Reset to page 1 on new search
         
@@ -47,7 +48,7 @@ export function useSearch(debounceMs: number = 300): UseSearchReturn {
     }, debounceMs);
 
     return () => clearTimeout(timeoutId);
-  }, [localQuery, searchQuery, searchParams, router, debounceMs]);
+  }, [localQuery, searchQuery, searchParams, router, debounceMs, paramName]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();

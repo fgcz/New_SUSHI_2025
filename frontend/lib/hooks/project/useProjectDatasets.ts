@@ -4,7 +4,8 @@ import { ProjectDatasetsResponse } from '@/lib/types';
 
 interface UseProjectDatasetsParams {
   projectNumber: number;
-  q?: string;
+  datasetName?: string;
+  user?: string;
   page?: number;
   per?: number;
 }
@@ -29,13 +30,14 @@ interface UseProjectDatasetsReturn {
  */
 export function useProjectDatasets({ 
   projectNumber, 
-  q = '', 
+  datasetName = '', 
+  user = '',
   page = 1, 
   per = 50 
 }: UseProjectDatasetsParams): UseProjectDatasetsReturn {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['datasets', projectNumber, { q, page, per }],
-    queryFn: () => projectApi.getProjectDatasets(projectNumber, { q, page, per }),
+    queryKey: ['datasets', projectNumber, { datasetName, user, page, per }],
+    queryFn: () => projectApi.getProjectDatasets(projectNumber, { datasetName, user, page, per }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
