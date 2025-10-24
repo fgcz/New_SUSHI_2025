@@ -75,7 +75,8 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
 
   # Add hosts allowed to access in development environment
-  config.hosts << "fgcz-h-037.fgcz-net.unizh.ch"
+  config.hosts << "fgcz-h-083"
+  config.hosts << "fgcz-h-083.fgcz-net.unizh.ch"
   config.hosts << "localhost"
   config.hosts << "127.0.0.1"
 end
