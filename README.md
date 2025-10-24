@@ -81,7 +81,7 @@ bundle exec rails db:create
 bundle exec rails db:migrate
 
 # Run API server
-bundle exec rails s -b fgcz-h-037.fgcz-net.unizh.ch -p 4000
+bundle exec rails s -b fgcz-h-083.fgcz-net.unizh.ch -p 4050
 ```
 
 3. **Frontend Verification**:
@@ -200,7 +200,31 @@ RAILS_ENV=development
 NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
-## 8. Architecture
+## 8. API Documentation
+
+The backend API is documented using Swagger/OpenAPI. Once the backend server is running, you can access the interactive API documentation at:
+
+```
+http://localhost:4050/api-docs/index.html
+```
+
+Or on the deployment server:
+```
+http://fgcz-h-083.fgcz-net.unizh.ch:4050/api-docs/index.html
+```
+
+The API documentation provides:
+- List of all available endpoints
+- Request/response schemas
+- Interactive testing interface
+- Authentication requirements
+
+For detailed endpoint documentation, see also:
+- `docs/api-datasets-endpoints.md`
+- `docs/api-project-jobs-endpoint.md`
+- `docs/api-application-config-endpoint.md`
+
+## 9. Architecture
 
 - **Backend**: Rails v8 API-only mode, FastAPI (later)
 - **Frontend**: Next.js 15 with TypeScript
