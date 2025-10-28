@@ -32,5 +32,10 @@ module Backend
     # Devise configuration
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
+    
+    # SUSHI-specific configuration
+    config.gstore_dir = ENV.fetch('GSTORE_DIR', '/srv/gstore')
+    config.submit_job_script_dir = ENV.fetch('SUBMIT_JOB_SCRIPT_DIR', Rails.root.join('tmp', 'job_scripts').to_s)
+    config.scratch_dir = ENV.fetch('SCRATCH_DIR', '/scratch')
   end
 end

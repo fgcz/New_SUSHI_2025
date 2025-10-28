@@ -6,7 +6,10 @@
 module SushiFabric
   class SushiApp
     attr_accessor :name, :analysis_category, :description, :required_columns, 
-                  :required_params, :modules, :inherit_tags, :inherit_columns
+                  :required_params, :modules, :inherit_tags, :inherit_columns,
+                  :dataset_sushi_id, :dataset, :dataset_hash, :project, :user,
+                  :next_dataset_name, :next_dataset_comment, :current_user,
+                  :result_dir, :gstore_dir, :scratch_dir, :job_script_dir
     attr_reader :params
     
     def initialize
@@ -19,23 +22,132 @@ module SushiFabric
       @modules = []
       @inherit_tags = []
       @inherit_columns = []
+      @dataset_sushi_id = nil
+      @dataset = nil
+      @dataset_hash = []
+      @project = nil
+      @user = nil
+      @next_dataset_name = nil
+      @next_dataset_comment = nil
+      @current_user = nil
+      @result_dir = nil
+      @gstore_dir = Rails.application.config.gstore_dir
+      @scratch_dir = Rails.application.config.scratch_dir
+      @job_script_dir = Rails.application.config.submit_job_script_dir
+    end
+    
+    # Set input dataset from database
+    def set_input_dataset
+      return unless @dataset_sushi_id
+      
+      dataset = DataSet.find_by_id(@dataset_sushi_id)
+      return unless dataset
+      
+      @dataset_hash = dataset.samples.map { |sample| sample.to_hash }
+      @dataset = @dataset_hash.first if @dataset_hash.any?
+    end
+    
+    # Set default parameters - subclasses can override
+    def set_default_parameters
+      # Default implementation - can be overridden in subclasses
+    end
+    
+    # Check if dataset has a specific column
+    def dataset_has_column?(column_name)
+      return false unless @dataset_hash && @dataset_hash.any?
+      @dataset_hash.first.keys.any? { |key| key.gsub(/\[.+\]/, '').strip == column_name }
+    end
+    
+    # Extract columns from dataset
+    def extract_columns(options = {})
+      return {} unless @dataset_hash && @dataset_hash.any?
+      
+      if colnames = options[:colnames]
+        result = {}
+        colnames.each do |colname|
+          @dataset_hash.first.each do |key, value|
+            if key.gsub(/\[.+\]/, '').strip == colname
+              result[key] = value
+            end
+          end
+        end
+        result
+      else
+        {}
+      end
+    end
+    
+    # Generate job script content
+    def generate_job_script
+      script = []
+      script << "#!/bin/bash"
+      script << "set -e"
+      script << "set -o pipefail"
+      script << ""
+      script << "# Job: #{@name}"
+      script << "# Dataset: #{@dataset_sushi_id}"
+      script << "# User: #{@user}"
+      script << "# Project: #{@project}"
+      script << ""
+      
+      # Load modules if specified
+      if @modules && !@modules.empty?
+        script << "# Load modules"
+        @modules.each do |mod|
+          script << "module load #{mod}"
+        end
+        script << ""
+      end
+      
+      # Set directories
+      script << "# Directories"
+      script << "GSTORE_DIR=#{@gstore_dir}"
+      script << "RESULT_DIR=#{@result_dir}"
+      script << "SCRATCH_DIR=#{@scratch_dir}"
+      script << ""
+      
+      # Application-specific commands
+      script << "# Application commands"
+      if respond_to?(:commands)
+        script << commands
+      else
+        script << "echo 'No commands defined'"
+      end
+      
+      script << ""
+      script << "echo 'Job completed'"
+      
+      script.join("\n")
     end
     
     # Stub methods that apps may call
-    def dataset_has_column?(column_name)
-      false
-    end
-    
-    def extract_columns(options = {})
-      {}
-    end
-    
     def run_RApp(app_name)
-      ""
+      "R --vanilla --slave << EOT\nEOT"
     end
     
     def run_PyApp(app_name, options = {})
-      ""
+      "python3 << EOT\nEOT"
+    end
+    
+    # Prepare result directory path
+    def prepare_result_dir
+      return if @result_dir
+      
+      dataset = DataSet.find_by_id(@dataset_sushi_id) if @dataset_sushi_id
+      next_dataset_name = @next_dataset_name || "#{@name}_result"
+      
+      if dataset && dataset.project
+        project_dir = File.join(@gstore_dir, 'projects', "p#{dataset.project.number}")
+        @result_dir = File.join(project_dir, next_dataset_name)
+      else
+        @result_dir = File.join(@gstore_dir, 'results', next_dataset_name)
+      end
+    end
+    
+    # Get next dataset definition
+    def next_dataset
+      # Default implementation - should be overridden in subclasses
+      { 'Name' => @next_dataset_name || "#{@name}_result" }
     end
   end
   

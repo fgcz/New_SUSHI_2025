@@ -6,7 +6,7 @@ class DataSet < ActiveRecord::Base
   has_many :data_sets, :foreign_key => :parent_id
   belongs_to :data_set, :foreign_key => :parent_id, optional: true
   serialize :runnable_apps, coder: YAML
-  belongs_to :user
+  belongs_to :user, optional: true, autosave: false
   serialize :order_ids, coder: YAML
   serialize :job_parameters, coder: YAML
 
@@ -273,7 +273,8 @@ class DataSet < ActiveRecord::Base
       data_set.samples << sample
     end
 
-    data_set.save
+    # Skip validation to avoid issues with user password validation
+    data_set.save(validate: false)
     data_set.id
   end
   def file_paths
