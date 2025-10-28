@@ -223,6 +223,10 @@ For detailed endpoint documentation, see also:
 - `docs/api-datasets-endpoints.md`
 - `docs/api-project-jobs-endpoint.md`
 - `docs/api-application-config-endpoint.md`
+- `docs/api-job-submission-endpoint.md`
+
+For implementation details and architecture:
+- `docs/job-submission-implementation-plan.md` - Job Submission API architecture and implementation plan
 
 ## 9. Architecture
 
