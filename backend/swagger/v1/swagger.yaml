@@ -45,3 +45,146 @@ paths:
           description: OK
         '403':
           description: Forbidden
+  /api/v1/jobs:
+    post:
+      summary: Submit a new job
+      tags:
+        - Jobs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                job:
+                  type: object
+                  required:
+                    - dataset_id
+                    - app_name
+                  properties:
+                    dataset_id:
+                      type: integer
+                      description: ID of the input dataset
+                      example: 9
+                    app_name:
+                      type: string
+                      description: Name of the SushiApp to run
+                      example: "FastqcApp"
+                    parameters:
+                      type: object
+                      description: Application-specific parameters
+                      example:
+                        cores: 8
+                        ram: 15
+                        scratch: 100
+                    next_dataset_name:
+                      type: string
+                      description: Name for the output dataset
+                      example: "FastQC_result"
+                    next_dataset_comment:
+                      type: string
+                      description: Comment for the output dataset
+                      example: "FastQC analysis results"
+      responses:
+        '201':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  status:
+                    type: string
+                  script_path:
+                    type: string
+                  output_dataset_id:
+                    type: integer
+        '400':
+          description: Bad Request
+        '404':
+          description: Dataset or App not found
+        '422':
+          description: Unprocessable Entity
+    get:
+      summary: List jobs
+      tags:
+        - Jobs
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - in: query
+          name: per
+          schema:
+            type: integer
+            default: 20
+          description: Items per page
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Filter by job status
+        - in: query
+          name: dataset_id
+          schema:
+            type: integer
+          description: Filter by input dataset ID
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      type: object
+                  pagination:
+                    type: object
+  /api/v1/jobs/{id}:
+    get:
+      summary: Show job detail
+      tags:
+        - Jobs
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  status:
+                    type: string
+                  script_path:
+                    type: string
+                  input_dataset_id:
+                    type: integer
+                  output_dataset_id:
+                    type: integer
+                  job_parameters:
+                    type: object
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Not Found
