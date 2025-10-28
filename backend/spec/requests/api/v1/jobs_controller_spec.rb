@@ -12,6 +12,8 @@ RSpec.describe 'Api::V1::Jobs', type: :request do
     let(:dataset) { create(:data_set, project: project, user: user) }
     
     context 'with valid parameters' do
+      # Ensure lazy lets are evaluated before change matcher baseline
+      before { dataset }
       let(:valid_params) do
         {
           job: {

@@ -6,7 +6,7 @@ class DataSet < ActiveRecord::Base
   has_many :data_sets, :foreign_key => :parent_id
   belongs_to :data_set, :foreign_key => :parent_id, optional: true
   serialize :runnable_apps, coder: YAML
-  belongs_to :user, optional: true, autosave: false
+  belongs_to :user, autosave: false
   serialize :order_ids, coder: YAML
   serialize :job_parameters, coder: YAML
 

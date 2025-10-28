@@ -24,6 +24,7 @@ FactoryBot.define do
     sequence(:submit_job_id) { |n| 30000 + n }
     status { 'COMPLETED' }
     user { 'testuser' }
+    script_path { '/tmp/test_job_script.sh' }
     start_time { Time.current }
     end_time { Time.current + 1.hour }
     
