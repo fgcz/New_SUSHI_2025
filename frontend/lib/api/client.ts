@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fgcz-h-037.fgcz-net.unizh.ch:4000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fgcz-h-083.fgcz-net.unizh.ch:4000';
 
 export class HttpClient {
   private baseUrl: string;

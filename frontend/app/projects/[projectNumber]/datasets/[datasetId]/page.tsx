@@ -14,7 +14,7 @@ export default function DatasetDetailPage() {
   const projectNumber = Number(params.projectNumber);
   const datasetId = Number(params.datasetId);
 
-  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(projectNumber, datasetId);
+  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
 
   if (isDatasetLoading) return (
     <div className="container mx-auto px-6 py-8">
