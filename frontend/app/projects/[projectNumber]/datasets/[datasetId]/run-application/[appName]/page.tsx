@@ -23,14 +23,16 @@ export default function RunApplicationPage() {
   const appName = params.appName;
 
   // Use existing hook for dataset data
-  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(projectNumber, datasetId);
+  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
 
   // Use custom hook for form schema
   const {
-    data: formConfig,
+    data: formConfigData,
     isLoading: isFormConfigLoading,
     error: formConfigError,
   } = useApplicationFormSchema(appName);
+  
+  const formConfig = formConfigData?.application;
 
   // Use custom hook for job submission
   const { submitJob, isSubmitting, error: submitError, success: submitSuccess } = useJobSubmission();
@@ -57,8 +59,8 @@ export default function RunApplicationPage() {
 
   // Initialize dynamic form data when schema loads
   useEffect(() => {
-    if (formConfig?.fields) {
-      setDynamicFormData(initializeFormData(formConfig.fields));
+    if (formConfig?.form_fields) {
+      setDynamicFormData(initializeFormData(formConfig.form_fields));
     }
   }, [formConfig]);
 
@@ -227,7 +229,7 @@ export default function RunApplicationPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Dynamic form fields in grid layout */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                {formConfig?.fields.map((field) => (
+                {formConfig?.form_fields?.map((field) => (
                   <FormFieldComponent
                     key={field.name}
                     field={field}

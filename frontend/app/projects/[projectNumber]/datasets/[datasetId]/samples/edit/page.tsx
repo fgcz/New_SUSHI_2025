@@ -13,7 +13,7 @@ export default function SamplesEditPage() {
   const projectNumber = Number(params.projectNumber);
   const datasetId = Number(params.datasetId);
 
-  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(projectNumber, datasetId);
+  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
   const { samples: datasetSamples, isLoading: isDatasetSamplesLoading, error: datasetSamplesError } = useDatasetSamples(datasetId);
 
   if (isDatasetLoading) return <SamplesEditPageSkeleton />;
