@@ -132,6 +132,19 @@ export default function DocsHomePage() {
           </a>
         </div>
 
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Backend API Endpoints</h3>
+          <p className="text-gray-600 mb-4">
+            Complete reference for all available REST API endpoints including authentication, projects, datasets, jobs, and configuration.
+          </p>
+          <a 
+            href="/docs/backend-api" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View API Documentation →
+          </a>
+        </div>
+
       </div>
 
     </div>

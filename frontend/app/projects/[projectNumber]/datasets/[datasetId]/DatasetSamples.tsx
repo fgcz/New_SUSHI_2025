@@ -81,7 +81,7 @@ export default function DatasetSamples({ datasetId, projectNumber }: DatasetSamp
           </thead>
           <tbody className="divide-y divide-gray-200">
             {datasetSamples.map((sample: DatasetSample, index: number) => (
-              <tr key={sample.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <tr key={sample.Name} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                 {Array.from(new Set(datasetSamples.flatMap(s => Object.keys(s)))).map((column) => (
                   <td key={column} className="px-4 py-3 text-sm text-gray-900 border-b">
                     {sample[column] !== undefined ? String(sample[column]) : '-'}

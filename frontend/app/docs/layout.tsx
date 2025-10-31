@@ -140,6 +140,14 @@ export default function DocsLayout({
                       Test Layers
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="/docs/backend-api" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Backend API Endpoints
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </aside>

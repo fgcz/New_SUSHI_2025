@@ -24,7 +24,6 @@ export class HttpClient {
         }
       });
     }
-
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }

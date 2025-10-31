@@ -194,8 +194,8 @@ export default function ProjectJobsPage() {
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r">
                 User
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r">
-                Dataset
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r max-w-48">
+                Next Dataset
               </th>
               <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-r">
                 Script
@@ -254,16 +254,26 @@ export default function ProjectJobsPage() {
                 <td className="px-4 py-3 text-sm text-gray-900 border-r">
                   {job.user}
                 </td>
-                <td className="px-4 py-3 text-sm border-r">
-                  <div>
-                    <Link 
-                      href={`/projects/${projectNumber}/datasets/${job.dataset.id}`}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      {job.dataset.name}
-                    </Link>
-                    <div className="text-gray-500 text-xs">ID: {job.dataset.id}</div>
-                  </div>
+                <td className="px-4 py-3 text-sm border-r max-w-48">
+                  {job.dataset ? (
+                    <div className="max-w-full">
+                      <Link 
+                        href={`/projects/${projectNumber}/datasets/${job.dataset.id}`}
+                        className="text-blue-600 hover:underline font-medium block truncate"
+                        title={job.dataset.name}
+                      >
+                        {job.dataset.name}
+                      </Link>
+                      <div className="text-gray-500 text-xs truncate" title={`ID: ${job.dataset.id}`}>
+                        ID: {job.dataset.id}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <span>null</span>
+                      <div className="text-gray-500 text-xs">ID: null</div>
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-3 text-sm border-r text-center">
                   <Link 

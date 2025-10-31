@@ -140,7 +140,7 @@ export default function EditableTable({
         </thead>
         <tbody className="divide-y divide-gray-200">
           {editableSamples.map((sample: DatasetSample, rowIndex: number) => (
-            <tr key={sample.id} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+            <tr key={sample.Name} className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
               {editableColumns.map((column) => (
                 <td key={column} className="px-4 py-3 text-sm border-b">
                   <input 

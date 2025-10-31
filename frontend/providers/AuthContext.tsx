@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { authApi, httpClient } from '@/lib/api';
+import { authApi, datasetApi } from '@/lib/api';
 import { AuthenticationStatus } from '@/lib/types';
 
 interface AuthContextType {
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Get authentication options from backend
       const status = await authApi.getAuthenticationStatus();
-      
+     
       // If authentication is skipped, don't check JWT token
       if (status.authentication_skipped) {
         setAuthStatus(status);
