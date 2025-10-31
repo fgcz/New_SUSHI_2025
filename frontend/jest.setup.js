@@ -1,6 +1,9 @@
 // Jest setup file
 import '@testing-library/jest-dom';
 
+// Setup MSW server for all tests
+import './mocks/server';
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -19,8 +22,7 @@ jest.mock('next/navigation', () => ({
   useParams: () => ({}),
 }));
 
-// Mock fetch globally
-global.fetch = jest.fn();
+// Note: No need to mock fetch globally anymore - MSW handles it
 
 // Mock console methods to reduce noise in tests
 const originalConsoleError = console.error;

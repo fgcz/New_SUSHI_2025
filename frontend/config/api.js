@@ -3,12 +3,12 @@ const API_CONFIG = {
   // Development environments
   development: {
     localhost: `http://localhost:${process.env.NEXT_PUBLIC_API_PORT || 4000}`,
-    fullHostname: `http://fgcz-h-037.fgcz-net.unizh.ch:${process.env.NEXT_PUBLIC_API_PORT || 4000}`
+    fullHostname: `http://fgcz-h-083.fgcz-net.unizh.ch:${process.env.NEXT_PUBLIC_API_PORT || 4000}`
   },
   
   // Production environment (update as needed)
   production: {
-    default: `http://fgcz-h-037.fgcz-net.unizh.ch:${process.env.NEXT_PUBLIC_API_PORT || 4000}`
+    default: `http://fgcz-h-083.fgcz-net.unizh.ch:${process.env.NEXT_PUBLIC_API_PORT || 4000}`
   }
 };
 
@@ -27,7 +27,7 @@ export const getApiBaseUrl = () => {
   
   if (env === 'development') {
     // Check if we're accessing via full hostname
-    if (typeof window !== 'undefined' && window.location.hostname === 'fgcz-h-037.fgcz-net.unizh.ch') {
+    if (typeof window !== 'undefined' && window.location.hostname === 'fgcz-h-083.fgcz-net.unizh.ch') {
       return config.fullHostname;
     }
     return config.localhost;

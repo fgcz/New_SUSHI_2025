@@ -7,7 +7,17 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
+        staleTime: 0, // Always refetch in tests
+        gcTime: 0, // Don't cache data between tests
       },
+      mutations: {
+        retry: false,
+      },
+    },
+    logger: {
+      log: console.log,
+      warn: console.warn,
+      error: () => {}, // Silence React Query errors in tests
     },
   });
 }
@@ -22,5 +32,8 @@ export function renderWithQuery(ui: React.ReactElement, options?: Omit<RenderOpt
     ...render(ui, { wrapper: Wrapper, ...options }),
   };
 }
+
+// Re-export MSW server for test-specific handler overrides
+export { server } from '../mocks/server';
 
 

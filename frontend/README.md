@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sushi Frontend
+
+This is a [Next.js](https://nextjs.org) project for the Sushi dataset management application, bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
@@ -18,7 +20,25 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Documentation
+
+- **[Type System Documentation](./docs/types.md)** - Comprehensive guide to all TypeScript types, their usage, and import patterns
+- **Project Structure** - See the types documentation for file organization
+
+## Key Features
+
+- **Dynamic Form System** - Applications with configurable parameters based on external definitions
+- **Dataset Management** - Browse, view, and manage datasets with samples and folder structures
+- **Project-based Organization** - Multi-project support with proper routing
+- **Type-safe API Layer** - Full TypeScript coverage for all API interactions
+
+## Architecture
+
+- **Frontend**: Next.js 13+ with App Router
+- **Styling**: Tailwind CSS
+- **State Management**: React Query for server state
+- **Type System**: Comprehensive TypeScript definitions in `lib/types/`
+- **API Layer**: Modular API clients in `lib/api/`
 
 ## Learn More
 

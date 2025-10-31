@@ -76,8 +76,8 @@ Rails.application.configure do
 
   config.hosts.clear
   # Add hosts allowed to access in development environment
-  # config.hosts << "fgcz-h-083"
-  # config.hosts << "fgcz-h-083.fgcz-net.unizh.ch"
-  # config.hosts << "localhost"
-  # config.hosts << "127.0.0.1"
+  config.hosts << "fgcz-h-083"
+  config.hosts << "fgcz-h-083.fgcz-net.unizh.ch"
+  config.hosts << "localhost"
+  config.hosts << "127.0.0.1"
 end
