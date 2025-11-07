@@ -58,15 +58,27 @@ jobs:
         bundle install --jobs 4 --retry 3
     
     - name: Setup Database
+      shell: bash
       run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
         bundle exec rails db:prepare
       env:
         RAILS_ENV: test
     
     - name: Run Backend Tests
-      run: bundle exec rspec --format progress
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        bundle exec rspec --format progress
       env:
         RAILS_ENV: test
+        CI: true
     
     - name: Upload Backend Coverage (always)
       if: always()
@@ -120,13 +132,31 @@ jobs:
           npm-${{ runner.os }}-${{ env.NODE_VERSION }}-
     
     - name: Install Dependencies
-      run: npm ci --prefer-offline --no-audit
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        npm ci --prefer-offline --no-audit
     
     - name: Run Frontend Tests
-      run: npm run test:ci
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        npm run test:ci
     
     - name: Build Frontend
-      run: npm run build
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        npm run build
     
     - name: Upload Frontend Coverage (always)
       if: always()
@@ -202,7 +232,12 @@ jobs:
         bundle install --jobs 4 --retry 3
     
     - name: Setup Database
+      shell: bash
       run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
         bundle exec rails db:prepare
       working-directory: ./backend
       env:
@@ -245,7 +280,13 @@ jobs:
         bundle install --jobs 4 --retry 3
     
     - name: Run Brakeman Security Scan
-      run: bundle exec brakeman --no-progress --format json --output brakeman-report.json
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        bundle exec brakeman --no-progress --format json --output brakeman-report.json
       working-directory: ./backend
       continue-on-error: true
     
@@ -259,13 +300,23 @@ jobs:
       working-directory: ./backend
       shell: bash
       run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
         gem install bundler-audit -N || true
         bundle audit update || true
         bundle audit check || true
 
     - name: npm audit (high and above)
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        npm audit --audit-level=high || true
       working-directory: ./frontend
-      run: npm audit --audit-level=high || true
 
   lint:
     name: Code Quality & Linting
@@ -296,16 +347,32 @@ jobs:
       shell: bash
       working-directory: ./frontend
       run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
         rsync -a --delete "$COMMON_SUSHI_DIR/frontend/node_modules" . || true
         npm ci --prefer-offline --no-audit
     
     - name: Run Backend Linting
-      run: bundle exec rubocop
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        bundle exec rubocop
       working-directory: ./backend
       continue-on-error: true  # Run as warning first
     
     - name: Run Frontend Linting
-      run: npm run lint
+      shell: bash
+      run: |
+        source /usr/local/ngseq/etc/lmod_profile || true
+        source /etc/profile.d/modules.sh || true
+        module load Dev/Ruby/${RUBY_VERSION}
+        module load Dev/node/${NODE_VERSION}
+        npm run lint
       working-directory: ./frontend
 
   deploy-staging:
