@@ -46,7 +46,7 @@ export default function ProjectDatasetsPage() {
   }, [searchParams]);
 
   const updateSelectedInUrl = (ids: Set<number>) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     if (ids.size > 0) sp.set('selected', Array.from(ids).join(',')); else sp.delete('selected');
     router.push(`?${sp.toString()}`);
   };
@@ -59,21 +59,21 @@ export default function ProjectDatasetsPage() {
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     if (qLocal) sp.set('q', qLocal); else sp.delete('q');
     sp.set('page', '1');
     router.push(`?${sp.toString()}`);
   };
 
   const onChangePer = (nextPer: number) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     sp.set('per', String(nextPer));
     sp.set('page', '1');
     router.push(`?${sp.toString()}`);
   };
 
   const goToPage = (nextPage: number) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     sp.set('page', String(nextPage));
     router.push(`?${sp.toString()}`);
   };
@@ -93,7 +93,7 @@ export default function ProjectDatasetsPage() {
         <span className="ml-4 text-base font-normal">
           <button
             onClick={() => {
-              const sp = new URLSearchParams(searchParams);
+              const sp = new URLSearchParams(searchParams.toString());
               sp.delete('view');
               router.push(`?${sp.toString()}`);
             }}
@@ -103,7 +103,7 @@ export default function ProjectDatasetsPage() {
           </button>
           <button
             onClick={() => {
-              const sp = new URLSearchParams(searchParams);
+              const sp = new URLSearchParams(searchParams.toString());
               sp.set('view', 'tree');
               router.push(`?${sp.toString()}`);
             }}
