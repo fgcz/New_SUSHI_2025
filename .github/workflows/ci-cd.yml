@@ -78,7 +78,6 @@ jobs:
         bundle exec rspec --format progress
       env:
         RAILS_ENV: test
-        CI: true
     
     - name: Upload Backend Coverage (always)
       if: always()

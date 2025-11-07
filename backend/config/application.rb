@@ -15,6 +15,13 @@ module Backend
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
+    
+    # Configure Zeitwerk inflector to handle fgcz.rb -> FGCZ module name mismatch
+    Rails.autoloaders.each do |autoloader|
+      autoloader.inflector.inflect(
+        'fgcz' => 'FGCZ'
+      )
+    end
 
     # Configuration for the application, engines, and railties goes here.
     #
