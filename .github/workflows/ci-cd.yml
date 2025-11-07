@@ -19,7 +19,7 @@ env:
 jobs:
   test-backend:
     name: Backend Tests (Rails)
-    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    runs-on: [self-hosted, linux, fgcz-h-083, new-sushi]
     timeout-minutes: 20
     
     defaults:
@@ -87,7 +87,7 @@ jobs:
 
   test-frontend:
     name: Frontend Tests (Next.js)
-    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    runs-on: [self-hosted, linux, fgcz-h-083, new-sushi]
     timeout-minutes: 20
     
     defaults:
@@ -177,7 +177,7 @@ jobs:
 
   integration-test:
     name: Integration Tests
-    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    runs-on: [self-hosted, linux, fgcz-h-083, new-sushi]
     needs: [test-backend, test-frontend]
     timeout-minutes: 20
     
@@ -221,7 +221,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    runs-on: [self-hosted, linux, fgcz-h-083, new-sushi]
     timeout-minutes: 20
     
     steps:
@@ -269,7 +269,7 @@ jobs:
 
   lint:
     name: Code Quality & Linting
-    runs-on: [self-hosted, linux, fgcz-h-037, new-sushi]
+    runs-on: [self-hosted, linux, fgcz-h-083, new-sushi]
     timeout-minutes: 20
     
     steps:
