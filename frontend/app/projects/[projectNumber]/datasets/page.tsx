@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import DatasetTree from '@/components/DatasetTree';
 
@@ -28,7 +28,7 @@ export default function ProjectDatasetsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['datasets', projectNumber, { q: qParam, page, per }],
     queryFn: () => apiClient.getProjectDatasets(projectNumber, { q: qParam, page, per }),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
 
