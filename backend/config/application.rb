@@ -14,14 +14,8 @@ module Backend
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
-    
-    # Configure Zeitwerk inflector to handle fgcz.rb -> FGCZ module name mismatch
-    Rails.autoloaders.each do |autoloader|
-      autoloader.inflector.inflect(
-        'fgcz' => 'FGCZ'
-      )
-    end
+    # Ignore lib directory entirely to avoid Zeitwerk naming conflicts
+    config.autoload_lib(ignore: %w[assets tasks apps fgcz.rb global_variables.rb sushi_fabric.rb])
 
     # Configuration for the application, engines, and railties goes here.
     #

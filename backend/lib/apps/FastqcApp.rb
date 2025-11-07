@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 require_relative '../sushi_fabric'
-require_relative '../global_variables_stub'
+require_relative '../global_variables'
 include GlobalVariables
 
 class FastqcApp <  SushiFabric::SushiApp
