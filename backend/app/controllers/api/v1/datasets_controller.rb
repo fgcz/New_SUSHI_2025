@@ -75,6 +75,80 @@ module Api
         end
       end
       
+      # POST /api/v1/datasets/from_tsv
+      # Register a dataset from TSV file content
+      def from_tsv
+        tsv_content = params[:tsv_content]
+        dataset_name = params[:dataset_name] || params[:name]
+        project_number = params[:project_number] || params[:project]
+        parent_id = params[:parent_id]
+        comment = params[:comment]
+        
+        unless tsv_content.present?
+          return render json: { errors: ['TSV content is required'] }, status: :unprocessable_entity
+        end
+        
+        unless dataset_name.present?
+          return render json: { errors: ['Dataset name is required'] }, status: :unprocessable_entity
+        end
+        
+        unless project_number.present?
+          return render json: { errors: ['Project number is required'] }, status: :unprocessable_entity
+        end
+        
+        begin
+          # Parse TSV content
+          require 'csv'
+          csv_data = CSV.parse(tsv_content, col_sep: "\t", headers: true)
+          
+          headers = csv_data.headers
+          rows = csv_data.map(&:fields)
+          
+          # Prepare data_set_arr for save_dataset_to_database
+          data_set_arr = [
+            'DataSetName', dataset_name,
+            'ProjectNumber', project_number.to_s
+          ]
+          
+          data_set_arr << 'ParentID' << parent_id.to_s if parent_id.present?
+          data_set_arr << 'Comment' << comment if comment.present?
+          
+          # Get current user
+          user = if AuthenticationHelper.authentication_skipped?
+                   User.find_by(login: 'sushi_lover') || User.first
+                 else
+                   current_user
+                 end
+          
+          # Save dataset to database
+          dataset_id = DataSet.save_dataset_to_database(
+            data_set_arr: data_set_arr,
+            headers: headers,
+            rows: rows,
+            user: user,
+            child: false
+          )
+          
+          dataset = DataSet.find(dataset_id)
+          
+          render json: {
+            dataset: {
+              id: dataset.id,
+              name: dataset.name,
+              created_at: dataset.created_at,
+              user: user.login || 'anonymous',
+              project_number: dataset.project&.number
+            },
+            message: 'Dataset created successfully from TSV'
+          }, status: :created
+        rescue CSV::MalformedCSVError => e
+          render json: { errors: ["Invalid TSV format: #{e.message}"] }, status: :unprocessable_entity
+        rescue StandardError => e
+          Rails.logger.error("Error creating dataset from TSV: #{e.message}\n#{e.backtrace.join("\n")}")
+          render json: { errors: ["Failed to create dataset: #{e.message}"] }, status: :internal_server_error
+        end
+      end
+      
       # GET /api/v1/datasets/:id/tree
       # Returns the parent tree to root and all children recursively
       def tree

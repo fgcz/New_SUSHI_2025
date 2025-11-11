@@ -43,6 +43,9 @@ Rails.application.routes.draw do
       # These endpoints require a valid JWT token in the Authorization header
       resources :authentication_config, only: [:index, :update]
       resources :datasets, only: [:index, :show, :create] do
+        collection do
+          post 'from_tsv'
+        end
         member do
           get 'tree'
           get 'runnable_apps'

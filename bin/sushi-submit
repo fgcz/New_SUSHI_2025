@@ -1,0 +1,311 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+# frozen_string_literal: true
+
+require 'optparse'
+require 'net/http'
+require 'json'
+require 'uri'
+require 'csv'
+
+class SushiSubmit
+  def initialize
+    @options = {
+      backend_url: ENV['SUSHI_BACKEND_URL'] || 'http://localhost:4050',
+      token: ENV['SUSHI_TOKEN'],
+      verbose: false
+    }
+  end
+
+  def run
+    parse_options
+    validate_options
+    
+    # Process dataset
+    dataset_id = process_dataset
+    
+    # Process parameters
+    parameters = process_parameters
+    
+    # Submit job
+    submit_job(dataset_id, parameters)
+  rescue StandardError => e
+    error("Error: #{e.message}")
+    exit 1
+  end
+
+  private
+
+  def parse_options
+    OptionParser.new do |opts|
+      opts.banner = "Usage: #{$PROGRAM_NAME} [OPTIONS]"
+      
+      opts.on('-a', '--app APP_NAME', 'SUSHI application name (e.g., FastqcApp)') do |app|
+        @options[:app_name] = app
+      end
+      
+      opts.on('-d', '--dataset-id ID', Integer, 'Input dataset ID (existing in DB)') do |id|
+        @options[:dataset_id] = id
+      end
+      
+      opts.on('-D', '--dataset-file FILE', 'Register dataset from TSV file') do |file|
+        @options[:dataset_file] = file
+      end
+      
+      opts.on('-p', '--parameter-file FILE', 'Parameter TSV file') do |file|
+        @options[:parameter_file] = file
+      end
+      
+      opts.on('-P', '--param KEY=VALUE', 'Parameter as key=value (can be specified multiple times)') do |param|
+        @options[:params] ||= []
+        @options[:params] << param
+      end
+      
+      opts.on('-o', '--output-name NAME', 'Output dataset name') do |name|
+        @options[:output_name] = name
+      end
+      
+      opts.on('-c', '--comment COMMENT', 'Comment') do |comment|
+        @options[:comment] = comment
+      end
+      
+      opts.on('--project-number NUMBER', Integer, 'Project number (required when using --dataset-file)') do |number|
+        @options[:project_number] = number
+      end
+      
+      opts.on('-u', '--backend-url URL', 'Backend URL (default: http://localhost:4050)') do |url|
+        @options[:backend_url] = url
+      end
+      
+      opts.on('-t', '--token TOKEN', 'JWT authentication token') do |token|
+        @options[:token] = token
+      end
+      
+      opts.on('-v', '--verbose', 'Verbose output') do
+        @options[:verbose] = true
+      end
+      
+      opts.on('-h', '--help', 'Show this help message') do
+        puts opts
+        exit 0
+      end
+    end.parse!
+  end
+
+  def validate_options
+    unless @options[:app_name]
+      error('Error: --app (or -a) is required')
+      exit 1
+    end
+    
+    unless @options[:dataset_id] || @options[:dataset_file]
+      error('Error: Either --dataset-id (or -d) or --dataset-file (or -D) is required')
+      exit 1
+    end
+    
+    if @options[:dataset_id] && @options[:dataset_file]
+      error('Error: Cannot specify both --dataset-id and --dataset-file')
+      exit 1
+    end
+  end
+
+  def process_dataset
+    if @options[:dataset_id]
+      log("Using existing dataset ID: #{@options[:dataset_id]}") if @options[:verbose]
+      return @options[:dataset_id]
+    end
+    
+    # Register dataset from TSV file
+    log("Registering dataset from file: #{@options[:dataset_file]}") if @options[:verbose]
+    
+    # Read TSV file with UTF-8 encoding
+    tsv_content = File.read(@options[:dataset_file], encoding: 'UTF-8')
+    
+    # Extract dataset name from filename or use default
+    dataset_name = @options[:output_name] || File.basename(@options[:dataset_file], '.tsv')
+    
+    # Get project number from option or extract from TSV
+    project_number = @options[:project_number] || extract_project_number_from_tsv(tsv_content)
+    
+    unless project_number
+      error('Error: Project number not found. Please specify it with --project-number option.')
+      error('Hint: Use --project-number NUMBER or ensure TSV file contains project path (e.g., p35611/...)')
+      exit 1
+    end
+    
+    # Register dataset via API
+    response = post_request('/api/v1/datasets/from_tsv', {
+      tsv_content: tsv_content,
+      dataset_name: dataset_name,
+      project_number: project_number,
+      comment: @options[:comment]
+    })
+    
+    if response['dataset'] && response['dataset']['id']
+      dataset_id = response['dataset']['id']
+      log("Dataset registered successfully. ID: #{dataset_id}") if @options[:verbose]
+      return dataset_id
+    else
+      error("Failed to register dataset: #{response['errors']&.join(', ') || 'Unknown error'}")
+      exit 1
+    end
+  end
+
+  def extract_project_number_from_tsv(tsv_content)
+    # Try to extract project number from TSV content
+    # Look for project number in file paths (e.g., p35611/...)
+    match = tsv_content.match(/p(\d+)/)
+    return match[1].to_i if match
+    
+    # Or check if there's a ProjectNumber column
+    csv_data = CSV.parse(tsv_content, col_sep: "\t", headers: true)
+    if csv_data.headers&.include?('ProjectNumber')
+      return csv_data.first['ProjectNumber'].to_i
+    end
+    
+    nil
+  end
+
+  def process_parameters
+    parameters = {}
+    
+    # Load from parameter file if specified
+    if @options[:parameter_file]
+      log("Loading parameters from file: #{@options[:parameter_file]}") if @options[:verbose]
+      parameters.merge!(load_parameters_from_file(@options[:parameter_file]))
+    end
+    
+    # Override with command-line parameters
+    if @options[:params]
+      @options[:params].each do |param|
+        key, value = param.split('=', 2)
+        if key && value
+          # Convert value to appropriate type
+          parameters[key] = convert_parameter_value(value)
+        else
+          warn("Warning: Invalid parameter format: #{param}. Expected KEY=VALUE")
+        end
+      end
+    end
+    
+    parameters
+  end
+
+  def load_parameters_from_file(file_path)
+    parameters = {}
+    
+    CSV.foreach(file_path, col_sep: "\t", headers: false, encoding: 'UTF-8') do |row|
+      next if row.length < 2
+      
+      key = row[0].to_s.strip
+      value = row[1].to_s.strip
+      
+      next if key.empty? || value.empty?
+      
+      parameters[key] = convert_parameter_value(value)
+    end
+    
+    parameters
+  rescue StandardError => e
+    error("Error reading parameter file: #{e.message}")
+    exit 1
+  end
+
+  def convert_parameter_value(value)
+    # Convert string values to appropriate types
+    case value.downcase
+    when 'true'
+      true
+    when 'false'
+      false
+    else
+      # Try to convert to integer or float
+      if value.match?(/^\d+$/)
+        value.to_i
+      elsif value.match?(/^\d+\.\d+$/)
+        value.to_f
+      else
+        value
+      end
+    end
+  end
+
+  def submit_job(dataset_id, parameters)
+    log("Submitting job for app: #{@options[:app_name]}") if @options[:verbose]
+    log("Dataset ID: #{dataset_id}") if @options[:verbose]
+    log("Parameters: #{parameters.inspect}") if @options[:verbose]
+    
+    job_data = {
+      job: {
+        dataset_id: dataset_id,
+        app_name: @options[:app_name],
+        parameters: parameters
+      }
+    }
+    
+    job_data[:job][:next_dataset_name] = @options[:output_name] if @options[:output_name]
+    job_data[:job][:next_dataset_comment] = @options[:comment] if @options[:comment]
+    
+    response = post_request('/api/v1/jobs', job_data)
+    
+    if response['job'] && response['job']['id']
+      job_id = response['job']['id']
+      puts "Job submitted successfully!"
+      puts "Job ID: #{job_id}"
+      puts "Status: #{response['job']['status']}"
+      if response['output_dataset']
+        puts "Output Dataset ID: #{response['output_dataset']['id']}"
+        puts "Output Dataset Name: #{response['output_dataset']['name']}"
+      end
+      return job_id
+    else
+      error("Failed to submit job: #{response['errors']&.join(', ') || 'Unknown error'}")
+      exit 1
+    end
+  end
+
+  def post_request(path, data)
+    uri = URI.join(@options[:backend_url], path)
+    
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri.path)
+    request['Content-Type'] = 'application/json'
+    request['Authorization'] = "Bearer #{@options[:token]}" if @options[:token]
+    request.body = data.to_json
+    
+    log("POST #{uri}") if @options[:verbose]
+    log("Request body: #{data.to_json}") if @options[:verbose]
+    
+    response = http.request(request)
+    
+    if response.code.to_i >= 200 && response.code.to_i < 300
+      JSON.parse(response.body)
+    else
+      error_body = begin
+        JSON.parse(response.body)
+      rescue JSON::ParserError
+        { 'errors' => [response.body] }
+      end
+      
+      raise StandardError, "API request failed (#{response.code}): #{error_body['errors']&.join(', ') || error_body['error'] || response.body}"
+    end
+  rescue JSON::ParserError => e
+    raise StandardError, "Invalid JSON response: #{e.message}"
+  rescue StandardError => e
+    raise StandardError, "Network error: #{e.message}"
+  end
+
+  def log(message)
+    puts message
+  end
+
+  def error(message)
+    $stderr.puts message
+  end
+end
+
+# Run the CLI tool
+if __FILE__ == $PROGRAM_NAME
+  SushiSubmit.new.run
+end
+
