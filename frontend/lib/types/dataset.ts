@@ -3,6 +3,7 @@ export interface Dataset {
   name: string;
   created_at: string;
   user: string;
+  project_number?: number;
 }
 
 export interface ProjectDataset {

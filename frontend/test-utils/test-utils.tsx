@@ -14,11 +14,6 @@ export function createTestQueryClient() {
         retry: false,
       },
     },
-    logger: {
-      log: console.log,
-      warn: console.warn,
-      error: () => {}, // Silence React Query errors in tests
-    },
   });
 }
 

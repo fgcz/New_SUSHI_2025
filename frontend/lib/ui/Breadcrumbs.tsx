@@ -11,7 +11,7 @@ interface BreadcrumbsProps {
 }
 
 export default function Breadcrumbs({ items }: BreadcrumbsProps) {
-  const elements = [];
+  const elements: JSX.Element[] = [];
   
   items.forEach((item, index) => {
     if (index > 0) {

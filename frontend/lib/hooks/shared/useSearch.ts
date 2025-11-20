@@ -35,7 +35,7 @@ export function useSearch(paramName: string = 'q', debounceMs: number = 300): Us
     const timeoutId = setTimeout(() => {
       // Only update URL if the search term actually changed
       if (localQuery !== searchQuery) {
-        const sp = new URLSearchParams(searchParams);
+        const sp = new URLSearchParams(searchParams.toString());
         if (localQuery.trim()) {
           sp.set(paramName, localQuery.trim());
         } else {

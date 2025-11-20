@@ -74,7 +74,7 @@ export const jobApi = {
         ];
 
         // Duplicate jobs 50 times each to get 150 total jobs (like in the page)
-        const allJobs = [];
+        const allJobs: any[] = [];
         for (let i = 0; i < 50; i++) {
           baseJobs.forEach((job, index) => {
             allJobs.push({

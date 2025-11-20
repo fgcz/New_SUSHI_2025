@@ -23,13 +23,13 @@ export function usePagination(defaultPerPage: number = 50): UsePaginationReturn 
   const per = useMemo(() => Number(searchParams.get('per') || defaultPerPage), [searchParams, defaultPerPage]);
 
   const goToPage = (nextPage: number) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     sp.set('page', String(nextPage));
     router.push(`?${sp.toString()}`);
   };
 
   const changePerPage = (nextPer: number) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     sp.set('per', String(nextPer));
     sp.set('page', '1'); // Reset to page 1 when changing per-page count
     router.push(`?${sp.toString()}`);

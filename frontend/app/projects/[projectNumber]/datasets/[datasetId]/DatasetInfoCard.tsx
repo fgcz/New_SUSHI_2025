@@ -1,7 +1,7 @@
-import { Dataset } from '@/lib/types';
+import { ProjectDataset } from '@/lib/types';
 
 interface DatasetInfoCardProps {
-  dataset: Dataset;
+  dataset: ProjectDataset;
 }
 
 export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {

@@ -26,8 +26,8 @@ export default function ProjectDatasetsPage() {
   useEffect(() => { setQLocal(qParam); }, [qParam]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['datasets', projectNumber, { q: qParam, page, per }],
-    queryFn: () => apiClient.getProjectDatasets(projectNumber, { q: qParam, page, per }),
+    queryKey: ['datasets', projectNumber, { datasetName: qParam, page, per }],
+    queryFn: () => apiClient.getProjectDatasets(projectNumber, { datasetName: qParam, page, per }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
