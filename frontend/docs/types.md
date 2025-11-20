@@ -13,10 +13,78 @@
 
 ## Dataset Types (`lib/types/dataset.ts`)
 
+### Core Dataset Types
+
+#### `Dataset` vs `ProjectDataset` - Critical Difference
+
+**`Dataset` (Basic/CRUD)**
+```typescript
+interface Dataset {
+  id: number;
+  name: string;
+  created_at: string;
+  user: string;
+}
+```
+- **Purpose**: Minimal dataset representation for basic CRUD operations
+- **Usage**: Generic dataset API endpoints, creation responses, basic operations
+- **Context**: When you only need core dataset identification
+
+**`ProjectDataset` (Rich/Display)**
+```typescript
+interface ProjectDataset {
+  id: number;
+  name: string;
+  sushi_app_name?: string;           // ← Additional fields
+  completed_samples?: number;        // ← Additional fields
+  samples_length?: number;           // ← Additional fields
+  parent_id?: number | null;         // ← Additional fields
+  children_ids?: number[];           // ← Additional fields
+  user_login?: string | null;        // ← Additional fields
+  created_at: string;
+  bfabric_id?: number | null;        // ← Additional fields
+  project_number: number;            // ← Additional fields
+}
+```
+- **Purpose**: Complete dataset information for UI display and business logic
+- **Usage**: Dataset listing pages, dataset details, data tables, business operations
+- **Context**: When you need rich dataset information with relationships and metadata
+
+#### **Usage Guidelines**
+
+```typescript
+// ✅ CORRECT: Use ProjectDataset for UI components and business logic
+function useDatasetBase(projectNumber: number, datasetId: number) {
+  // Returns ProjectDataset[] from getProjectDatasets()
+  const dataset: ProjectDataset | undefined = data?.datasets?.find(ds => ds.id === datasetId);
+}
+
+// ✅ CORRECT: Use Dataset for basic CRUD operations
+function createDataset(data: CreateDatasetRequest): Dataset {
+  // Returns basic Dataset from creation endpoint
+}
+
+// ❌ WRONG: Don't use Dataset when you need rich information
+function DatasetListPage() {
+  // This would miss sushi_app_name, samples info, etc.
+  const datasets: Dataset[] = // Wrong type choice
+}
+```
+
+#### **When to Use Which**
+
+| Use `Dataset` When | Use `ProjectDataset` When |
+|-------------------|---------------------------|
+| Creating new datasets | Displaying dataset lists |
+| Basic CRUD operations | Showing dataset details |
+| Generic dataset references | Business logic with samples/apps |
+| API responses from creation | Project-specific dataset operations |
+| Minimal dataset identification | UI components needing rich data |
+
+### Other Dataset Types
+
 | Type | Purpose | Primary Usage |
 |------|---------|---------------|
-| `Dataset` | CRUD operations return type | `lib/api/datasets.ts` |
-| `ProjectDataset` | Display dataset information in UI | **Pages:**<br>• Dataset listing<br>• Dataset details<br>• Tests |
 | `DatasetsResponse` | Return type for `getDatasets()` | `lib/api/datasets.ts` |
 | `DatasetResponse` | Return type for `getDataset()` | `lib/api/datasets.ts` |
 | `CreateDatasetResponse` | Return type for `createDataset()` | `lib/api/datasets.ts` |
@@ -47,7 +115,7 @@
 | Type | Purpose | Primary Usage |
 |------|---------|---------------|
 | `AppFormField` | Dynamic form field definition | **Components:**<br>• Applications API<br>• Form renderer |
-| `AppFormResponse` | API response structure | **Components:**<br>• Applications API<br>• Run-application page |
+| `AppFormResponse` | API response structure (includes app description) | **Components:**<br>• Applications API<br>• Run-application page |
 
 ## Misc Types (`lib/types/misc.ts`)
 

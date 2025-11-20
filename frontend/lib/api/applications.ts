@@ -1,5 +1,5 @@
-import { httpClient } from './client';
-import { AppFormResponse } from '../types/app-form';
+import { httpClient } from "./client";
+import { AppFormResponse } from "../types/app-form";
 
 export const applicationApi = {
   async getFormSchema(appName: string): Promise<AppFormResponse> {
@@ -7,6 +7,7 @@ export const applicationApi = {
     const mockResponses: Record<string, AppFormResponse> = {
       cellRanger: {
         appName: "cellRanger",
+        description: "Mock description of cellRanger",
         fields: [
           {
             name: "cores",
@@ -14,7 +15,7 @@ export const applicationApi = {
             label: "CPU Cores",
             options: ["4", "8", "16", "32"],
             default: "8",
-            required: true
+            required: true,
           },
           {
             name: "memory",
@@ -22,15 +23,15 @@ export const applicationApi = {
             label: "Memory (GB)",
             options: ["32", "64", "128", "256"],
             default: "64",
-            required: true
+            required: true,
           },
           {
             name: "partition",
-            type: "select", 
+            type: "select",
             label: "Partition",
             options: ["normal", "highmem", "priority"],
             default: "normal",
-            required: true
+            required: true,
           },
           {
             name: "chemistry",
@@ -38,7 +39,7 @@ export const applicationApi = {
             label: "Chemistry Version",
             options: ["auto", "SC3Pv3", "SC5P-PE", "SC3Pv2", "SC3Pv1"],
             default: "auto",
-            required: true
+            required: true,
           },
           {
             name: "expectedCells",
@@ -47,7 +48,7 @@ export const applicationApi = {
             min: 500,
             max: 50000,
             default: 3000,
-            required: true
+            required: true,
           },
           {
             name: "forcedCells",
@@ -55,7 +56,7 @@ export const applicationApi = {
             label: "Force Cell Count (optional)",
             min: 100,
             max: 100000,
-            placeholder: "Leave empty for auto-detection"
+            placeholder: "Leave empty for auto-detection",
           },
           {
             name: "includeIntrons",
@@ -63,7 +64,7 @@ export const applicationApi = {
             label: "Include Intronic Reads",
             options: ["true", "false"],
             default: "false",
-            required: true
+            required: true,
           },
           {
             name: "localMem",
@@ -72,7 +73,7 @@ export const applicationApi = {
             min: 1,
             max: 16,
             default: 4,
-            required: true
+            required: true,
           },
           {
             name: "transcriptome",
@@ -80,20 +81,21 @@ export const applicationApi = {
             label: "Transcriptome Reference",
             placeholder: "Path to transcriptome reference",
             default: "/references/refdata-gex-GRCh38-2020-A",
-            required: true
-          }
-        ]
+            required: true,
+          },
+        ],
       },
       seurat: {
         appName: "seurat",
+        description: "Mock description of seurat",
         fields: [
           {
             name: "cores",
             type: "select",
-            label: "CPU Cores", 
+            label: "CPU Cores",
             options: ["2", "4", "8", "16"],
             default: "4",
-            required: true
+            required: true,
           },
           {
             name: "memory",
@@ -101,15 +103,15 @@ export const applicationApi = {
             label: "Memory (GB)",
             options: ["16", "32", "64", "128"],
             default: "32",
-            required: true
+            required: true,
           },
           {
             name: "partition",
             type: "select",
             label: "Partition",
             options: ["normal", "highmem"],
-            default: "normal", 
-            required: true
+            default: "normal",
+            required: true,
           },
           {
             name: "minCells",
@@ -118,25 +120,25 @@ export const applicationApi = {
             min: 1,
             max: 100,
             default: 3,
-            required: true
+            required: true,
           },
           {
             name: "minFeatures",
-            type: "number", 
+            type: "number",
             label: "Minimum Features per Cell",
             min: 50,
             max: 10000,
             default: 200,
-            required: true
+            required: true,
           },
           {
             name: "maxFeatures",
-            type: "number", 
+            type: "number",
             label: "Maximum Features per Cell",
             min: 1000,
             max: 50000,
             default: 2500,
-            required: true
+            required: true,
           },
           {
             name: "mitochondrialPercent",
@@ -145,7 +147,7 @@ export const applicationApi = {
             min: 5,
             max: 50,
             default: 20,
-            required: true
+            required: true,
           },
           {
             name: "resolution",
@@ -154,16 +156,16 @@ export const applicationApi = {
             min: 0.1,
             max: 2.0,
             default: 0.5,
-            required: true
+            required: true,
           },
           {
             name: "dims",
-            type: "number", 
+            type: "number",
             label: "PCA Dimensions",
             min: 10,
             max: 100,
             default: 30,
-            required: true
+            required: true,
           },
           {
             name: "algorithm",
@@ -171,7 +173,7 @@ export const applicationApi = {
             label: "Clustering Algorithm",
             options: ["leiden", "louvain", "slm"],
             default: "leiden",
-            required: true
+            required: true,
           },
           {
             name: "normalizationMethod",
@@ -179,7 +181,7 @@ export const applicationApi = {
             label: "Normalization Method",
             options: ["LogNormalize", "CLR", "RC"],
             default: "LogNormalize",
-            required: true
+            required: true,
           },
           {
             name: "findAllMarkers",
@@ -187,12 +189,13 @@ export const applicationApi = {
             label: "Find All Markers",
             options: ["true", "false"],
             default: "true",
-            required: true
-          }
-        ]
+            required: true,
+          },
+        ],
       },
       scanpy: {
         appName: "scanpy",
+        description: "Mock description of scanpy",
         fields: [
           {
             name: "cores",
@@ -200,7 +203,7 @@ export const applicationApi = {
             label: "CPU Cores",
             options: ["2", "4", "8", "16", "32"],
             default: "8",
-            required: true
+            required: true,
           },
           {
             name: "memory",
@@ -208,15 +211,15 @@ export const applicationApi = {
             label: "Memory (GB)",
             options: ["16", "32", "64", "128", "256"],
             default: "64",
-            required: true
+            required: true,
           },
           {
             name: "partition",
             type: "select",
-            label: "Partition", 
+            label: "Partition",
             options: ["normal", "highmem", "gpu"],
             default: "normal",
-            required: true
+            required: true,
           },
           {
             name: "minGenes",
@@ -225,7 +228,7 @@ export const applicationApi = {
             min: 50,
             max: 5000,
             default: 200,
-            required: true
+            required: true,
           },
           {
             name: "minCells",
@@ -234,7 +237,7 @@ export const applicationApi = {
             min: 1,
             max: 100,
             default: 3,
-            required: true
+            required: true,
           },
           {
             name: "maxGenes",
@@ -243,7 +246,7 @@ export const applicationApi = {
             min: 1000,
             max: 20000,
             default: 5000,
-            required: true
+            required: true,
           },
           {
             name: "mitochondrialThreshold",
@@ -252,7 +255,7 @@ export const applicationApi = {
             min: 5,
             max: 50,
             default: 20,
-            required: true
+            required: true,
           },
           {
             name: "normalizePerCell",
@@ -261,7 +264,7 @@ export const applicationApi = {
             min: 1000,
             max: 100000,
             default: 10000,
-            required: true
+            required: true,
           },
           {
             name: "nTopGenes",
@@ -270,7 +273,7 @@ export const applicationApi = {
             min: 500,
             max: 10000,
             default: 2000,
-            required: true
+            required: true,
           },
           {
             name: "pcaComponents",
@@ -279,7 +282,7 @@ export const applicationApi = {
             min: 10,
             max: 100,
             default: 50,
-            required: true
+            required: true,
           },
           {
             name: "neighborhoodSize",
@@ -288,7 +291,7 @@ export const applicationApi = {
             min: 5,
             max: 100,
             default: 15,
-            required: true
+            required: true,
           },
           {
             name: "umapMinDist",
@@ -297,7 +300,7 @@ export const applicationApi = {
             min: 0.01,
             max: 1.0,
             default: 0.5,
-            required: true
+            required: true,
           },
           {
             name: "clusteringMethod",
@@ -305,7 +308,7 @@ export const applicationApi = {
             label: "Clustering Method",
             options: ["leiden", "louvain"],
             default: "leiden",
-            required: true
+            required: true,
           },
           {
             name: "clusteringResolution",
@@ -314,7 +317,7 @@ export const applicationApi = {
             min: 0.1,
             max: 2.0,
             default: 0.5,
-            required: true
+            required: true,
           },
           {
             name: "rankGenesGroups",
@@ -322,7 +325,7 @@ export const applicationApi = {
             label: "Find Marker Genes",
             options: ["true", "false"],
             default: "true",
-            required: true
+            required: true,
           },
           {
             name: "plotResults",
@@ -330,21 +333,22 @@ export const applicationApi = {
             label: "Generate Plots",
             options: ["true", "false"],
             default: "true",
-            required: true
-          }
-        ]
-      }
+            required: true,
+          },
+        ],
+      },
     };
-    
+
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(mockResponses[appName] || mockResponses.cellRanger);
       }, 800);
     });
-    
+
     // Future implementation when backend is ready:
     // return httpClient.request<AppFormResponse>(`/api/v1/applications/${appName}/form`, {
     //   method: 'GET',
     // });
-  }
+  },
 };
+

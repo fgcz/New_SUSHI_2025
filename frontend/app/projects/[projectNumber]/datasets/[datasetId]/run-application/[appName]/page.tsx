@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { projectApi, jobApi, applicationApi } from "@/lib/api";
 import { JobSubmissionRequest, DynamicFormData } from "@/lib/types";
 import {
   FormFieldComponent,
   initializeFormData,
 } from "@/lib/utils/form-renderer";
+import Breadcrumbs from '@/lib/ui/Breadcrumbs';
+import { useDatasetBase, useApplicationFormSchema, useJobSubmission } from '@/lib/hooks';
+import RunApplicationPageSkeleton from './RunApplicationPageSkeleton';
 
 export default function RunApplicationPage() {
   const params = useParams<{
@@ -21,52 +22,38 @@ export default function RunApplicationPage() {
   const datasetId = Number(params.datasetId);
   const appName = params.appName;
 
-  const {
-    data: projectData,
-    isLoading: isProjectLoading,
-    error: projectError,
-  } = useQuery({
-    queryKey: ["datasets", projectNumber],
-    queryFn: () => projectApi.getProjectDatasets(projectNumber),
-    staleTime: 60_000,
-  });
+  // Use existing hook for dataset data
+  const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(projectNumber, datasetId);
 
-  // Fetch dynamic form schema for the application
+  // Use custom hook for form schema
   const {
     data: formConfig,
     isLoading: isFormConfigLoading,
     error: formConfigError,
-  } = useQuery({
-    queryKey: ["appForm", appName],
-    queryFn: () => applicationApi.getFormSchema(appName),
-    staleTime: 60_000,
-  });
+  } = useApplicationFormSchema(appName);
 
-  // Form state management
+  // Use custom hook for job submission
+  const { submitJob, isSubmitting, error: submitError, success: submitSuccess } = useJobSubmission();
+
+  // Form state management (remaining local state)
   const [nextDatasetData, setNextDatasetData] = useState({
     datasetName: `this input will change once dataset name is retrieved`,
     datasetComment: "",
   });
   const [dynamicFormData, setDynamicFormData] = useState<DynamicFormData>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // Update dataset name when data is loaded
+  // Update dataset name when data is loaded (timeout kept for debugging loading states)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (projectData?.datasets) {
-        const dataset = projectData.datasets.find((ds) => ds.id === datasetId);
-        if (dataset) {
-          setNextDatasetData((prev) => ({
-            ...prev,
-            datasetName: `${appName}_${dataset.name}_${new Date().toISOString().slice(0, 10)}`,
-          }));
-        }
+      if (dataset) {
+        setNextDatasetData((prev) => ({
+          ...prev,
+          datasetName: `${appName}_${dataset.name}_${new Date().toISOString().slice(0, 10)}`,
+        }));
       }
     }, 1000);
     return () => clearTimeout(timeoutId);
-  }, [projectData, datasetId, appName]);
+  }, [dataset, appName]);
 
   // Initialize dynamic form data when schema loads
   useEffect(() => {
@@ -98,14 +85,7 @@ export default function RunApplicationPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!projectData?.datasets) return;
-
-    const dataset = projectData.datasets.find((ds) => ds.id === datasetId);
     if (!dataset) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-    setSubmitSuccess(false);
 
     const jobData: JobSubmissionRequest = {
       project_number: projectNumber,
@@ -118,49 +98,14 @@ export default function RunApplicationPage() {
       parameters: dynamicFormData,
     };
 
-    // Log form data to console
-    console.log("Submitting job with data:", jobData);
-
-    try {
-      const response = await jobApi.submitJob(jobData);
-      console.log("Job submission response:", response);
-      setSubmitSuccess(true);
-    } catch (error) {
-      console.error("Job submission failed:", error);
-      setSubmitError("Failed to submit job. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitJob(jobData);
   };
 
-  if (isProjectLoading || isFormConfigLoading)
-    return (
-      <div className="container mx-auto px-6 py-8">
-        <div className="animate-pulse">
-          {/* Breadcrumb skeleton */}
-          <div className="h-4 bg-gray-200 rounded w-64 mb-6"></div>
+  if (isDatasetLoading || isFormConfigLoading) {
+    return <RunApplicationPageSkeleton />;
+  }
 
-          {/* Title skeleton */}
-          <div className="h-8 bg-gray-200 rounded w-96 mb-6"></div>
-
-          {/* Form skeleton */}
-          <div className="bg-white border rounded-lg p-6">
-            <div className="space-y-6">
-              <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-24"></div>
-                  <div className="h-10 bg-gray-200 rounded"></div>
-                </div>
-              ))}
-              <div className="h-10 bg-gray-200 rounded w-32"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-  if (projectError || formConfigError)
+  if (datasetError || formConfigError)
     return (
       <div className="container mx-auto px-6 py-8">
         <div className="text-center py-12">
@@ -180,9 +125,7 @@ export default function RunApplicationPage() {
       </div>
     );
 
-  const dataset = projectData?.datasets?.find((ds) => ds.id === datasetId);
-
-  if (!dataset) {
+  if (datasetNotFound || !dataset) {
     return (
       <div className="container mx-auto px-6 py-8">
         <h1 className="text-2xl font-bold mb-4 text-red-600">
@@ -203,48 +146,21 @@ export default function RunApplicationPage() {
 
   return (
     <div className="container mx-auto px-6 py-8">
-      {/* Breadcrumb navigation */}
-      <nav className="mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2 text-sm text-gray-500">
-          <li>
-            <Link
-              href={`/projects/${projectNumber}`}
-              className="hover:text-gray-700"
-            >
-              Project {projectNumber}
-            </Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link
-              href={`/projects/${projectNumber}/datasets`}
-              className="hover:text-gray-700"
-            >
-              Datasets
-            </Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link
-              href={`/projects/${projectNumber}/datasets/${datasetId}`}
-              className="hover:text-gray-700"
-            >
-              {dataset.name}
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium" aria-current="page">
-            Run {appName}
-          </li>
-        </ol>
-      </nav>
+
+      <Breadcrumbs items={[
+        { label: 'Projects', href: '/projects' },
+        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+        { label: 'Datasets', href: `/projects/${projectNumber}/datasets` },
+        { label: dataset.name, href: `/projects/${projectNumber}/datasets/${datasetId}`},
+        { label: `Run ${appName}`, active: true }
+      ]} />
 
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Run Application: {appName}</h1>
           <p className="text-gray-600 mt-1">Dataset: {dataset.name}</p>
           <p className="text-gray-600 mt-1">
-            Descripton: QC tool from github.com/.... {"{app.description}"}
+            Description: {formConfig?.description || "Loading application description..."}
           </p>
         </div>
         <Link

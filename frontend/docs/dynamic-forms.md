@@ -24,7 +24,8 @@ The dynamic form system enables the frontend to generate forms dynamically based
 
 ```typescript
 export interface AppFormResponse {
-  appName: string;        
+  appName: string;
+  description: string;        
   fields: AppFormField[];
 }
 

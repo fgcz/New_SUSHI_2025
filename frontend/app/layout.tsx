@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import "highlight.js/styles/github.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/providers/AuthContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 
 const inter = Inter({

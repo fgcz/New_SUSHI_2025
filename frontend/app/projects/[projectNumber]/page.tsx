@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/providers/AuthContext';
 import { useParams } from 'next/navigation';
+import Breadcrumbs from '@/lib/ui/Breadcrumbs';
 
 // Define the type for a menu item
 interface MenuItem {
@@ -184,9 +185,10 @@ export default function ProjectPage() {
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
           <h1 className="text-3xl font-bold" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>Sushi</h1>
           <nav className="flex items-center space-x-4">
+            <Link href="/projects" className="text-gray-600 hover:text-blue-600">Projects</Link>
             <Link href={`/projects/${projectNumber}/datasets`} className="text-gray-600 hover:text-blue-600">DataSets</Link>
             <Link href="/import" className="text-gray-600 hover:text-blue-600">Import</Link>
-            <Link href="/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
+            <Link href="/projects/1001/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
             <Link href="/gstore" className="text-gray-600 hover:text-blue-600">gStore</Link>
             <Link href="/docs" className="text-gray-600 hover:text-blue-600">Docs</Link>
             <Link href="/help" className="text-gray-600 hover:text-blue-600">Help</Link>
@@ -210,6 +212,10 @@ export default function ProjectPage() {
       </header>
 
       <main className="flex-grow container mx-auto px-6 py-10">
+        <Breadcrumbs items={[
+          { label: 'Projects', href: '/projects' },
+          { label: `Project ${projectNumber}`, active: true }
+        ]} />
         <AuthStatus />
         <div className="bg-white p-8 rounded-lg shadow-inner" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
             <h2 className="text-3xl font-bold text-gray-800 mb-8">

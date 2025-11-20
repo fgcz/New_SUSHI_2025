@@ -92,6 +92,46 @@ export default function DocsLayout({
                       Dynamic Forms
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="/docs/providers" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Providers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/pagination" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Pagination Architecture
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/table-editing" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Table Editing System
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/linting" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Linting System
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/testing" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Testing Philosophy
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </aside>

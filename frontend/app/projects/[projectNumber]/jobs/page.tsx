@@ -15,8 +15,26 @@ const StatusBadge = ({ status }: { status: string }) => {
         return 'bg-blue-100 text-blue-800';
       case 'FAILED':
         return 'bg-red-100 text-red-800';
-      case 'CANCELED+':
+      case 'CANCELLED+':
         return 'bg-gray-100 text-gray-800';
+      case 'CREATED':
+        return 'bg-gray-100 text-gray-800';
+      case 'SUBMITTED':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'PENDING':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'SCRIPT_NOT_FOUND':
+        return 'bg-red-100 text-red-800';
+      case 'PARAMS_ERROR':
+        return 'bg-red-100 text-red-800';
+      case 'COPY_LOGS_FAILED':
+        return 'bg-orange-100 text-orange-800';
+      case 'FAILED_SCRIPT_NOT_FOUND':
+        return 'bg-red-100 text-red-800';
+      case 'FAILED_PARAMS_ERROR':
+        return 'bg-red-100 text-red-800';
+      case 'SLURM_ERROR_ON_SUBMIT':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }

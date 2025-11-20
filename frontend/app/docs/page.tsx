@@ -1,12 +1,6 @@
 export default function DocsHomePage() {
   return (
     <div className="prose max-w-none">
-      <h1>Documentation</h1>
-      <p className="text-lg text-gray-600">
-        Welcome to the Sushi Frontend documentation. Here you'll find comprehensive guides and references for the codebase.
-      </p>
-      
-      <h2>Available Documentation</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 not-prose">
         <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold mb-2">Type System</h3>
@@ -59,6 +53,72 @@ export default function DocsHomePage() {
             View Dynamic Forms →
           </a>
         </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Providers</h3>
+          <p className="text-gray-600 mb-4">
+            Explanation about providers AuthProvider and QueryProvider used in app/layout.tsx
+          </p>
+          <a 
+            href="/docs/providers" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Providers
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Pagination Architecture</h3>
+          <p className="text-gray-600 mb-4">
+            How our URL-driven pagination and search system works with hooks and TanStack Query.
+          </p>
+          <a 
+            href="/docs/pagination" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Pagination Guide →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Table Editing System</h3>
+          <p className="text-gray-600 mb-4">
+            Complete architecture guide for the editable table system used for sample data manipulation.
+          </p>
+          <a 
+            href="/docs/table-editing" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Table Editing Guide →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Linting System</h3>
+          <p className="text-gray-600 mb-4">
+            Complete guide to the code linting and formatting system, covering ESLint, Prettier, TypeScript, and Coc.nvim integration.
+          </p>
+          <a 
+            href="/docs/linting" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Linting System →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Testing Philosophy</h3>
+          <p className="text-gray-600 mb-4">
+            Testing strategy and implementation plan covering unit tests, integration tests, best practices, and tooling setup.
+          </p>
+          <a 
+            href="/docs/testing" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Testing Philosophy →
+          </a>
+        </div>
+
       </div>
 
     </div>
