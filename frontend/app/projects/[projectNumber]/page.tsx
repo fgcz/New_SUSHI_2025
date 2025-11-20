@@ -20,7 +20,7 @@ const MenuCard = ({ item }: { item: MenuItem }) => (
     <Link href={item.link} className="block p-6 text-center">
       <div className="flex flex-col items-center">
         <div className="w-32 h-32 relative mb-4">
-            <Image src={item.icon} alt={`${item.title} icon`} fill className="object-contain" />
+            <Image src={item.icon} alt={`${item.title} icon`} fill sizes="128px" className="object-contain" />
         </div>
         <h3 className="text-xl font-semibold text-blue-700 mb-2">{item.title}</h3>
         <p className="text-gray-600 text-sm">
@@ -188,6 +188,7 @@ export default function ProjectPage() {
             <Link href="/import" className="text-gray-600 hover:text-blue-600">Import</Link>
             <Link href="/jobs" className="text-gray-600 hover:text-blue-600">Jobs</Link>
             <Link href="/gstore" className="text-gray-600 hover:text-blue-600">gStore</Link>
+            <Link href="/docs" className="text-gray-600 hover:text-blue-600">Docs</Link>
             <Link href="/help" className="text-gray-600 hover:text-blue-600">Help</Link>
             <div className="border-l border-gray-300 h-6"></div>
             <span className="font-semibold">Project {projectNumber}</span>
