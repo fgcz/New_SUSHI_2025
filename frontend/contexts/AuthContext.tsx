@@ -2,7 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { apiClient, AuthenticationStatus } from '@/lib/api';
+import { authApi, httpClient } from '@/lib/api';
+import { AuthenticationStatus } from '@/lib/types';
 
 interface AuthContextType {
   authStatus: AuthenticationStatus | null;
@@ -27,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       
       // Get authentication options from backend
-      const status = await apiClient.getAuthenticationStatus();
+      const status = await authApi.getAuthenticationStatus();
       
       // If authentication is skipped, don't check JWT token
       if (status.authentication_skipped) {
@@ -37,18 +38,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       // If JWT token exists, verify it and get user info
-      if (apiClient['token']) {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
+      if (token) {
         try {
-          const verifyResult = await apiClient.verifyToken();
+          const verifyResult = await authApi.verifyToken();
           if (verifyResult.valid && verifyResult.user) {
             status.current_user = verifyResult.user.login;
           } else {
             // Token is invalid, clear it
-            apiClient.logout();
+            authApi.logout();
           }
         } catch (verifyError) {
           // Token is invalid, clear it
-          apiClient.logout();
+          authApi.logout();
         }
       }
       
@@ -73,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     // Clear JWT token
-    apiClient.logout();
+    authApi.logout();
     
     // Clear authentication status
     setAuthStatus(null);
