@@ -34,24 +34,22 @@ module Api
 
         # Build detailed payload similar to legacy SUSHI data_set/show
         render json: {
-          dataset: {
-            id: dataset.id,
-            name: dataset.name,
-            created_at: dataset.created_at,
-            user: (current_user&.login || 'anonymous'),
-            project_number: dataset.project&.number,
-            samples_count: dataset.samples_length,
-            completed_samples: dataset.completed_samples,
-            parent_id: dataset.parent_id,
-            children_ids: dataset.data_sets.pluck(:id),
-            bfabric_id: dataset.bfabric_id,
-            order_id: dataset.order_id,
-            comment: dataset.comment,
-            sushi_app_name: dataset.sushi_app_name,
-            headers: dataset.factor_first_headers,
-            samples: serialize_samples(dataset),
-            applications: runnable_applications(dataset)
-          }
+          id: dataset.id,
+          name: dataset.name,
+          created_at: dataset.created_at,
+          user: (current_user&.login || 'anonymous'),
+          project_number: dataset.project&.number,
+          samples_count: dataset.samples_length,
+          completed_samples: dataset.completed_samples,
+          parent_id: dataset.parent_id,
+          children_ids: dataset.data_sets.pluck(:id),
+          bfabric_id: dataset.bfabric_id,
+          order_id: dataset.order_id,
+          comment: dataset.comment,
+          sushi_app_name: dataset.sushi_app_name,
+          headers: dataset.factor_first_headers,
+          samples: serialize_samples(dataset),
+          applications: runnable_applications(dataset)
         }
       rescue ActiveRecord::RecordNotFound
         render json: { error: 'Dataset not found' }, status: :not_found
