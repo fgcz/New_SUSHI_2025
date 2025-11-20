@@ -33,3 +33,6 @@ docker_files/FGCZ_CA_2019.crt
 
 # old SUSHI
 old_sushi/
+
+# cursor_log
+cursor_log/
