@@ -66,7 +66,7 @@ export default function ProjectJobsPage() {
   // Debounced search - update URL after 300ms of no typing
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      const sp = new URLSearchParams(searchParams);
+      const sp = new URLSearchParams(searchParams.toString());
       if (qLocal) sp.set('q', qLocal); else sp.delete('q');
       sp.set('page', '1'); // Reset to page 1 on new search
       
@@ -88,7 +88,7 @@ export default function ProjectJobsPage() {
   // Duplicate jobs 50 times each to get 150 total jobs
   const allJobs = useMemo(() => {
     if (!jobsData?.jobs) return [];
-    const duplicatedJobs = [];
+    const duplicatedJobs: any[] = [];
     for (let i = 0; i < 50; i++) {
       jobsData.jobs.forEach((job, index) => {
         duplicatedJobs.push({
@@ -131,14 +131,14 @@ export default function ProjectJobsPage() {
   };
 
   const onChangePer = (nextPer: number) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     sp.set('per', String(nextPer));
     sp.set('page', '1');
     router.push(`?${sp.toString()}`);
   };
 
   const goToPage = (nextPage: number) => {
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParams.toString());
     sp.set('page', String(nextPage));
     router.push(`?${sp.toString()}`);
   };
