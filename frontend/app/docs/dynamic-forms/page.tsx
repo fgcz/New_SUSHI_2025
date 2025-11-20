@@ -60,7 +60,7 @@ export default async function DynamicFormsPage() {
               </td>
             ),
             // Custom styling for code blocks
-            code: ({ node, inline, className, children, ...props }) => {
+            code: ({ node, inline, className, children, ...props }: any) => {
               if (inline) {
                 return (
                   <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono" {...props}>
