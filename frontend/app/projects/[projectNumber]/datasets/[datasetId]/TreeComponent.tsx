@@ -7,6 +7,13 @@ import $ from 'jquery';
 import 'jstree';
 import 'jstree/dist/themes/default/style.min.css';
 
+// Type extension for jstree
+declare global {
+  interface JQuery {
+    jstree(options?: any): any;
+  }
+}
+
 interface TreeComponentProps {
   datasetTree: DatasetTreeNode[];
   datasetId: number;
