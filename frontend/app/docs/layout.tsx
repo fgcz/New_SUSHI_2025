@@ -126,10 +126,26 @@ export default function DocsLayout({
                   </li>
                   <li>
                     <Link 
-                      href="/docs/testing" 
+                      href="/docs/test-strategy" 
                       className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                     >
-                      Testing Philosophy
+                      Test Strategy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/test-layers" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Test Layers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/backend-api" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Backend API Endpoints
                     </Link>
                   </li>
                 </ul>

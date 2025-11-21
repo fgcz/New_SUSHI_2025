@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/providers/AuthContext';
-import { apiClient } from '@/lib/api';
+import { authApi } from '@/lib/api';
 
 export default function LoginPage() {
   const [login, setLogin] = useState('');
@@ -28,7 +28,7 @@ export default function LoginPage() {
 
     try {
       // Use JWT authentication (supports both standard and LDAP)
-      const result = await apiClient.login(login, password);
+      const result = await authApi.login(login, password);
 
       if (result.token) {
         // Login successful

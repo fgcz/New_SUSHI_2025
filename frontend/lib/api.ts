@@ -43,7 +43,7 @@ export const apiClient = {
   // Dataset methods
   getDatasets: datasetApi.getDatasets.bind(datasetApi),
   getDataset: datasetApi.getDataset.bind(datasetApi),
-  createDataset: datasetApi.createDataset.bind(datasetApi),
+  // createDataset: datasetApi.createDataset.bind(datasetApi), // Commented out in Phase 9
   
   // Project methods
   getUserProjects: projectApi.getUserProjects.bind(projectApi),

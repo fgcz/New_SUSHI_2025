@@ -107,15 +107,41 @@ export default function DocsHomePage() {
         </div>
 
         <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
-          <h3 className="text-lg font-semibold mb-2">Testing Philosophy</h3>
+          <h3 className="text-lg font-semibold mb-2">Test Strategy</h3>
           <p className="text-gray-600 mb-4">
             Testing strategy and implementation plan covering unit tests, integration tests, best practices, and tooling setup.
           </p>
           <a 
-            href="/docs/testing" 
+            href="/docs/test-strategy" 
             className="inline-flex items-center text-blue-600 hover:text-blue-800"
           >
-            View Testing Philosophy →
+            View Test Strategy →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Test Layers</h3>
+          <p className="text-gray-600 mb-4">
+            Overview of API layer, hook layer, and integration testing approaches with practical examples and focus areas.
+          </p>
+          <a 
+            href="/docs/test-layers" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Test Layers →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Backend API Endpoints</h3>
+          <p className="text-gray-600 mb-4">
+            Complete reference for all available REST API endpoints including authentication, projects, datasets, jobs, and configuration.
+          </p>
+          <a 
+            href="/docs/backend-api" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View API Documentation →
           </a>
         </div>
 
