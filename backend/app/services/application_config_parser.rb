@@ -34,6 +34,11 @@ class ApplicationConfigParser
     def find_app_file(app_name)
       # Sanitize app_name to prevent directory traversal
       sanitized_name = app_name.gsub(/[^a-zA-Z0-9_]/, '')
+      
+      # Remove 'App' suffix if present (e.g., 'FastqcApp' -> 'Fastqc')
+      # This handles both 'Fastqc' and 'FastqcApp' as input
+      sanitized_name = sanitized_name.sub(/App$/, '')
+      
       app_file = APPS_DIR.join("#{sanitized_name}App.rb")
       
       return app_file if File.exist?(app_file)

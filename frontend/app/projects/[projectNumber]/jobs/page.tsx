@@ -112,11 +112,11 @@ export default function ProjectJobsPage() {
         duplicatedJobs.push({
           ...job,
           id: 1000 + (i * 3) + index + 1,
-          dataset: {
+          dataset: job.dataset ? {
             ...job.dataset,
             name: `${job.dataset.name} #${i + 1}`,
             id: job.dataset.id + i
-          }
+          } : null
         });
       });
     }
@@ -127,7 +127,7 @@ export default function ProjectJobsPage() {
   const filteredJobs = useMemo(() => {
     if (!qParam) return allJobs;
     return allJobs.filter(job => 
-      job.dataset.name.toLowerCase().includes(qParam.toLowerCase())
+      job.dataset?.name?.toLowerCase().includes(qParam.toLowerCase())
     );
   }, [allJobs, qParam]);
 
