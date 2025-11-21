@@ -145,6 +145,45 @@ export default function DocsHomePage() {
           </a>
         </div>
 
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Multiple UI Triggers</h3>
+          <p className="text-gray-600 mb-4">
+            Analysis of NextJS rendering cycles and React Query data fetching patterns that cause multiple component re-renders.
+          </p>
+          <a 
+            href="/docs/multiple-ui-triggers" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View UI Triggers Guide →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Props Immutability</h3>
+          <p className="text-gray-600 mb-4">
+            Why React props should never be mutated and how to properly handle editable data with local state patterns.
+          </p>
+          <a 
+            href="/docs/props-immutability" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View Props Guide →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">State Management</h3>
+          <p className="text-gray-600 mb-4">
+            Guide to state management and data persistence between pages using localStorage, React Context, and server-side sessions.
+          </p>
+          <a 
+            href="/docs/state-management" 
+            className="inline-flex items-center text-blue-600 hover:text-blue-800"
+          >
+            View State Management →
+          </a>
+        </div>
+
       </div>
 
     </div>

@@ -34,8 +34,8 @@ export const renderFormField = ({ field, value, onChange }: FieldRendererProps):
           onChange={(e) => onChange(field.name, e.target.value)}
           className={`${baseClasses} bg-white w-full`}
         >
-          {field.options?.map((option) => (
-            <option key={option} value={option}>
+          {field.options?.map((option, index) => (
+            <option key={index} value={option}>
               {option}
             </option>
           ))}
@@ -56,8 +56,8 @@ export const renderFormField = ({ field, value, onChange }: FieldRendererProps):
           className={`${baseClasses} bg-white w-full`}
           size={Math.min(field.options?.length || 3, 5)}
         >
-          {field.options?.map((option) => (
-            <option key={option} value={option}>
+          {field.options?.map((option, index) => (
+            <option key={index} value={option}>
               {option}
             </option>
           ))}

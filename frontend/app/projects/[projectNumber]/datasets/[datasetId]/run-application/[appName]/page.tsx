@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { JobSubmissionRequest, DynamicFormData } from "@/lib/types";
 import {
@@ -18,6 +18,7 @@ export default function RunApplicationPage() {
     datasetId: string;
     appName: string;
   }>();
+  const router = useRouter();
   const projectNumber = Number(params.projectNumber);
   const datasetId = Number(params.datasetId);
   const appName = params.appName;
@@ -89,18 +90,27 @@ export default function RunApplicationPage() {
 
     if (!dataset) return;
 
-    const jobData: JobSubmissionRequest = {
-      project_number: projectNumber,
-      dataset_id: datasetId,
-      app_name: appName,
-      next_dataset: {
+    const jobData = {
+      projectNumber,
+      datasetId,
+      appName,
+      nextDataset: {
         name: nextDatasetData.datasetName,
         comment: nextDatasetData.datasetComment || undefined,
       },
       parameters: dynamicFormData,
     };
 
-    await submitJob(jobData);
+    try {
+      // Store job data in localStorage
+      localStorage.setItem('sushi_job_submission_data', JSON.stringify(jobData));
+      
+      // Navigate to confirmation page
+      router.push(`/projects/${projectNumber}/datasets/${datasetId}/run-application/${appName}/confirm`);
+    } catch (error) {
+      console.error('Failed to store job data:', error);
+      alert('Failed to save job data. Please try again.');
+    }
   };
 
   if (isDatasetLoading || isFormConfigLoading) {
@@ -144,6 +154,31 @@ export default function RunApplicationPage() {
         </Link>
       </div>
     );
+  }
+
+  // Check if the app exists in the dataset's runnable applications
+  const isAppAvailable = dataset.applications?.some((category) =>
+    category.apps.some((app) => app.class_name === appName)
+  );
+
+  if (!isAppAvailable) {
+    console.log("This Application cannot run on this dataset")
+    // return (
+    //   <div className="container mx-auto px-6 py-8">
+    //     <h1 className="text-2xl font-bold mb-4 text-red-600">
+    //       Application Cannot Run on This Dataset
+    //     </h1>
+    //     <p className="text-gray-700 mb-6">
+    //       The application "{appName}" is not available for this dataset.
+    //     </p>
+    //     <Link
+    //       href={`/projects/${projectNumber}/datasets/${datasetId}`}
+    //       className="text-blue-600 hover:underline"
+    //     >
+    //       ← Back to Dataset
+    //     </Link>
+    //   </div>
+    // );
   }
 
   return (
@@ -239,28 +274,14 @@ export default function RunApplicationPage() {
                 ))}
               </div>
 
-              {/* Error/Success Messages */}
-              {submitError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-red-600 text-sm">{submitError}</p>
-                </div>
-              )}
-              {submitSuccess && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-green-600 text-sm">
-                    Job submitted successfully! Check the console for details.
-                  </p>
-                </div>
-              )}
 
               {/* Submit button */}
               <div className="pt-4">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 font-medium"
                 >
-                  {isSubmitting ? "Submitting..." : "Submit Job"}
+                  Continue to Review →
                 </button>
               </div>
             </form>
