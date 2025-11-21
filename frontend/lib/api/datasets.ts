@@ -1,13 +1,13 @@
 import { httpClient } from './client';
-import { DatasetsResponse, Dataset, CreateDatasetResponse, DatasetSamplesResponse, DatasetRunnableAppsResponse, DatasetTreeResponse} from '../types/dataset';
+import { DatasetsResponse, Dataset, ProjectDataset, CreateDatasetResponse, DatasetSamplesResponse, DatasetRunnableAppsResponse, DatasetTreeResponse} from '../types/dataset';
 
 export const datasetApi = {
     async getDatasets(): Promise<DatasetsResponse> {
         return httpClient.request<DatasetsResponse>('/api/v1/datasets');
     },
 
-    async getDataset(id: number): Promise<Dataset> {
-        return httpClient.request<Dataset>(`/api/v1/datasets/${id}`);
+    async getDataset(id: number): Promise<ProjectDataset> {
+        return httpClient.request<ProjectDataset>(`/api/v1/datasets/${id}`);
     },
 
     // async createDataset(name: string): Promise<CreateDatasetResponse> {
