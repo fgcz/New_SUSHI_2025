@@ -107,12 +107,12 @@ export default function DatasetDetailPage() {
           </div>
 
           <div className="mt-8 pt-6 border-t">
-            <DatasetSamples datasetId={datasetId} projectNumber={projectNumber} />
+            <DatasetSamples samples={dataset.samples} datasetId={datasetId} projectNumber={projectNumber} />
           </div>
 
           <div className="mt-8 pt-6 border-t">
             <h3 className="text-lg font-semibold mb-4">Runnable Applications</h3>
-            <DatasetApps datasetId={datasetId} projectNumber={projectNumber} />
+            <DatasetApps runnableApps={dataset.applications} datasetId={datasetId} projectNumber={projectNumber} />
           </div>
         </div>
       </div>

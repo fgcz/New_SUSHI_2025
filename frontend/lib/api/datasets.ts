@@ -1,5 +1,5 @@
 import { httpClient } from './client';
-import { DatasetsResponse, Dataset, ProjectDataset, CreateDatasetResponse, DatasetSamplesResponse, DatasetRunnableAppsResponse, DatasetTreeResponse} from '../types/dataset';
+import { DatasetsResponse, ProjectDataset, DatasetTreeResponse} from '../types/dataset';
 
 export const datasetApi = {
     async getDatasets(): Promise<DatasetsResponse> {
@@ -19,14 +19,5 @@ export const datasetApi = {
 
     async getDatasetTree(id: number): Promise<DatasetTreeResponse> {
         return httpClient.request<DatasetTreeResponse>(`/api/v1/datasets/${id}/tree`);
-    },
-
-
-    async getDatasetSamples(id: number): Promise<DatasetSamplesResponse> {
-        return httpClient.request<DatasetSamplesResponse>(`/api/v1/datasets/${id}/samples`);
-    },
-
-    async getRunnableApps(id: number): Promise<DatasetRunnableAppsResponse> {
-        return httpClient.request<DatasetRunnableAppsResponse>(`/api/v1/datasets/${id}/runnable_apps`);
     },
 };

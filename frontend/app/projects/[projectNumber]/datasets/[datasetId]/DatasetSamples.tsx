@@ -1,52 +1,43 @@
 import Link from 'next/link';
 import { DatasetSample } from '@/lib/types';
-import { useDatasetSamples } from '@/lib/hooks';
 
 interface DatasetSamplesProps {
-  datasetId: number;
-  projectNumber: number;
+  samples: DatasetSample[]
+  projectNumber: number,
+  datasetId: number,
 }
 
-export default function DatasetSamples({ datasetId, projectNumber }: DatasetSamplesProps) {
-  const { samples: datasetSamples, isLoading: isDatasetSamplesLoading, error: datasetSamplesError, isEmpty: isSamplesEmpty } = useDatasetSamples(datasetId);
+export default function DatasetSamples({ samples, projectNumber, datasetId}: DatasetSamplesProps) {
 
-  if (isDatasetSamplesLoading && !datasetSamples) {
-    return (
-      <div className="animate-pulse">
-        <div className="bg-gray-200 rounded-lg">
-          <div className="px-4 py-3 bg-gray-100 border-b">
-            <div className="flex space-x-4">
-              <div className="h-4 bg-gray-300 rounded w-16"></div>
-              <div className="h-4 bg-gray-300 rounded w-24"></div>
-              <div className="h-4 bg-gray-300 rounded w-20"></div>
-              <div className="h-4 bg-gray-300 rounded w-32"></div>
-            </div>
-          </div>
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="px-4 py-3 border-b">
-              <div className="flex space-x-4">
-                <div className="h-4 bg-gray-200 rounded w-12"></div>
-                <div className="h-4 bg-gray-200 rounded w-20"></div>
-                <div className="h-4 bg-gray-200 rounded w-16"></div>
-                <div className="h-4 bg-gray-200 rounded w-28"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // TODO: move this part of the code to when you load the dataset info, not in the dataset samples
+//   if (isDatasetSamplesLoading && !datasetSamples) {
+//     return (
+//       <div className="animate-pulse">
+//         <div className="bg-gray-200 rounded-lg">
+//           <div className="px-4 py-3 bg-gray-100 border-b">
+//             <div className="flex space-x-4">
+//               <div className="h-4 bg-gray-300 rounded w-16"></div>
+//               <div className="h-4 bg-gray-300 rounded w-24"></div>
+//               <div className="h-4 bg-gray-300 rounded w-20"></div>
+//               <div className="h-4 bg-gray-300 rounded w-32"></div>
+//             </div>
+//           </div>
+//           {[...Array(3)].map((_, i) => (
+//             <div key={i} className="px-4 py-3 border-b">
+//               <div className="flex space-x-4">
+//                 <div className="h-4 bg-gray-200 rounded w-12"></div>
+//                 <div className="h-4 bg-gray-200 rounded w-20"></div>
+//                 <div className="h-4 bg-gray-200 rounded w-16"></div>
+//                 <div className="h-4 bg-gray-200 rounded w-28"></div>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     );
+//   }
 
-  if (datasetSamplesError) {
-    return (
-      <div className="text-center py-8 bg-red-50 rounded-lg border border-red-200">
-        <div className="text-red-600 font-medium mb-2">Failed to load samples</div>
-        <p className="text-red-500 text-sm">There was an error loading the sample data for this dataset.</p>
-      </div>
-    );
-  }
-
-  if (!datasetSamples || isSamplesEmpty) {
+  if (samples.length == 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
         <div className="text-gray-400 text-lg mb-2">📊</div>
@@ -72,18 +63,18 @@ export default function DatasetSamples({ datasetId, projectNumber }: DatasetSamp
         <table className="min-w-full bg-white border border-gray-200 rounded-lg">
           <thead className="bg-gray-50">
             <tr>
-              {Array.from(new Set(datasetSamples.flatMap(sample => Object.keys(sample)))).map((column) => (
-                <th key={column} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+              {Array.from(new Set(samples.flatMap(sample => Object.keys(sample)))).map((column) => (
+                <th key={column} className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b max-w-[200px] truncate">
                   {column}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {datasetSamples.map((sample: DatasetSample, index: number) => (
+            {samples.map((sample: DatasetSample, index: number) => (
               <tr key={sample.Name} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                {Array.from(new Set(datasetSamples.flatMap(s => Object.keys(s)))).map((column) => (
-                  <td key={column} className="px-4 py-3 text-sm text-gray-900 border-b">
+                {Array.from(new Set(samples.flatMap(s => Object.keys(s)))).map((column) => (
+                  <td key={column} className="px-4 py-3 text-sm text-gray-900 border-b max-w-[200px] truncate">
                     {sample[column] !== undefined ? String(sample[column]) : '-'}
                   </td>
                 ))}

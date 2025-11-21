@@ -20,6 +20,13 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Setup
+
+Do not forget to set up .env.local
+```shell
+NEXT_PUBLIC_API_URL=http://localhost:4070
+```
+
 ## Documentation
 
 - **[Type System Documentation](./docs/types.md)** - Comprehensive guide to all TypeScript types, their usage, and import patterns
