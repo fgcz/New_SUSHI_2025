@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import EditableTable from './EditableTable';
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
-import { useDatasetBase, useDatasetSamples } from '@/lib/hooks';
+import { useDatasetBase } from '@/lib/hooks';
 import SamplesEditPageSkeleton from './SamplesEditPageSkeleton';
 import DatasetInfoCard from '../../DatasetInfoCard';
 
@@ -14,11 +14,13 @@ export default function SamplesEditPage() {
   const datasetId = Number(params.datasetId);
 
   const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
-  const { samples: datasetSamples, isLoading: isDatasetSamplesLoading, error: datasetSamplesError } = useDatasetSamples(datasetId);
 
-  if (isDatasetLoading) return <SamplesEditPageSkeleton />;
+  if (isDatasetLoading) {
+    return <SamplesEditPageSkeleton />;
+  }
   
-  if (datasetError) return (
+  if (datasetError){
+    return (
     <div className="container mx-auto px-6 py-8">
       <div className="text-center py-12">
         <div className="text-red-600 text-lg font-medium mb-2">Failed to load dataset</div>
@@ -30,6 +32,7 @@ export default function SamplesEditPage() {
     </div>
   );
 
+  } 
   if (datasetNotFound || !dataset) {
     return (
       <div className="container mx-auto px-6 py-8">
@@ -75,11 +78,7 @@ export default function SamplesEditPage() {
           </div>
           <div className="p-6">
             <EditableTable
-              initialSamples={datasetSamples || []}
-              projectNumber={projectNumber}
-              datasetId={datasetId}
-              isLoading={isDatasetSamplesLoading}
-              error={datasetSamplesError}
+              initialSamples={dataset.samples}
             />
           </div>
         </div>

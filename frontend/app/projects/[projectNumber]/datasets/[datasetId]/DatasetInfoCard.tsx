@@ -30,7 +30,7 @@ export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600">Created by:</span>
-                <span>{dataset.user_login || 'N/A'}</span>
+                <span>{dataset.user || 'N/A'}</span>
               </div>
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600">Samples:</span>
-                <span>{dataset.completed_samples ?? 0} / {dataset.samples_length ?? 0}</span>
+                <span>{dataset.completed_samples ?? 0} / {dataset.samples_count ?? 0}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600">BFabric ID:</span>
@@ -57,6 +57,21 @@ export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
                       className="text-blue-600 hover:underline"
                     >
                       {dataset.bfabric_id}
+                    </a>
+                  ) : 'N/A'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium text-gray-600">Order ID:</span>
+                <span>
+                  {dataset.order_id ? (
+                    <a
+                      href={`https://fgcz-bfabric.uzh.ch/bfabric/dataset/show.html?id=${dataset.bfabric_id}&tab=details`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {dataset.order_id}
                     </a>
                   ) : 'N/A'}
                 </span>

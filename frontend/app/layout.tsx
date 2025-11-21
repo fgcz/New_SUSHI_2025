@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import "highlight.js/styles/github.css";
+import "handsontable/styles/handsontable.min.css"
 import { AuthProvider } from "@/providers/AuthContext";
 import { QueryProvider } from "@/providers/QueryProvider";
 

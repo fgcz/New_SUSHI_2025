@@ -148,6 +148,30 @@ export default function DocsLayout({
                       Backend API Endpoints
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="/docs/multiple-ui-triggers" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Multiple UI Triggers
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/props-immutability" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Props Immutability
+                    </Link>
+                  </li>
+                  <li>
+                    <Link 
+                      href="/docs/state-management" 
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      State Management
+                    </Link>
+                  </li>
                 </ul>
               </nav>
             </aside>

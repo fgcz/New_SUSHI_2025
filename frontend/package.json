@@ -14,8 +14,10 @@
     "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "dependencies": {
+    "@handsontable/react-wrapper": "^16.1.1",
     "@tanstack/react-query": "^5.87.4",
     "@types/jquery": "^3.5.33",
+    "handsontable": "^16.1.1",
     "jquery": "^3.7.1",
     "jstree": "^3.3.17",
     "next": "14.1.0",

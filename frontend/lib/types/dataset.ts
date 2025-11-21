@@ -11,23 +11,22 @@ export interface ProjectDataset {
   name: string;
   sushi_app_name?: string;
   completed_samples?: number;
-  samples_length?: number;
+  samples_count?: number;
   parent_id?: number | null;
   children_ids?: number[];
-  user_login?: string | null;
+  user?: string | null;
   created_at: string;
   bfabric_id?: number | null;
+  order_id?: number | null;
   project_number: number;
+  applications: DatasetAppCategory[],
+  samples: DatasetSample[];
 }
 
 export interface DatasetsResponse {
   datasets: Dataset[];
   total_count: number;
   current_user: string;
-}
-
-export interface DatasetResponse {
-  dataset: Dataset;
 }
 
 export interface CreateDatasetResponse {
@@ -43,12 +42,15 @@ export interface DatasetSample {
 
 export type DatasetSamplesResponse = DatasetSample[];
 
-export interface DatasetRunnableApp {
+export interface DatasetAppCategory {
   category: string;
-  applications: string[];
+  apps: DatasetApp[];
 }
 
-export type DatasetRunnableAppsResponse = DatasetRunnableApp[];
+interface DatasetApp{
+  class_name: string;
+  description: string;
+}
 
 export interface DatasetTreeNode {
   id: number;
