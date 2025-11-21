@@ -77,15 +77,18 @@ export default function ConfirmJobPage() {
       parameters: jobData.parameters,
     };
 
-    const success = await submitJob(submissionData);
-    
-    if (success) {
+    await submitJob(submissionData);
+  };
+
+  // Handle successful submission
+  useEffect(() => {
+    if (submitSuccess) {
       // Clear localStorage after successful submission
       localStorage.removeItem('sushi_job_submission_data');
       // Navigate to jobs page or dataset page
       router.push(`/projects/${projectNumber}/datasets/${datasetId}`);
     }
-  };
+  }, [submitSuccess, router, projectNumber, datasetId]);
 
   const handleMockRun = () => {
     // TODO: Implement mock run functionality

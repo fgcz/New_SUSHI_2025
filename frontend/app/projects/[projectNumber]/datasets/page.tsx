@@ -325,7 +325,7 @@ export default function ProjectDatasetsPage() {
                       <a href={`/projects/${projectNumber}/datasets/${ds.id}`} className="text-blue-600 hover:underline">{ds.name}</a>
                     </td>
                     <td className="p-2 border">{ds.sushi_app_name || ''}</td>
-                    <td className="p-2 border">{ds.completed_samples ?? 0} / {ds.samples_length ?? 0}</td>
+                    <td className="p-2 border">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                     <td className="p-2 border">
                       {ds.parent_id ? (
                         <a href={`/projects/${projectNumber}/datasets/${ds.parent_id}`} className="text-blue-600 hover:underline">{ds.parent_id}</a>
@@ -339,7 +339,7 @@ export default function ProjectDatasetsPage() {
                         </span>
                       ))}
                     </td>
-                    <td className="p-2 border">{ds.user_login || ''}</td>
+                    <td className="p-2 border">{ds.user || ''}</td>
                     <td className="p-2 border">{new Date(ds.created_at).toLocaleString()}</td>
                     <td className="p-2 border">
                       {ds.bfabric_id ? (
