@@ -23,7 +23,7 @@ const MenuCard = ({ item }: { item: MenuItem }) => (
             <Image src={item.icon} alt={`${item.title} icon`} fill sizes="128px" className="object-contain" />
         </div>
         <h3 className="text-xl font-semibold text-brand-700 mb-2">{item.title}</h3>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs">
             {item.description.split('\n').map((line, index) => (
               <span key={index}>{line}{index !== item.description.split('\n').length - 1 && <br />}</span>
             ))}
@@ -67,10 +67,10 @@ export default function ProjectPage() {
 
   return (
     <div className="container mx-auto px-6 py-10">
-      <Breadcrumbs items={[
+      {/*<Breadcrumbs items={[
         { label: 'Projects', href: '/projects' },
         { label: `Project ${projectNumber}`, active: true }
-      ]} />
+      ]} />*/}
       <div className="bg-white p-8 rounded-lg shadow-inner" style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' }}>
           <h2 className="text-3xl font-bold text-gray-800 mb-8">
             Project {projectNumber}

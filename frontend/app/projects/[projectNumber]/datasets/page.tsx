@@ -233,10 +233,12 @@ export default function ProjectDatasetsPage() {
                       <input type="checkbox" className="rounded border-gray-300" checked={selectedSet.has(ds.id)} onChange={() => toggleSelect(ds.id)} />
                     </td>
                     <td className="px-3 py-2 text-gray-600">{ds.id}</td>
+                    {/* <td className="px-3 py-2 max-w-[200px] truncate" title={ds.name}> */}
                     <td className="px-3 py-2">
                       <a href={`/projects/${projectNumber}/datasets/${ds.id}`} className="text-brand-700 hover:text-brand-900 hover:underline font-medium">{ds.name}</a>
                     </td>
-                    <td className="px-3 py-2 text-gray-600">{ds.sushi_app_name || ''}</td>
+                    {/* <td className="px-3 py-2 text-gray-600 max-w-[150px] truncate" title={ds.sushi_app_name || ''}>{ds.sushi_app_name || ''}</td> */}
+                    <td className="px-3 py-2">{ds.sushi_app_name || ''}</td>
                     <td className="px-3 py-2 text-gray-600">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                     <td className="px-3 py-2">
                       {ds.parent_id ? (
@@ -252,7 +254,7 @@ export default function ProjectDatasetsPage() {
                       )) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-2 text-gray-600">{ds.user_login || ''}</td>
-                    <td className="px-3 py-2 text-gray-500">{new Date(ds.created_at).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-gray-500 max-w-[120px] truncate" title={new Date(ds.created_at).toLocaleString()}>{new Date(ds.created_at).toLocaleString()}</td>
                     <td className="px-3 py-2">
                       {ds.bfabric_id ? (
                         <a

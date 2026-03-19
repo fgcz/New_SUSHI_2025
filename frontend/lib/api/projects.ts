@@ -9,11 +9,19 @@ export const projectApi = {
   },
 
   async getProjectDatasets(
-    projectNumber: number, 
+    projectNumber: number,
     params: { q?: string; user?: string; page?: number; per?: number } = {}
   ): Promise<DatasetListResponse> {
     const queryString = httpClient.buildQueryString(params);
     const endpoint = `/api/v1/projects/${projectNumber}/datasets${queryString ? `?${queryString}` : ''}`;
+    return httpClient.request<DatasetListResponse>(endpoint);
+  },
+
+  async getGlobalDatasets(
+    params: { q?: string; user?: string; page?: number; per?: number } = {}
+  ): Promise<DatasetListResponse> {
+    const queryString = httpClient.buildQueryString(params);
+    const endpoint = `/api/v1/datasets${queryString ? `?${queryString}` : ''}`;
     return httpClient.request<DatasetListResponse>(endpoint);
   },
 
@@ -72,5 +80,34 @@ export const projectApi = {
   async getProjectIdFromJob(jobId: number): Promise<{ projectId: number }> {
     // Mock API call - returns the project ID associated with a job
     return Promise.resolve({ projectId: 1001 });
+  },
+
+  async getApplicationsList(): Promise<{ sushiApps: string[]; retiredApps: string[] }> {
+    return Promise.resolve({
+      sushiApps: [
+        'FastQC',
+        'STAR',
+        'Bowtie2',
+        'BWA',
+        'Salmon',
+        'Kallisto',
+        'DESeq2',
+        'EdgeR',
+        'Cufflinks',
+        'HTSeq',
+      ],
+      retiredApps: [
+        'TopHat',
+        'Cuffquant',
+        'Cuffdiff',
+        'Cuffmerge',
+        'Cuffcompare',
+        'CuffnormApp',
+        'SoapAligner',
+        'MAQ',
+        'ELAND',
+        'Novoalign',
+      ],
+    });
   }
 };

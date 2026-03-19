@@ -145,7 +145,7 @@ export default function Header() {
   return (
     <div className="sticky top-0 z-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div className="container mx-auto py-2 flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/" className="text-3xl font-bold hover:text-brand-600 transition-colors mr-4" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>
               <h1>Sushi</h1>
@@ -199,15 +199,15 @@ export default function Header() {
             </form>
 
             {/* Dataset ID Search */}
-            <form onSubmit={handleDatasetSearchSubmit} className="flex items-center ml-2">
-              <input
-                type="text"
-                value={datasetSearchQuery}
-                onChange={(e) => setDatasetSearchQuery(e.target.value)}
-                placeholder="Dataset ID"
-                className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm w-24"
-              />
-            </form>
+            {/* <form onSubmit={handleDatasetSearchSubmit} className="flex items-center ml-2"> */}
+            {/*   <input */}
+            {/*     type="text" */}
+            {/*     value={datasetSearchQuery} */}
+            {/*     onChange={(e) => setDatasetSearchQuery(e.target.value)} */}
+            {/*     placeholder="Dataset ID" */}
+            {/*     className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm w-24" */}
+            {/*   /> */}
+            {/* </form> */}
           </div>
           
           <nav className="flex items-center space-x-4">
@@ -218,6 +218,7 @@ export default function Header() {
             <Link href={`/projects/${projectNumber}/jobs`} className="text-gray-600 hover:text-brand-600">Jobs</Link>
             <Link href={`/files/p${projectNumber}`} className="text-gray-600 hover:text-brand-600">gStore</Link>
             <Link href="/docs" className="text-gray-600 hover:text-brand-600">Docs</Link>
+            <Link href="/dataset/list" className="text-gray-600 hover:text-brand-600">Find</Link>
             <Link href="/help" className="text-gray-600 hover:text-brand-600">Help</Link>
             <div className="border-l border-gray-300 h-6"></div>
             {projectNumber && (

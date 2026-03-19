@@ -19,7 +19,6 @@ describe('ProjectPage', () => {
     render(<ProjectPage />);
     // Title appears in both breadcrumb and h2 heading
     expect(screen.getAllByText('Project 1001').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText('Projects')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Project 1001');
   });
 
