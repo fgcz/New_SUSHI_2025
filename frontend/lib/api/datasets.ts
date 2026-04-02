@@ -3,7 +3,7 @@ import { DatasetFullResponse, DatasetTreeResponse } from '../types/dataset';
 
 export const datasetApi = {
     async getDataset(id: number): Promise<DatasetFullResponse> {
-        const dataset = await httpClient.request<DatasetFullResponse>(`/api/v1/datasets/${id}`);
+        const dataset = await httpClient.request<DatasetFullResponse>(`/datasets/${id}`);
 
         // Add mock "Development: CountQC" application
         const devCategory = {

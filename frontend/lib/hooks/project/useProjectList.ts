@@ -22,7 +22,7 @@ export function useProjectList(): UseProjectListReturn {
   
   const { data: userProjectsData, isLoading, error, refetch } = useQuery({
     queryKey: ['user-projects'],
-    queryFn: () => projectApi.getUserProjects(),
+    queryFn: () => projectApi.getUserProjects("CHANGE THIS"),
     enabled: !authLoading,
     staleTime: 60_000,
   });

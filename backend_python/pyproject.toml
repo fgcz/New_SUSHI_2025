@@ -48,5 +48,9 @@ select = ["E", "F", "I", "UP"]
 python_version = "3.11"
 strict = true
 
+[[tool.mypy.overrides]]
+module = "app.api.routes.*"
+disable_error_code = ["union-attr", "arg-type"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -69,8 +69,8 @@ export default function ProjectDatasetsPage() {
   );
 
   const datasets = data?.datasets ?? [];
-  const total = data?.total_count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / per));
+  const total = data?.pagination.total_count ?? 0;
+  const totalPages = data?.pagination.total_pages ?? 0;
   const allIds = datasets.map((d) => d.id);
   const allSelectedOnPage = allIds.length > 0 && allIds.every((id) => selectedSet.has(id));
   const startIndex = (page - 1) * per + Math.min(1, total);

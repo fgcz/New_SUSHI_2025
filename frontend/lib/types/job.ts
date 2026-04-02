@@ -2,8 +2,17 @@ import { DynamicFormData } from "./app-form";
 
 export interface JobListResponse {
   jobs: JobMinimal[];
-  total_count: number;
-  page: number;
+  pagination: {
+    total_count: number;
+    page: number;
+    per: number;
+    total_pages: number;
+  };
+  filters: {
+    status: string;
+    user: string;
+  };
+  project_number: number;
 }
 
 export interface JobFullResponse {

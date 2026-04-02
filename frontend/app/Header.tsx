@@ -169,14 +169,14 @@ export default function Header() {
                   <div className="px-4 py-2 text-gray-500">Loading...</div>
                 ) : userProjects && userProjects.projects.length > 0 ? (
                   <>
-                    {userProjects.projects.map((project) => (
+                    {userProjects.projects.map((projectNumber) => (
                       <Link
-                        key={project.number}
-                        href={`/projects/${project.number}`}
+                        key={projectNumber}
+                        href={`/projects/${projectNumber}`}
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowProjectsDropdown(false)}
                       >
-                        Project {project.number}
+                        Project {projectNumber}
                       </Link>
                     ))}
                   </>

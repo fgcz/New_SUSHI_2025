@@ -1,8 +1,4 @@
-export interface Project { 
-  number: number;
-}
-
 export interface UserProjectsResponse { 
-  projects: Project[]; 
+  projects: number[]; 
   current_user: string;
 }

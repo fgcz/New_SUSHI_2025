@@ -253,7 +253,7 @@ export default function DatasetDetailPage() {
           {treeError && <div className="h-64 border rounded-lg bg-red-50 flex items-center justify-center"><div className="text-red-600">Failed to load tree data</div></div>}
           {datasetTree && (
             <DatasetTreeRcTree
-              treeNodes={datasetTree}
+              treeNodes={datasetTree.tree}
               projectNumber={projectNumber}
               currentDatasetId={datasetId}
             />

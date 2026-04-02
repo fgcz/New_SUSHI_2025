@@ -1,8 +1,14 @@
 export interface DatasetListResponse {
   datasets: DatasetMinimal[];
-  total_count: number;
-  page: number;
-  per: number;
+  pagination: {
+    total_count: number;
+    page: number;
+    per: number;
+    total_pages: number;
+  }
+  filters: {
+    q: string;
+  }
   project_number: number;
 }
 
@@ -59,14 +65,18 @@ interface DatasetApp{
   description: string;
 }
 
-// -------------------- TREE 
+// -------------------- TREE
 export interface DatasetTreeNode {
   id: number;
   name: string;
   comment?: string;
   parent: number | "#";
+  children_count: number;
 }
 
-export type DatasetTreeResponse = DatasetTreeNode[];
+export type DatasetTreeResponse = {
+  tree: DatasetTreeNode[];
+  project_number: number;
+}
 
 

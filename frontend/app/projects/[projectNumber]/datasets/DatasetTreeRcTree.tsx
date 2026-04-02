@@ -21,21 +21,26 @@ interface RcTreeNode {
   key: string;
   title: string;
   comment?: string;
+  childrenCount: number;
   href: string;
   originalId: number;
   children?: RcTreeNode[];
 }
 
 function nodeName(node: any): string {
-  return node.dataset_data?.name ?? node.name ?? `#${node.id}`;
+  return node.name ?? `#${node.id}`;
 }
 
 function nodeComment(node: any): string | undefined {
-  return node.dataset_data?.comment ?? node.comment;
+  return node.comment;
+}
+
+function nodeChildrenCount(node: any): number {
+  return node.children_count ?? 0;
 }
 
 function nodeHref(node: any, projectNumber: number): string {
-  return node.a_attr?.href ?? `/projects/${projectNumber}/datasets/${node.id}`;
+  return `/projects/${projectNumber}/datasets/${node.id}`;
 }
 
 export default function DatasetTreeRcTree({
@@ -57,6 +62,7 @@ export default function DatasetTreeRcTree({
         key: String(n.id),
         title: nodeName(n),
         comment: nodeComment(n),
+        childrenCount: nodeChildrenCount(n),
         href: nodeHref(n, projectNumber),
         originalId: n.id,
         children: [],
@@ -114,6 +120,9 @@ export default function DatasetTreeRcTree({
     const isCurrent = currentDatasetId !== undefined && node.originalId === currentDatasetId;
     return (
       <span className="text-sm">
+        {node.childrenCount > 0 && (
+          <span className="text-xs text-gray-500 mr-1">({node.childrenCount})</span>
+        )}
         <a
           href={node.href}
           className={`no-underline rounded px-1 hover:bg-brand-50 ${

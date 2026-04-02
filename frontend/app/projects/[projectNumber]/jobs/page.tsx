@@ -106,8 +106,8 @@ export default function ProjectJobsPage() {
 
   // Use backend pagination and filtering data directly
   const jobs = jobsData?.jobs || [];
-  const total = jobsData?.total_count || 0;
-  const totalPages = Math.max(1, Math.ceil(total / per));
+  const total = jobsData?.pagination.total_count || 0;
+  const totalPages = jobsData?.pagination.total_pages || 0;
   const startIndex = (page - 1) * per + Math.min(1, total);
   const endIndex = Math.min(page * per, total);
 

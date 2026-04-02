@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { datasetApi } from '@/lib/api';
-import { DatasetTreeNode } from '@/lib/types';
+import { DatasetTreeResponse } from '@/lib/types';
 
 interface UseDatasetTreeReturn {
-  datasetTree: DatasetTreeNode[] | undefined;
+  datasetTree: DatasetTreeResponse | undefined;
   isLoading: boolean;
   error: Error | null;
   isEmpty: boolean;
@@ -26,8 +26,7 @@ export function useDatasetTree(
   });
 
   // Computed state: Determine if tree is empty
-  const isEmpty = !isLoading && !error && (!datasetTree || datasetTree.length === 0);
-
+  const isEmpty = !isLoading && !error && (!datasetTree || datasetTree.tree.length === 0);
   return {
     datasetTree,
     isLoading,
