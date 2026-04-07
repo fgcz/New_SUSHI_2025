@@ -3,6 +3,10 @@
 from fastapi import APIRouter, Response
 from pydantic import BaseModel
 
+from typing import Annotated
+
+from fastapi import Cookie
+
 from app.api.deps import (
     AuthServiceDep,
     CurrentUserDep,
@@ -16,7 +20,6 @@ router = APIRouter()
 class LoginOptions(BaseModel):
     ldap_auth: bool
     authentication_skipped: bool
-    current_user: str | None
 
 
 class LoginRequest(BaseModel):
@@ -28,14 +31,11 @@ class LoginRequest(BaseModel):
 def login_options() -> LoginOptions:
     """Return available authentication methods.
 
-    If authentication_skipped is True, frontend skips authentication.
+    If authentication_skipped is True, LDAP is bypassed and any request works.
     """
-    skip_auth = settings.ENVIRONMENT == "local"
-
     return LoginOptions(
-        ldap_auth=not skip_auth,
-        authentication_skipped=skip_auth,
-        current_user=None,
+        ldap_auth=not settings.SKIP_AUTH,
+        authentication_skipped=settings.SKIP_AUTH,
     )
 
 
@@ -76,12 +76,13 @@ def refresh(refresh_token: RefreshTokenDep, service: AuthServiceDep) -> dict:
 
 @router.post("/logout")
 def logout(
-    refresh_token: RefreshTokenDep,
     response: Response,
     service: AuthServiceDep,
+    refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> dict:
     """Logout by revoking the refresh token and clearing the cookie."""
-    service.logout(refresh_token)
+    if refresh_token:
+        service.logout(refresh_token)
 
     # Clear the refresh token cookie
     response.delete_cookie(key="refresh_token")

@@ -16,7 +16,8 @@ class LDAPService:
     """Service for LDAP authentication and user queries."""
 
     def __init__(self):
-        self.server = Server(settings.LDAP_HOST, get_info=ALL)
+        if not settings.SKIP_AUTH:
+            self.server = Server(settings.LDAP_HOST, get_info=ALL)
 
     def authenticate(self, username: str, password: str) -> dict:
         """Authenticate a user against LDAP.
@@ -31,6 +32,28 @@ class LDAPService:
         Raises:
             LDAPAuthError: If authentication fails
         """
+        # Skip LDAP and return mock user in development
+        if settings.SKIP_AUTH:
+            return self._mock_authenticate(username)
+
+        return self._ldap_authenticate(username, password)
+
+    def _mock_authenticate(self, username: str) -> dict:
+        """Return mock user data for development.
+
+        Accepts any username, grants access to all projects.
+        """
+        # Use provided username or default to 'dev_user'
+        login = username if username else "dev_user"
+
+        return {
+            "login": login,
+            "email": f"{login}@local.dev",
+            "projects": [],  # Empty means all projects accessible when SKIP_AUTH=True
+        }
+
+    def _ldap_authenticate(self, username: str, password: str) -> dict:
+        """Authenticate against real LDAP server."""
         # Construct the user DN for binding
         user_dn = f"uid={username},{settings.LDAP_USER_SEARCH_BASE}"
 

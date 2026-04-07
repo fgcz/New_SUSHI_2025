@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import Cookie, Depends, Header
 from sqlmodel import Session
 
+from app.core.config import settings
 from app.core.db import get_session
 from app.core.exceptions import AuthenticationError, ForbiddenError
 from app.core.ldap import LDAPService, get_ldap_service
@@ -15,6 +16,8 @@ from app.repositories import (
     JobRepository,
     ProjectRepository,
     RefreshTokenRepository,
+    SampleRepository,
+    SushiApplicationRepository,
     UserRepository,
 )
 from app.services import AuthService, DatasetService, JobService, ProjectService
@@ -48,12 +51,22 @@ def get_refresh_token_repository(session: SessionDep) -> RefreshTokenRepository:
     return RefreshTokenRepository(session)
 
 
+def get_sample_repository(session: SessionDep) -> SampleRepository:
+    return SampleRepository(session)
+
+
+def get_sushi_application_repository(session: SessionDep) -> SushiApplicationRepository:
+    return SushiApplicationRepository(session)
+
+
 # Service dependencies
 def get_dataset_service(
     dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
     user_repo: Annotated[UserRepository, Depends(get_user_repository)],
+    sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
+    sushi_app_repo: Annotated[SushiApplicationRepository, Depends(get_sushi_application_repository)],
 ) -> DatasetService:
-    return DatasetService(dataset_repo, user_repo)
+    return DatasetService(dataset_repo, user_repo, sample_repo, sushi_app_repo)
 
 
 def get_job_service(
@@ -69,13 +82,12 @@ def get_project_service() -> ProjectService:
 
 
 def get_auth_service(
-    user_repo: Annotated[UserRepository, Depends(get_user_repository)],
     refresh_token_repo: Annotated[
         RefreshTokenRepository, Depends(get_refresh_token_repository)
     ],
     ldap_service: Annotated[LDAPService, Depends(get_ldap_service)],
 ) -> AuthService:
-    return AuthService(user_repo, refresh_token_repo, ldap_service)
+    return AuthService(refresh_token_repo, ldap_service)
 
 
 # Authentication dependencies
@@ -100,8 +112,12 @@ def get_current_user(
         CurrentUser object with user info
 
     Raises:
-        AuthenticationError: If token is missing or invalid
+        AuthenticationError: If token is missing or invalid (unless SKIP_AUTH)
     """
+    # In dev mode without token, return a default dev user
+    if settings.SKIP_AUTH and not authorization:
+        return CurrentUser(user_id=0, login="dev_user", projects=[])
+
     if not authorization:
         raise AuthenticationError("Missing authorization header")
 
@@ -149,6 +165,11 @@ def require_project_access(project_number: int, user: CurrentUser) -> None:
     Raises:
         ForbiddenError: If user doesn't have access to the project
     """
+    # Skip project access check in development mode
+    if settings.SKIP_AUTH:
+        return
+
+    # Empty projects list with SKIP_AUTH=False means no access
     if project_number not in user.projects:
         raise ForbiddenError(f"You don't have access to project {project_number}")
 
@@ -179,6 +200,10 @@ ProjectRepoDep = Annotated[ProjectRepository, Depends(get_project_repository)]
 UserRepoDep = Annotated[UserRepository, Depends(get_user_repository)]
 RefreshTokenRepoDep = Annotated[
     RefreshTokenRepository, Depends(get_refresh_token_repository)
+]
+SampleRepoDep = Annotated[SampleRepository, Depends(get_sample_repository)]
+SushiAppRepoDep = Annotated[
+    SushiApplicationRepository, Depends(get_sushi_application_repository)
 ]
 
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]

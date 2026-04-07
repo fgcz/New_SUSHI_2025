@@ -3,15 +3,25 @@
 from app.core.exceptions import NotFoundError
 from app.models import DataSet
 from app.repositories.dataset import DatasetRepository
+from app.repositories.sample import SampleRepository
+from app.repositories.sushi_application import SushiApplicationRepository
 from app.repositories.user import UserRepository
 
 
 class DatasetService:
     """Service for dataset operations."""
 
-    def __init__(self, dataset_repo: DatasetRepository, user_repo: UserRepository):
+    def __init__(
+        self,
+        dataset_repo: DatasetRepository,
+        user_repo: UserRepository,
+        sample_repo: SampleRepository,
+        sushi_app_repo: SushiApplicationRepository,
+    ):
         self.dataset_repo = dataset_repo
         self.user_repo = user_repo
+        self.sample_repo = sample_repo
+        self.sushi_app_repo = sushi_app_repo
 
     def get_paginated(
         self,
@@ -39,7 +49,7 @@ class DatasetService:
 
         return {
             "datasets": [
-                self._serialize_dataset(ds, project_number, users_map, children_map)
+                self._serialize_dataset_list(ds, project_number, users_map, children_map)
                 for ds in datasets
             ],
             "pagination": {
@@ -55,23 +65,49 @@ class DatasetService:
         }
 
     def get_by_id(self, dataset_id: int) -> dict:
-        """Get a single dataset by ID."""
+        """Get full dataset details by ID including samples and applications."""
         dataset = self.dataset_repo.get_by_id(dataset_id)
         if not dataset:
             raise NotFoundError("Dataset", dataset_id)
+
+        # Get user login
+        user_login = None
+        if dataset.user_id:
+            users_map = self.user_repo.get_logins_by_ids({dataset.user_id})
+            user_login = users_map.get(dataset.user_id)
+
+        # Get project number
+        project_number = self.dataset_repo.get_project_number(dataset)
+
+        # Get children IDs
+        children_ids = self.dataset_repo.get_children_ids(dataset.id)
+
+        # Get samples
+        samples = self.sample_repo.get_samples_as_dicts(dataset.id)
+
+        # Get headers
+        headers = self.sample_repo.get_headers(dataset.id)
+
+        # Get runnable applications with full details
+        applications = self.sushi_app_repo.get_runnable_apps_detailed(headers)
 
         return {
             "id": dataset.id,
             "name": dataset.name,
             "created_at": dataset.created_at.isoformat() if dataset.created_at else None,
-            "comment": dataset.comment,
-            "num_samples": dataset.num_samples,
+            "user": user_login,
+            "project_number": project_number,
+            "samples_count": dataset.num_samples or len(samples),
             "completed_samples": dataset.completed_samples,
             "parent_id": dataset.parent_id,
+            "children_ids": children_ids,
             "bfabric_id": dataset.bfabric_id,
             "order_id": dataset.order_id,
+            "comment": dataset.comment,
             "sushi_app_name": dataset.sushi_app_name,
-            "samples": [],
+            "headers": headers,
+            "samples": samples,
+            "applications": applications,
         }
 
     def get_tree(self, project_number: int) -> dict:
@@ -98,27 +134,57 @@ class DatasetService:
             # Use "#" for root nodes (no parent or parent not in this project)
             parent = parent_id if parent_id and parent_id in dataset_ids else "#"
 
-            tree_nodes.append({
+            node = {
                 "id": ds_id,
                 "name": ds["name"],
-                "comment": ds["comment"],
                 "parent": parent,
                 "children_count": children_counts.get(ds_id, 0),
-            })
+            }
+            if ds["comment"]:
+                node["comment"] = ds["comment"]
+            tree_nodes.append(node)
 
         # Sort by id descending
         tree_nodes.sort(key=lambda node: -node["id"])
 
         return {"tree": tree_nodes, "project_number": project_number}
 
-    def _serialize_dataset(
+    def get_tree_for_dataset(self, dataset_id: int) -> list[dict]:
+        """Get tree structure for a specific dataset (ancestors + self + descendants)."""
+        dataset = self.dataset_repo.get_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundError("Dataset", dataset_id)
+
+        return self.dataset_repo.get_tree_for_dataset(dataset)
+
+    def get_runnable_apps(self, dataset_id: int) -> list[dict]:
+        """Get runnable applications for a dataset."""
+        dataset = self.dataset_repo.get_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundError("Dataset", dataset_id)
+
+        # Get headers from samples
+        headers = self.sample_repo.get_headers(dataset.id)
+
+        # Get matching applications
+        return self.sushi_app_repo.get_runnable_apps_for_headers(headers)
+
+    def get_samples(self, dataset_id: int) -> list[dict]:
+        """Get all samples for a dataset."""
+        dataset = self.dataset_repo.get_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundError("Dataset", dataset_id)
+
+        return self.sample_repo.get_samples_as_dicts(dataset.id)
+
+    def _serialize_dataset_list(
         self,
         ds: DataSet,
         project_number: int,
         users_map: dict[int, str],
         children_map: dict[int, list[int]],
     ) -> dict:
-        """Serialize a dataset to a dictionary."""
+        """Serialize a dataset for list view."""
         return {
             "id": ds.id,
             "name": ds.name,

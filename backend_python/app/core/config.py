@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Auth bypass for development
+    SKIP_AUTH: bool = True  # Skip LDAP, use mock user, allow all projects
+
     # CORS (comma-separated string)
     BACKEND_CORS_ORIGINS: str = ""
 

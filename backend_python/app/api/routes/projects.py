@@ -13,13 +13,9 @@ from app.api.deps import (
 router: APIRouter = APIRouter()
 
 
-@router.get("/{user}")
-def get_user_projects(user: str, current_user: CurrentUserDep, service: ProjectServiceDep) -> dict:
-    """Get projects for a user.
-
-    Note: Currently returns mock data. User can only query their own projects.
-    """
-    # For now, return the projects from the JWT token
+@router.get("/")
+def get_user_projects(current_user: CurrentUserDep, service: ProjectServiceDep) -> dict:
+    """Get projects for the current authenticated user."""
     return {
         "projects": current_user.projects,
         "current_user": current_user.login,

@@ -67,6 +67,34 @@ class Job(SQLModel, table=True):
     end_time: datetime | None = None
 
 
+class Sample(SQLModel, table=True):
+    """Maps to the existing samples table."""
+
+    __tablename__ = "samples"
+
+    id: int | None = Field(default=None, primary_key=True)
+    key_value: str | None = None  # Serialized Ruby hash string
+    data_set_id: int | None = Field(default=None, foreign_key="datasets.id")
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class SushiApplication(SQLModel, table=True):
+    """Maps to the existing sushi_applications table."""
+
+    __tablename__ = "sushi_applications"
+
+    id: int | None = Field(default=None, primary_key=True)
+    class_name: str | None = None
+    analysis_category: str | None = None
+    required_columns: str | None = None  # YAML serialized
+    next_dataset_keys: str | None = None  # YAML serialized
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    description: str | None = None
+    employee: bool | None = None
+
+
 class RefreshToken(SQLModel, table=True):
     """Stores refresh tokens for JWT authentication."""
 
