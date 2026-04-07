@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlmodel import Field, SQLModel
 
@@ -65,3 +65,16 @@ class Job(SQLModel, table=True):
     user: str | None = None
     start_time: datetime | None = None
     end_time: datetime | None = None
+
+
+class RefreshToken(SQLModel, table=True):
+    """Stores refresh tokens for JWT authentication."""
+
+    __tablename__ = "refresh_tokens"
+
+    id: int | None = Field(default=None, primary_key=True)
+    token_hash: str = Field(index=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    expires_at: datetime
+    revoked: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
