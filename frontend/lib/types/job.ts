@@ -9,14 +9,17 @@ export interface JobListResponse {
     total_pages: number;
   };
   filters: {
-    status: string;
-    user: string;
+    status: string | null;
+    user: string | null;
+    dataset_name?: string | null;
+    q?: string | null;
   };
-  project_number: number;
+  project_number?: number;
 }
 
 export interface JobFullResponse {
   id: number;
+  project_number: number | null;
   status: string;
   user: string;
   input_dataset_id: number;

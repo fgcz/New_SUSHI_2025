@@ -2,30 +2,29 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { jobApi, projectApi } from '@/lib/api';
+import { jobApi } from '@/lib/api';
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
 
 export default function JobScriptPage() {
   const params = useParams<{ jobid: string }>();
   const jobId = Number(params.jobid);
 
-  const { data: script, isLoading: scriptLoading, error: scriptError } = useQuery({
+  const { data: job, isLoading: jobLoading } = useQuery({
+    queryKey: ['job', jobId],
+    queryFn: () => jobApi.getJob(jobId),
+    enabled: !!jobId,
+    staleTime: 30_000,
+  });
+
+  const { data: script, isLoading: scriptLoading, error } = useQuery({
     queryKey: ['job-script', jobId],
     queryFn: () => jobApi.getJobScript(jobId),
     enabled: !!jobId,
     staleTime: 30_000,
   });
 
-  const { data: projectData, isLoading: projectLoading } = useQuery({
-    queryKey: ['job-project', jobId],
-    queryFn: () => projectApi.getProjectIdFromJob(jobId),
-    enabled: !!jobId,
-    staleTime: 30_000,
-  });
-
-  const isLoading = scriptLoading || projectLoading;
-  const error = scriptError;
-  const projectId = projectData?.projectId ?? null;
+  const isLoading = jobLoading || scriptLoading;
+  const projectNumber = job?.project_number ?? null;
 
   if (isLoading) {
     return (
@@ -57,8 +56,8 @@ export default function JobScriptPage() {
   return (
     <div className="container mx-auto px-6 py-8">
       <Breadcrumbs items={[
-        { label: `Project ${projectId}`, href: `/projects/${projectId}` },
-        { label: 'Jobs', href: `/projects/${projectId}/jobs` },
+        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+        { label: 'Jobs', href: `/projects/${projectNumber}/jobs` },
         { label: `Job ${jobId}` },
         { label: "Script", active: true }
       ]} />

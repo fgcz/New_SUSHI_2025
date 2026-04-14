@@ -3,39 +3,10 @@ import { DatasetFullResponse, DatasetTreeResponse } from '../types/dataset';
 
 export const datasetApi = {
     async getDataset(id: number): Promise<DatasetFullResponse> {
-        const dataset = await httpClient.request<DatasetFullResponse>(`/datasets/${id}`);
-
-        // Add mock "Development: CountQC" application
-        const devCategory = {
-            category: 'Development',
-            apps: [{ class_name: 'CountQC', description: 'Quality control analysis for count data' }],
-        };
-
-        // Check if Development category already exists
-        const existingDevIndex = dataset.applications?.findIndex(cat => cat.category === 'Development');
-        if (existingDevIndex !== undefined && existingDevIndex >= 0) {
-            // Add CountQC to existing Development category if not already present
-            const hasCountQC = dataset.applications[existingDevIndex].apps.some(app => app.class_name === 'CountQC');
-            if (!hasCountQC) {
-                dataset.applications[existingDevIndex].apps.push({ class_name: 'CountQC', description: 'Quality control analysis for count data' });
-            }
-        } else {
-            // Add new Development category
-            dataset.applications = [...(dataset.applications || []), devCategory];
-        }
-
-        // For dataset 172, add a mock "Condition [Factor]" column to demonstrate Edit Factors
-        if (id === 172 && dataset.samples) {
-            dataset.samples = dataset.samples.map(sample => ({
-                ...sample,
-                'Condition [Factor]': 'WT',
-            }));
-        }
-
-        return dataset;
+        return httpClient.request<DatasetFullResponse>(`/datasets/${id}`);
     },
     async getDatasetTree(id: number): Promise<DatasetTreeResponse> {
-        return httpClient.request<DatasetTreeResponse>(`/api/v1/datasets/${id}/tree`);
+        return httpClient.request<DatasetTreeResponse>(`/datasets/${id}/tree`);
     },
 
     // Mock API functions for dataset actions
@@ -50,9 +21,6 @@ export const datasetApi = {
     },
     async getScriptsPath(datasetId: number): Promise<{ path: string }> {
         return Promise.resolve({ path: 'p1001/whatever_path_we_get' });
-    },
-    async getDatasetDataFolder(datasetId: number): Promise<{ path: string }> {
-        return Promise.resolve({ path: 'p1001/dataset_data_folder' });
     },
     async mergeDataset(datasetId: number): Promise<void> {
         return Promise.resolve();

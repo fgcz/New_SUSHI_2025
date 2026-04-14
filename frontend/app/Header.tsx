@@ -5,7 +5,6 @@ import { useAuth } from '@/providers/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useProjectList } from '@/lib/hooks';
-import { projectApi } from '@/lib/api';
 
 // Authentication status component
 const AuthStatus = () => {
@@ -62,9 +61,7 @@ export default function Header() {
   const params = useParams<{ projectNumber?: string }>();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [datasetSearchQuery, setDatasetSearchQuery] = useState('');
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { userProjects, isLoading: projectsLoading } = useProjectList();
 
   const projectNumber = params?.projectNumber ? Number(params.projectNumber) : null;
@@ -76,14 +73,6 @@ export default function Header() {
       setSearchQuery(projectNumber.toString());
     }
   }, [projectNumber]);
-
-  // Auto-dismiss error message after 5 seconds
-  useEffect(() => {
-    if (errorMessage) {
-      const timer = setTimeout(() => setErrorMessage(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorMessage]);
 
   // Show loading screen while checking authentication
   if (loading) {
@@ -102,9 +91,9 @@ export default function Header() {
     );
   }
 
-  const handleLogout = (e: React.MouseEvent) => {
+  const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    logout();
+    await logout();
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -112,28 +101,6 @@ export default function Header() {
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery) {
       router.push(`/projects/${trimmedQuery}`);
-    }
-  };
-
-  const handleDatasetSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedQuery = datasetSearchQuery.trim();
-    if (!trimmedQuery) return;
-
-    if (!/^\d+$/.test(trimmedQuery)) {
-      setErrorMessage('Dataset ID must be a number');
-      return;
-    }
-
-    const datasetId = Number(trimmedQuery);
-    try {
-      const { projectId } = await projectApi.validateDatasetId(userName, datasetId);
-      setErrorMessage(null);
-      router.push(`/projects/${projectId}/datasets/${datasetId}`);
-      setDatasetSearchQuery('');
-    } catch (error) {
-      setErrorMessage(`Dataset ${datasetId} not found`);
-      // Stay on current page - don't navigate
     }
   };
 
@@ -197,17 +164,6 @@ export default function Header() {
                 className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm w-24"
               />
             </form>
-
-            {/* Dataset ID Search */}
-            {/* <form onSubmit={handleDatasetSearchSubmit} className="flex items-center ml-2"> */}
-            {/*   <input */}
-            {/*     type="text" */}
-            {/*     value={datasetSearchQuery} */}
-            {/*     onChange={(e) => setDatasetSearchQuery(e.target.value)} */}
-            {/*     placeholder="Dataset ID" */}
-            {/*     className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm w-24" */}
-            {/*   /> */}
-            {/* </form> */}
           </div>
           
           <nav className="flex items-center space-x-4">
@@ -221,51 +177,25 @@ export default function Header() {
             <Link href="/dataset/list" className="text-gray-600 hover:text-brand-600">Find</Link>
             <Link href="/help" className="text-gray-600 hover:text-brand-600">Help</Link>
             <div className="border-l border-gray-300 h-6"></div>
-            {projectNumber && (
-              <span className="font-semibold">Project {projectNumber}</span>
-            )}
             <span className="text-gray-700">
-            Hi, {userName}
-            {/* Auth Skipped indicator commented out
-            {authStatus?.authentication_skipped ? (
-              <span className="text-green-600 ml-1">| Auth Skipped</span>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="text-brand-600 hover:underline ml-1 bg-transparent border-none cursor-pointer"
-              >
-                | Sign out
-              </button>
-            )}
-            */}
-          </span>
+              Hi, {userName}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-red-600 ml-2 px-2 py-1 text-sm border border-gray-300 rounded hover:border-red-300 transition-colors"
+            >
+              Logout
+            </button>
         </nav>
       </div>
       </header>
       
       {/* Close dropdown when clicking outside */}
       {showProjectsDropdown && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => setShowProjectsDropdown(false)}
         />
-      )}
-      {/* Error message banner */}
-      {errorMessage && (
-        <div className="bg-red-50 border-b border-red-200">
-          <div className="container mx-auto px-6 py-2 flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="text-red-600 mr-2">⚠</span>
-              <span className="text-red-800 text-sm">{errorMessage}</span>
-            </div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-red-600 hover:text-red-800 text-sm font-medium"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Auth status commented out - header getting populated

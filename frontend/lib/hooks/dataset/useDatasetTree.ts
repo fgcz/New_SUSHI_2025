@@ -26,7 +26,7 @@ export function useDatasetTree(
   });
 
   // Computed state: Determine if tree is empty
-  const isEmpty = !isLoading && !error && (!datasetTree || datasetTree.tree.length === 0);
+  const isEmpty = !isLoading && !error && (!datasetTree?.tree?.length);
   return {
     datasetTree,
     isLoading,

@@ -70,6 +70,14 @@ export default function DocsLayout({
                   </li>
                   <li>
                     <Link
+                      href="/docs/authentication"
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Authentication
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
                       href="/docs/api"
                       className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                     >

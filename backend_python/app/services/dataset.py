@@ -91,6 +91,9 @@ class DatasetService:
         # Get runnable applications with full details
         applications = self.sushi_app_repo.get_runnable_apps_detailed(headers)
 
+        # Get data folder paths from sample file paths
+        data_paths = self.sample_repo.get_data_paths(dataset.id)
+
         return {
             "id": dataset.id,
             "name": dataset.name,
@@ -108,6 +111,7 @@ class DatasetService:
             "headers": headers,
             "samples": samples,
             "applications": applications,
+            "data_paths": data_paths,
         }
 
     def get_tree(self, project_number: int) -> dict:

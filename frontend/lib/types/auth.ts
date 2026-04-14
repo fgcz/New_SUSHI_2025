@@ -1,12 +1,10 @@
 export interface AuthenticationStatus {
-  standard_login: boolean;
-  oauth2_login: boolean;
-  two_factor_auth: boolean;
   ldap_auth: boolean;
-  wallet_auth: boolean;
-  enabled_methods: string[];
   authentication_skipped: boolean;
-  current_user?: string;
+}
+
+export interface AuthState extends AuthenticationStatus {
+  current_user: string | null;
 }
 
 export interface AuthenticationConfig {
@@ -41,16 +39,17 @@ export interface AuthenticationConfig {
 }
 
 export interface LoginResponse {
-  token: string;
+  access_token: string;
+  token_type: string;
   user: {
     id: number;
     login: string;
     email: string;
   };
-  message: string;
 }
 
 export interface TokenVerifyResponse {
-  user: any;
-  valid: boolean;
+  user_id: number;
+  login: string;
+  projects: number[];
 }

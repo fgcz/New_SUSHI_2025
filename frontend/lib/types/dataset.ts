@@ -28,6 +28,7 @@ export interface DatasetFullResponse {
   sushi_app_name?: string;
   samples: DatasetSample[];
   applications: DatasetAppCategory[];
+  data_paths: string[];
 }
 
 interface DatasetMinimal {
@@ -76,7 +77,7 @@ export interface DatasetTreeNode {
 
 export type DatasetTreeResponse = {
   tree: DatasetTreeNode[];
-  project_number: number;
+  project_number?: number;
 }
 
 

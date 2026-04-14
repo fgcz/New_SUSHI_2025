@@ -96,3 +96,43 @@ class SampleRepository(BaseRepository[Sample]):
         other_headers.sort()
 
         return name_headers + factor_headers + other_headers
+
+    def get_data_paths(self, dataset_id: int) -> list[str]:
+        """Extract unique data folder paths from sample file paths.
+
+        Scans all samples for [File] and [Link] tagged headers,
+        extracts directory paths, and returns unique dataset-level paths
+        (first 2 path segments: p{project}/{dataset_folder}).
+
+        Returns:
+            List of unique data paths, e.g., ["p1234/Analysis_A", "p1234/Analysis_B"]
+        """
+        samples = self.get_samples_as_dicts(dataset_id)
+        sample_paths: set[str] = set()
+
+        for sample in samples:
+            for header, value in sample.items():
+                # Check for [File] or [Link] tagged headers
+                if "[File]" in header or "[Link]" in header:
+                    if not value:
+                        continue
+                    # Files can be comma-separated
+                    file_list = str(value).split(",")
+                    for file_path in file_list:
+                        file_path = file_path.strip()
+                        if "/" in file_path:
+                            # Get directory path
+                            dir_path = "/".join(file_path.split("/")[:-1])
+                            if dir_path:
+                                sample_paths.add(dir_path)
+
+        # Extract dataset-level paths (first 2 segments: p1234/DatasetName)
+        dataset_paths: set[str] = set()
+        for path in sample_paths:
+            segments = path.split("/")
+            if len(segments) >= 2:
+                dataset_paths.add("/".join(segments[:2]))
+            elif len(segments) == 1:
+                dataset_paths.add(segments[0])
+
+        return sorted(dataset_paths)

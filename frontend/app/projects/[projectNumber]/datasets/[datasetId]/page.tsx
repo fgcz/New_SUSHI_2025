@@ -115,16 +115,36 @@ export default function DatasetDetailPage() {
 
         {/* Quick Actions - top right */}
         <div className="flex items-center gap-1">
-          <button
-            onClick={async () => {
-              const { path } = await datasetApi.getDatasetDataFolder(datasetId);
-              router.push(`/files/${path}`);
-            }}
-            className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            title="Data Folder"
-          >
-            Data Folder
-          </button>
+          {/* Data Folder button - handles single or multiple paths */}
+          {dataset.data_paths.length === 1 ? (
+            <button
+              onClick={() => router.push(`/files/${dataset.data_paths[0]}`)}
+              className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              title="Data Folder"
+            >
+              Data Folder
+            </button>
+          ) : dataset.data_paths.length > 1 ? (
+            <div className="relative group">
+              <button
+                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                title="Data Folders"
+              >
+                Data Folders ({dataset.data_paths.length})
+              </button>
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-48 hidden group-hover:block">
+                {dataset.data_paths.map((path) => (
+                  <button
+                    key={path}
+                    onClick={() => router.push(`/files/${path}`)}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {path}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <button
             onClick={() => router.push(`/projects/${projectNumber}/datasets/${datasetId}/samples/edit`)}
             className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -268,7 +288,7 @@ export default function DatasetDetailPage() {
       
       <div className="bg-white border rounded-lg overflow-hidden mt-6">
         <div className="p-6">
-          <DatasetSamples samples={dataset.samples} datasetId={datasetId} projectNumber={projectNumber} />
+          <DatasetSamples samples={dataset.samples} datasetId={datasetId} projectNumber={projectNumber} dataPaths={dataset.data_paths} />
 
           <div className="mt-6 pt-4 border-t">
             <h3 className="text-lg font-semibold mb-4">Runnable Applications</h3>

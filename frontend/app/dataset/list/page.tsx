@@ -59,7 +59,7 @@ export default function GlobalDatasetListPage() {
             className="w-40 border border-gray-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           >
             <option value="">--- select ---</option>
-            {appsData?.sushiApps.map((app) => (
+            {appsData?.sushi_apps.map((app) => (
               <option key={app} value={app}>{app}</option>
             ))}
           </select>
@@ -72,7 +72,7 @@ export default function GlobalDatasetListPage() {
             className="w-40 border border-gray-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           >
             <option value="">--- select ---</option>
-            {appsData?.retiredApps.map((app) => (
+            {appsData?.retired_apps.map((app) => (
               <option key={app} value={app}>{app}</option>
             ))}
           </select>

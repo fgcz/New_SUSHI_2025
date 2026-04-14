@@ -143,6 +143,14 @@ class SushiApplicationRepository(BaseRepository[SushiApplication]):
                     "description": app.description,
                 })
 
+        # Add development mock app (CountQC) - always available for testing
+        if "Development" not in matching_apps:
+            matching_apps["Development"] = []
+        matching_apps["Development"].append({
+            "class_name": "CountQC",
+            "description": "Quality control analysis for count data",
+        })
+
         # Convert to list format
         result = []
         for category in sorted(matching_apps.keys()):

@@ -1,11 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
-import { projectApi } from '@/lib/api/projects';
-import { usePagination, useSearch, useJobsFilters } from '@/lib/hooks';
+import { jobApi } from '@/lib/api';
+import { usePagination, useSearch } from '@/lib/hooks';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusStyles = (status: string) => {
@@ -24,18 +23,6 @@ const StatusBadge = ({ status }: { status: string }) => {
         return 'bg-indigo-100 text-indigo-800';
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
-      case 'SCRIPT_NOT_FOUND':
-        return 'bg-red-100 text-red-800';
-      case 'PARAMS_ERROR':
-        return 'bg-red-100 text-red-800';
-      case 'COPY_LOGS_FAILED':
-        return 'bg-orange-100 text-orange-800';
-      case 'FAILED_SCRIPT_NOT_FOUND':
-        return 'bg-red-100 text-red-800';
-      case 'FAILED_PARAMS_ERROR':
-        return 'bg-red-100 text-red-800';
-      case 'SLURM_ERROR_ON_SUBMIT':
-        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -54,53 +41,40 @@ const formatDateTime = (dateString: string) => {
 
 const formatDuration = (startTime: string, endTime?: string) => {
   if (!endTime) return 'Running...';
-  
+
   const start = new Date(startTime);
   const end = new Date(endTime);
   const diffMs = end.getTime() - start.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
   const diffSeconds = Math.floor((diffMs % 60000) / 1000);
-  
+
   if (diffMinutes > 0) {
     return `${diffMinutes}m ${diffSeconds}s`;
   }
   return `${diffSeconds}s`;
 };
 
-export default function ProjectJobsPage() {
-  const params = useParams<{ projectNumber: string }>();
-  const projectNumber = Number(params.projectNumber);
-
+export default function AllJobsPage() {
   // Pagination with shared hook
   const { page, per, goToPage, changePerPage } = usePagination();
-  
-  // User search with shared hook
-  const { searchQuery: userParam, localQuery: userLocal, setLocalQuery: setUserLocal, onSubmit: onSubmit } = useSearch('user');
-  
-  // Jobs filters with custom hook
-  const { 
-    filters: { status: statusParam, from_date: fromDateParam, to_date: toDateParam },
-    localFilters: { status: statusLocal, from_date: fromDateLocal, to_date: toDateLocal },
-    setStatusLocal,
-    setFromDateLocal,
-    setToDateLocal,
-    clearFilters
-  } = useJobsFilters();
 
+  // Filters using search hooks
+  const { searchQuery: statusParam, localQuery: statusLocal, setLocalQuery: setStatusLocal, onSubmit } = useSearch('status');
+  const { searchQuery: userParam, localQuery: userLocal, setLocalQuery: setUserLocal } = useSearch('user');
+  const { searchQuery: datasetNameParam, localQuery: datasetNameLocal, setLocalQuery: setDatasetNameLocal } = useSearch('dataset_name');
 
   // Build API parameters for backend filtering
   const apiParams = useMemo(() => {
-    const params: any = { page, per };
+    const params: { page: number; per: number; status?: string; user?: string; dataset_name?: string } = { page, per };
     if (statusParam) params.status = statusParam;
     if (userParam) params.user = userParam;
-    if (fromDateParam) params.from_date = fromDateParam;
-    if (toDateParam) params.to_date = toDateParam;
+    if (datasetNameParam) params.dataset_name = datasetNameParam;
     return params;
-  }, [page, per, statusParam, userParam, fromDateParam, toDateParam]);
+  }, [page, per, statusParam, userParam, datasetNameParam]);
 
   const { data: jobsData, isLoading, error } = useQuery({
-    queryKey: ['jobs', projectNumber, apiParams],
-    queryFn: () => projectApi.getProjectJobs(projectNumber, apiParams),
+    queryKey: ['all-jobs', apiParams],
+    queryFn: () => jobApi.getAllJobs(apiParams),
     staleTime: 30_000,
   });
 
@@ -111,6 +85,19 @@ export default function ProjectJobsPage() {
   const startIndex = (page - 1) * per + Math.min(1, total);
   const endIndex = Math.min(page * per, total);
 
+  const clearFilters = () => {
+    setStatusLocal('');
+    setUserLocal('');
+    setDatasetNameLocal('');
+    // Trigger URL update
+    const url = new URL(window.location.href);
+    url.searchParams.delete('status');
+    url.searchParams.delete('user');
+    url.searchParams.delete('dataset_name');
+    url.searchParams.set('page', '1');
+    window.history.pushState({}, '', url.toString());
+    window.location.reload();
+  };
 
   if (isLoading) return (
     <div className="container mx-auto px-6 py-8">
@@ -143,18 +130,17 @@ export default function ProjectJobsPage() {
       </div>
     </div>
   );
-  
+
   if (error) return (
     <div className="container mx-auto px-6 py-8">
       <div className="text-center py-12">
         <div className="text-red-600 text-lg font-medium mb-2">Failed to load jobs</div>
-        <p className="text-gray-500 mb-4">There was an error loading the jobs for this project.</p>
+        <p className="text-gray-500 mb-4">There was an error loading the jobs.</p>
       </div>
     </div>
   );
 
-
-  // Status options for dropdown (extracted from StatusBadge)
+  // Status options for dropdown
   const statusOptions = [
     { value: '', label: 'All' },
     { value: 'COMPLETED', label: 'Completed' },
@@ -164,33 +150,18 @@ export default function ProjectJobsPage() {
     { value: 'CREATED', label: 'Created' },
     { value: 'SUBMITTED', label: 'Submitted' },
     { value: 'PENDING', label: 'Pending' },
-    // { value: 'SCRIPT_NOT_FOUND', label: 'Script Not Found' },
-    // { value: 'PARAMS_ERROR', label: 'Params Error' },
-    // { value: 'COPY_LOGS_FAILED', label: 'Copy Logs Failed' },
-    // { value: 'FAILED_SCRIPT_NOT_FOUND', label: 'Failed Script Not Found' },
-    // { value: 'FAILED_PARAMS_ERROR', label: 'Failed Params Error' },
-    // { value: 'SLURM_ERROR_ON_SUBMIT', label: 'Slurm Error On Submit' }
   ];
 
   return (
     <div className="container mx-auto px-6 py-8">
-
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Project {projectNumber} - Jobs</h1>
-        <div className="flex gap-2">
-          <Link
-            href="/jobs"
-            className="px-4 py-2 text-sm font-medium text-white bg-brand-600 border border-brand-600 rounded-md hover:bg-brand-700"
-          >
-            Show All Jobs
-          </Link>
-          <Link
-            href={`/projects/${projectNumber}`}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            ← Back to Project
-          </Link>
-        </div>
+        <h1 className="text-2xl font-bold">All Jobs</h1>
+        <button
+          onClick={() => window.history.back()}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+        >
+          Back
+        </button>
       </div>
 
       <form onSubmit={onSubmit} className="mb-3 space-y-3">
@@ -238,31 +209,25 @@ export default function ProjectJobsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">From:</label>
+            <label className="text-sm text-gray-600">Dataset:</label>
             <input
-              type="date"
-              value={fromDateLocal}
-              onChange={(e) => setFromDateLocal(e.target.value)}
-              className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">To:</label>
-            <input
-              type="date"
-              value={toDateLocal}
-              onChange={(e) => setToDateLocal(e.target.value)}
+              value={datasetNameLocal}
+              onChange={(e) => setDatasetNameLocal(e.target.value)}
+              placeholder="Filter by dataset name..."
               className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
             />
           </div>
 
           <button
+            type="submit"
+            className="px-3 py-1.5 text-sm font-medium text-white bg-brand-600 border border-brand-600 rounded-md hover:bg-brand-700 transition-colors"
+          >
+            Apply Filters
+          </button>
+
+          <button
             type="button"
-            onClick={() => {
-              clearFilters();
-              setUserLocal('');
-            }}
+            onClick={clearFilters}
             className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
           >
             Clear Filters
@@ -315,15 +280,14 @@ export default function ProjectJobsPage() {
                 </td>
                 <td className="px-3 py-1.5 text-sm border-r border-gray-200 max-w-48">
                   {job.dataset ? (
-                    <Link
-                      href={`/projects/${projectNumber}/datasets/${job.dataset.id}`}
-                      className="text-brand-600 hover:underline font-medium truncate block"
+                    <span
+                      className="font-medium truncate block"
                       title={`${job.dataset.name} (ID: ${job.dataset.id})`}
                     >
                       {job.dataset.name} <span className="text-gray-400 font-normal">#{job.dataset.id}</span>
-                    </Link>
+                    </span>
                   ) : (
-                    <span className="text-gray-400">—</span>
+                    <span className="text-gray-400">-</span>
                   )}
                 </td>
                 <td className="px-3 py-1.5 text-sm border-r border-gray-200 text-center">
@@ -343,10 +307,10 @@ export default function ProjectJobsPage() {
                   </Link>
                 </td>
                 <td className="px-3 py-1.5 text-sm text-gray-900 border-r border-gray-200">
-                  {formatDuration(job.time.start_time, job.time.end_time)}
+                  {job.time.start_time ? formatDuration(job.time.start_time, job.time.end_time) : '-'}
                 </td>
                 <td className="px-3 py-1.5 text-sm text-gray-900">
-                  {formatDateTime(job.time.start_time)}
+                  {job.time.start_time ? formatDateTime(job.time.start_time) : '-'}
                 </td>
               </tr>
             ))}
@@ -358,7 +322,7 @@ export default function ProjectJobsPage() {
       {jobs.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg mb-2">No jobs found</div>
-          <p className="text-gray-400">There are no jobs for this project yet.</p>
+          <p className="text-gray-400">Try adjusting your filters.</p>
         </div>
       )}
 
