@@ -33,7 +33,8 @@ export default function DatasetDetailPage() {
     } else if (activeAction === 'bfabricId') {
       await datasetApi.setBFabricId(datasetId, inputValue);
     }
-    alert('Mock call api');
+    // TODO: Replace alert with toast notification and data refresh
+    alert(`${activeAction === 'comment' ? 'Comment added' : activeAction === 'rename' ? 'Dataset renamed' : 'B-Fabric ID set'} successfully`);
     setActiveAction(null);
     setInputValue('');
   };
@@ -178,7 +179,11 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          onClick={async () => { await datasetApi.downloadDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            const { downloadUrl } = await datasetApi.downloadDataset(datasetId);
+            // TODO: Trigger actual download when backend returns real URL
+            alert(`Download URL: ${downloadUrl}`);
+          }}
         >
           Download
         </button>
@@ -190,7 +195,13 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          onClick={async () => { await datasetApi.mergeDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            const targetId = prompt('Enter target dataset ID to merge with:');
+            if (targetId && !isNaN(Number(targetId))) {
+              await datasetApi.mergeDataset(datasetId, Number(targetId));
+              alert('Merge request submitted');
+            }
+          }}
         >
           Merge with another dataset
         </button>
@@ -223,7 +234,12 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-red-600 bg-white border border-red-300 rounded hover:bg-red-50"
-          onClick={async () => { await datasetApi.deleteDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            if (confirm(`Are you sure you want to delete dataset "${dataset.name}"?`)) {
+              await datasetApi.deleteDataset(datasetId);
+              router.push(`/projects/${projectNumber}/datasets`);
+            }
+          }}
         >
           Delete
         </button>

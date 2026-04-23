@@ -9,73 +9,72 @@ export const datasetApi = {
         return httpClient.request<DatasetTreeResponse>(`/datasets/${id}/tree`);
     },
 
-    // Mock API functions for dataset actions
     async addComment(datasetId: number, comment: string): Promise<void> {
-        return Promise.resolve();
+        await httpClient.request(`/datasets/${datasetId}/comment?comment=${encodeURIComponent(comment)}`, {
+            method: 'POST',
+        });
     },
+
     async renameDataset(datasetId: number, newName: string): Promise<void> {
-        return Promise.resolve();
+        await httpClient.request(`/datasets/${datasetId}/name?new_name=${encodeURIComponent(newName)}`, {
+            method: 'PATCH',
+        });
     },
-    async downloadDataset(datasetId: number): Promise<void> {
-        return Promise.resolve();
+
+    async downloadDataset(datasetId: number): Promise<{ downloadUrl: string }> {
+        const response = await httpClient.request<{ download_url: string }>(
+            `/datasets/${datasetId}/download`
+        );
+        return { downloadUrl: response.download_url };
     },
+
     async getScriptsPath(datasetId: number): Promise<{ path: string }> {
-        return Promise.resolve({ path: 'p1001/whatever_path_we_get' });
+        return httpClient.request<{ path: string }>(`/datasets/${datasetId}/scripts-path`);
     },
-    async mergeDataset(datasetId: number): Promise<void> {
-        return Promise.resolve();
+
+    async mergeDataset(datasetId: number, targetDatasetId: number): Promise<void> {
+        await httpClient.request(
+            `/datasets/${datasetId}/merge?target_dataset_id=${targetDatasetId}`,
+            { method: 'POST' }
+        );
     },
+
     async getDatasetParameters(datasetId: number): Promise<Record<string, string>> {
-        return Promise.resolve({
-            cores: '8',
-            ram: '32',
-            scratch: '100',
-            partition: 'normal',
-            ref: 'hg38',
-            paired: 'true',
-            strandMode: 'sense',
-            featureLevel: 'gene',
-            transcriptTypes: 'protein_coding,lncRNA',
-            minReads: '10',
-            normMethod: 'TMM',
-            runGO: 'true',
-            backgroundExpression: '5',
-        });
+        return httpClient.request<Record<string, string>>(`/datasets/${datasetId}/parameters`);
     },
+
     async updateSize(datasetId: number): Promise<void> {
-        return Promise.resolve();
-    },
-    async setBFabricId(datasetId: number, bfabricId: string): Promise<void> {
-        return Promise.resolve();
-    },
-    async announceDataset(datasetId: number): Promise<void> {
-        return Promise.resolve();
-    },
-    async geoUploader(datasetId: number): Promise<void> {
-        return Promise.resolve();
-    },
-    async deleteDataset(datasetId: number): Promise<void> {
-        return Promise.resolve();
-    },
-    async getResubmitData(datasetId: number): Promise<{ appName: string; parameters: Record<string, any> }> {
-        // Different values from schema defaults to demonstrate resubmit prepopulation
-        return Promise.resolve({
-            appName: 'CountQC',
-            parameters: {
-                cores: 16,
-                ram: 64,
-                scratch: 200,
-                partition: 'high',
-                ref: 'mm10',
-                paired: false,
-                strandMode: 'antisense',
-                featureLevel: 'transcript',
-                transcriptTypes: 'protein_coding',
-                minReads: 25,
-                normMethod: 'RLE',
-                runGO: false,
-                backgroundExpression: 10,
-            },
+        await httpClient.request(`/datasets/${datasetId}/update-size`, {
+            method: 'POST',
         });
+    },
+
+    async setBFabricId(datasetId: number, bfabricId: string): Promise<void> {
+        await httpClient.request(
+            `/datasets/${datasetId}/bfabric-id?bfabric_id=${encodeURIComponent(bfabricId)}`,
+            { method: 'PATCH' }
+        );
+    },
+
+    async announceDataset(datasetId: number): Promise<void> {
+        await httpClient.request(`/datasets/${datasetId}/announce`, {
+            method: 'POST',
+        });
+    },
+
+    async deleteDataset(datasetId: number): Promise<void> {
+        await httpClient.request(`/datasets/${datasetId}`, {
+            method: 'DELETE',
+        });
+    },
+
+    async getResubmitData(datasetId: number): Promise<{ appName: string; parameters: Record<string, any> }> {
+        const response = await httpClient.request<{ app_name: string; parameters: Record<string, any> }>(
+            `/datasets/${datasetId}/resubmit-data`
+        );
+        return {
+            appName: response.app_name,
+            parameters: response.parameters,
+        };
     },
 };
