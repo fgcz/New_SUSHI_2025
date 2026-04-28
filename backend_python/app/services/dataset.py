@@ -1,11 +1,17 @@
 """Dataset service for dataset-related business logic."""
 
-from app.core.exceptions import NotFoundError
+from typing import TYPE_CHECKING
+
+from app.core.config import settings
+from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models import DataSet
 from app.repositories.dataset import DatasetRepository
 from app.repositories.sample import SampleRepository
 from app.repositories.sushi_application import SushiApplicationRepository
 from app.repositories.user import UserRepository
+
+if TYPE_CHECKING:
+    from app.api.deps import CurrentUser
 
 
 class DatasetService:
@@ -22,6 +28,29 @@ class DatasetService:
         self.user_repo = user_repo
         self.sample_repo = sample_repo
         self.sushi_app_repo = sushi_app_repo
+
+    def _get_authorized_dataset(self, dataset_id: int, user: "CurrentUser") -> DataSet:
+        """Fetch dataset and verify project access.
+
+        Raises: NotFoundError, ForbiddenError
+        """
+        dataset = self.dataset_repo.get_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundError("Dataset", dataset_id)
+
+        if settings.SKIP_AUTH:
+            return dataset
+
+        project_number = self.dataset_repo.get_project_number(dataset)
+
+        # Future: Employee bypass
+        # if hasattr(user, 'is_employee') and user.is_employee:
+        #     return dataset
+
+        if project_number is None or project_number not in user.projects:
+            raise ForbiddenError(f"No access to dataset {dataset.id}")
+
+        return dataset
 
     def get_paginated(
         self,
@@ -64,11 +93,9 @@ class DatasetService:
             "project_number": project_number,
         }
 
-    def get_by_id(self, dataset_id: int) -> dict:
+    def get_by_id(self, dataset_id: int, user: "CurrentUser") -> dict:
         """Get full dataset details by ID including samples and applications."""
-        dataset = self.dataset_repo.get_by_id(dataset_id)
-        if not dataset:
-            raise NotFoundError("Dataset", dataset_id)
+        dataset = self._get_authorized_dataset(dataset_id, user)
 
         # Get user login
         user_login = None
@@ -153,19 +180,14 @@ class DatasetService:
 
         return {"tree": tree_nodes, "project_number": project_number}
 
-    def get_tree_for_dataset(self, dataset_id: int) -> list[dict]:
+    def get_tree_for_dataset(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get tree structure for a specific dataset (ancestors + self + descendants)."""
-        dataset = self.dataset_repo.get_by_id(dataset_id)
-        if not dataset:
-            raise NotFoundError("Dataset", dataset_id)
-
+        dataset = self._get_authorized_dataset(dataset_id, user)
         return self.dataset_repo.get_tree_for_dataset(dataset)
 
-    def get_runnable_apps(self, dataset_id: int) -> list[dict]:
+    def get_runnable_apps(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get runnable applications for a dataset."""
-        dataset = self.dataset_repo.get_by_id(dataset_id)
-        if not dataset:
-            raise NotFoundError("Dataset", dataset_id)
+        dataset = self._get_authorized_dataset(dataset_id, user)
 
         # Get headers from samples
         headers = self.sample_repo.get_headers(dataset.id)
@@ -173,12 +195,9 @@ class DatasetService:
         # Get matching applications
         return self.sushi_app_repo.get_runnable_apps_for_headers(headers)
 
-    def get_samples(self, dataset_id: int) -> list[dict]:
+    def get_samples(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get all samples for a dataset."""
-        dataset = self.dataset_repo.get_by_id(dataset_id)
-        if not dataset:
-            raise NotFoundError("Dataset", dataset_id)
-
+        dataset = self._get_authorized_dataset(dataset_id, user)
         return self.sample_repo.get_samples_as_dicts(dataset.id)
 
     def _serialize_dataset_list(

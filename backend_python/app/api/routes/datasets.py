@@ -34,7 +34,7 @@ def get_dataset(
 
     Returns dataset with samples, headers, and runnable applications.
     """
-    return service.get_by_id(dataset_id)
+    return service.get_by_id(dataset_id, current_user)
 
 
 @router.get("/{dataset_id}/tree")
@@ -48,7 +48,7 @@ def get_dataset_tree(
     Returns ancestors, the dataset itself, and all descendants
     in jstree-compatible format.
     """
-    tree_nodes = service.get_tree_for_dataset(dataset_id)
+    tree_nodes = service.get_tree_for_dataset(dataset_id, current_user)
     return {"tree": tree_nodes}
 
 
@@ -63,7 +63,7 @@ def get_dataset_runnable_apps(
     Returns applications grouped by category that can process
     this dataset based on its headers.
     """
-    return service.get_runnable_apps(dataset_id)
+    return service.get_runnable_apps(dataset_id, current_user)
 
 
 @router.get("/{dataset_id}/samples")
@@ -76,7 +76,7 @@ def get_dataset_samples(
 
     Returns array of sample objects with their key-value data.
     """
-    return service.get_samples(dataset_id)
+    return service.get_samples(dataset_id, current_user)
 
 
 # --------------------------------------------------------------------------
