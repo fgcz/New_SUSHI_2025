@@ -217,8 +217,6 @@ All API functions follow these patterns:
 ### Mock Behavior
 - Mock functions return `Promise.resolve()` for void operations
 - Mock functions with delays simulate network latency (e.g., `submitJob` has 2s delay)
-- `getDataset()` injects a mock "Development: CountQC" application into real API responses
-- `getFormSchema()` returns hardcoded schema for "CountQC", real API for others
 
 ### Hardcoded Values in Mocks
 - `projectId: 1001` - Used in `validateDatasetId()`, `getProjectIdFromJob()`

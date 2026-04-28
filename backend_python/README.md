@@ -1,13 +1,13 @@
 # Backend
 
-FastAPI backend with MariaDB and LDAP authentication.
+FastAPI backend with SQLite and LDAP authentication.
 
 ## Requirements
 
 - Python 3.11+
 - [uv](https://github.com/astral-sh/uv) (recommended) or pip
 - Docker (for containerized deployment)
-- MariaDB database
+- SQlite database
 - LDAP server
 
 ## Setup

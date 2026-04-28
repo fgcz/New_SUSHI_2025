@@ -20,7 +20,14 @@ from app.repositories import (
     SushiApplicationRepository,
     UserRepository,
 )
-from app.services import AuthService, DatasetService, JobService, ProjectService
+from app.services import (
+    AuthService,
+    DatasetService,
+    JobService,
+    JobSubmissionService,
+    ProjectService,
+    SlurmService,
+)
 
 # Session dependency
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -88,6 +95,19 @@ def get_auth_service(
     ldap_service: Annotated[LDAPService, Depends(get_ldap_service)],
 ) -> AuthService:
     return AuthService(refresh_token_repo, ldap_service)
+
+
+def get_slurm_service() -> SlurmService:
+    return SlurmService()
+
+
+def get_job_submission_service(
+    job_repo: Annotated[JobRepository, Depends(get_job_repository)],
+    dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
+    sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
+    slurm_service: Annotated[SlurmService, Depends(get_slurm_service)],
+) -> JobSubmissionService:
+    return JobSubmissionService(job_repo, dataset_repo, sample_repo, slurm_service)
 
 
 # Authentication dependencies
@@ -208,6 +228,7 @@ SushiAppRepoDep = Annotated[
 
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
+JobSubmissionServiceDep = Annotated[JobSubmissionService, Depends(get_job_submission_service)]
 ProjectServiceDep = Annotated[ProjectService, Depends(get_project_service)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 

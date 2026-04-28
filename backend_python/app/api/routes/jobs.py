@@ -1,12 +1,9 @@
 """Job routes - thin handlers delegating to services."""
 
-from datetime import datetime, timezone
-from random import randint
-
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUserDep, JobServiceDep
+from app.api.deps import CurrentUserDep, JobServiceDep, JobSubmissionServiceDep
 
 router = APIRouter()
 
@@ -174,16 +171,27 @@ def get_job_logs_mock(
 def submit_job(
     request: JobSubmitRequest,
     current_user: CurrentUserDep,
+    submission_service: JobSubmissionServiceDep,
 ) -> dict:
-    """Submit a new job (MOCK - returns fake response).
+    """Submit a new job for execution."""
+    # Extract from request for clarity
+    dataset_id = request.dataset_id
+    project_number = request.project_number
+    user_login = current_user.login
 
-    This endpoint is a placeholder. Real job submission requires
-    integration with the job scheduler (SushiFabric).
-    """
-    mock_job_id = randint(10000, 99999)
-    return {
-        "id": mock_job_id,
-        "status": "submitted",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "message": f"MOCK: Job {mock_job_id} submitted for {request.app_name} on dataset {request.dataset_id}",
-    }
+    app_name = request.app_name
+    params = request.parameters
+    next_dataset_name = request.next_dataset.name
+    next_dataset_comment = request.next_dataset.comment
+
+    return submission_service.submit(
+        # Identity
+        dataset_id=dataset_id,
+        project_number=project_number,
+        user_login=user_login,
+        # App configuration
+        app_name=app_name,
+        params=params,
+        next_dataset_name=next_dataset_name,
+        next_dataset_comment=next_dataset_comment,
+    )

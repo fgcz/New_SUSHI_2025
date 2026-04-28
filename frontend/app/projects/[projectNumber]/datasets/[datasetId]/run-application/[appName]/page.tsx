@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +33,8 @@ export default function RunApplicationPage() {
   const datasetId = Number(params.datasetId);
   const appName = params.appName;
   const isResubmit = searchParams.get("resubmit") === "true";
+
+  const paramsRef = useRef<HTMLDivElement>(null);
 
   // ============================================
   // DATA FETCHING
@@ -72,6 +74,7 @@ export default function RunApplicationPage() {
     handleKeyDown,
   } = useApplicationForm({
     appName,
+    datasetId,
     datasetName: dataset?.name,
     paramGroups: formConfig?.param_groups,
     resubmitParams: resubmitData?.parameters,
@@ -103,8 +106,17 @@ export default function RunApplicationPage() {
     const newParams = new URLSearchParams(searchParams);
     // stepIndex is 0-based from FormStepper, convert to 1-based for URL
     newParams.set("step", (stepIndex + 1).toString());
-    router.push(`${pathname}?${newParams.toString()}`);
+    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
+
+  // Scroll to params section when step changes via stepper click
+  const prevStepRef = useRef(currentStepNumber);
+  useEffect(() => {
+    if (prevStepRef.current !== currentStepNumber) {
+      paramsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      prevStepRef.current = currentStepNumber;
+    }
+  }, [currentStepNumber]);
 
   const goNext = useCallback(() => {
     if (currentStepNumber < paramGroups.length) {
@@ -141,7 +153,7 @@ export default function RunApplicationPage() {
     };
 
     try {
-      localStorage.setItem("sushi_job_submission_data", JSON.stringify(jobData));
+      sessionStorage.setItem("sushi_job_submission_data", JSON.stringify(jobData));
       router.push(
         `/projects/${projectNumber}/datasets/${datasetId}/run-application/${appName}/confirm`
       );
@@ -289,7 +301,7 @@ export default function RunApplicationPage() {
       <div className="space-y-6">
         {/* Current Step Parameters */}
         {currentStep && (
-          <div className="bg-white border rounded-lg overflow-hidden">
+          <div ref={paramsRef} className="bg-white border rounded-lg overflow-hidden">
             <div className="px-6 py-4">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold">{currentStep.title}</h3>

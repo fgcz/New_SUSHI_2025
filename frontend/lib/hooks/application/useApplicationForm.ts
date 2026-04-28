@@ -5,6 +5,7 @@ import { initializeFormDataFromGroups, flattenParamGroups } from '@/lib/utils/fo
 
 interface UseApplicationFormParams {
   appName: string;
+  datasetId: number;
   datasetName: string | undefined;
   paramGroups: ParamGroup[] | undefined;
   resubmitParams: Record<string, any> | undefined;
@@ -16,8 +17,34 @@ interface NextDatasetData {
   datasetComment: string;
 }
 
+const STORAGE_KEY = 'sushi_job_submission_data';
+
+interface StoredJobData {
+  datasetId: number;
+  appName: string;
+  nextDataset: { name: string; comment?: string };
+  parameters: Record<string, any>;
+}
+
+function getStoredJobData(appName: string, datasetId: number): StoredJobData | null {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (!stored) return null;
+
+    const data = JSON.parse(stored) as StoredJobData;
+    // Only use stored data if it matches the current app and dataset
+    if (data.appName === appName && data.datasetId === datasetId) {
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function useApplicationForm({
   appName,
+  datasetId,
   datasetName,
   paramGroups,
   resubmitParams,
@@ -40,21 +67,39 @@ export function useApplicationForm({
   // Update output dataset name when input dataset loads
   useEffect(() => {
     if (datasetName) {
-      const baseName = `${appName}_${datasetName}_${new Date().toISOString().slice(0, 10)}`;
-      setNextDatasetData((prev) => ({
-        ...prev,
-        datasetName: baseName,
-      }));
+      // Check for stored data first (from Review -> Back navigation)
+      const storedData = getStoredJobData(appName, datasetId);
+      if (storedData?.nextDataset) {
+        setNextDatasetData({
+          datasetName: storedData.nextDataset.name,
+          datasetComment: storedData.nextDataset.comment || '',
+        });
+      } else {
+        const baseName = `${appName}_${datasetName}_${new Date().toISOString().slice(0, 10)}`;
+        setNextDatasetData((prev) => ({
+          ...prev,
+          datasetName: baseName,
+        }));
+      }
     }
-  }, [datasetName, appName]);
+  }, [datasetName, appName, datasetId]);
 
-  // Initialize form when schema loads (with optional resubmit prepopulation)
+  // Initialize form when schema loads (with optional resubmit or stored data prepopulation)
   useEffect(() => {
     if (paramGroups && paramGroups.length > 0) {
       const initialData = initializeFormDataFromGroups(paramGroups);
 
-      // If resubmit, merge the previous job's parameters
-      if (isResubmit && resubmitParams) {
+      // Check for stored data first (from Review -> Back navigation)
+      const storedData = getStoredJobData(appName, datasetId);
+      if (storedData?.parameters) {
+        Object.keys(storedData.parameters).forEach((key) => {
+          if (key in initialData) {
+            initialData[key] = storedData.parameters[key];
+          }
+        });
+      }
+      // If resubmit, merge the previous job's parameters (takes precedence)
+      else if (isResubmit && resubmitParams) {
         Object.keys(resubmitParams).forEach((key) => {
           if (key in initialData) {
             initialData[key] = resubmitParams[key];
@@ -65,7 +110,7 @@ export function useApplicationForm({
       setFormValues(initialData);
       setGroupConfig(paramGroups);
     }
-  }, [paramGroups, isResubmit, resubmitParams]);
+  }, [paramGroups, isResubmit, resubmitParams, appName, datasetId]);
 
   // ============================================
   // HANDLERS

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useApplicationForm } from './useApplicationForm';
+import { ParamGroup } from '@/lib/types';
 
 vi.mock('@/lib/api', () => ({
   applicationApi: {
@@ -41,7 +42,7 @@ vi.mock('@/lib/utils/form-renderer', () => ({
   }),
 }));
 
-const mockParamGroups = [
+const mockParamGroups: ParamGroup[] = [
   {
     id: 'resources',
     title: 'Resource Parameters',
@@ -54,7 +55,7 @@ const mockParamGroups = [
     id: 'input',
     title: 'Input Parameters',
     fields: [
-      { name: 'inputFile', type: 'string', default_value: '' },
+      { name: 'inputFile', type: 'text', default_value: '' },
     ],
   },
 ];
@@ -62,12 +63,14 @@ const mockParamGroups = [
 describe('useApplicationForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
   it('initializes with loading state for dataset name', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: undefined,
         paramGroups: undefined,
         resubmitParams: undefined,
@@ -83,6 +86,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: undefined,
         resubmitParams: undefined,
@@ -99,6 +103,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: mockParamGroups,
         resubmitParams: undefined,
@@ -124,6 +129,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: mockParamGroups,
         resubmitParams,
@@ -146,6 +152,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: mockParamGroups,
         resubmitParams,
@@ -163,6 +170,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: mockParamGroups,
         resubmitParams: undefined,
@@ -183,6 +191,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: mockParamGroups,
         resubmitParams: undefined,
@@ -205,6 +214,7 @@ describe('useApplicationForm', () => {
     const { result } = renderHook(() =>
       useApplicationForm({
         appName: 'TestApp',
+        datasetId: 1,
         datasetName: 'RNA-seq',
         paramGroups: mockParamGroups,
         resubmitParams: undefined,
@@ -214,6 +224,87 @@ describe('useApplicationForm', () => {
 
     await waitFor(() => {
       expect(result.current.paramGroups).toEqual(mockParamGroups);
+    });
+  });
+
+  it('restores form values from sessionStorage when navigating back', async () => {
+    // Simulate stored data from Review page
+    const storedData = {
+      appName: 'TestApp',
+      datasetId: 1,
+      nextDataset: { name: 'CustomName', comment: 'My comment' },
+      parameters: { cores: 16, ram: 64, inputFile: 'test.txt' },
+    };
+    sessionStorage.setItem('sushi_job_submission_data', JSON.stringify(storedData));
+
+    const { result } = renderHook(() =>
+      useApplicationForm({
+        appName: 'TestApp',
+        datasetId: 1,
+        datasetName: 'RNA-seq',
+        paramGroups: mockParamGroups,
+        resubmitParams: undefined,
+        isResubmit: false,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.formValues.cores).toBe(16);
+      expect(result.current.formValues.ram).toBe(64);
+      expect(result.current.nextDatasetData.datasetName).toBe('CustomName');
+      expect(result.current.nextDatasetData.datasetComment).toBe('My comment');
+    });
+  });
+
+  it('ignores sessionStorage data if appName does not match', async () => {
+    const storedData = {
+      appName: 'DifferentApp',
+      datasetId: 1,
+      nextDataset: { name: 'CustomName' },
+      parameters: { cores: 16 },
+    };
+    sessionStorage.setItem('sushi_job_submission_data', JSON.stringify(storedData));
+
+    const { result } = renderHook(() =>
+      useApplicationForm({
+        appName: 'TestApp',
+        datasetId: 1,
+        datasetName: 'RNA-seq',
+        paramGroups: mockParamGroups,
+        resubmitParams: undefined,
+        isResubmit: false,
+      })
+    );
+
+    await waitFor(() => {
+      // Should use defaults, not stored data
+      expect(result.current.formValues.cores).toBe(4);
+    });
+  });
+
+  it('ignores sessionStorage data if datasetId does not match', async () => {
+    const storedData = {
+      appName: 'TestApp',
+      datasetId: 999,
+      nextDataset: { name: 'CustomName' },
+      parameters: { cores: 16 },
+    };
+    sessionStorage.setItem('sushi_job_submission_data', JSON.stringify(storedData));
+
+    const { result } = renderHook(() =>
+      useApplicationForm({
+        appName: 'TestApp',
+        datasetId: 1,
+        datasetName: 'RNA-seq',
+        paramGroups: mockParamGroups,
+        resubmitParams: undefined,
+        isResubmit: false,
+      })
+    );
+
+    await waitFor(() => {
+      // Should use defaults, not stored data
+      expect(result.current.formValues.cores).toBe(4);
     });
   });
 });

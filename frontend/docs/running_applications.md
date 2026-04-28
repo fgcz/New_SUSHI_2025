@@ -1,5 +1,5 @@
 # Running Applications - Input Schema
-**Last Updated:** 2026-03-02
+**Last Updated:** 2026-04-28
 
 This document explains the application input schema structure and how it's handled in the frontend.
 
@@ -101,3 +101,112 @@ This enables scenarios like:
 - Selecting a reference genome filters available annotation options
 - Choosing a partition updates the maximum allowed cores/RAM
 - Enabling a feature reveals additional related parameters
+
+---
+
+## Submission Pipeline
+
+### Overview
+
+The job submission follows a multi-page flow with state persistence:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  Run Application │────▶│  Confirm/Review │────▶│   Job Running   │
+│  (Multi-step)    │◀────│                 │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+      Fill form          Review & Submit         Success redirect
+```
+
+### State Persistence
+
+Form data is stored in `sessionStorage` to survive navigation between the form and review pages.
+
+**Storage Key:** `sushi_job_submission_data`
+
+**Stored Data Structure:**
+```typescript
+{
+  projectNumber: number;
+  datasetId: number;
+  appName: string;
+  nextDataset: {
+    name: string;
+    comment?: string;
+  };
+  parameters: Record<string, any>;
+}
+```
+
+### When State is Saved
+
+Data is saved to `sessionStorage` when the user clicks "Review" (submits the form to go to the confirm page).
+
+**Location:** `run-application/[appName]/page.tsx` in `handleSubmit()`
+
+### When State is Restored
+
+Data is restored from `sessionStorage` when:
+1. User navigates back from the Confirm page to edit parameters
+2. The `useApplicationForm` hook checks for matching stored data on mount
+
+**Location:** `lib/hooks/application/useApplicationForm.ts`
+
+The hook only restores data if `appName` and `datasetId` match the stored values. This prevents loading stale data from a different app or dataset.
+
+### When State is Cleared
+
+| Event | Cleared? | Location |
+|-------|----------|----------|
+| Successful job submission | Yes | `confirm/page.tsx` in `submitSuccess` effect |
+| Mock run | Yes | `confirm/page.tsx` in `handleMockRun()` |
+| Browser tab closed | Yes | Automatic (sessionStorage behavior) |
+| User navigates away | No | Data persists for potential return |
+| Different app/dataset | Ignored | Matching check fails, defaults used |
+
+### Why sessionStorage?
+
+We use `sessionStorage` instead of `localStorage` because:
+
+1. **Auto-cleanup**: Data clears when the tab closes, preventing stale submissions
+2. **Tab isolation**: Each tab has its own storage, allowing parallel submissions
+3. **User expectation**: Closing a tab signals intent to abandon the form
+4. **No manual expiry**: No need to track timestamps or implement TTL logic
+
+### User Flow Examples
+
+**Happy Path:**
+1. User fills form across multiple steps
+2. Clicks "Review" → data saved to sessionStorage → navigates to confirm page
+3. Reviews parameters, clicks "Submit"
+4. Job submitted → sessionStorage cleared → redirects to dataset page
+
+**Edit Flow:**
+1. User fills form, clicks "Review"
+2. On confirm page, notices a mistake
+3. Clicks "Back to Edit" → returns to form
+4. Form restores values from sessionStorage
+5. User edits, clicks "Review" again → updated data saved
+6. Submits successfully
+
+**Abandon Flow:**
+1. User fills form partially
+2. Closes browser tab
+3. sessionStorage automatically cleared
+4. Next visit starts fresh
+
+### Key Files
+
+| File | Role in Pipeline |
+|------|------------------|
+| `run-application/[appName]/page.tsx` | Saves data on "Review" click |
+| `run-application/[appName]/confirm/page.tsx` | Loads data, clears on submit |
+| `lib/hooks/application/useApplicationForm.ts` | Restores data on back navigation |
+
+### NextDataset Section
+
+The form includes a "NextDataset" section (above the parameter steps) where users specify:
+- **Name**: Output dataset name (auto-generated default: `{appName}_{datasetName}_{date}`)
+- **Comment**: Optional description
+
+This section is always visible regardless of which step the user is on, since it applies to the entire submission rather than a specific parameter group.

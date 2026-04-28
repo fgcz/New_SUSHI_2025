@@ -38,17 +38,17 @@ export default function ConfirmJobPage() {
   // Use custom hook for job submission
   const { submitJob, isSubmitting, error: submitError, success: submitSuccess } = useJobSubmission();
 
-  // Load data from localStorage on mount
+  // Load data from sessionStorage on mount
   useEffect(() => {
     try {
-      const storedData = localStorage.getItem('sushi_job_submission_data');
+      const storedData = sessionStorage.getItem('sushi_job_submission_data');
       if (!storedData) {
         setDataLoadError('No job data found. Please go back and fill out the form.');
         return;
       }
 
       const parsedData: StoredJobData = JSON.parse(storedData);
-      
+
       // Validate that the stored data matches current URL params
       if (
         parsedData.projectNumber !== projectNumber ||
@@ -62,7 +62,7 @@ export default function ConfirmJobPage() {
       setJobData(parsedData);
     } catch (error) {
       setDataLoadError('Failed to load job data. Please go back and try again.');
-      console.error('Error loading job data from localStorage:', error);
+      console.error('Error loading job data from sessionStorage:', error);
     }
   }, [projectNumber, datasetId, appName]);
 
@@ -83,8 +83,8 @@ export default function ConfirmJobPage() {
   // Handle successful submission
   useEffect(() => {
     if (submitSuccess) {
-      // Clear localStorage after successful submission
-      localStorage.removeItem('sushi_job_submission_data');
+      // Clear sessionStorage after successful submission
+      sessionStorage.removeItem('sushi_job_submission_data');
       // Navigate to jobs page or dataset page
       router.push(`/projects/${projectNumber}/datasets/${datasetId}`);
     }
@@ -93,6 +93,8 @@ export default function ConfirmJobPage() {
   const handleMockRun = () => {
     // TODO: Implement mock run functionality
     console.log('Mock run requested with data:', jobData);
+    // Clear sessionStorage after mock run
+    sessionStorage.removeItem('sushi_job_submission_data');
     alert('Mock run functionality not yet implemented');
   };
 

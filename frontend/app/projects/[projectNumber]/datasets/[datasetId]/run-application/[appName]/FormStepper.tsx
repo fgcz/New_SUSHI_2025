@@ -17,7 +17,7 @@ export default function FormStepper({
         {steps.map((step, index) => {
           const isCompleted = index < currentStepIndex;
           const isCurrent = index === currentStepIndex;
-          const isClickable = onStepClick && (isCompleted || isCurrent);
+          const isClickable = !!onStepClick;
 
           return (
             <li key={step.id} className="flex items-center">
