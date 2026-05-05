@@ -1,12 +1,10 @@
 """Sample repository for sample-related database operations."""
 
-import ast
-import re
-
 from sqlmodel import Session, select
 
 from app.models import Sample
 from app.repositories.base import BaseRepository
+from app.utils.sample_parser import parse_sample_data
 
 
 class SampleRepository(BaseRepository[Sample]):
@@ -21,43 +19,17 @@ class SampleRepository(BaseRepository[Sample]):
         return list(self.session.exec(statement).all())
 
     def parse_key_value(self, key_value: str | None) -> dict:
-        """Parse Ruby hash string to Python dict.
+        """Parse sample key_value field to Python dict.
 
-        The key_value field stores data as Ruby hash syntax:
-        '{"Name"=>"Sample1", "Read1"=>"path/to/file"}'
+        Handles both JSON and Ruby hash formats for backwards compatibility.
 
         Args:
-            key_value: Ruby hash string
+            key_value: Serialized string (JSON or Ruby hash format)
 
         Returns:
             Parsed dictionary
         """
-        if not key_value:
-            return {}
-
-        try:
-            # Convert Ruby hash syntax to Python dict syntax
-            # Replace => with : for dict conversion
-            # Handle Ruby symbols (:key) and strings ("key")
-            python_str = key_value.strip()
-
-            # Replace Ruby hash rocket => with Python colon :
-            python_str = re.sub(r'=>', ':', python_str)
-
-            # Replace Ruby symbols :word with "word"
-            python_str = re.sub(r':(\w+)', r'"\1"', python_str)
-
-            # Handle nil -> None
-            python_str = python_str.replace(':nil', 'None').replace('nil', 'None')
-
-            # Handle true/false
-            python_str = python_str.replace(':true', 'True').replace(':false', 'False')
-
-            # Try to safely evaluate as Python literal
-            return ast.literal_eval(python_str)
-        except (ValueError, SyntaxError):
-            # If parsing fails, return empty dict
-            return {}
+        return parse_sample_data(key_value)
 
     def get_samples_as_dicts(self, dataset_id: int) -> list[dict]:
         """Get all samples for a dataset as parsed dictionaries."""

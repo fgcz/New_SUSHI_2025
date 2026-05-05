@@ -4,6 +4,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 
 from app.api.deps import (
     CurrentUserDep,
+    DatasetImportServiceDep,
     DatasetServiceDep,
     JobServiceDep,
     ProjectServiceDep,
@@ -92,21 +93,66 @@ def get_rankings(current_user: CurrentUserDep) -> dict:
 async def import_dataset(
     project_number: int,
     current_user: CurrentUserDep,
+    import_service: DatasetImportServiceDep,
     file: UploadFile = File(...),
-    name: str = Form(...),
     parent_id: int | None = Form(None),
+    allow_duplicate: bool = Form(False),
 ) -> dict:
-    """Import a dataset into a project.
+    """Import a dataset into a project from a TSV file.
 
-    MOCK: Returns success without actually importing.
-    Real implementation would parse the file and create dataset records.
+    The dataset name and other metadata are extracted from the TSV content.
     """
     require_project_access(project_number, current_user)
 
+    # Read file content
+    content = await file.read()
+    content_str = content.decode("utf-8")
+
+    # Import dataset
+    dataset = import_service.import_from_tsv(
+        content=content_str,
+        project_number=project_number,
+        user=current_user,
+        parent_id=parent_id,
+        allow_duplicate=allow_duplicate,
+    )
+
     return {
         "success": True,
-        "message": f"Dataset '{name}' import initiated",
-        "project_number": project_number,
-        "parent_id": parent_id,
-        "filename": file.filename,
+        "dataset": {
+            "id": dataset.id,
+            "name": dataset.name,
+            "num_samples": dataset.num_samples,
+            "comment": dataset.comment,
+            "order_ids": dataset.order_ids,
+        },
     }
+
+
+@router.post("/{project_number}/datasets/import/preview")
+async def preview_dataset_import(
+    project_number: int,
+    current_user: CurrentUserDep,
+    import_service: DatasetImportServiceDep,
+    file: UploadFile = File(...),
+) -> dict:
+    """Preview what would be imported without actually importing.
+
+    Parses the TSV, validates structure, and checks for duplicates
+    in the target project. Does NOT create any database records.
+
+    Args:
+        project_number: Target project
+        file: TSV file to preview
+
+    Returns:
+        Preview info including name, samples count, columns, and duplicate check
+    """
+    require_project_access(project_number, current_user)
+
+    # Read file content
+    content = await file.read()
+    content_str = content.decode("utf-8")
+
+    # Get preview
+    return import_service.preview_import(content_str, project_number)

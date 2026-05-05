@@ -1,8 +1,9 @@
 """Dataset routes - thin handlers delegating to services."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, File, Form, UploadFile
 
-from app.api.deps import CurrentUserDep, DatasetServiceDep
+from app.api.deps import CurrentUserDep, DatasetImportServiceDep, DatasetServiceDep
+from app.api.deps import require_project_access
 
 router = APIRouter()
 
@@ -234,4 +235,43 @@ def get_resubmit_data(
             "runGO": False,
             "backgroundExpression": 10,
         },
+    }
+
+
+# --------------------------------------------------------------------------
+# Dataset Validation (no project context needed)
+# --------------------------------------------------------------------------
+
+
+@router.post("/validate")
+async def validate_dataset_tsv(
+    current_user: CurrentUserDep,
+    import_service: DatasetImportServiceDep,
+    file: UploadFile = File(...),
+) -> dict:
+    """Validate a TSV file structure without importing.
+
+    Checks TSV format, required fields, and column structure.
+    Does NOT check for duplicates (requires project context).
+
+    Args:
+        file: TSV file to validate
+
+    Returns:
+        Validation result with parsed info
+    """
+    # Read file content
+    content = await file.read()
+    content_str = content.decode("utf-8")
+
+    # Validate
+    parsed = import_service.validate_tsv(content_str)
+
+    return {
+        "valid": True,
+        "name": parsed.name,
+        "comment": parsed.comment,
+        "num_samples": len(parsed.samples),
+        "columns": [{"name": c.name, "tag": c.tag} for c in parsed.columns],
+        "file_columns": parsed.file_columns,
     }

@@ -27,6 +27,7 @@ from app.services import (
     ProjectService,
     SlurmService,
 )
+from app.services.dataset_import import DatasetImportService
 
 # Session dependency
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -102,6 +103,10 @@ def get_job_submission_service(
     slurm_service: Annotated[SlurmService, Depends(get_slurm_service)],
 ) -> JobSubmissionService:
     return JobSubmissionService(job_repo, dataset_repo, sample_repo, slurm_service)
+
+
+def get_dataset_import_service(session: SessionDep) -> DatasetImportService:
+    return DatasetImportService(session)
 
 
 # Authentication dependencies
@@ -230,6 +235,7 @@ RefreshTokenRepoDep = Annotated[
 SampleRepoDep = Annotated[SampleRepository, Depends(get_sample_repository)]
 
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
+DatasetImportServiceDep = Annotated[DatasetImportService, Depends(get_dataset_import_service)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 JobSubmissionServiceDep = Annotated[JobSubmissionService, Depends(get_job_submission_service)]
 ProjectServiceDep = Annotated[ProjectService, Depends(get_project_service)]

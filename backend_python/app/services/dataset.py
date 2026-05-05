@@ -130,7 +130,7 @@ class DatasetService:
             "parent_id": dataset.parent_id,
             "children_ids": children_ids,
             "bfabric_id": dataset.bfabric_id,
-            "order_id": dataset.order_id,
+            "order_id": dataset.primary_order_id,
             "comment": dataset.comment,
             "sushi_app_name": dataset.sushi_app_name,
             "headers": headers,
@@ -217,7 +217,7 @@ class DatasetService:
             "user_login": users_map.get(ds.user_id) if ds.user_id else None,
             "created_at": ds.created_at.isoformat() if ds.created_at else None,
             "bfabric_id": ds.bfabric_id,
-            "order_id": ds.order_id,
+            "order_id": ds.primary_order_id,
             "project_number": project_number,
             "comment": ds.comment,
         }

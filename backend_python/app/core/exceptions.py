@@ -55,6 +55,13 @@ class ForbiddenError(AppException):
         super().__init__(message, "FORBIDDEN", 403)
 
 
+class ConflictError(AppException):
+    """Raised when a resource conflict occurs (e.g., duplicate)."""
+
+    def __init__(self, message: str = "Resource conflict"):
+        super().__init__(message, "CONFLICT", 409)
+
+
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     """Handle application-specific exceptions."""
     return JSONResponse(
