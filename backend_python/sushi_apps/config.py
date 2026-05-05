@@ -1,11 +1,8 @@
-"""Configuration constants for SUSHI apps."""
+"""Constants for SUSHI apps.
 
-# Paths
-EZ_GLOBAL_VARIABLES = "/usr/local/ngseq/opt/EZ_GLOBAL_VARIABLES.txt"
-CONDA_PROFILE = "/usr/local/ngseq/miniforge3/etc/profile.d/conda.sh"
-MINICONDA_PROFILE = "/usr/local/ngseq/miniconda3/etc/profile.d/conda.sh"
-DEFAULT_GSTORE_DIR = "/srv/gstore/projects"
-DEFAULT_SCRATCH_DIR = "/scratch"
+Infrastructure paths (GSTORE_DIR, SCRATCH_DIR, etc.) are in app/core/config.py
+and can be overridden via environment variables.
+"""
 
 # Process modes
 PROCESS_MODE_SAMPLE = "SAMPLE"

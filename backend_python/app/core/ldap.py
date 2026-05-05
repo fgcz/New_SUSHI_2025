@@ -50,6 +50,7 @@ class LDAPService:
             "login": login,
             "email": f"{login}@local.dev",
             "projects": [],  # Empty means all projects accessible when SKIP_AUTH=True
+            "is_employee": True,  # Mock users are employees for dev convenience
         }
 
     def _ldap_authenticate(self, username: str, password: str) -> dict:
@@ -82,13 +83,15 @@ class LDAPService:
             user_entry = conn.entries[0]
             email = str(user_entry.mail) if hasattr(user_entry, "mail") else f"{username}@local"
 
-            # Fetch project memberships
+            # Fetch project memberships and employee status
             projects = self._get_user_projects(conn, username)
+            is_employee = self._check_is_employee(conn, username)
 
             return {
                 "login": username,
                 "email": email,
                 "projects": projects,
+                "is_employee": is_employee,
             }
         finally:
             conn.unbind()
@@ -123,6 +126,26 @@ class LDAPService:
                     pass
 
         return projects
+
+    def _check_is_employee(self, conn: Connection, username: str) -> bool:
+        """Check if user is an employee (has global read access).
+
+        Args:
+            conn: Active LDAP connection
+            username: The user's login name
+
+        Returns:
+            True if user is an employee
+        """
+        # Check if user belongs to an employee group
+        # This checks for membership in a group like "employees" or similar
+        conn.search(
+            search_base=settings.LDAP_GROUP_SEARCH_BASE,
+            search_filter=f"(&(cn=employees)(memberUid={username}))",
+            attributes=["cn"],
+        )
+
+        return len(conn.entries) > 0
 
 
 def get_ldap_service() -> LDAPService:

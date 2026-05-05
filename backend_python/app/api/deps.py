@@ -108,10 +108,17 @@ def get_job_submission_service(
 class CurrentUser:
     """Represents the currently authenticated user from JWT token."""
 
-    def __init__(self, user_id: int, login: str, projects: list[int]):
+    def __init__(
+        self,
+        user_id: int,
+        login: str,
+        projects: list[int],
+        is_employee: bool = False,
+    ):
         self.user_id = user_id
         self.login = login
         self.projects = projects
+        self.is_employee = is_employee
 
 
 def get_current_user(
@@ -130,7 +137,7 @@ def get_current_user(
     """
     # In dev mode without token, return a default dev user
     if settings.SKIP_AUTH and not authorization:
-        return CurrentUser(user_id=0, login="dev_user", projects=[])
+        return CurrentUser(user_id=0, login="dev_user", projects=[], is_employee=True)
 
     if not authorization:
         raise AuthenticationError("Missing authorization header")
@@ -150,6 +157,7 @@ def get_current_user(
         user_id=int(payload["sub"]),
         login=payload["login"],
         projects=payload.get("projects", []),
+        is_employee=payload.get("is_employee", False),
     )
 
 
@@ -183,7 +191,11 @@ def require_project_access(project_number: int, user: CurrentUser) -> None:
     if settings.SKIP_AUTH:
         return
 
-    # Empty projects list with SKIP_AUTH=False means no access
+    # Employees have global read access to all projects
+    if user.is_employee:
+        return
+
+    # Check if user has explicit project membership
     if project_number not in user.projects:
         raise ForbiddenError(f"You don't have access to project {project_number}")
 

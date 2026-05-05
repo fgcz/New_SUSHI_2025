@@ -46,6 +46,7 @@ class AuthService:
             user_id=0,
             login=ldap_user["login"],
             projects=ldap_user["projects"],
+            is_employee=ldap_user.get("is_employee", False),
         )
 
         # Create and store refresh token
@@ -91,6 +92,7 @@ class AuthService:
             user_id=0,
             login="user",  # Generic since we don't store user info with token
             projects=[],
+            is_employee=False,  # Conservative default for refresh
         )
 
         return {

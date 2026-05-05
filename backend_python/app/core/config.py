@@ -31,6 +31,16 @@ class Settings(BaseSettings):
     # CORS (comma-separated string)
     BACKEND_CORS_ORIGINS: str = ""
 
+    # Infrastructure paths
+    GSTORE_DIR: str = "/srv/gstore/projects"
+    GSTORE_URL: str = "https://fgcz-gstore.uzh.ch"  # External URL for file downloads
+    SCRATCH_DIR: str = "/scratch"
+
+    # Tool paths
+    EZ_GLOBAL_VARIABLES: str = "/usr/local/ngseq/opt/EZ_GLOBAL_VARIABLES.txt"
+    CONDA_PROFILE: str = "/usr/local/ngseq/miniforge3/etc/profile.d/conda.sh"
+    MINICONDA_PROFILE: str = "/usr/local/ngseq/miniconda3/etc/profile.d/conda.sh"
+
     @property
     def cors_origins(self) -> list[str]:
         if not self.BACKEND_CORS_ORIGINS:

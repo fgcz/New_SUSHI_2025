@@ -6,7 +6,7 @@ Mirrors Ruby SUSHI's run_RApp() from global_variables.rb.
 
 from typing import TYPE_CHECKING, Any
 
-from sushi_apps.config import EZ_GLOBAL_VARIABLES, CONDA_PROFILE
+from app.core.config import settings
 
 if TYPE_CHECKING:
     from sushi_apps.base import SushiApp
@@ -39,14 +39,14 @@ def generate_r_heredoc(
 
     # Optional conda activation
     if conda_env:
-        lines.append(f". '{CONDA_PROFILE}'")
+        lines.append(f". '{settings.CONDA_PROFILE}'")
         lines.append(f"set +e; conda activate {conda_env}; set -e")
 
     # Start R heredoc
     lines.append("R --vanilla --slave << EOT")
 
     # Set global variables path
-    lines.append(f"EZ_GLOBAL_VARIABLES <<- '{EZ_GLOBAL_VARIABLES}'")
+    lines.append(f"EZ_GLOBAL_VARIABLES <<- '{settings.EZ_GLOBAL_VARIABLES}'")
 
     # Optional custom library path
     if lib_path:

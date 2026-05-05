@@ -8,13 +8,19 @@ import jwt
 from app.core.config import settings
 
 
-def create_access_token(user_id: int, login: str, projects: list[int] | None = None) -> str:
+def create_access_token(
+    user_id: int,
+    login: str,
+    projects: list[int] | None = None,
+    is_employee: bool = False,
+) -> str:
     """Create a JWT access token.
 
     Args:
         user_id: The user's database ID
         login: The user's login name
         projects: List of project numbers the user has access to
+        is_employee: Whether the user is an employee (has global read access)
 
     Returns:
         Encoded JWT token string
@@ -26,6 +32,7 @@ def create_access_token(user_id: int, login: str, projects: list[int] | None = N
         "sub": str(user_id),
         "login": login,
         "projects": projects or [],
+        "is_employee": is_employee,
         "exp": expire,
         "iat": datetime.now(timezone.utc),
         "type": "access",
