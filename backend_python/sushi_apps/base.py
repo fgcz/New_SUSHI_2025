@@ -207,6 +207,15 @@ class SushiApp(ABC):
         """
         return []
 
+    @property
+    def output_files(self) -> list[str]:
+        """Get output file paths tagged with [File].
+
+        Extracts paths from next_dataset() for keys containing [File] tag.
+        Used by SlurmService to generate copy commands in job footer.
+        """
+        return [path for key, path in self.next_dataset().items() if "[File]" in key]
+
     # === Utilities ===
 
     @property

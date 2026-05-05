@@ -12,13 +12,15 @@ This service is responsible for:
 The SushiApp itself is a pure domain model - this service handles all I/O.
 """
 
-from app.core.exceptions import NotFoundError, ValidationError
+from datetime import datetime, timezone
+
+from app.core.config import settings
+from app.core.exceptions import NotFoundError
+from app.models import Job
 from app.repositories.dataset import DatasetRepository
 from app.repositories.job import JobRepository
 from app.repositories.sample import SampleRepository
 from app.services.slurm_service import SlurmService
-from app.services.sushi_validators import validate_app
-
 from sushi_apps import get_app
 
 
@@ -39,11 +41,9 @@ class JobSubmissionService:
 
     def submit(
         self,
-        # Identity: what and where
         dataset_id: int,
         project_number: int,
         user_login: str,
-        # App configuration
         app_name: str,
         params: dict,
         next_dataset_name: str,
@@ -52,164 +52,167 @@ class JobSubmissionService:
     ) -> dict:
         """Submit a job for execution.
 
-        Workflow:
-        1. Load app, dataset, samples
-        2. Load project defaults
-        3. Build paths (gstore_dir, result_dir, input_dataset_tsv_path)
-        4. Configure app
-        5. Run app hooks (set_default_parameters, adjust_requirements)
-        6. Validate (columns, params)
-        7. Create output dataset record in DB
-        8. Write input dataset TSV
-        9. Generate and write script(s):
-           - DATASET mode: 1 script for all samples
-           - SAMPLE mode: 1 script per sample (with job dependencies)
-        10. Write parameters TSV
-        11. Create job record(s) in DB
-        12. Save parameters to DB
-        13. Submit to SLURM:
-            - DATASET mode: single submit
-            - SAMPLE mode: submit_job_chain with dependencies
+        Minimal implementation that:
+        1. Loads app, dataset, samples
+        2. Configures app with params
+        3. Builds and writes script
+        4. Creates job record in DB
+        5. Submits to SLURM
 
-        Returns: {job_ids, status, script_paths, output_dataset_id, message}
-        Raises: NotFoundError, ValidationError
+        Returns: {job_id, slurm_job_id, script_path, status, message}
         """
-        # TODO: Implement full workflow
-        raise NotImplementedError("JobSubmissionService.submit not yet implemented")
+        # 1. Load app
+        app = get_app(app_name)
+        if not app:
+            raise NotFoundError("Application", app_name)
 
-    def mock_submit(
-        self,
-        app_name: str,
-        dataset_id: int,
-        params: dict,
-        project_number: int,
-    ) -> dict:
-        """Generate script preview without creating DB records or submitting.
+        # 2. Load dataset and samples
+        dataset = self.dataset_repo.get_by_id(dataset_id)
+        if not dataset:
+            raise NotFoundError("Dataset", dataset_id)
 
-        Used by frontend "Mock Run" button to show what would be executed.
+        samples = self.sample_repo.get_samples_as_dicts(dataset_id)
 
-        Returns: {script_preview, output_dataset}
-        """
-        # TODO: Implement mock submission
-        raise NotImplementedError("JobSubmissionService.mock_submit not yet implemented")
+        # 3. Build paths
+        timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
+        result_dir = f"p{project_number}/{next_dataset_name}_{timestamp}"
+        input_dataset_tsv_path = f"{settings.GSTORE_DIR}/{result_dir}/input_dataset.tsv"
 
-    # === Private helpers (stubs) ===
+        # 4. Configure app
+        app.configure(
+            user_params=params,
+            dataset_rows=samples,
+            project=f"p{project_number}",
+            gstore_dir=settings.GSTORE_DIR,
+            result_dir=result_dir,
+            input_dataset_tsv_path=input_dataset_tsv_path,
+            process_mode=process_mode,
+        )
 
-    def _load_dataset(self, dataset_id: int):
-        """Fetch dataset or raise NotFoundError."""
-        # TODO: Implement
-        raise NotImplementedError
+        # 5. Build script
+        script_content = self.slurm_service.build_script(app)
 
-    def _load_samples(self, dataset_id: int) -> list[dict]:
-        """Fetch samples as list of dicts."""
-        # TODO: Implement
-        raise NotImplementedError
+        # 6. Write script
+        script_path = self.slurm_service.generate_script_path(app)
+        stdout_path = f"{script_path}_o.log"
+        stderr_path = f"{script_path}_e.log"
+        self.slurm_service.write_script(script_path, script_content)
 
-    def _load_project_defaults(self, project_number: int, app_name: str) -> dict:
-        """Load project-specific parameter defaults.
+        # 7. Create job record in DB
+        now = datetime.now(timezone.utc)
+        job = Job(
+            input_dataset_id=dataset_id,
+            script_path=script_path,
+            stdout_path=stdout_path,
+            stderr_path=stderr_path,
+            user=user_login,
+            status="submitted",
+            created_at=now,
+            updated_at=now,
+        )
+        self.job_repo.create(job)
 
-        Reads from project_default_parametersets.tsv if it exists.
-        Returns empty dict if no defaults found.
-        """
-        # TODO: Implement
-        return {}
+        # 8. Submit to SLURM
+        cores = params.get("cores", 1)
+        ram = params.get("ram", 4)
+        scratch = params.get("scratch", 10)
+        partition = params.get("partition", "employee")
 
-    def _build_paths(self, project_number: int, next_dataset_name: str) -> dict:
-        """Build gstore_dir, result_dir, input_dataset_tsv_path.
+        slurm_job_id = self.slurm_service.submit(
+            script_path=script_path,
+            stdout_path=stdout_path,
+            stderr_path=stderr_path,
+            cores=cores,
+            ram=ram,
+            scratch=scratch,
+            partition=partition,
+        )
 
-        Returns: {gstore_dir, result_dir, input_dataset_tsv_path}
-        """
-        # TODO: Implement path building with timestamps, sanitization
-        raise NotImplementedError
+        # 9. Update job with SLURM job ID
+        job.submit_job_id = int(slurm_job_id)
+        job.start_time = now
+        self.job_repo.update(job)
 
-    def _write_input_dataset_tsv(self, path: str, samples: list[dict]) -> None:
-        """Write input dataset TSV file for R apps to read."""
-        # TODO: Implement TSV writing
-        raise NotImplementedError
+        return {
+            "job_id": job.id,
+            "slurm_job_id": slurm_job_id,
+            "script_path": script_path,
+            "status": "submitted",
+            "message": f"Job submitted successfully to SLURM (job ID: {slurm_job_id})",
+        }
 
-    def _write_parameters_tsv(self, path: str, app_name: str, params: dict) -> None:
-        """Write parameters TSV file alongside the script.
-
-        Ruby SUSHI saves params to parameters.tsv for reproducibility.
-        Format: param_name<tab>value
-        """
-        # TODO: Implement
-        raise NotImplementedError
-
-    def _save_parameters_to_db(
-        self,
-        job_id: int,
-        app_name: str,
-        params: dict,
-    ) -> None:
-        """Save job parameters to database for reproducibility.
-
-        Allows re-running jobs with same parameters later.
-        """
-        # TODO: Implement
-        raise NotImplementedError
-
-    def _create_output_dataset(
+    def submit_hello_world(
         self,
         project_number: int,
-        name: str,
-        comment: str | None,
-        parent_id: int,
-        app_name: str,
-    ) -> int:
-        """Create output dataset record in DB.
-
-        Returns: dataset_id
-        """
-        # TODO: Implement
-        raise NotImplementedError
-
-    def _create_job_record(
-        self,
-        project_number: int,
-        app_name: str,
         user_login: str,
-        input_dataset_id: int,
-        output_dataset_id: int,
-        script_path: str,
-    ) -> int:
-        """Create job record in DB.
+    ) -> dict:
+        """Submit a minimal hello world job for testing.
 
-        Returns: job_id
+        Creates a simple R script that prints "Hello World" and submits to SLURM.
+        No dataset or app configuration needed.
+
+        Returns: {job_id, slurm_job_id, script_path, status, message}
         """
-        # TODO: Implement
-        raise NotImplementedError
+        # Build simple hello world script
+        script_content = """#!/bin/bash
+set -eux
+set -o pipefail
 
-    def _generate_scripts_for_mode(
-        self,
-        app,
-        process_mode: str,
-        base_script_path: str,
-    ) -> list[str]:
-        """Generate script(s) based on process mode.
+echo "Job runs on $(hostname)"
+echo "Starting Hello World test"
 
-        DATASET mode: Single script processing all samples
-        SAMPLE mode: One script per sample (app.set_sample() called for each)
-        BATCH mode: Single script with all samples (like DATASET but different R handling)
+R --vanilla --slave << EOT
+print("Hello World from SUSHI!")
+print(paste("Running on:", Sys.info()["nodename"]))
+print(paste("Time:", Sys.time()))
+EOT
 
-        Args:
-            app: Configured SushiApp instance
-            process_mode: DATASET, SAMPLE, or BATCH
-            base_script_path: Base path for scripts (index appended for SAMPLE mode)
+echo "Hello World test completed"
+echo "__SCRIPT END__"
+"""
 
-        Returns:
-            List of script paths written
-        """
-        # TODO: Implement
-        # if process_mode == "SAMPLE":
-        #     for i, sample in enumerate(app.samples):
-        #         app.set_sample(i, is_last=(i == len(app.samples) - 1))
-        #         script = self.slurm_service.build_script(app)
-        #         path = f"{base_script_path}_{i}.sh"
-        #         self.slurm_service.write_script(path, script)
-        #         paths.append(path)
-        # else:
-        #     script = self.slurm_service.build_script(app)
-        #     self.slurm_service.write_script(base_script_path, script)
-        #     paths.append(base_script_path)
-        raise NotImplementedError
+        # Generate script path
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        script_path = str(self.slurm_service.script_dir / f"hello_world_{timestamp}.sh")
+        stdout_path = f"{script_path}_o.log"
+        stderr_path = f"{script_path}_e.log"
+
+        # Write script
+        self.slurm_service.write_script(script_path, script_content)
+
+        # Create job record
+        now = datetime.now(timezone.utc)
+        job = Job(
+            script_path=script_path,
+            stdout_path=stdout_path,
+            stderr_path=stderr_path,
+            user=user_login,
+            status="submitted",
+            created_at=now,
+            updated_at=now,
+        )
+        self.job_repo.create(job)
+
+        # Submit to SLURM (minimal resources)
+        slurm_job_id = self.slurm_service.submit(
+            script_path=script_path,
+            stdout_path=stdout_path,
+            stderr_path=stderr_path,
+            cores=1,
+            ram=1,
+            scratch=1,
+            partition="employee",
+        )
+
+        # Update job with SLURM job ID
+        job.submit_job_id = int(slurm_job_id)
+        job.start_time = now
+        self.job_repo.update(job)
+
+        return {
+            "job_id": job.id,
+            "slurm_job_id": slurm_job_id,
+            "script_path": script_path,
+            "status": "submitted",
+            "message": f"Hello World job submitted (SLURM job ID: {slurm_job_id})",
+        }

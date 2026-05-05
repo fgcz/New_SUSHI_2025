@@ -195,3 +195,20 @@ def submit_job(
         next_dataset_name=next_dataset_name,
         next_dataset_comment=next_dataset_comment,
     )
+
+
+@router.post("/test/hello-world")
+def submit_hello_world_job(
+    current_user: CurrentUserDep,
+    submission_service: JobSubmissionServiceDep,
+    project_number: int = 1001,
+) -> dict:
+    """Submit a minimal hello world job for testing SLURM integration.
+
+    Creates a simple R script that prints "Hello World" and submits to SLURM.
+    No dataset or app configuration needed - just tests the submission pipeline.
+    """
+    return submission_service.submit_hello_world(
+        project_number=project_number,
+        user_login=current_user.login,
+    )

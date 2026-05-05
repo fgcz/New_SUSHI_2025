@@ -29,3 +29,22 @@ class BaseRepository(Generic[T]):
         if conditions:
             statement = statement.where(*conditions)
         return self.session.exec(statement).one()
+
+    def create(self, entity: T) -> T:
+        """Create a new record."""
+        self.session.add(entity)
+        self.session.commit()
+        self.session.refresh(entity)
+        return entity
+
+    def update(self, entity: T) -> T:
+        """Update an existing record."""
+        self.session.add(entity)
+        self.session.commit()
+        self.session.refresh(entity)
+        return entity
+
+    def delete(self, entity: T) -> None:
+        """Delete a record."""
+        self.session.delete(entity)
+        self.session.commit()
