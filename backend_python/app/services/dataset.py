@@ -7,8 +7,8 @@ from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models import DataSet
 from app.repositories.dataset import DatasetRepository
 from app.repositories.sample import SampleRepository
-from app.repositories.sushi_application import SushiApplicationRepository
 from app.repositories.user import UserRepository
+from sushi_apps import get_runnable_apps
 
 if TYPE_CHECKING:
     from app.api.deps import CurrentUser
@@ -22,12 +22,10 @@ class DatasetService:
         dataset_repo: DatasetRepository,
         user_repo: UserRepository,
         sample_repo: SampleRepository,
-        sushi_app_repo: SushiApplicationRepository,
     ):
         self.dataset_repo = dataset_repo
         self.user_repo = user_repo
         self.sample_repo = sample_repo
-        self.sushi_app_repo = sushi_app_repo
 
     def _get_authorized_dataset(self, dataset_id: int, user: "CurrentUser") -> DataSet:
         """Fetch dataset and verify project access.
@@ -115,8 +113,8 @@ class DatasetService:
         # Get headers
         headers = self.sample_repo.get_headers(dataset.id)
 
-        # Get runnable applications with full details
-        applications = self.sushi_app_repo.get_runnable_apps_detailed(headers)
+        # Get runnable applications
+        applications = get_runnable_apps(headers)
 
         # Get data folder paths from sample file paths
         data_paths = self.sample_repo.get_data_paths(dataset.id)
@@ -193,7 +191,7 @@ class DatasetService:
         headers = self.sample_repo.get_headers(dataset.id)
 
         # Get matching applications
-        return self.sushi_app_repo.get_runnable_apps_for_headers(headers)
+        return get_runnable_apps(headers)
 
     def get_samples(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get all samples for a dataset."""

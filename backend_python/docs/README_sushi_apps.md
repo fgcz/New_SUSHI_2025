@@ -23,10 +23,11 @@ app/
 ## Public API
 
 ```python
-from sushi_apps import get_app, list_apps
+from sushi_apps import get_app, list_apps, get_runnable_apps
 
-list_apps()          # ["FastQC", "CountQC", ...]
-get_app("FastQC")    # App instance for execution
+list_apps()                  # ["FastQC", "CountQC", ...]
+get_app("FastQC")            # App instance for execution
+get_runnable_apps(headers)   # Apps matching dataset headers
 ```
 
 For frontend config:
@@ -37,6 +38,26 @@ from app.api.serializers.sushi import serialize_app_config
 app = get_app("FastQC")
 config = serialize_app_config(app)  # Config dict for frontend form
 ```
+
+For filtering apps by dataset:
+```python
+from sushi_apps import get_runnable_apps
+
+headers = ["Name", "Read1 [File]", "Read2 [File]"]
+apps = get_runnable_apps(headers)
+# [{"category": "QC", "apps": [{"class_name": "FastQC", "description": "..."}]}]
+```
+
+## No Database for App Definitions
+
+Unlike the original Ruby SUSHI which stored app metadata in a `sushi_applications` database table for caching, the Python backend uses an **in-memory registry** exclusively. The database table existed in Ruby to avoid repeatedly loading 100+ app files on each request.
+
+In Python, this caching layer is unnecessary because:
+- All apps are imported once at startup via `importlib`
+- Class attributes (name, category, required_columns) are accessed directly - no instantiation needed
+- Filtering 200 apps in memory takes ~0.1ms vs ~5ms for a database query
+
+This simplifies the architecture: app definitions live only in code, with no sync mechanism needed between files and database.
 
 ## App Definition
 
@@ -55,6 +76,7 @@ Each app inherits from `SushiApp` and defines:
 | `next_dataset()` | Yes | Output file specification |
 | `set_default_parameters()` | No | Set defaults based on dataset |
 | `adjust_requirements()` | No | Adjust required_columns/modules based on params |
+| `adjust_params()` | No | Dynamic form updates based on user input |
 | `grandchild_datasets()` | No | Additional output datasets |
 
 ## Lifecycle Hooks
@@ -114,6 +136,33 @@ With `adjust_requirements()`:
 2. `adjust_requirements()` adds Read2 to required_columns
 3. Validation fails immediately: "Missing required column: Read2"
 4. User sees clear error before job starts
+
+## Dynamic Forms with `adjust_params()`
+
+Apps can implement dynamic form behavior where changing one field affects others. The frontend calls `POST /applications/{app_name}/validate` on field blur, and apps can override `adjust_params()` to return a modified parameter schema.
+
+```python
+def adjust_params(self, current_values: dict) -> list[dict]:
+    """Called when user changes a form field. Return updated params_definition."""
+    import copy
+    params = copy.deepcopy(self.params_definition)
+
+    # Example: show GTF file field only when custom genome is selected
+    if current_values.get("genome") == "custom":
+        for p in params:
+            if p["name"] == "gtf_file":
+                p["hidden"] = False
+
+    return params
+```
+
+Use cases:
+- Show/hide fields based on other field values
+- Change dropdown options dynamically
+- Update default values based on selections
+- Validate field combinations
+
+By default, `adjust_params()` returns `params_definition` unchanged (no dynamic behavior).
 
 ## The Output Contract
 
@@ -257,7 +306,20 @@ class STARApp(SushiApp):
     # ... define params, commands, next_dataset
 ```
 
-Auto-discovery imports all `.py` files except `__init__`, `base`, `config`, `r_heredoc`.
+Auto-discovery imports all `.py` files except those listed in `_EXCLUDED` in `__init__.py`. If you add a new utility module (e.g., a heredoc generator), add its name to `_EXCLUDED` to prevent it from being scanned as an app module.
+
+**Startup-time registration:** The app registry is built once when the `sushi_apps` module is first imported (typically at server startup). Python caches imported modules, so subsequent imports return the cached registry without re-scanning. This means adding a new app file requires a server restart to be discovered.
+
+**Abstract intermediate base classes:** Only subclasses with a `name` attribute are registered. Omitting `name` allows you to create shared base classes that aren't exposed as apps:
+
+```python
+class RBaseApp(SushiApp):
+    """Base for all R apps - no name, not registered."""
+    modules = ["Dev/R"]
+
+class FastQCApp(RBaseApp):
+    name = "FastQC"  # This one gets registered
+```
 
 ## Submission Flow
 

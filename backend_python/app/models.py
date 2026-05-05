@@ -79,22 +79,6 @@ class Sample(SQLModel, table=True):
     updated_at: datetime | None = None
 
 
-class SushiApplication(SQLModel, table=True):
-    """Maps to the existing sushi_applications table."""
-
-    __tablename__ = "sushi_applications"
-
-    id: int | None = Field(default=None, primary_key=True)
-    class_name: str | None = None
-    analysis_category: str | None = None
-    required_columns: str | None = None  # YAML serialized
-    next_dataset_keys: str | None = None  # YAML serialized
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
-    description: str | None = None
-    employee: bool | None = None
-
-
 class RefreshToken(SQLModel, table=True):
     """Stores refresh tokens for JWT authentication."""
 

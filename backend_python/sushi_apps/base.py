@@ -12,6 +12,7 @@ class SushiApp(ABC):
     Optional hooks:
     - set_default_parameters()
     - adjust_requirements()
+    - adjust_params()
     - grandchild_datasets()
     """
 
@@ -173,6 +174,30 @@ class SushiApp(ABC):
                 self.modules.append("CUDA/11.0")
         """
         pass
+
+    def adjust_params(self, current_values: dict) -> list[dict]:
+        """Adjust parameter definitions based on current form values.
+
+        Called by the /validate endpoint when user changes a field.
+        Override to implement dynamic form behavior.
+
+        Args:
+            current_values: Current form values from the frontend
+
+        Returns:
+            Updated params_definition (can modify options, defaults, hidden, etc.)
+
+        Example:
+            def adjust_params(self, current_values: dict) -> list[dict]:
+                import copy
+                params = copy.deepcopy(self.params_definition)
+                if current_values.get("genome") == "custom":
+                    for p in params:
+                        if p["name"] == "gtf_file":
+                            p["hidden"] = False
+                return params
+        """
+        return self.params_definition
 
     def grandchild_datasets(self) -> list[dict]:
         """Return additional output datasets (optional).

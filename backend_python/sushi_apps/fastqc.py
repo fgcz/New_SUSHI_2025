@@ -15,7 +15,6 @@ class FastQCApp(SushiApp):
     description = "Quality control analysis for high throughput sequence data"
     required_columns = ["Name", "Read1"]
 
-    # HPC modules to load (from Ruby FastqcApp.rb)
     modules = ["QC/FastQC", "Dev/R", "Tools/Picard", "Tools/samtools", "Dev/Python", "QC/fastp"]
 
     param_groups = [

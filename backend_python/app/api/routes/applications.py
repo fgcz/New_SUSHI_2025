@@ -36,15 +36,19 @@ def validate_application_config(
     current_user: CurrentUserDep,
     config: dict,
 ) -> dict:
-    """Validate application configuration.
+    """Validate and adjust application configuration based on current values.
 
-    TODO: Implement real validation logic.
-    For now, returns the config unchanged.
+    Apps can override adjust_params() to dynamically modify the form schema
+    based on user input (e.g., show/hide fields, change options).
     """
     try:
-        # Verify app exists
-        get_app(app_name)
-        # Return config as-is (no-op validation)
-        return config
+        app = get_app(app_name)
+        current_values = config.get("config", {})
+
+        # Let app adjust params based on current form values
+        adjusted_params = app.adjust_params(current_values)
+
+        # Return updated schema
+        return serialize_app_config(app, adjusted_params)
     except ValueError:
         raise HTTPException(status_code=404, detail=f"Application '{app_name}' not found")

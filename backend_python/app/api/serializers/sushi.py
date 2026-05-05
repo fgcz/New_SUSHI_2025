@@ -3,13 +3,20 @@
 from sushi_apps.base import SushiApp
 
 
-def serialize_app_config(app: SushiApp) -> dict:
-    """Convert app definition to frontend config format."""
+def serialize_app_config(app: SushiApp, params_override: list[dict] | None = None) -> dict:
+    """Convert app definition to frontend config format.
+
+    Args:
+        app: The SushiApp instance
+        params_override: Optional params to use instead of app.params_definition
+                        (used by /validate endpoint for dynamic forms)
+    """
     # Group parameters by their group id
     grouped: dict[str, list[dict]] = {}
     ungrouped: list[dict] = []
 
-    for param in app.params_definition:
+    params = params_override if params_override is not None else app.params_definition
+    for param in params:
         group_id = param.get("group")
         field = _param_to_field(param)
         if group_id:

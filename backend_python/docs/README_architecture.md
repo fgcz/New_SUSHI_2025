@@ -102,6 +102,7 @@ from app.core.exceptions import NotFoundError
 from app.repositories.dataset import DatasetRepository
 from app.repositories.sample import SampleRepository
 from app.repositories.user import UserRepository
+from sushi_apps import get_runnable_apps
 
 class DatasetService:
     def __init__(
@@ -109,12 +110,10 @@ class DatasetService:
         dataset_repo: DatasetRepository,
         user_repo: UserRepository,
         sample_repo: SampleRepository,
-        sushi_app_repo: SushiApplicationRepository,
     ):
         self.dataset_repo = dataset_repo
         self.user_repo = user_repo
         self.sample_repo = sample_repo
-        self.sushi_app_repo = sushi_app_repo
 
     def get_by_id(self, dataset_id: int) -> dict:
         """Get full dataset details by ID including samples and applications."""
@@ -134,7 +133,7 @@ class DatasetService:
         children_ids = self.dataset_repo.get_children_ids(dataset.id)
         samples = self.sample_repo.get_samples_as_dicts(dataset.id)
         headers = self.sample_repo.get_headers(dataset.id)
-        applications = self.sushi_app_repo.get_runnable_apps_detailed(headers)
+        applications = get_runnable_apps(headers)
 
         # 3. Transform into API response format
         return {
@@ -303,9 +302,8 @@ def get_dataset_service(
     dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
     user_repo: Annotated[UserRepository, Depends(get_user_repository)],
     sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
-    sushi_app_repo: Annotated[SushiApplicationRepository, Depends(get_sushi_application_repository)],
 ) -> DatasetService:
-    return DatasetService(dataset_repo, user_repo, sample_repo, sushi_app_repo)
+    return DatasetService(dataset_repo, user_repo, sample_repo)
 
 # Type alias for clean route signatures
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
@@ -326,11 +324,10 @@ DatasetServiceDep
             ├── UserRepository ← get_user_repository()
             │       └── Session ← get_session() [same instance]
             │
-            ├── SampleRepository ← get_sample_repository()
-            │       └── Session ← get_session() [same instance]
-            │
-            └── SushiApplicationRepository ← get_sushi_application_repository()
+            └── SampleRepository ← get_sample_repository()
                     └── Session ← get_session() [same instance]
+
+Note: App matching uses sushi_apps module directly (no repository needed)
 ```
 
 All repositories share the same database session within a request.
@@ -402,6 +399,12 @@ app/
 │   ├── sample.py            # SampleRepository
 │   ├── user.py              # UserRepository
 │   └── refresh_token.py     # RefreshTokenRepository
+│
+sushi_apps/                   # App definitions and registry
+├── __init__.py              # Registry, get_app(), get_runnable_apps()
+├── base.py                  # SushiApp base class
+├── fastqc.py                # FastQC app definition
+└── countqc.py               # CountQC app definition
 │
 ├── models.py                # SQLModel database models
 │

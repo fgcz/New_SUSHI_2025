@@ -17,7 +17,6 @@ from app.repositories import (
     ProjectRepository,
     RefreshTokenRepository,
     SampleRepository,
-    SushiApplicationRepository,
     UserRepository,
 )
 from app.services import (
@@ -62,18 +61,13 @@ def get_sample_repository(session: SessionDep) -> SampleRepository:
     return SampleRepository(session)
 
 
-def get_sushi_application_repository(session: SessionDep) -> SushiApplicationRepository:
-    return SushiApplicationRepository(session)
-
-
 # Service dependencies
 def get_dataset_service(
     dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
     user_repo: Annotated[UserRepository, Depends(get_user_repository)],
     sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
-    sushi_app_repo: Annotated[SushiApplicationRepository, Depends(get_sushi_application_repository)],
 ) -> DatasetService:
-    return DatasetService(dataset_repo, user_repo, sample_repo, sushi_app_repo)
+    return DatasetService(dataset_repo, user_repo, sample_repo)
 
 
 def get_job_service(
@@ -222,9 +216,6 @@ RefreshTokenRepoDep = Annotated[
     RefreshTokenRepository, Depends(get_refresh_token_repository)
 ]
 SampleRepoDep = Annotated[SampleRepository, Depends(get_sample_repository)]
-SushiAppRepoDep = Annotated[
-    SushiApplicationRepository, Depends(get_sushi_application_repository)
-]
 
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
