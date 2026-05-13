@@ -1,8 +1,29 @@
+import json
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import Column, JSON
+import yaml
+from sqlalchemy import Column, String
+from sqlalchemy.types import TypeDecorator
 from sqlmodel import Field, SQLModel
+
+
+class RubySerializedJSON(TypeDecorator):
+    """Handles columns that may contain JSON or Ruby YAML serialization."""
+
+    impl = String
+    cache_ok = True
+
+    def process_result_value(self, value: Any, dialect: Any) -> Any:
+        if value is None or value == "":
+            return None
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            try:
+                return yaml.safe_load(value)
+            except Exception:
+                return None
 
 
 class Project(SQLModel, table=True):
@@ -56,15 +77,15 @@ class DataSet(SQLModel, table=True):
     # App that created this dataset (null if imported directly)
     sushi_app_name: str | None = None
 
-    # Job parameters used when app created this dataset (JSON)
+    # Job parameters used when app created this dataset (JSON or Ruby YAML)
     job_parameters: dict[str, Any] | None = Field(
-        default=None, sa_column=Column(JSON)
+        default=None, sa_column=Column(RubySerializedJSON)
     )
 
     # B-Fabric integration
     bfabric_id: int | None = None
     workunit_id: int | None = None
-    order_ids: list[int] | None = Field(default=None, sa_column=Column(JSON))
+    order_ids: list[int] | None = Field(default=None, sa_column=Column(RubySerializedJSON))
 
     # Timestamps
     created_at: datetime = Field(

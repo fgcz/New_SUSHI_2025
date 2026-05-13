@@ -23,6 +23,9 @@ export default function ProjectDatasetsPage() {
 
   // Local selection state (no need for URL sync)
   const [selectedSet, setSelectedSet] = useState<Set<number>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
+  const exitSelectMode = () => { setSelectMode(false); setSelectedSet(new Set()); };
 
   const toggleSelect = (id: number) => {
     setSelectedSet(prev => {
@@ -40,11 +43,13 @@ export default function ProjectDatasetsPage() {
     staleTime: 60_000,
   });
 
-  // Tree data query (enabled only when tree view)
+  const isTreeView = viewMode === 'tree' || viewMode === 'tree3';
+
+  // Tree data query (shared across all three tree views)
   const { data: treeData, isLoading: isTreeLoading, error: treeError } = useQuery({
     queryKey: ['datasets-tree', projectNumber],
     queryFn: () => projectApi.getProjectDatasetsTree(projectNumber),
-    enabled: viewMode === 'tree',
+    enabled: isTreeView,
     staleTime: 60_000,
   });
 
@@ -84,42 +89,30 @@ export default function ProjectDatasetsPage() {
       <div className="flex items-center gap-3 mb-4">
         {/* View toggle group */}
         <div className="inline-flex rounded-md bg-gray-100 p-0.5">
-          <button
-            onClick={() => {
-              const sp = new URLSearchParams(searchParams.toString());
-              sp.delete('view');
-              router.push(`?${sp.toString()}`);
-              setSelectedSet(new Set());
-            }}
-            className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${
-              viewMode === 'table'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Table
-          </button>
-          <button
-            onClick={() => {
-              const sp = new URLSearchParams(searchParams.toString());
-              sp.set('view', 'tree');
-              router.push(`?${sp.toString()}`);
-              setSelectedSet(new Set());
-            }}
-            className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${
-              viewMode === 'tree'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Tree
-          </button>
+          {(['table', 'tree', 'tree3'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => {
+                const sp = new URLSearchParams(searchParams.toString());
+                if (mode === 'table') sp.delete('view'); else sp.set('view', mode);
+                router.push(`?${sp.toString()}`);
+                exitSelectMode();
+              }}
+              className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${
+                viewMode === mode
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {mode === 'table' ? 'Table' : mode === 'tree' ? 'Tree' : 'Tree 3'}
+            </button>
+          ))}
         </div>
 
         <div className="w-px h-6 bg-gray-300" />
 
         {/* Search input - different for table vs tree */}
-        {viewMode === 'tree' ? (
+        {isTreeView ? (
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
               <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,13 +154,40 @@ export default function ProjectDatasetsPage() {
         <div className="flex-1" />
 
         {/* Action buttons - right aligned */}
-        <button
-          className="px-3 py-1.5 bg-white text-red-600 border border-red-300 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-red-300 transition-colors"
-          disabled={selectedSet.size === 0}
-          onClick={() => deleteDatasets(Array.from(selectedSet))}
-        >
-          Delete ({selectedSet.size})
-        </button>
+        {isTreeView ? (
+          selectMode ? (
+            <>
+              <button
+                className="px-3 py-1.5 bg-white text-red-600 border border-red-300 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-red-300 transition-colors"
+                disabled={selectedSet.size === 0}
+                onClick={async () => { await deleteDatasets(Array.from(selectedSet)); exitSelectMode(); }}
+              >
+                Delete ({selectedSet.size})
+              </button>
+              <button
+                className="px-3 py-1.5 bg-white text-gray-600 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+                onClick={exitSelectMode}
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              className="px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+              onClick={() => setSelectMode(true)}
+            >
+              Select
+            </button>
+          )
+        ) : (
+          <button
+            className="px-3 py-1.5 bg-white text-red-600 border border-red-300 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-red-300 transition-colors"
+            disabled={selectedSet.size === 0}
+            onClick={() => deleteDatasets(Array.from(selectedSet))}
+          >
+            Delete ({selectedSet.size})
+          </button>
+        )}
         <button
           className="px-3 py-1.5 bg-brand-600 text-white rounded-md text-sm font-medium hover:bg-brand-700 transition-colors"
           onClick={() => downloadAllDatasets()}
@@ -176,17 +196,18 @@ export default function ProjectDatasetsPage() {
         </button>
       </div>
 
-      {viewMode === 'tree' ? (
+      {isTreeView ? (
         <div>
           {isTreeLoading && <div className="p-6 text-gray-500">Loading tree...</div>}
           {treeError && <div className="p-6 text-red-600">Failed to load tree</div>}
           {treeData && (
             <DatasetTreeRcTree
               treeNodes={treeData.tree}
-              selectedIds={selectedSet}
-              onSelectionChange={setSelectedSet}
+              selectedIds={selectMode ? selectedSet : undefined}
+              onSelectionChange={selectMode ? setSelectedSet : undefined}
               projectNumber={projectNumber}
               searchQuery={treeSearchQuery}
+              variant={viewMode === 'tree3' ? 'geist' : 'rctree'}
             />
           )}
         </div>

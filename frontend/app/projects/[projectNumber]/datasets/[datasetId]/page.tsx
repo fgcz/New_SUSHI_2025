@@ -292,6 +292,8 @@ export default function DatasetDetailPage() {
               treeNodes={datasetTree.tree}
               projectNumber={projectNumber}
               currentDatasetId={datasetId}
+              variant="geist"
+              noFade
             />
           )}
         </div>
