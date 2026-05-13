@@ -50,6 +50,9 @@ function buildRoots(treeNodes: any[], projectNumber: number): RcTreeNode[] {
     if (n.parent === '#') rootNodes.push(node);
     else nodeMap.get(String(n.parent))?.children?.push(node);
   }
+  for (const [, node] of nodeMap) {
+    node.childrenCount = node.children?.length ?? 0;
+  }
   return rootNodes;
 }
 

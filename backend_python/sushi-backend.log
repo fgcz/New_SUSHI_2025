@@ -5475,3 +5475,1673 @@ INFO:     130.60.193.7:62087 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 O
 2026-05-13 13:29:36,542 INFO sqlalchemy.engine.Engine ROLLBACK
 INFO:     130.60.193.7:62088 - "GET /auth/me HTTP/1.1" 200 OK
 INFO:     130.60.193.7:62088 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62118 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62120 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:30:28,899 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:30:28,900 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:30:28,900 INFO sqlalchemy.engine.Engine [cached since 1793s ago] (1001,)
+2026-05-13 13:30:28,900 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:30:28,900 INFO sqlalchemy.engine.Engine [cached since 1793s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62119 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:30:28,901 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:30:28,910 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:30:28,910 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:30:28,910 INFO sqlalchemy.engine.Engine [cached since 1890s ago] (1001,)
+2026-05-13 13:30:28,911 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:30:28,911 INFO sqlalchemy.engine.Engine [cached since 1890s ago] (1001, 10, 0)
+2026-05-13 13:30:28,921 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:30:28,921 INFO sqlalchemy.engine.Engine [cached since 1890s ago] (2,)
+2026-05-13 13:30:28,922 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:30:28,922 INFO sqlalchemy.engine.Engine [cached since 1890s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:62119 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:30:28,923 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62121 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62120 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62121 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62120 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62121 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:31:21,233 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:31:21,234 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:31:21,234 INFO sqlalchemy.engine.Engine [cached since 1943s ago] (1001,)
+2026-05-13 13:31:21,234 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:31:21,234 INFO sqlalchemy.engine.Engine [cached since 1943s ago] (1001, 10, 0)
+2026-05-13 13:31:21,245 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:31:21,245 INFO sqlalchemy.engine.Engine [cached since 1943s ago] (2,)
+2026-05-13 13:31:21,245 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:31:21,245 INFO sqlalchemy.engine.Engine [cached since 1943s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:62122 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:31:21,246 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62144 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:31:21,252 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:31:21,252 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:31:21,252 INFO sqlalchemy.engine.Engine [cached since 1846s ago] (1001,)
+2026-05-13 13:31:21,252 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:31:21,253 INFO sqlalchemy.engine.Engine [cached since 1846s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62143 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:31:21,253 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62144 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62144 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62175 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:32:20,026 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:20,027 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:20,027 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:32:20,028 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:32:20,028 INFO sqlalchemy.engine.Engine [cached since 1905s ago] (1001,)
+2026-05-13 13:32:20,028 INFO sqlalchemy.engine.Engine [cached since 2002s ago] (1001,)
+2026-05-13 13:32:20,028 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:32:20,028 INFO sqlalchemy.engine.Engine [cached since 2001s ago] (1001, 10, 0)
+2026-05-13 13:32:20,029 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:32:20,030 INFO sqlalchemy.engine.Engine [cached since 1905s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+2026-05-13 13:32:20,040 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:32:20,040 INFO sqlalchemy.engine.Engine [cached since 2001s ago] (2,)
+INFO:     130.60.193.7:62174 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:32:20,041 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:32:20,041 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:32:20,041 INFO sqlalchemy.engine.Engine [cached since 2001s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:62173 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:32:20,042 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62175 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62175 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62194 - "OPTIONS /datasets/265 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62195 - "OPTIONS /datasets/265/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62196 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:32:44,936 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:44,937 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:44,937 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+2026-05-13 13:32:44,937 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:32:44,937 INFO sqlalchemy.engine.Engine [cached since 2026s ago] (2,)
+2026-05-13 13:32:44,938 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:32:44,938 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (3,)
+2026-05-13 13:32:44,938 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:44,938 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+2026-05-13 13:32:44,938 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:44,938 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+2026-05-13 13:32:44,939 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:44,939 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+2026-05-13 13:32:44,940 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:44,940 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+2026-05-13 13:32:44,941 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:44,942 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:44,942 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+2026-05-13 13:32:44,943 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:44,943 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (265,)
+INFO:     130.60.193.7:62196 - "GET /datasets/265 HTTP/1.1" 200 OK
+2026-05-13 13:32:44,944 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:32:44,949 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:44,949 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (266,)
+2026-05-13 13:32:44,949 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+INFO:     130.60.193.7:62198 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:32:44,950 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (267,)
+2026-05-13 13:32:44,950 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:44,950 INFO sqlalchemy.engine.Engine [cached since 2023s ago] (268,)
+INFO:     130.60.193.7:62197 - "GET /datasets/265/tree HTTP/1.1" 200 OK
+2026-05-13 13:32:44,951 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62197 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62195 - "OPTIONS /projects/1001/datasets/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62195 - "OPTIONS /datasets/23 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62194 - "OPTIONS /datasets/23/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62197 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:32:49,073 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:49,074 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:49,074 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+2026-05-13 13:32:49,074 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,074 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+2026-05-13 13:32:49,080 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,081 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (39,)
+INFO:     130.60.193.7:62196 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:32:49,082 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,082 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (51,)
+2026-05-13 13:32:49,083 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,083 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (147,)
+2026-05-13 13:32:49,084 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:49,084 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:49,084 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+2026-05-13 13:32:49,085 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,085 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (200,)
+2026-05-13 13:32:49,086 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,086 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (221,)
+2026-05-13 13:32:49,086 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:32:49,086 INFO sqlalchemy.engine.Engine [cached since 2031s ago] (2,)
+2026-05-13 13:32:49,086 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,087 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:32:49,087 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (272,)
+2026-05-13 13:32:49,087 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (3,)
+2026-05-13 13:32:49,087 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:49,087 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+INFO:     130.60.193.7:62198 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:32:49,088 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:32:49,089 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:49,089 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+2026-05-13 13:32:49,089 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:49,089 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+2026-05-13 13:32:49,089 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:49,090 INFO sqlalchemy.engine.Engine [cached since 2027s ago] (23,)
+INFO:     130.60.193.7:62197 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:32:49,090 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62196 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62199 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62208 - "OPTIONS /datasets/147 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62209 - "OPTIONS /datasets/147/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62199 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:32:55,553 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:55,553 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:55,553 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+2026-05-13 13:32:55,555 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:32:55,555 INFO sqlalchemy.engine.Engine [cached since 2037s ago] (2,)
+2026-05-13 13:32:55,556 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:32:55,556 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (3,)
+2026-05-13 13:32:55,557 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:55,557 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+2026-05-13 13:32:55,558 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:55,558 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+2026-05-13 13:32:55,559 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:32:55,559 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:55,559 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+INFO:     130.60.193.7:62211 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:32:55,562 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:32:55,562 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:55,562 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (23,)
+2026-05-13 13:32:55,562 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+2026-05-13 13:32:55,563 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:55,563 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+2026-05-13 13:32:55,564 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:32:55,565 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:32:55,565 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (147,)
+2026-05-13 13:32:55,565 INFO sqlalchemy.engine.Engine [cached since 2034s ago] (272,)
+INFO:     130.60.193.7:62210 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62199 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:32:55,566 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:32:55,566 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:33:01,604 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:33:01,604 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:01,604 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+2026-05-13 13:33:01,605 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:33:01,605 INFO sqlalchemy.engine.Engine [cached since 2043s ago] (2,)
+2026-05-13 13:33:01,605 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:33:01,605 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (3,)
+2026-05-13 13:33:01,605 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,605 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+2026-05-13 13:33:01,606 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:01,606 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+2026-05-13 13:33:01,606 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:01,606 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+2026-05-13 13:33:01,607 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:01,607 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+INFO:     130.60.193.7:62212 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:33:01,608 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:33:01,609 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:33:01,609 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:01,609 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+2026-05-13 13:33:01,610 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,610 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (23,)
+2026-05-13 13:33:01,616 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,616 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (39,)
+2026-05-13 13:33:01,616 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,616 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (51,)
+INFO:     130.60.193.7:62215 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:33:01,617 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,617 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (147,)
+2026-05-13 13:33:01,618 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,618 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (200,)
+2026-05-13 13:33:01,619 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,619 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (221,)
+2026-05-13 13:33:01,619 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:01,619 INFO sqlalchemy.engine.Engine [cached since 2040s ago] (272,)
+INFO:     130.60.193.7:62214 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:33:01,619 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62215 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62215 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:33:25,347 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:33:25,348 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:25,348 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (147,)
+2026-05-13 13:33:25,349 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:33:25,350 INFO sqlalchemy.engine.Engine [cached since 2067s ago] (2,)
+2026-05-13 13:33:25,351 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:33:25,351 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (3,)
+INFO:     130.60.193.7:62231 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:33:25,353 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:33:25,353 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:25,353 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:25,354 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (147,)
+2026-05-13 13:33:25,354 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (147,)
+2026-05-13 13:33:25,354 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:25,356 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:25,356 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (147,)
+2026-05-13 13:33:25,356 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (23,)
+2026-05-13 13:33:25,357 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:25,357 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:25,357 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (147,)
+2026-05-13 13:33:25,357 INFO sqlalchemy.engine.Engine [cached since 2063s ago] (147,)
+2026-05-13 13:33:25,358 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:25,358 INFO sqlalchemy.engine.Engine [cached since 2064s ago] (147,)
+2026-05-13 13:33:25,359 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:25,360 INFO sqlalchemy.engine.Engine [cached since 2063s ago] (272,)
+INFO:     130.60.193.7:62229 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:33:25,360 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62230 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:33:25,361 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62231 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62231 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:33:39,043 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:33:39,044 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:39,044 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+2026-05-13 13:33:39,045 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:33:39,046 INFO sqlalchemy.engine.Engine [cached since 2081s ago] (2,)
+2026-05-13 13:33:39,047 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:33:39,047 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (3,)
+2026-05-13 13:33:39,048 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:39,048 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+INFO:     130.60.193.7:62243 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:33:39,049 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:39,050 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:33:39,050 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+2026-05-13 13:33:39,050 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:39,051 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+2026-05-13 13:33:39,051 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:39,053 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:33:39,053 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+2026-05-13 13:33:39,053 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (23,)
+2026-05-13 13:33:39,054 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:39,054 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:33:39,054 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+2026-05-13 13:33:39,054 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (147,)
+2026-05-13 13:33:39,055 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:33:39,056 INFO sqlalchemy.engine.Engine [cached since 2077s ago] (272,)
+INFO:     130.60.193.7:62241 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:33:39,057 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62242 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:33:39,057 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62243 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62243 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62256 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62256 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:34:04,752 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:34:04,752 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:34:04,753 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+2026-05-13 13:34:04,754 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:34:04,754 INFO sqlalchemy.engine.Engine [cached since 2106s ago] (2,)
+2026-05-13 13:34:04,755 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:34:04,755 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (3,)
+2026-05-13 13:34:04,756 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:34:04,756 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+2026-05-13 13:34:04,756 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:34:04,757 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+INFO:     130.60.193.7:62267 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:34:04,757 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:34:04,758 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+2026-05-13 13:34:04,760 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:34:04,760 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+2026-05-13 13:34:04,761 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:34:04,761 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:62265 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:34:04,761 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+2026-05-13 13:34:04,762 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:34:04,764 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:34:04,764 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (23,)
+2026-05-13 13:34:04,764 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:34:04,764 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (147,)
+2026-05-13 13:34:04,765 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:34:04,765 INFO sqlalchemy.engine.Engine [cached since 2103s ago] (272,)
+INFO:     130.60.193.7:62266 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:34:04,766 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62267 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62267 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:34:11,318 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:34:11,318 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:34:11,318 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (147,)
+2026-05-13 13:34:11,320 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:34:11,320 INFO sqlalchemy.engine.Engine [cached since 2113s ago] (2,)
+INFO:     130.60.193.7:62271 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:34:11,321 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:34:11,322 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (3,)
+2026-05-13 13:34:11,322 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:34:11,322 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (147,)
+2026-05-13 13:34:11,322 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:34:11,323 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (147,)
+2026-05-13 13:34:11,324 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:34:11,324 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:34:11,324 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (147,)
+2026-05-13 13:34:11,324 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:34:11,325 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:34:11,325 INFO sqlalchemy.engine.Engine [cached since 2110s ago] (147,)
+2026-05-13 13:34:11,325 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (147,)
+2026-05-13 13:34:11,327 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:62269 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:34:11,328 INFO sqlalchemy.engine.Engine [cached since 2110s ago] (23,)
+2026-05-13 13:34:11,328 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:34:11,329 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:34:11,329 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (147,)
+2026-05-13 13:34:11,330 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:34:11,330 INFO sqlalchemy.engine.Engine [cached since 2109s ago] (272,)
+INFO:     130.60.193.7:62270 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:34:11,331 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62271 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62271 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62295 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62295 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:35:40,992 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:35:40,993 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:35:40,993 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+2026-05-13 13:35:40,995 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:35:40,995 INFO sqlalchemy.engine.Engine [cached since 2202s ago] (2,)
+2026-05-13 13:35:40,995 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:35:40,996 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (3,)
+2026-05-13 13:35:40,997 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:35:40,998 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+2026-05-13 13:35:40,998 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:35:40,998 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+INFO:     130.60.193.7:62323 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:35:41,000 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:35:41,000 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+2026-05-13 13:35:41,000 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:35:41,001 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:35:41,001 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:35:41,001 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+2026-05-13 13:35:41,001 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+2026-05-13 13:35:41,003 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:35:41,003 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (23,)
+INFO:     130.60.193.7:62321 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:35:41,004 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:35:41,005 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (147,)
+2026-05-13 13:35:41,005 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:35:41,006 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:35:41,006 INFO sqlalchemy.engine.Engine [cached since 2199s ago] (272,)
+INFO:     130.60.193.7:62322 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:35:41,007 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62323 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62323 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:35:54,958 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:35:54,958 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:35:54,958 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,960 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:35:54,960 INFO sqlalchemy.engine.Engine [cached since 2216s ago] (2,)
+2026-05-13 13:35:54,961 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:35:54,961 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (3,)
+2026-05-13 13:35:54,963 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+INFO:     130.60.193.7:62335 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:35:54,964 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,964 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:35:54,965 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:35:54,965 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,966 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:35:54,966 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,966 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:35:54,966 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,965 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:62333 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:35:54,967 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,967 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:35:54,969 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:35:54,969 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (23,)
+2026-05-13 13:35:54,970 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:35:54,970 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (147,)
+2026-05-13 13:35:54,971 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:35:54,971 INFO sqlalchemy.engine.Engine [cached since 2213s ago] (272,)
+INFO:     130.60.193.7:62334 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:35:54,972 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62335 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62335 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62358 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62358 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:36:53,195 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:36:53,195 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:36:53,195 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+2026-05-13 13:36:53,196 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:36:53,196 INFO sqlalchemy.engine.Engine [cached since 2275s ago] (2,)
+2026-05-13 13:36:53,196 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:36:53,196 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (3,)
+2026-05-13 13:36:53,197 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,197 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+2026-05-13 13:36:53,198 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:36:53,198 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+INFO:     130.60.193.7:62375 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:36:53,199 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:36:53,199 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+2026-05-13 13:36:53,200 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:36:53,200 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:36:53,201 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+2026-05-13 13:36:53,201 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:36:53,201 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+2026-05-13 13:36:53,202 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,202 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (23,)
+INFO:     130.60.193.7:62373 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:36:53,203 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:36:53,209 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,209 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (39,)
+2026-05-13 13:36:53,209 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,210 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (51,)
+2026-05-13 13:36:53,210 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,210 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (147,)
+INFO:     130.60.193.7:62375 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:36:53,211 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,211 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (200,)
+2026-05-13 13:36:53,212 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,212 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (221,)
+2026-05-13 13:36:53,212 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:36:53,212 INFO sqlalchemy.engine.Engine [cached since 2271s ago] (272,)
+INFO:     130.60.193.7:62374 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:36:53,212 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62375 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62386 - "OPTIONS /datasets/272 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62387 - "OPTIONS /datasets/272/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62388 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:37:06,959 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:37:06,959 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:06,959 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+2026-05-13 13:37:06,960 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:37:06,961 INFO sqlalchemy.engine.Engine [cached since 2288s ago] (2,)
+2026-05-13 13:37:06,961 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:37:06,961 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (3,)
+2026-05-13 13:37:06,962 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:06,962 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+2026-05-13 13:37:06,963 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:37:06,963 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:06,964 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:06,964 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+2026-05-13 13:37:06,965 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+INFO:     130.60.193.7:62390 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:37:06,967 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:06,968 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:06,968 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (147,)
+2026-05-13 13:37:06,968 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+2026-05-13 13:37:06,970 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:06,971 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:06,971 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (23,)
+2026-05-13 13:37:06,971 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+2026-05-13 13:37:06,971 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:06,972 INFO sqlalchemy.engine.Engine [cached since 2285s ago] (272,)
+INFO:     130.60.193.7:62388 - "GET /datasets/272 HTTP/1.1" 200 OK
+2026-05-13 13:37:06,973 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62389 - "GET /datasets/272/tree HTTP/1.1" 200 OK
+2026-05-13 13:37:06,973 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62390 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:37:52,956 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:37:52,956 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:52,956 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,958 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:37:52,958 INFO sqlalchemy.engine.Engine [cached since 2334s ago] (2,)
+2026-05-13 13:37:52,958 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:37:52,958 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (3,)
+2026-05-13 13:37:52,959 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:52,959 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,959 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:52,959 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,959 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:52,960 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,960 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:52,960 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,962 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:37:52,962 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:62391 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:37:52,963 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,964 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:37:52,965 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:62408 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:37:52,966 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (23,)
+2026-05-13 13:37:52,966 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:52,966 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (147,)
+2026-05-13 13:37:52,967 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:52,968 INFO sqlalchemy.engine.Engine [cached since 2331s ago] (272,)
+INFO:     130.60.193.7:62407 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:37:52,968 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62408 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62408 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62391 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:37:54,493 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:37:54,493 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:54,493 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+2026-05-13 13:37:54,494 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,494 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+2026-05-13 13:37:54,500 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,500 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (39,)
+2026-05-13 13:37:54,500 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,500 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (51,)
+2026-05-13 13:37:54,500 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,500 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (147,)
+2026-05-13 13:37:54,501 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,501 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (200,)
+2026-05-13 13:37:54,502 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,502 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (221,)
+2026-05-13 13:37:54,502 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,502 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (272,)
+2026-05-13 13:37:54,503 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:37:54,503 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:37:54,503 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+2026-05-13 13:37:54,503 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:37:54,503 INFO sqlalchemy.engine.Engine [cached since 2336s ago] (2,)
+2026-05-13 13:37:54,503 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:37:54,504 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (3,)
+2026-05-13 13:37:54,504 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:37:54,504 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+2026-05-13 13:37:54,504 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:54,504 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+2026-05-13 13:37:54,505 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:54,505 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+2026-05-13 13:37:54,505 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:37:54,505 INFO sqlalchemy.engine.Engine [cached since 2333s ago] (23,)
+INFO:     130.60.193.7:62408 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:37:54,506 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62407 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:37:54,506 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62391 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62391 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:38:06,029 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:38:06,030 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:38:06,030 INFO sqlalchemy.engine.Engine [cached since 2348s ago] (1001,)
+2026-05-13 13:38:06,030 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:38:06,030 INFO sqlalchemy.engine.Engine [cached since 2347s ago] (1001, 10, 0)
+2026-05-13 13:38:06,040 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:38:06,040 INFO sqlalchemy.engine.Engine [cached since 2347s ago] (2,)
+2026-05-13 13:38:06,041 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:38:06,041 INFO sqlalchemy.engine.Engine [cached since 2347s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:62415 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:38:06,041 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:38:06,967 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:38:06,968 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:38:06,968 INFO sqlalchemy.engine.Engine [cached since 2252s ago] (1001,)
+2026-05-13 13:38:06,968 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:38:06,968 INFO sqlalchemy.engine.Engine [cached since 2252s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62415 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:38:06,969 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62415 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62421 - "OPTIONS /datasets/222 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62422 - "OPTIONS /datasets/222/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62415 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:38:11,017 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:38:11,017 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:38:11,017 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+2026-05-13 13:38:11,017 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:38:11,017 INFO sqlalchemy.engine.Engine [cached since 2352s ago] (2,)
+2026-05-13 13:38:11,018 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:38:11,018 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (3,)
+2026-05-13 13:38:11,018 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:11,018 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+2026-05-13 13:38:11,018 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:38:11,019 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+2026-05-13 13:38:11,020 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:38:11,020 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+2026-05-13 13:38:11,021 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:38:11,021 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+INFO:     130.60.193.7:62415 - "GET /datasets/222 HTTP/1.1" 200 OK
+2026-05-13 13:38:11,023 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO:     130.60.193.7:62424 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:38:11,024 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:38:11,024 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:38:11,025 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+2026-05-13 13:38:11,025 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:11,025 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (222,)
+2026-05-13 13:38:11,031 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:11,031 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (224,)
+2026-05-13 13:38:11,032 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:11,032 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (228,)
+2026-05-13 13:38:11,032 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:11,032 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (243,)
+2026-05-13 13:38:11,032 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:11,032 INFO sqlalchemy.engine.Engine [cached since 2349s ago] (245,)
+INFO:     130.60.193.7:62423 - "GET /datasets/222/tree HTTP/1.1" 200 OK
+2026-05-13 13:38:11,033 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:38:17,872 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:38:17,872 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:38:17,872 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+2026-05-13 13:38:17,873 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:38:17,873 INFO sqlalchemy.engine.Engine [cached since 2359s ago] (2,)
+2026-05-13 13:38:17,873 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:38:17,873 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (3,)
+2026-05-13 13:38:17,873 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,873 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+2026-05-13 13:38:17,874 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:38:17,874 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+2026-05-13 13:38:17,874 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:38:17,874 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+2026-05-13 13:38:17,875 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:38:17,875 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+INFO:     130.60.193.7:62425 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:38:17,875 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62429 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:38:17,880 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:38:17,881 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:38:17,881 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+2026-05-13 13:38:17,881 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,881 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (23,)
+2026-05-13 13:38:17,887 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,887 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (39,)
+2026-05-13 13:38:17,887 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,887 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (51,)
+2026-05-13 13:38:17,888 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,888 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (147,)
+2026-05-13 13:38:17,889 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,889 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (200,)
+2026-05-13 13:38:17,889 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,889 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (221,)
+2026-05-13 13:38:17,889 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:38:17,889 INFO sqlalchemy.engine.Engine [cached since 2356s ago] (272,)
+INFO:     130.60.193.7:62428 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:38:17,890 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62429 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62429 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:39:40,988 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:39:40,988 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:39:40,988 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+2026-05-13 13:39:40,989 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:39:40,989 INFO sqlalchemy.engine.Engine [cached since 2442s ago] (2,)
+2026-05-13 13:39:40,989 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:39:40,989 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (3,)
+2026-05-13 13:39:40,990 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:40,990 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+2026-05-13 13:39:40,990 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:39:40,990 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+2026-05-13 13:39:40,991 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:39:40,991 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+2026-05-13 13:39:40,991 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:39:40,991 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+INFO:     130.60.193.7:62456 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:39:40,993 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62455 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:39:40,995 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:39:40,995 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:39:40,995 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+2026-05-13 13:39:40,995 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:40,995 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (23,)
+2026-05-13 13:39:41,002 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:41,002 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (39,)
+2026-05-13 13:39:41,002 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:41,002 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (51,)
+2026-05-13 13:39:41,002 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:41,002 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (147,)
+2026-05-13 13:39:41,003 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:41,003 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (200,)
+2026-05-13 13:39:41,004 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:41,004 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (221,)
+2026-05-13 13:39:41,004 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:39:41,004 INFO sqlalchemy.engine.Engine [cached since 2439s ago] (272,)
+INFO:     130.60.193.7:62454 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:39:41,005 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62455 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62455 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:41:02,294 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:41:02,295 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:41:02,295 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+2026-05-13 13:41:02,295 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:41:02,295 INFO sqlalchemy.engine.Engine [cached since 2524s ago] (2,)
+2026-05-13 13:41:02,296 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+INFO:     130.60.193.7:62494 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:41:02,296 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (3,)
+2026-05-13 13:41:02,296 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,297 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+2026-05-13 13:41:02,297 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:41:02,297 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+2026-05-13 13:41:02,297 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:41:02,297 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+2026-05-13 13:41:02,298 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:41:02,298 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+INFO:     130.60.193.7:62492 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:41:02,299 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:41:02,300 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:41:02,300 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:41:02,301 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+2026-05-13 13:41:02,301 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,301 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (23,)
+2026-05-13 13:41:02,307 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,307 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (39,)
+2026-05-13 13:41:02,307 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,307 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (51,)
+2026-05-13 13:41:02,308 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,308 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (147,)
+2026-05-13 13:41:02,309 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,309 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (200,)
+2026-05-13 13:41:02,309 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,310 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (221,)
+INFO:     130.60.193.7:62492 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:41:02,310 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:02,310 INFO sqlalchemy.engine.Engine [cached since 2520s ago] (272,)
+INFO:     130.60.193.7:62493 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:41:02,311 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62494 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62493 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62494 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62493 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:41:41,510 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:41:41,511 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:41:41,511 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+2026-05-13 13:41:41,511 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:41:41,511 INFO sqlalchemy.engine.Engine [cached since 2563s ago] (2,)
+2026-05-13 13:41:41,511 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:41:41,512 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (3,)
+2026-05-13 13:41:41,512 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,512 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+2026-05-13 13:41:41,512 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:41:41,512 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+2026-05-13 13:41:41,513 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:41:41,513 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+2026-05-13 13:41:41,513 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:41:41,513 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+INFO:     130.60.193.7:62495 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:41:41,514 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62514 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:41:41,522 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:41:41,522 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:41:41,522 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+2026-05-13 13:41:41,522 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,522 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (23,)
+2026-05-13 13:41:41,528 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,529 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (39,)
+2026-05-13 13:41:41,529 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,529 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (51,)
+2026-05-13 13:41:41,529 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,529 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (147,)
+2026-05-13 13:41:41,530 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,530 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (200,)
+2026-05-13 13:41:41,530 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,531 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (221,)
+2026-05-13 13:41:41,531 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:41:41,531 INFO sqlalchemy.engine.Engine [cached since 2560s ago] (272,)
+INFO:     130.60.193.7:62513 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:41:41,532 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62514 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62514 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:42:04,339 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:42:04,339 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:42:04,339 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (23,)
+2026-05-13 13:42:04,340 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:42:04,340 INFO sqlalchemy.engine.Engine [cached since 2586s ago] (2,)
+2026-05-13 13:42:04,340 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:42:04,340 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (3,)
+2026-05-13 13:42:04,340 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,340 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (23,)
+2026-05-13 13:42:04,341 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:42:04,341 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (23,)
+2026-05-13 13:42:04,341 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:42:04,341 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (23,)
+2026-05-13 13:42:04,342 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:42:04,342 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (23,)
+INFO:     130.60.193.7:62530 - "GET /datasets/23 HTTP/1.1" 200 OK
+2026-05-13 13:42:04,343 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:42:04,346 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:42:04,346 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:62529 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:42:04,346 INFO sqlalchemy.engine.Engine [cached since 2583s ago] (23,)
+2026-05-13 13:42:04,347 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,347 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (23,)
+2026-05-13 13:42:04,353 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,353 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (39,)
+2026-05-13 13:42:04,353 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,353 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (51,)
+2026-05-13 13:42:04,353 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,353 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (147,)
+2026-05-13 13:42:04,354 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,354 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (200,)
+2026-05-13 13:42:04,355 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,355 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (221,)
+2026-05-13 13:42:04,355 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:04,355 INFO sqlalchemy.engine.Engine [cached since 2582s ago] (272,)
+INFO:     130.60.193.7:62528 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:42:04,356 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62529 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62529 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62530 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:42:05,722 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:42:05,722 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:42:05,723 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:42:05,723 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:42:05,723 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+2026-05-13 13:42:05,723 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+2026-05-13 13:42:05,725 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:42:05,727 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:42:05,727 INFO sqlalchemy.engine.Engine [cached since 2587s ago] (2,)
+2026-05-13 13:42:05,727 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (23,)
+2026-05-13 13:42:05,728 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:42:05,728 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (3,)
+2026-05-13 13:42:05,728 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:05,729 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+2026-05-13 13:42:05,729 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:05,729 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+2026-05-13 13:42:05,730 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:42:05,730 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (272,)
+2026-05-13 13:42:05,731 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:42:05,731 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+INFO:     130.60.193.7:62528 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:42:05,732 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:42:05,732 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:42:05,732 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+2026-05-13 13:42:05,733 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:42:05,733 INFO sqlalchemy.engine.Engine [cached since 2584s ago] (147,)
+INFO:     130.60.193.7:62529 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:42:05,734 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62530 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62530 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:42:07,622 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:42:07,622 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:42:07,622 INFO sqlalchemy.engine.Engine [cached since 2492s ago] (1001,)
+2026-05-13 13:42:07,623 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:42:07,623 INFO sqlalchemy.engine.Engine [cached since 2492s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62530 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:42:07,624 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62549 - "OPTIONS /datasets/147 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62550 - "OPTIONS /datasets/147/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62551 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:43:07,310 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:07,310 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:07,310 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+2026-05-13 13:43:07,312 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:43:07,312 INFO sqlalchemy.engine.Engine [cached since 2649s ago] (2,)
+2026-05-13 13:43:07,314 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:43:07,314 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (3,)
+2026-05-13 13:43:07,315 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:07,315 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+2026-05-13 13:43:07,316 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:07,317 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+INFO:     130.60.193.7:62553 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:43:07,317 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:07,317 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+2026-05-13 13:43:07,318 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:07,318 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+2026-05-13 13:43:07,319 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:07,319 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+INFO:     130.60.193.7:62551 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:43:07,318 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+2026-05-13 13:43:07,320 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:43:07,321 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:07,322 INFO sqlalchemy.engine.Engine [cached since 2646s ago] (23,)
+2026-05-13 13:43:07,322 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:07,322 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (147,)
+2026-05-13 13:43:07,323 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:07,323 INFO sqlalchemy.engine.Engine [cached since 2645s ago] (272,)
+INFO:     130.60.193.7:62552 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:43:07,324 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62552 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62550 - "OPTIONS /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:43:09,339 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:09,340 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:09,340 INFO sqlalchemy.engine.Engine [cached since 2648s ago] (23,)
+2026-05-13 13:43:09,340 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,340 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (23,)
+2026-05-13 13:43:09,346 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,346 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (39,)
+2026-05-13 13:43:09,346 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,346 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (51,)
+2026-05-13 13:43:09,347 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,347 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (147,)
+2026-05-13 13:43:09,348 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,348 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (200,)
+2026-05-13 13:43:09,348 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,348 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (221,)
+2026-05-13 13:43:09,348 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:09,348 INFO sqlalchemy.engine.Engine [cached since 2647s ago] (272,)
+INFO:     130.60.193.7:62552 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:43:09,349 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:43:28,576 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:28,576 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:28,576 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+2026-05-13 13:43:28,578 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:43:28,578 INFO sqlalchemy.engine.Engine [cached since 2670s ago] (2,)
+2026-05-13 13:43:28,578 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:43:28,578 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (3,)
+2026-05-13 13:43:28,579 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:28,579 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+2026-05-13 13:43:28,579 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:28,579 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+2026-05-13 13:43:28,579 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:28,580 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+2026-05-13 13:43:28,580 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:28,580 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+INFO:     130.60.193.7:62554 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:43:28,581 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62568 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:43:28,587 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:28,587 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:28,587 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+2026-05-13 13:43:28,589 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:28,589 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (23,)
+2026-05-13 13:43:28,590 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:28,590 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (147,)
+2026-05-13 13:43:28,591 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:28,591 INFO sqlalchemy.engine.Engine [cached since 2667s ago] (272,)
+INFO:     130.60.193.7:62567 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:43:28,591 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62568 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62568 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:43:29,578 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:29,578 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:29,578 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (23,)
+2026-05-13 13:43:29,579 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,579 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (23,)
+2026-05-13 13:43:29,585 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,585 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (39,)
+2026-05-13 13:43:29,585 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,585 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (51,)
+2026-05-13 13:43:29,585 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,585 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (147,)
+2026-05-13 13:43:29,586 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,586 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (200,)
+2026-05-13 13:43:29,586 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,587 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (221,)
+2026-05-13 13:43:29,587 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:29,587 INFO sqlalchemy.engine.Engine [cached since 2668s ago] (272,)
+INFO:     130.60.193.7:62568 - "GET /datasets/23/tree HTTP/1.1" 200 OK
+2026-05-13 13:43:29,588 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:43:42,027 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:42,028 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:42,028 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+2026-05-13 13:43:42,030 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:43:42,030 INFO sqlalchemy.engine.Engine [cached since 2683s ago] (2,)
+2026-05-13 13:43:42,031 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:43:42,031 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (3,)
+INFO:     130.60.193.7:62581 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:43:42,033 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:43:42,033 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:42,033 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+2026-05-13 13:43:42,034 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:42,036 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:43:42,036 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+2026-05-13 13:43:42,036 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (23,)
+2026-05-13 13:43:42,036 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:42,037 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:42,037 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+2026-05-13 13:43:42,037 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+2026-05-13 13:43:42,038 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:42,039 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:43:42,039 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+2026-05-13 13:43:42,039 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (272,)
+2026-05-13 13:43:42,040 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:43:42,040 INFO sqlalchemy.engine.Engine [cached since 2680s ago] (147,)
+INFO:     130.60.193.7:62580 - "GET /datasets/147/tree HTTP/1.1" 200 OK
+2026-05-13 13:43:42,041 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62579 - "GET /datasets/147 HTTP/1.1" 200 OK
+2026-05-13 13:43:42,042 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62581 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62581 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62582 - "OPTIONS /datasets/23 HTTP/1.1" 200 OK
