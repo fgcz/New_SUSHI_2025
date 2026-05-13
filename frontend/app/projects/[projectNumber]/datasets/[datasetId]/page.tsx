@@ -298,15 +298,17 @@ export default function DatasetDetailPage() {
         {/* Left side - Tree (70%) */}
         <div className="lg:col-span-7">
           <div className="flex items-center justify-end mb-2 gap-2">
-            <label className="flex items-center gap-1.5 text-sm text-gray-500 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                className="rounded border-gray-300 text-brand-600"
-                checked={showFullTree}
-                onChange={(e) => setShowFullTree(e.target.checked)}
-              />
-              Show full tree
-            </label>
+            {!isAlreadyRoot && (
+              <label className="flex items-center gap-1.5 text-sm text-gray-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 text-brand-600"
+                  checked={showFullTree}
+                  onChange={(e) => setShowFullTree(e.target.checked)}
+                />
+                Show full tree
+              </label>
+            )}
           </div>
           {(isTreeLoading || isFullTreeLoading) && <div className="h-64 border rounded-lg bg-gray-50 flex items-center justify-center"><div className="text-gray-500">Loading tree...</div></div>}
           {treeError && <div className="h-64 border rounded-lg bg-red-50 flex items-center justify-center"><div className="text-red-600">Failed to load tree data</div></div>}

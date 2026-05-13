@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -33,8 +33,6 @@ export default function RunApplicationPage() {
   const datasetId = Number(params.datasetId);
   const appName = params.appName;
   const isResubmit = searchParams.get("resubmit") === "true";
-
-  const paramsRef = useRef<HTMLDivElement>(null);
 
   // ============================================
   // DATA FETCHING
@@ -109,20 +107,11 @@ export default function RunApplicationPage() {
     router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
-  // Scroll to params section when step changes via stepper click
-  const prevStepRef = useRef(currentStepNumber);
-  useEffect(() => {
-    if (prevStepRef.current !== currentStepNumber) {
-      paramsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      prevStepRef.current = currentStepNumber;
-    }
-  }, [currentStepNumber]);
-
   const goNext = useCallback(() => {
     if (currentStepNumber < paramGroups.length) {
       const newParams = new URLSearchParams(searchParams);
       newParams.set("step", (currentStepNumber + 1).toString());
-      router.push(`${pathname}?${newParams.toString()}`);
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
   }, [currentStepNumber, paramGroups.length, searchParams, pathname, router]);
 
@@ -130,7 +119,7 @@ export default function RunApplicationPage() {
     if (currentStepNumber > 1) {
       const newParams = new URLSearchParams(searchParams);
       newParams.set("step", (currentStepNumber - 1).toString());
-      router.push(`${pathname}?${newParams.toString()}`);
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
   }, [currentStepNumber, searchParams, pathname, router]);
 
@@ -289,26 +278,23 @@ export default function RunApplicationPage() {
         </div>
       </div>
 
-      {/* Step Progress Indicator */}
-      {paramGroups.length > 0 && (
-        <FormStepper
-          steps={paramGroups}
-          currentStepIndex={currentStepIndex}
-          onStepClick={goToStep}
-        />
-      )}
-
       <div className="space-y-6">
         {/* Current Step Parameters */}
         {currentStep && (
-          <div ref={paramsRef} className="bg-white border rounded-lg overflow-hidden">
-            <div className="px-6 py-4">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">{currentStep.title}</h3>
-                {currentStep.description && (
-                  <p className="text-sm text-gray-500 mt-1">{currentStep.description}</p>
-                )}
+          <div className="bg-white border rounded-lg overflow-hidden">
+            {paramGroups.length > 0 && (
+              <div className="px-6 pt-4">
+                <FormStepper
+                  steps={paramGroups}
+                  currentStepIndex={currentStepIndex}
+                  onStepClick={goToStep}
+                />
               </div>
+            )}
+            <div className="px-6 py-4">
+              {currentStep.description && (
+                <p className="text-sm text-gray-500 mb-4">{currentStep.description}</p>
+              )}
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   {currentStep.fields.map((field) => (

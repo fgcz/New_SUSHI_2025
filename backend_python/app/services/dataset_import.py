@@ -58,7 +58,7 @@ class DatasetImportService:
         user: "CurrentUser | None",
         *,
         parent_id: int | None = None,
-        allow_duplicate: bool = False,
+        allow_duplicate: bool = True,
         name_override: str | None = None,
         auto_create_project: bool = False,
     ) -> DataSet:

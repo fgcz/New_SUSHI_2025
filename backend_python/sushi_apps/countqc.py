@@ -12,8 +12,8 @@ class CountQCApp(SushiApp):
     required_columns = ["Name", "Count"]
 
     param_groups = [
-        {"id": "resources", "title": "Resource Parameters", "description": "Compute resources for the job"},
         {"id": "analysis", "title": "Analysis Parameters", "description": "CountQC-specific settings"},
+        {"id": "resources", "title": "Resource Parameters", "description": "Compute resources for the job"},
     ]
 
     params_definition = [
