@@ -1,6 +1,6 @@
 """Dataset import service for TSV file imports.
 
-Handles importing datasets from TSV files (web upload).
+Handles importing datasets from TSV files (web upload or server-side path).
 """
 
 import hashlib
@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from sqlmodel import Session
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
-from app.models import DataSet, Project, Sample
+from app.models import DataSet, Project, Sample, User
 from app.utils.sample_parser import serialize_sample_data
 from app.utils.tsv_parser import ParsedDataset, parse_tsv
 
@@ -24,14 +24,43 @@ class DatasetImportService:
     def __init__(self, session: Session):
         self.session = session
 
+    def import_from_path(
+        self,
+        path: str,
+        project_number: int,
+        *,
+        name_override: str | None = None,
+        parent_id: int | None = None,
+    ) -> DataSet:
+        """Import a dataset by reading a TSV file from the server filesystem.
+
+        The project is auto-created if it does not exist.
+        """
+        try:
+            with open(path, encoding="utf-8") as f:
+                content = f.read()
+        except OSError as e:
+            raise ValidationError(f"Cannot read dataset file: {e}")
+
+        return self.import_from_tsv(
+            content=content,
+            project_number=project_number,
+            user=None,
+            parent_id=parent_id,
+            name_override=name_override,
+            auto_create_project=True,
+        )
+
     def import_from_tsv(
         self,
         content: str,
         project_number: int,
-        user: "CurrentUser",
+        user: "CurrentUser | None",
         *,
         parent_id: int | None = None,
         allow_duplicate: bool = False,
+        name_override: str | None = None,
+        auto_create_project: bool = False,
     ) -> DataSet:
         """Import a dataset from TSV content.
 
@@ -56,14 +85,15 @@ class DatasetImportService:
         except ValueError as e:
             raise ValidationError(f"Invalid TSV format: {e}")
 
-        if not parsed.name:
-            raise ValidationError("Dataset name is required (Name field in TSV)")
+        name = name_override or parsed.name
+        if not name:
+            raise ValidationError("Dataset name is required (Name field in TSV or name_override)")
 
         if not parsed.samples:
             raise ValidationError("Dataset must have at least one sample")
 
-        # Get project
-        project = self._get_project(project_number)
+        # Get project, optionally creating it if missing
+        project = self._get_project(project_number, auto_create=auto_create_project)
 
         # Compute MD5 for duplicate detection
         md5 = self._compute_md5(content)
@@ -76,18 +106,18 @@ class DatasetImportService:
                     f"Duplicate dataset exists: '{existing.name}' (ID: {existing.id})"
                 )
 
-        # Get user from database
-        from app.models import User
-
-        db_user = self.session.query(User).filter(User.login == user.login).first()
-        user_id = db_user.id if db_user else None
+        # Resolve user_id from login if a user was provided
+        user_id = None
+        if user is not None:
+            db_user = self.session.query(User).filter(User.login == user.login).first()
+            user_id = db_user.id if db_user else None
 
         # Create dataset
         dataset = DataSet(
             project_id=project.id,
             parent_id=parent_id,
             user_id=user_id,
-            name=parsed.name,
+            name=name,
             comment=parsed.comment,
             md5=md5,
             order_ids=parsed.order_ids if parsed.order_ids else None,
@@ -177,15 +207,21 @@ class DatasetImportService:
             "duplicate_name": existing.name if existing else None,
         }
 
-    def _get_project(self, project_number: int) -> Project:
-        """Get project by number."""
+    def _get_project(self, project_number: int, *, auto_create: bool = False) -> Project:
+        """Get project by number, optionally creating it if absent."""
         project = (
             self.session.query(Project)
             .filter(Project.number == project_number)
             .first()
         )
         if not project:
-            raise NotFoundError("Project", project_number)
+            if auto_create:
+                now = datetime.now(timezone.utc)
+                project = Project(number=project_number, created_at=now, updated_at=now)
+                self.session.add(project)
+                self.session.flush()
+            else:
+                raise NotFoundError("Project", project_number)
         return project
 
     def _compute_md5(self, content: str) -> str:

@@ -1,6 +1,7 @@
 """Project routes - thin handlers delegating to services."""
 
 from fastapi import APIRouter, File, Form, UploadFile
+from pydantic import BaseModel
 
 from app.api.deps import (
     CurrentUserDep,
@@ -156,3 +157,29 @@ async def preview_dataset_import(
 
     # Get preview
     return import_service.preview_import(content_str, project_number)
+
+
+class DatasetRegisterRequest(BaseModel):
+    name: str | None = None
+    path: str
+    parent_id: int | None = None
+
+
+@router.post("/{project_number}/datasets/register")
+def register_dataset(
+    project_number: int,
+    body: DatasetRegisterRequest,
+    import_service: DatasetImportServiceDep,
+) -> dict:
+    """Register a dataset from a server-side TSV file path.
+
+    The project is created automatically if it does not exist.
+    Intended for script/btools callers; no authentication required.
+    """
+    dataset = import_service.import_from_path(
+        path=body.path,
+        project_number=project_number,
+        name_override=body.name,
+        parent_id=body.parent_id,
+    )
+    return {"message": "OK", "data_set_id": dataset.id}
