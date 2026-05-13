@@ -36,3 +36,11 @@ old_sushi/
 
 # cursor_log
 cursor_log/
+
+# Runtime logs
+backend_python/sushi-backend.log
+frontend/sushi-frontend.log
+
+# PID files
+.backend-python.pid
+.frontend.pid

@@ -4071,3 +4071,1407 @@ WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
 2026-05-13 10:34:08,253 INFO sqlalchemy.engine.Engine [cached since 6.533e+04s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
 INFO:     130.60.193.7:60231 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
 2026-05-13 10:34:08,254 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:60391 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60393 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60391 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60393 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60391 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60393 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     172.23.207.34:38482 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:56244 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.7:60776 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60786 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60786 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60786 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60797 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60797 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60812 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60813 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60851 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60872 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60892 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     130.60.193.7:60913 - "OPTIONS /auth/login_options HTTP/1.1" 400 Bad Request
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3391053]
+INFO:     Stopping reloader process [3391047]
+INFO:     Will watch for changes in these directories: ['/srv/sushi/rdom_test_new_sushi_20251030/backend_python']
+INFO:     Uvicorn running on http://0.0.0.0:4071 (Press CTRL+C to quit)
+INFO:     Started reloader process [3747687] using WatchFiles
+INFO:     Started server process [3747689]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     130.60.193.7:60938 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60939 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60938 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60939 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60938 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60939 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60942 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 12:58:58,482 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 12:58:58,485 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 12:58:58,485 INFO sqlalchemy.engine.Engine [generated in 0.00014s] (1001,)
+2026-05-13 12:58:58,534 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 12:58:58,534 INFO sqlalchemy.engine.Engine [generated in 0.00022s] (1001, 10, 0)
+2026-05-13 12:58:58,545 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 12:58:58,545 INFO sqlalchemy.engine.Engine [generated in 0.00014s] (2,)
+2026-05-13 12:58:58,547 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 12:58:58,547 INFO sqlalchemy.engine.Engine [generated in 0.00014s] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:60943 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 12:58:58,549 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:60942 - "OPTIONS /datasets/273 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60943 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60945 - "OPTIONS /datasets/273/tree HTTP/1.1" 200 OK
+2026-05-13 12:59:01,819 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 12:59:01,821 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 12:59:01,821 INFO sqlalchemy.engine.Engine [generated in 0.00014s] (273,)
+2026-05-13 12:59:01,823 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 12:59:01,823 INFO sqlalchemy.engine.Engine [cached since 3.278s ago] (2,)
+2026-05-13 12:59:01,824 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 12:59:01,824 INFO sqlalchemy.engine.Engine [generated in 0.00010s] (3,)
+2026-05-13 12:59:01,825 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 12:59:01,825 INFO sqlalchemy.engine.Engine [generated in 0.00010s] (273,)
+2026-05-13 12:59:01,826 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 12:59:01,826 INFO sqlalchemy.engine.Engine [generated in 0.00010s] (273,)
+INFO:     130.60.193.7:60946 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 12:59:01,854 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 12:59:01,854 INFO sqlalchemy.engine.Engine [cached since 0.02862s ago] (273,)
+2026-05-13 12:59:01,855 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 12:59:01,855 INFO sqlalchemy.engine.Engine [cached since 0.02924s ago] (273,)
+INFO:     130.60.193.7:60943 - "GET /datasets/273 HTTP/1.1" 200 OK
+2026-05-13 12:59:01,856 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 12:59:01,861 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 12:59:01,861 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 12:59:01,861 INFO sqlalchemy.engine.Engine [cached since 0.04018s ago] (273,)
+2026-05-13 12:59:01,863 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 12:59:01,863 INFO sqlalchemy.engine.Engine [cached since 0.04206s ago] (172,)
+2026-05-13 12:59:01,864 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 12:59:01,864 INFO sqlalchemy.engine.Engine [generated in 0.00011s] (273,)
+INFO:     130.60.193.7:60946 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60947 - "GET /datasets/273/tree HTTP/1.1" 200 OK
+2026-05-13 12:59:01,865 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:60972 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:00:02,410 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:00:02,410 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:00:02,410 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (273,)
+2026-05-13 13:00:02,411 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:00:02,411 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:00:02,411 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (273,)
+2026-05-13 13:00:02,413 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:00:02,414 INFO sqlalchemy.engine.Engine [cached since 63.87s ago] (2,)
+2026-05-13 13:00:02,416 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:00:02,416 INFO sqlalchemy.engine.Engine [cached since 60.6s ago] (172,)
+2026-05-13 13:00:02,416 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:00:02,417 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:00:02,417 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (3,)
+2026-05-13 13:00:02,417 INFO sqlalchemy.engine.Engine [cached since 60.55s ago] (273,)
+2026-05-13 13:00:02,417 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:00:02,417 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (273,)
+INFO:     130.60.193.7:60973 - "GET /datasets/273/tree HTTP/1.1" 200 OK
+2026-05-13 13:00:02,418 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:00:02,419 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:00:02,419 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (273,)
+2026-05-13 13:00:02,419 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:00:02,419 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (273,)
+2026-05-13 13:00:02,420 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:00:02,420 INFO sqlalchemy.engine.Engine [cached since 60.59s ago] (273,)
+INFO:     130.60.193.7:60974 - "GET /datasets/273 HTTP/1.1" 200 OK
+2026-05-13 13:00:02,421 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:60972 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:60972 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:00:34,203 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:00:34,203 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:00:34,204 INFO sqlalchemy.engine.Engine [cached since 95.72s ago] (1001,)
+2026-05-13 13:00:34,204 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:00:34,204 INFO sqlalchemy.engine.Engine [cached since 95.67s ago] (1001, 10, 0)
+2026-05-13 13:00:34,215 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:00:34,215 INFO sqlalchemy.engine.Engine [cached since 95.67s ago] (2,)
+2026-05-13 13:00:34,215 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:00:34,215 INFO sqlalchemy.engine.Engine [cached since 95.67s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:60987 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:00:34,216 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:60989 - "OPTIONS /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:00:35,440 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:00:35,441 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:00:35,441 INFO sqlalchemy.engine.Engine [generated in 0.00012s] (1001,)
+2026-05-13 13:00:35,442 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:00:35,442 INFO sqlalchemy.engine.Engine [generated in 0.00018s] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:60987 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:00:35,443 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61001 - "OPTIONS /datasets/267 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61000 - "OPTIONS /datasets/267/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61002 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:00:57,250 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:00:57,250 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:00:57,250 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+2026-05-13 13:00:57,253 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:00:57,253 INFO sqlalchemy.engine.Engine [cached since 118.7s ago] (2,)
+2026-05-13 13:00:57,254 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:00:57,254 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (3,)
+2026-05-13 13:00:57,255 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:00:57,255 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+2026-05-13 13:00:57,256 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:00:57,256 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:00:57,257 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:00:57,257 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+2026-05-13 13:00:57,257 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+INFO:     130.60.193.7:61004 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:00:57,260 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:00:57,260 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (265,)
+2026-05-13 13:00:57,261 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:00:57,262 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:00:57,262 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+2026-05-13 13:00:57,262 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+2026-05-13 13:00:57,262 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:00:57,263 INFO sqlalchemy.engine.Engine [cached since 115.4s ago] (267,)
+INFO:     130.60.193.7:61003 - "GET /datasets/267/tree HTTP/1.1" 200 OK
+2026-05-13 13:00:57,263 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61002 - "GET /datasets/267 HTTP/1.1" 200 OK
+2026-05-13 13:00:57,264 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61003 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61005 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61005 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:02:07,107 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:02:07,108 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:02:07,108 INFO sqlalchemy.engine.Engine [cached since 91.67s ago] (1001,)
+2026-05-13 13:02:07,109 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:02:07,109 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:02:07,109 INFO sqlalchemy.engine.Engine [cached since 188.6s ago] (1001,)
+2026-05-13 13:02:07,110 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:02:07,110 INFO sqlalchemy.engine.Engine [cached since 188.6s ago] (1001, 10, 0)
+2026-05-13 13:02:07,111 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:02:07,111 INFO sqlalchemy.engine.Engine [cached since 91.67s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+2026-05-13 13:02:07,122 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:02:07,122 INFO sqlalchemy.engine.Engine [cached since 188.6s ago] (2,)
+INFO:     130.60.193.7:61046 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:02:07,123 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INFO:     130.60.193.7:61045 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:02:07,123 INFO sqlalchemy.engine.Engine [cached since 188.6s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:02:07,123 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61044 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:02:07,124 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61046 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61046 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:03:06,092 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:03:06,092 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:03:06,092 INFO sqlalchemy.engine.Engine [cached since 247.6s ago] (1001,)
+2026-05-13 13:03:06,093 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:03:06,093 INFO sqlalchemy.engine.Engine [cached since 247.6s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61070 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:03:06,105 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:03:06,105 INFO sqlalchemy.engine.Engine [cached since 247.6s ago] (2,)
+2026-05-13 13:03:06,106 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:03:06,106 INFO sqlalchemy.engine.Engine [cached since 247.6s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61068 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:03:06,110 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:03:06,112 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:03:06,113 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:03:06,113 INFO sqlalchemy.engine.Engine [cached since 150.7s ago] (1001,)
+2026-05-13 13:03:06,113 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:03:06,113 INFO sqlalchemy.engine.Engine [cached since 150.7s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61069 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:03:06,114 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61070 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61070 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:04:11,710 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:04:11,710 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:04:11,710 INFO sqlalchemy.engine.Engine [cached since 313.2s ago] (1001,)
+2026-05-13 13:04:11,711 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:04:11,711 INFO sqlalchemy.engine.Engine [cached since 313.2s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61097 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:04:11,723 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:04:11,723 INFO sqlalchemy.engine.Engine [cached since 313.2s ago] (2,)
+2026-05-13 13:04:11,724 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:04:11,724 INFO sqlalchemy.engine.Engine [cached since 313.2s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61098 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:04:11,725 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:04:11,725 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:04:11,726 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:04:11,726 INFO sqlalchemy.engine.Engine [cached since 216.3s ago] (1001,)
+2026-05-13 13:04:11,726 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:04:11,726 INFO sqlalchemy.engine.Engine [cached since 216.3s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61096 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:04:11,727 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61097 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61097 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:05:05,039 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:05:05,040 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:05:05,040 INFO sqlalchemy.engine.Engine [cached since 366.6s ago] (1001,)
+2026-05-13 13:05:05,040 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:05:05,040 INFO sqlalchemy.engine.Engine [cached since 366.5s ago] (1001, 10, 0)
+2026-05-13 13:05:05,052 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+INFO:     130.60.193.7:61122 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:05:05,053 INFO sqlalchemy.engine.Engine [cached since 366.5s ago] (2,)
+2026-05-13 13:05:05,053 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:05:05,054 INFO sqlalchemy.engine.Engine [cached since 366.5s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:05:05,055 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:05:05,055 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:05:05,055 INFO sqlalchemy.engine.Engine [cached since 269.6s ago] (1001,)
+INFO:     130.60.193.7:61120 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:05:05,056 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:05:05,056 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:05:05,056 INFO sqlalchemy.engine.Engine [cached since 269.6s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61121 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:05:05,057 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61122 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61122 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:05:33,740 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:05:33,740 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:05:33,741 INFO sqlalchemy.engine.Engine [cached since 395.3s ago] (1001,)
+2026-05-13 13:05:33,741 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:05:33,741 INFO sqlalchemy.engine.Engine [cached since 395.2s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61138 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:05:33,754 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:05:33,754 INFO sqlalchemy.engine.Engine [cached since 395.2s ago] (2,)
+2026-05-13 13:05:33,755 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:05:33,755 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:05:33,755 INFO sqlalchemy.engine.Engine [cached since 298.3s ago] (1001,)
+2026-05-13 13:05:33,756 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:05:33,756 INFO sqlalchemy.engine.Engine [cached since 395.2s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61136 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:05:33,757 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:05:33,758 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:05:33,758 INFO sqlalchemy.engine.Engine [cached since 298.3s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61137 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:05:33,758 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61138 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61138 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61156 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:05:50,350 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:05:50,350 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:05:50,350 INFO sqlalchemy.engine.Engine [cached since 411.9s ago] (1001,)
+2026-05-13 13:05:50,351 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:05:50,351 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:05:50,351 INFO sqlalchemy.engine.Engine [cached since 411.8s ago] (1001, 10, 0)
+2026-05-13 13:05:50,352 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:05:50,352 INFO sqlalchemy.engine.Engine [cached since 314.9s ago] (1001,)
+2026-05-13 13:05:50,363 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:05:50,364 INFO sqlalchemy.engine.Engine [cached since 411.8s ago] (2,)
+INFO:     130.60.193.7:61156 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:05:50,365 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:05:50,365 INFO sqlalchemy.engine.Engine [cached since 411.8s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:05:50,365 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:05:50,365 INFO sqlalchemy.engine.Engine [cached since 314.9s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61154 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:05:50,366 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61155 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:05:50,367 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61156 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:06:35,739 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:06:35,739 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:06:35,739 INFO sqlalchemy.engine.Engine [cached since 457.3s ago] (1001,)
+2026-05-13 13:06:35,739 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:06:35,740 INFO sqlalchemy.engine.Engine [cached since 457.2s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61183 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:06:35,752 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:06:35,753 INFO sqlalchemy.engine.Engine [cached since 457.2s ago] (2,)
+2026-05-13 13:06:35,753 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:06:35,754 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:06:35,754 INFO sqlalchemy.engine.Engine [cached since 360.3s ago] (1001,)
+2026-05-13 13:06:35,754 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:06:35,754 INFO sqlalchemy.engine.Engine [cached since 457.2s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61181 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:06:35,755 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:06:35,756 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:06:35,756 INFO sqlalchemy.engine.Engine [cached since 360.3s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61182 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:06:35,757 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61183 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61183 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:07:57,304 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:07:57,305 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:07:57,305 INFO sqlalchemy.engine.Engine [cached since 538.8s ago] (1001,)
+2026-05-13 13:07:57,305 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:07:57,306 INFO sqlalchemy.engine.Engine [cached since 538.8s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61208 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:07:57,318 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:07:57,318 INFO sqlalchemy.engine.Engine [cached since 538.8s ago] (2,)
+2026-05-13 13:07:57,318 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:07:57,319 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:07:57,319 INFO sqlalchemy.engine.Engine [cached since 538.8s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:07:57,319 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:07:57,320 INFO sqlalchemy.engine.Engine [cached since 441.9s ago] (1001,)
+INFO:     130.60.193.7:61207 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:07:57,321 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:07:57,321 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:07:57,321 INFO sqlalchemy.engine.Engine [cached since 441.9s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61206 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:07:57,322 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61208 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61208 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61228 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:08:46,882 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:08:46,883 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:08:46,883 INFO sqlalchemy.engine.Engine [cached since 588.4s ago] (1001,)
+2026-05-13 13:08:46,883 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:08:46,884 INFO sqlalchemy.engine.Engine [cached since 588.3s ago] (1001, 10, 0)
+2026-05-13 13:08:46,884 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:08:46,885 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:08:46,885 INFO sqlalchemy.engine.Engine [cached since 491.4s ago] (1001,)
+2026-05-13 13:08:46,895 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:08:46,895 INFO sqlalchemy.engine.Engine [cached since 588.4s ago] (2,)
+2026-05-13 13:08:46,896 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:08:46,896 INFO sqlalchemy.engine.Engine [cached since 588.3s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61227 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:08:46,897 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:08:46,897 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:08:46,898 INFO sqlalchemy.engine.Engine [cached since 491.5s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61229 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:08:46,898 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61228 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61228 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61240 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:08:57,007 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:08:57,008 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:08:57,008 INFO sqlalchemy.engine.Engine [cached since 501.6s ago] (1001,)
+2026-05-13 13:08:57,009 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:08:57,010 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:08:57,010 INFO sqlalchemy.engine.Engine [cached since 598.5s ago] (1001,)
+2026-05-13 13:08:57,010 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:08:57,010 INFO sqlalchemy.engine.Engine [cached since 598.5s ago] (1001, 10, 0)
+2026-05-13 13:08:57,011 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:08:57,011 INFO sqlalchemy.engine.Engine [cached since 501.6s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61239 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:08:57,012 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:08:57,023 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:08:57,023 INFO sqlalchemy.engine.Engine [cached since 598.5s ago] (2,)
+2026-05-13 13:08:57,024 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:08:57,024 INFO sqlalchemy.engine.Engine [cached since 598.5s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61239 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61238 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:08:57,025 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61240 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61238 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61240 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61238 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:09:05,435 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:09:05,436 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:09:05,436 INFO sqlalchemy.engine.Engine [cached since 510s ago] (1001,)
+2026-05-13 13:09:05,436 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:09:05,436 INFO sqlalchemy.engine.Engine [cached since 510s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61241 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:09:05,437 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61250 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61251 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:09:05,454 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:09:05,454 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:09:05,454 INFO sqlalchemy.engine.Engine [cached since 607s ago] (1001,)
+2026-05-13 13:09:05,455 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:09:05,455 INFO sqlalchemy.engine.Engine [cached since 606.9s ago] (1001, 10, 0)
+2026-05-13 13:09:05,465 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:09:05,465 INFO sqlalchemy.engine.Engine [cached since 606.9s ago] (2,)
+2026-05-13 13:09:05,465 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:09:05,465 INFO sqlalchemy.engine.Engine [cached since 606.9s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61241 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:09:05,466 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61251 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61251 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:10:27,485 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:10:27,485 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:10:27,485 INFO sqlalchemy.engine.Engine [cached since 689s ago] (1001,)
+2026-05-13 13:10:27,486 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:10:27,486 INFO sqlalchemy.engine.Engine [cached since 689s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61276 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:10:27,494 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:10:27,499 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:10:27,500 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:10:27,500 INFO sqlalchemy.engine.Engine [cached since 592.1s ago] (1001,)
+2026-05-13 13:10:27,500 INFO sqlalchemy.engine.Engine [cached since 689s ago] (2,)
+2026-05-13 13:10:27,500 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:10:27,501 INFO sqlalchemy.engine.Engine [cached since 689s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:10:27,501 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:10:27,501 INFO sqlalchemy.engine.Engine [cached since 592.1s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61274 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:10:27,502 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61275 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:10:27,503 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61276 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61276 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:11:50,329 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:11:50,329 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:11:50,329 INFO sqlalchemy.engine.Engine [cached since 771.8s ago] (1001,)
+2026-05-13 13:11:50,330 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:11:50,330 INFO sqlalchemy.engine.Engine [cached since 771.8s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61302 - "OPTIONS /projects/1001/datasets/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61303 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:11:50,341 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:11:50,341 INFO sqlalchemy.engine.Engine [cached since 771.8s ago] (2,)
+2026-05-13 13:11:50,341 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:11:50,341 INFO sqlalchemy.engine.Engine [cached since 771.8s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61301 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:11:50,342 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:11:50,344 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:11:50,344 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:11:50,344 INFO sqlalchemy.engine.Engine [cached since 674.9s ago] (1001,)
+2026-05-13 13:11:50,345 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:11:50,345 INFO sqlalchemy.engine.Engine [cached since 674.9s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61303 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:11:50,345 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61304 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61304 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:12:33,313 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:12:33,314 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:12:33,314 INFO sqlalchemy.engine.Engine [cached since 814.8s ago] (1001,)
+2026-05-13 13:12:33,314 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:12:33,314 INFO sqlalchemy.engine.Engine [cached since 814.8s ago] (1001, 10, 0)
+2026-05-13 13:12:33,325 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:12:33,325 INFO sqlalchemy.engine.Engine [cached since 814.8s ago] (2,)
+2026-05-13 13:12:33,326 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:12:33,326 INFO sqlalchemy.engine.Engine [cached since 814.8s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61326 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61305 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:12:33,328 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:12:33,329 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:12:33,329 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:12:33,329 INFO sqlalchemy.engine.Engine [cached since 717.9s ago] (1001,)
+2026-05-13 13:12:33,330 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:12:33,330 INFO sqlalchemy.engine.Engine [cached since 717.9s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61325 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:12:33,331 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61305 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61305 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:13:19,670 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:13:19,670 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:13:19,670 INFO sqlalchemy.engine.Engine [cached since 861.2s ago] (1001,)
+2026-05-13 13:13:19,671 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:13:19,671 INFO sqlalchemy.engine.Engine [cached since 861.1s ago] (1001, 10, 0)
+2026-05-13 13:13:19,681 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:13:19,681 INFO sqlalchemy.engine.Engine [cached since 861.1s ago] (2,)
+2026-05-13 13:13:19,682 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:13:19,682 INFO sqlalchemy.engine.Engine [cached since 861.1s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61344 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:13:19,684 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61345 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:13:19,686 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:13:19,686 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:13:19,686 INFO sqlalchemy.engine.Engine [cached since 764.2s ago] (1001,)
+2026-05-13 13:13:19,687 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:13:19,687 INFO sqlalchemy.engine.Engine [cached since 764.2s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61343 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:13:19,688 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61345 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61345 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61348 - "OPTIONS /datasets/222 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61347 - "OPTIONS /datasets/222/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61349 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:13:25,778 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:13:25,778 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-05-13 13:13:25,778 INFO sqlalchemy.engine.Engine [cached since 864s ago] (222,)
+2026-05-13 13:13:25,779 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:13:25,779 INFO sqlalchemy.engine.Engine [cached since 867.2s ago] (2,)
+2026-05-13 13:13:25,779 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-05-13 13:13:25,779 INFO sqlalchemy.engine.Engine [cached since 864s ago] (3,)
+2026-05-13 13:13:25,779 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:13:25,779 INFO sqlalchemy.engine.Engine [cached since 864s ago] (222,)
+2026-05-13 13:13:25,780 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:13:25,780 INFO sqlalchemy.engine.Engine [cached since 864s ago] (222,)
+2026-05-13 13:13:25,781 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:13:25,781 INFO sqlalchemy.engine.Engine [cached since 864s ago] (222,)
+2026-05-13 13:13:25,782 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-05-13 13:13:25,782 INFO sqlalchemy.engine.Engine [cached since 864s ago] (222,)
+2026-05-13 13:13:25,783 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:13:25,783 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.sushi_app_name AS datasets_sushi_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:61349 - "GET /datasets/222 HTTP/1.1" 200 OK
+2026-05-13 13:13:25,784 INFO sqlalchemy.engine.Engine [cached since 864s ago] (222,)
+2026-05-13 13:13:25,784 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61351 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:13:25,786 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:13:25,786 INFO sqlalchemy.engine.Engine [cached since 863.9s ago] (222,)
+2026-05-13 13:13:25,792 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:13:25,792 INFO sqlalchemy.engine.Engine [cached since 863.9s ago] (224,)
+2026-05-13 13:13:25,792 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:13:25,792 INFO sqlalchemy.engine.Engine [cached since 863.9s ago] (228,)
+2026-05-13 13:13:25,793 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:13:25,793 INFO sqlalchemy.engine.Engine [cached since 863.9s ago] (243,)
+2026-05-13 13:13:25,793 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-05-13 13:13:25,793 INFO sqlalchemy.engine.Engine [cached since 863.9s ago] (245,)
+INFO:     130.60.193.7:61350 - "GET /datasets/222/tree HTTP/1.1" 200 OK
+2026-05-13 13:13:25,794 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61351 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:13:45,704 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:13:45,704 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:13:45,704 INFO sqlalchemy.engine.Engine [cached since 887.2s ago] (1001,)
+2026-05-13 13:13:45,704 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:13:45,705 INFO sqlalchemy.engine.Engine [cached since 887.2s ago] (1001, 10, 0)
+2026-05-13 13:13:45,716 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:13:45,716 INFO sqlalchemy.engine.Engine [cached since 887.2s ago] (2,)
+2026-05-13 13:13:45,717 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:13:45,717 INFO sqlalchemy.engine.Engine [cached since 887.2s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61352 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:13:45,719 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61364 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:13:45,728 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:13:45,728 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:13:45,728 INFO sqlalchemy.engine.Engine [cached since 790.3s ago] (1001,)
+2026-05-13 13:13:45,729 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:13:45,729 INFO sqlalchemy.engine.Engine [cached since 790.3s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61365 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:13:45,730 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61364 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61364 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:14:31,043 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:14:31,043 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:14:31,043 INFO sqlalchemy.engine.Engine [cached since 932.6s ago] (1001,)
+2026-05-13 13:14:31,044 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:14:31,044 INFO sqlalchemy.engine.Engine [cached since 932.5s ago] (1001, 10, 0)
+2026-05-13 13:14:31,056 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+INFO:     130.60.193.7:61388 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:14:31,056 INFO sqlalchemy.engine.Engine [cached since 932.5s ago] (2,)
+2026-05-13 13:14:31,057 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:14:31,057 INFO sqlalchemy.engine.Engine [cached since 932.5s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:14:31,058 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:14:31,058 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:14:31,059 INFO sqlalchemy.engine.Engine [cached since 835.6s ago] (1001,)
+INFO:     130.60.193.7:61386 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:14:31,059 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:14:31,060 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:14:31,060 INFO sqlalchemy.engine.Engine [cached since 835.6s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61387 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:14:31,061 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61388 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61388 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:15:48,641 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:15:48,641 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:15:48,641 INFO sqlalchemy.engine.Engine [cached since 1010s ago] (1001,)
+2026-05-13 13:15:48,642 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:15:48,642 INFO sqlalchemy.engine.Engine [cached since 1010s ago] (1001, 10, 0)
+2026-05-13 13:15:48,644 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:15:48,644 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:15:48,650 INFO sqlalchemy.engine.Engine [cached since 913.2s ago] (1001,)
+2026-05-13 13:15:48,656 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+INFO:     130.60.193.7:61413 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:15:48,657 INFO sqlalchemy.engine.Engine [cached since 1010s ago] (2,)
+2026-05-13 13:15:48,657 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:15:48,657 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:15:48,657 INFO sqlalchemy.engine.Engine [cached since 913.2s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+2026-05-13 13:15:48,658 INFO sqlalchemy.engine.Engine [cached since 1010s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61411 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:15:48,659 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61412 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:15:48,659 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61413 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61413 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:16:20,766 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:16:20,766 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:16:20,766 INFO sqlalchemy.engine.Engine [cached since 1042s ago] (1001,)
+2026-05-13 13:16:20,766 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:16:20,767 INFO sqlalchemy.engine.Engine [cached since 1042s ago] (1001, 10, 0)
+2026-05-13 13:16:20,779 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:16:20,779 INFO sqlalchemy.engine.Engine [cached since 1042s ago] (2,)
+2026-05-13 13:16:20,780 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:16:20,780 INFO sqlalchemy.engine.Engine [cached since 1042s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61430 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61428 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:16:20,783 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:16:20,783 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:16:20,784 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:16:20,784 INFO sqlalchemy.engine.Engine [cached since 945.3s ago] (1001,)
+2026-05-13 13:16:20,785 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:16:20,785 INFO sqlalchemy.engine.Engine [cached since 945.3s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61429 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:16:20,786 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61430 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61429 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:17:29,441 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:17:29,441 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:17:29,441 INFO sqlalchemy.engine.Engine [cached since 1111s ago] (1001,)
+2026-05-13 13:17:29,442 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:17:29,442 INFO sqlalchemy.engine.Engine [cached since 1111s ago] (1001, 10, 0)
+INFO:     130.60.193.7:61456 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:17:29,454 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:17:29,455 INFO sqlalchemy.engine.Engine [cached since 1111s ago] (2,)
+2026-05-13 13:17:29,455 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:17:29,456 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:17:29,456 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:17:29,456 INFO sqlalchemy.engine.Engine [cached since 1111s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:17:29,456 INFO sqlalchemy.engine.Engine [cached since 1014s ago] (1001,)
+INFO:     130.60.193.7:61454 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:17:29,457 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:17:29,458 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:17:29,458 INFO sqlalchemy.engine.Engine [cached since 1014s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61455 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:17:29,459 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61456 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61456 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:18:50,589 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:18:50,589 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:18:50,589 INFO sqlalchemy.engine.Engine [cached since 1192s ago] (1001,)
+2026-05-13 13:18:50,590 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:18:50,590 INFO sqlalchemy.engine.Engine [cached since 1192s ago] (1001, 10, 0)
+2026-05-13 13:18:50,600 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:18:50,601 INFO sqlalchemy.engine.Engine [cached since 1192s ago] (2,)
+INFO:     130.60.193.7:61482 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:18:50,603 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:18:50,603 INFO sqlalchemy.engine.Engine [cached since 1192s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:18:50,604 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:18:50,604 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+INFO:     130.60.193.7:61480 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:18:50,604 INFO sqlalchemy.engine.Engine [cached since 1095s ago] (1001,)
+2026-05-13 13:18:50,605 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:18:50,605 INFO sqlalchemy.engine.Engine [cached since 1095s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+2026-05-13 13:18:50,605 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61481 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:18:50,606 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61482 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61482 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:19:57,442 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:19:57,442 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:19:57,442 INFO sqlalchemy.engine.Engine [cached since 1162s ago] (1001,)
+2026-05-13 13:19:57,443 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:19:57,443 INFO sqlalchemy.engine.Engine [cached since 1162s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61503 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61502 - "OPTIONS /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:19:57,444 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61504 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:19:57,454 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:19:57,454 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:19:57,454 INFO sqlalchemy.engine.Engine [cached since 1259s ago] (1001,)
+2026-05-13 13:19:57,454 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:19:57,454 INFO sqlalchemy.engine.Engine [cached since 1259s ago] (1001, 10, 0)
+2026-05-13 13:19:57,465 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:19:57,465 INFO sqlalchemy.engine.Engine [cached since 1259s ago] (2,)
+2026-05-13 13:19:57,465 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:19:57,465 INFO sqlalchemy.engine.Engine [cached since 1259s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61503 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:19:57,466 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61505 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61504 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61505 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61504 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61505 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:21:26,687 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:21:26,688 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:21:26,688 INFO sqlalchemy.engine.Engine [cached since 1251s ago] (1001,)
+INFO:     130.60.193.7:61699 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:21:26,689 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:21:26,690 INFO sqlalchemy.engine.Engine [cached since 1251s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61700 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:21:26,691 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:21:26,691 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:21:26,692 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:21:26,692 INFO sqlalchemy.engine.Engine [cached since 1348s ago] (1001,)
+2026-05-13 13:21:26,692 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:21:26,692 INFO sqlalchemy.engine.Engine [cached since 1348s ago] (1001, 10, 0)
+2026-05-13 13:21:26,709 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:21:26,710 INFO sqlalchemy.engine.Engine [cached since 1348s ago] (2,)
+INFO:     130.60.193.7:61700 - "GET /auth/me HTTP/1.1" 200 OK
+2026-05-13 13:21:26,714 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:21:26,714 INFO sqlalchemy.engine.Engine [cached since 1348s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61698 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:21:26,715 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61698 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61803 - "OPTIONS /projects/1001/datasets/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61802 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:22:23,791 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:22:23,791 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:22:23,791 INFO sqlalchemy.engine.Engine [cached since 1405s ago] (1001,)
+2026-05-13 13:22:23,791 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:22:23,792 INFO sqlalchemy.engine.Engine [cached since 1405s ago] (1001, 10, 0)
+2026-05-13 13:22:23,802 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:22:23,802 INFO sqlalchemy.engine.Engine [cached since 1405s ago] (2,)
+2026-05-13 13:22:23,802 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:22:23,802 INFO sqlalchemy.engine.Engine [cached since 1405s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61804 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:22:23,806 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:22:23,812 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:22:23,812 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:22:23,813 INFO sqlalchemy.engine.Engine [cached since 1308s ago] (1001,)
+2026-05-13 13:22:23,813 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:22:23,813 INFO sqlalchemy.engine.Engine [cached since 1308s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61802 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:22:23,814 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61804 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61804 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:23:15,925 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:23:15,926 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:23:15,926 INFO sqlalchemy.engine.Engine [cached since 1457s ago] (1001,)
+2026-05-13 13:23:15,926 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:23:15,926 INFO sqlalchemy.engine.Engine [cached since 1457s ago] (1001, 10, 0)
+2026-05-13 13:23:15,937 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:23:15,937 INFO sqlalchemy.engine.Engine [cached since 1457s ago] (2,)
+2026-05-13 13:23:15,939 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INFO:     130.60.193.7:61934 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:23:15,939 INFO sqlalchemy.engine.Engine [cached since 1457s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:23:15,941 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:23:15,941 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+INFO:     130.60.193.7:61805 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:23:15,942 INFO sqlalchemy.engine.Engine [cached since 1361s ago] (1001,)
+2026-05-13 13:23:15,942 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:23:15,943 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:23:15,943 INFO sqlalchemy.engine.Engine [cached since 1361s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61933 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:23:15,944 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61934 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61934 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61950 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:23:32,363 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:23:32,364 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:23:32,364 INFO sqlalchemy.engine.Engine [cached since 1474s ago] (1001,)
+2026-05-13 13:23:32,364 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:23:32,364 INFO sqlalchemy.engine.Engine [cached since 1474s ago] (1001, 10, 0)
+2026-05-13 13:23:32,365 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:23:32,365 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:23:32,366 INFO sqlalchemy.engine.Engine [cached since 1377s ago] (1001,)
+2026-05-13 13:23:32,376 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:23:32,376 INFO sqlalchemy.engine.Engine [cached since 1474s ago] (2,)
+2026-05-13 13:23:32,377 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:23:32,377 INFO sqlalchemy.engine.Engine [cached since 1474s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:23:32,378 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:23:32,378 INFO sqlalchemy.engine.Engine [cached since 1377s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61948 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:23:32,379 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61949 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:23:32,380 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61950 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61950 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:24:41,197 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:24:41,198 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:24:41,198 INFO sqlalchemy.engine.Engine [cached since 1543s ago] (1001,)
+2026-05-13 13:24:41,198 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:24:41,198 INFO sqlalchemy.engine.Engine [cached since 1543s ago] (1001, 10, 0)
+2026-05-13 13:24:41,210 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:24:41,210 INFO sqlalchemy.engine.Engine [cached since 1543s ago] (2,)
+2026-05-13 13:24:41,210 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INFO:     130.60.193.7:61976 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:24:41,211 INFO sqlalchemy.engine.Engine [cached since 1543s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:24:41,212 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:24:41,212 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:24:41,212 INFO sqlalchemy.engine.Engine [cached since 1446s ago] (1001,)
+INFO:     130.60.193.7:61974 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:24:41,213 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:24:41,214 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:24:41,214 INFO sqlalchemy.engine.Engine [cached since 1446s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:61975 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:24:41,215 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:61976 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:61975 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:26:01,539 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:26:01,540 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:26:01,540 INFO sqlalchemy.engine.Engine [cached since 1623s ago] (1001,)
+2026-05-13 13:26:01,540 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:26:01,540 INFO sqlalchemy.engine.Engine [cached since 1623s ago] (1001, 10, 0)
+2026-05-13 13:26:01,543 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO:     130.60.193.7:62001 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:26:01,549 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:26:01,554 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:26:01,555 INFO sqlalchemy.engine.Engine [cached since 1526s ago] (1001,)
+2026-05-13 13:26:01,555 INFO sqlalchemy.engine.Engine [cached since 1623s ago] (2,)
+2026-05-13 13:26:01,556 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:26:01,556 INFO sqlalchemy.engine.Engine [cached since 1623s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:61999 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:26:01,557 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:26:01,557 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:26:01,558 INFO sqlalchemy.engine.Engine [cached since 1526s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62000 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:26:01,558 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62001 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62001 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:27:24,825 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:27:24,825 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:27:24,825 INFO sqlalchemy.engine.Engine [cached since 1706s ago] (1001,)
+2026-05-13 13:27:24,826 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:27:24,826 INFO sqlalchemy.engine.Engine [cached since 1706s ago] (1001, 10, 0)
+2026-05-13 13:27:24,838 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+INFO:     130.60.193.7:62028 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:27:24,838 INFO sqlalchemy.engine.Engine [cached since 1706s ago] (2,)
+2026-05-13 13:27:24,840 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:27:24,840 INFO sqlalchemy.engine.Engine [cached since 1706s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:27:24,840 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:27:24,841 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:27:24,841 INFO sqlalchemy.engine.Engine [cached since 1609s ago] (1001,)
+2026-05-13 13:27:24,841 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:27:24,841 INFO sqlalchemy.engine.Engine [cached since 1609s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62029 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:27:24,843 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62027 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:27:24,843 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62028 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62028 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:28:30,983 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:28:30,984 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:28:30,984 INFO sqlalchemy.engine.Engine [cached since 1772s ago] (1001,)
+2026-05-13 13:28:30,984 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:28:30,985 INFO sqlalchemy.engine.Engine [cached since 1772s ago] (1001, 10, 0)
+INFO:     130.60.193.7:62053 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:28:30,987 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:28:30,988 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:28:30,988 INFO sqlalchemy.engine.Engine [cached since 1676s ago] (1001,)
+2026-05-13 13:28:30,998 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:28:30,998 INFO sqlalchemy.engine.Engine [cached since 1772s ago] (2,)
+2026-05-13 13:28:30,999 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:28:30,999 INFO sqlalchemy.engine.Engine [cached since 1772s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:62054 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:28:31,000 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:28:31,001 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:28:31,001 INFO sqlalchemy.engine.Engine [cached since 1676s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62052 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:28:31,001 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62053 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62053 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:29:17,453 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:29:17,453 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:29:17,453 INFO sqlalchemy.engine.Engine [cached since 1819s ago] (1001,)
+2026-05-13 13:29:17,453 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:29:17,454 INFO sqlalchemy.engine.Engine [cached since 1819s ago] (1001, 10, 0)
+INFO:     130.60.193.7:62074 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-05-13 13:29:17,467 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:29:17,467 INFO sqlalchemy.engine.Engine [cached since 1819s ago] (2,)
+2026-05-13 13:29:17,467 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:29:17,468 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:29:17,468 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:29:17,468 INFO sqlalchemy.engine.Engine [cached since 1819s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+2026-05-13 13:29:17,468 INFO sqlalchemy.engine.Engine [cached since 1722s ago] (1001,)
+INFO:     130.60.193.7:62072 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:29:17,469 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:29:17,470 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:29:17,470 INFO sqlalchemy.engine.Engine [cached since 1722s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62073 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:29:17,470 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62074 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62074 - "GET /projects/ HTTP/1.1" 200 OK
+2026-05-13 13:29:36,524 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:29:36,525 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:29:36,525 INFO sqlalchemy.engine.Engine [cached since 1838s ago] (1001,)
+2026-05-13 13:29:36,525 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.sushi_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-05-13 13:29:36,525 INFO sqlalchemy.engine.Engine [cached since 1838s ago] (1001, 10, 0)
+2026-05-13 13:29:36,537 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-05-13 13:29:36,537 INFO sqlalchemy.engine.Engine [cached since 1838s ago] (2,)
+2026-05-13 13:29:36,537 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-05-13 13:29:36,537 INFO sqlalchemy.engine.Engine [cached since 1838s ago] (273, 272, 270, 269, 268, 267, 266, 265, 245, 243)
+INFO:     130.60.193.7:62088 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62086 - "GET /projects/1001/datasets?q=&page=1&per=10 HTTP/1.1" 200 OK
+2026-05-13 13:29:36,539 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-05-13 13:29:36,540 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-05-13 13:29:36,540 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-05-13 13:29:36,540 INFO sqlalchemy.engine.Engine [cached since 1741s ago] (1001,)
+2026-05-13 13:29:36,541 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-05-13 13:29:36,541 INFO sqlalchemy.engine.Engine [cached since 1741s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:62087 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-05-13 13:29:36,542 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:62088 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:62088 - "GET /projects/ HTTP/1.1" 200 OK

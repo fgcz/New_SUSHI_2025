@@ -114,3 +114,238 @@ npm notice
  GET /projects/1001 200 in 4.3s (compile: 4.3s, render: 62ms)
  GET /projects/1001/datasets 200 in 122ms (compile: 34ms, render: 89ms)
  GET /projects/1001/datasets?view=tree3 200 in 38ms (compile: 24ms, render: 14ms)
+ GET /projects/1001 200 in 108ms (compile: 65ms, render: 43ms)
+ GET / 200 in 803ms (compile: 766ms, render: 37ms)
+ GET / 200 in 36ms (compile: 1875µs, render: 34ms)
+ GET / 200 in 34ms (compile: 2ms, render: 31ms)
+⚠ Blocked cross-origin request from fgcz-h-083 to /_next/* resource. To allow this, configure "allowedDevOrigins" in next.config
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /projects/1001 200 in 90ms (compile: 27ms, render: 63ms)
+ GET /login 200 in 1057ms (compile: 1026ms, render: 31ms)
+ GET / 200 in 11ms (compile: 1822µs, render: 9ms)
+ GET /projects/1001 200 in 40ms (compile: 25ms, render: 15ms)
+ GET /projects/1001 200 in 24ms (compile: 2ms, render: 21ms)
+ GET /projects/1001/datasets 200 in 148ms (compile: 45ms, render: 102ms)
+ GET /projects/1001 200 in 69ms (compile: 24ms, render: 45ms)
+ GET /login 200 in 18ms (compile: 2ms, render: 16ms)
+ GET / 200 in 12ms (compile: 1755µs, render: 11ms)
+ GET /projects/1001 200 in 35ms (compile: 20ms, render: 15ms)
+ GET /projects/1001 200 in 18ms (compile: 1911µs, render: 17ms)
+○ Compiling /projects/[projectNumber]/datasets/import ...
+ GET /projects/1001/datasets 200 in 45ms (compile: 23ms, render: 21ms)
+ GET /projects/1001/datasets/import 200 in 7.8s (compile: 7.8s, render: 19ms)
+ GET /projects/1001/datasets/import 200 in 43ms (compile: 26ms, render: 17ms)
+ GET /projects/1001/datasets/import 200 in 16ms (compile: 1709µs, render: 15ms)
+ GET /projects/1001/datasets/import 200 in 15ms (compile: 1732µs, render: 13ms)
+ GET /projects/1001/datasets 200 in 82ms (compile: 23ms, render: 59ms)
+ GET /login 200 in 16ms (compile: 2ms, render: 13ms)
+ GET / 200 in 14ms (compile: 2ms, render: 12ms)
+ GET /projects/1001 200 in 55ms (compile: 29ms, render: 27ms)
+ GET /projects/1001 200 in 20ms (compile: 2ms, render: 17ms)
+ GET /projects/1001 200 in 69ms (compile: 27ms, render: 42ms)
+ GET /login 200 in 15ms (compile: 2ms, render: 13ms)
+ GET /login 200 in 37ms (compile: 1700µs, render: 35ms)
+ GET /login 200 in 36ms (compile: 2ms, render: 34ms)
+ GET /login 200 in 35ms (compile: 1883µs, render: 33ms)
+  Reload env: .env.local
+[?25h
+
+> frontend@0.1.0 dev
+> next dev --port 4070 --hostname 0.0.0.0
+
+▲ Next.js 16.1.1 (Turbopack)
+- Local:         http://localhost:4070
+- Network:       http://0.0.0.0:4070
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 6.1s
+⚠ Blocked cross-origin request from fgcz-h-083 to /_next/* resource. To allow this, configure "allowedDevOrigins" in next.config
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+○ Compiling /login ...
+ GET / 200 in 5.9s (compile: 5.7s, render: 211ms)
+ GET / 200 in 2.6s (compile: 2.3s, render: 274ms)
+ GET /projects/1001 200 in 2.6s (compile: 2.6s, render: 25ms)
+ GET /projects/1001/datasets 200 in 2.3s (compile: 2.3s, render: 36ms)
+ GET /projects/1001/datasets 200 in 53ms (compile: 28ms, render: 24ms)
+ GET /projects/1001/datasets 200 in 17ms (compile: 2ms, render: 14ms)
+ GET /projects/1001/datasets 200 in 16ms (compile: 2ms, render: 13ms)
+ GET /projects/1001/datasets/273 200 in 1093ms (compile: 1012ms, render: 82ms)
+ GET /projects/1001/datasets/273 200 in 77ms (compile: 24ms, render: 52ms)
+ GET /projects/1001/datasets 200 in 42ms (compile: 26ms, render: 16ms)
+ GET /projects/1001/datasets?view=tree3 200 in 43ms (compile: 26ms, render: 16ms)
+ GET /projects/1001/datasets/267 200 in 70ms (compile: 26ms, render: 44ms)
+ GET /projects/1001/datasets/267 200 in 65ms (compile: 2ms, render: 63ms)
+ GET /projects/1001/datasets?view=tree3 200 in 82ms (compile: 27ms, render: 55ms)
+ GET /projects/1001/datasets?view=tree3 200 in 73ms (compile: 24ms, render: 48ms)
+ GET /projects/1001/datasets?view=tree 200 in 62ms (compile: 44ms, render: 17ms)
+ GET /projects/1001/datasets?view=tree3 200 in 43ms (compile: 28ms, render: 16ms)
+ GET /projects/1001/datasets?view=tree3 200 in 77ms (compile: 27ms, render: 51ms)
+ GET /projects/1001/datasets?view=tree3 200 in 84ms (compile: 28ms, render: 56ms)
+ GET /projects/1001/datasets?view=tree3 200 in 75ms (compile: 27ms, render: 48ms)
+Browserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ GET /projects/1001/datasets?view=tree3 200 in 3.7s (compile: 3.5s, render: 177ms)
+ GET /projects/1001/datasets?view=tree3 200 in 305ms (compile: 123ms, render: 182ms)
+ GET /projects/1001/datasets?view=tree3 200 in 83ms (compile: 31ms, render: 51ms)
+ GET /projects/1001/datasets?view=tree3 200 in 81ms (compile: 30ms, render: 52ms)
+ GET /projects/1001/datasets?view=tree3 200 in 354ms (compile: 126ms, render: 228ms)
+ GET /projects/1001/datasets?view=tree3 200 in 340ms (compile: 144ms, render: 197ms)
+ GET /projects/1001/datasets?view=tree3 200 in 322ms (compile: 140ms, render: 182ms)
+ GET /projects/1001/datasets?view=tree3 200 in 96ms (compile: 28ms, render: 68ms)
+ GET /projects/1001/datasets?view=tree3 200 in 83ms (compile: 32ms, render: 51ms)
+ GET /projects/1001/datasets?view=tree3 200 in 84ms (compile: 27ms, render: 56ms)
+ GET /projects/1001/datasets?view=tree3 200 in 303ms (compile: 129ms, render: 173ms)
+ GET /projects/1001/datasets/222 200 in 396ms (compile: 235ms, render: 162ms)
+ GET /projects/1001/datasets?view=tree3 200 in 75ms (compile: 33ms, render: 43ms)
+ GET /projects/1001/datasets?view=tree3 200 in 311ms (compile: 118ms, render: 193ms)
+ GET /projects/1001/datasets?view=tree3 200 in 87ms (compile: 35ms, render: 51ms)
+ GET /projects/1001/datasets?view=tree3 200 in 80ms (compile: 32ms, render: 49ms)
+ GET /projects/1001/datasets?view=tree3 200 in 315ms (compile: 118ms, render: 197ms)
+ GET /projects/1001/datasets?view=tree3 200 in 294ms (compile: 117ms, render: 177ms)
+ GET /projects/1001/datasets?view=tree3 200 in 85ms (compile: 30ms, render: 55ms)
+ GET /projects/1001/datasets?view=tree3 200 in 292ms (compile: 115ms, render: 176ms)
+⨯ ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx:171:15
+Parsing ecmascript source code failed
+[0m [90m 169 |[39m
+ [90m 170 |[39m         [33m<[39m
+[31m[1m>[22m[39m[90m 171 |[39m           href[33m=[39m{node[33m.[39mhref}
+ [90m     |[39m               [31m[1m^[22m[39m
+ [90m 172 |[39m           className[33m=[39m{[32m`[39m
+ [90m 173 |[39m [32m            text-[15px] font-medium flex-shrink-0 transition-colors[39m
+ [90m 174 |[39m [32m            ${isCurrent ? 'text-brand-700' : 'text-gray-900 hover:text-brand-700'}[39m[0m
+
+Expected '</', got '='
+
+Import traces:
+  Client Component Browser:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+
+○ Compiling /_error ...
+ GET /projects/1001/datasets?view=tree3 500 in 9.8s (compile: 9.8s, render: 6ms)
+⨯ ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx:171:15
+Parsing ecmascript source code failed
+[0m [90m 169 |[39m
+ [90m 170 |[39m         [33m<[39m
+[31m[1m>[22m[39m[90m 171 |[39m           href[33m=[39m{node[33m.[39mhref}
+ [90m     |[39m               [31m[1m^[22m[39m
+ [90m 172 |[39m           className[33m=[39m{[32m`[39m
+ [90m 173 |[39m [32m            text-[15px] font-medium flex-shrink-0 transition-colors[39m
+ [90m 174 |[39m [32m            ${isCurrent ? 'text-brand-700' : 'text-gray-900 hover:text-brand-700'}[39m[0m
+
+Expected '</', got '='
+
+Import traces:
+  Client Component Browser:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+
+ GET /projects/1001/datasets?view=tree3 500 in 140ms (compile: 131ms, render: 9ms)
+⨯ ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx:171:15
+Parsing ecmascript source code failed
+[0m [90m 169 |[39m
+ [90m 170 |[39m         [33m<[39m
+[31m[1m>[22m[39m[90m 171 |[39m           href[33m=[39m{node[33m.[39mhref}
+ [90m     |[39m               [31m[1m^[22m[39m
+ [90m 172 |[39m           className[33m=[39m{[32m`[39m
+ [90m 173 |[39m [32m            text-[15px] font-medium flex-shrink-0 transition-colors[39m
+ [90m 174 |[39m [32m            ${isCurrent ? 'text-brand-700' : 'text-gray-900 hover:text-brand-700'}[39m[0m
+
+Expected '</', got '='
+
+Import traces:
+  Client Component Browser:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+
+ GET /projects/1001/datasets?view=tree3 500 in 26ms (compile: 17ms, render: 9ms)
+⨯ ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx:171:15
+Parsing ecmascript source code failed
+[0m [90m 169 |[39m
+ [90m 170 |[39m         [33m<[39m
+[31m[1m>[22m[39m[90m 171 |[39m           href[33m=[39m{node[33m.[39mhref}
+ [90m     |[39m               [31m[1m^[22m[39m
+ [90m 172 |[39m           className[33m=[39m{[32m`[39m
+ [90m 173 |[39m [32m            text-[15px] font-medium flex-shrink-0 transition-colors[39m
+ [90m 174 |[39m [32m            ${isCurrent ? 'text-brand-700' : 'text-gray-900 hover:text-brand-700'}[39m[0m
+
+Expected '</', got '='
+
+Import traces:
+  Client Component Browser:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+
+ GET /projects/1001/datasets?view=tree3 500 in 20ms (compile: 12ms, render: 8ms)
+⨯ ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx:171:15
+Parsing ecmascript source code failed
+[0m [90m 169 |[39m
+ [90m 170 |[39m         [33m<[39m
+[31m[1m>[22m[39m[90m 171 |[39m           href[33m=[39m{node[33m.[39mhref}
+ [90m     |[39m               [31m[1m^[22m[39m
+ [90m 172 |[39m           className[33m=[39m{[32m`[39m
+ [90m 173 |[39m [32m            text-[15px] font-medium flex-shrink-0 transition-colors[39m
+ [90m 174 |[39m [32m            ${isCurrent ? 'text-brand-700' : 'text-gray-900 hover:text-brand-700'}[39m[0m
+
+Expected '</', got '='
+
+Import traces:
+  Client Component Browser:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component Browser]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/projects/[projectNumber]/datasets/DatasetTreeRcTree.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Client Component SSR]
+    ./app/projects/[projectNumber]/datasets/page.tsx [Server Component]
+
+
+ GET /projects/1001/datasets?view=tree3 500 in 20ms (compile: 11ms, render: 9ms)
+✓ Compiled in 114ms
+ GET /projects/1001/datasets?view=tree3 200 in 323ms (compile: 139ms, render: 183ms)
+ GET /projects/1001/datasets?view=tree3 200 in 101ms (compile: 43ms, render: 58ms)
+ GET /projects/1001/datasets?view=tree3 200 in 330ms (compile: 138ms, render: 192ms)
+ GET /projects/1001/datasets?view=tree3 200 in 311ms (compile: 129ms, render: 181ms)
+ GET /projects/1001/datasets?view=tree 200 in 63ms (compile: 43ms, render: 19ms)
+ GET /projects/1001/datasets?view=tree3 200 in 56ms (compile: 39ms, render: 18ms)
+ GET /projects/1001/datasets?view=tree 200 in 59ms (compile: 43ms, render: 16ms)
+ GET /projects/1001/datasets?view=tree3 200 in 59ms (compile: 45ms, render: 15ms)
+ GET /projects/1001/datasets?view=tree3 200 in 317ms (compile: 140ms, render: 177ms)
+ GET /projects/1001/datasets 200 in 62ms (compile: 47ms, render: 15ms)
+ GET /projects/1001/datasets?view=tree3 200 in 60ms (compile: 46ms, render: 13ms)
+ GET /projects/1001/datasets?view=tree3 200 in 91ms (compile: 45ms, render: 47ms)
+ GET /projects/1001/datasets?view=tree3 200 in 96ms (compile: 43ms, render: 53ms)
+ GET /projects/1001/datasets?view=tree3 200 in 315ms (compile: 131ms, render: 184ms)
+ GET /projects/1001/datasets?view=tree3 200 in 333ms (compile: 137ms, render: 195ms)
+ GET /projects/1001/datasets?view=tree3 200 in 296ms (compile: 127ms, render: 169ms)

@@ -60,7 +60,8 @@ function filterNodes(nodes: RcTreeNode[], query: string): RcTreeNode[] {
     .map((node) => {
       const filteredChildren = filterNodes(node.children ?? [], q);
       const selfMatch = node.title.toLowerCase().includes(q);
-      if (selfMatch || filteredChildren.length > 0) return { ...node, children: filteredChildren };
+      if (selfMatch) return node;
+      if (filteredChildren.length > 0) return { ...node, children: filteredChildren };
       return null;
     })
     .filter(Boolean) as RcTreeNode[];
@@ -78,34 +79,34 @@ function collectAllKeys(nodes: RcTreeNode[]): Set<string> {
 // ── SVG Icons ────────────────────────────────────────────────────────
 
 const IconChevronRight = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor"
+  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor"
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M4.5 2.5L8 6L4.5 9.5" />
   </svg>
 );
 
 const IconChevronDown = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor"
+  <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor"
     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M2.5 4.5L6 8L9.5 4.5" />
   </svg>
 );
 
 const IconFolderClosed = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="text-amber-400">
+  <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor" style={{ color: '#2A9391' }}>
     <path d="M1.75 1A1.75 1.75 0 0 0 0 2.75v10.5C0 14.216.784 15 1.75 15h12.5A1.75 1.75 0 0 0 16 13.25v-8.5A1.75 1.75 0 0 0 14.25 3H7.5a.25.25 0 0 1-.2-.1l-.9-1.2C6.07 1.26 5.55 1 5 1H1.75z" />
   </svg>
 );
 
 const IconFolderOpen = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" className="text-amber-300">
+  <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor" style={{ color: '#9DE3E1' }}>
     <path d="M.513 1.513A1.75 1.75 0 0 1 1.75 1h3.5c.55 0 1.07.26 1.4.7l.9 1.2a.25.25 0 0 0 .2.1H14.25c.966 0 1.75.784 1.75 1.75v8.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V2.75c0-.464.184-.91.513-1.237z" />
     <path fill="rgba(0,0,0,.15)" d="M0 6h16v7.25A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25V6z" />
   </svg>
 );
 
 const IconFile = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400">
     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
     <polyline points="13 2 13 9 20 9" />
@@ -124,6 +125,21 @@ interface SharedNodeProps {
   checkedIds: Set<number>;
   onCheckChange: (id: number, checked: boolean) => void;
   noFade?: boolean;
+  searchQuery?: string;
+}
+
+function HighlightedText({ text, query }: { text: string; query?: string }) {
+  if (!query?.trim()) return <>{text}</>;
+  const q = query.trim();
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-100 text-yellow-800 rounded-sm px-0.5 not-italic">{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -131,7 +147,7 @@ interface SharedNodeProps {
 // ════════════════════════════════════════════════════════════════════
 
 function GeistNode({ node, depth, isLast, ...shared }: { node: RcTreeNode; depth: number; isLast: boolean } & SharedNodeProps) {
-  const { expandedKeys, toggleExpand, currentDatasetId, hasCheckboxes, checkedIds, onCheckChange, noFade } = shared;
+  const { expandedKeys, toggleExpand, currentDatasetId, hasCheckboxes, checkedIds, onCheckChange, noFade, searchQuery } = shared;
   const isExpanded = expandedKeys.has(node.key);
   const hasChildren = (node.children?.length ?? 0) > 0;
   const isCurrent = currentDatasetId === node.originalId;
@@ -141,7 +157,7 @@ function GeistNode({ node, depth, isLast, ...shared }: { node: RcTreeNode; depth
     <div>
       <div
         className={`
-          group flex items-center gap-2 py-[5px] pr-2 cursor-pointer select-none
+          group flex items-center gap-2.5 py-1.5 pr-2 cursor-pointer select-none
           transition-colors duration-75 min-w-0
           ${isCurrent ? 'bg-brand-50' : 'hover:bg-gray-50'}
         `}
@@ -158,10 +174,14 @@ function GeistNode({ node, depth, isLast, ...shared }: { node: RcTreeNode; depth
         )}
 
         <span className="flex-shrink-0 flex items-center leading-none">
-          {hasChildren
-            ? (isExpanded ? <IconFolderOpen /> : <IconFolderClosed />)
-            : <IconFile />}
+          <IconFolderClosed />
         </span>
+
+        {hasChildren && (
+          <span className="flex-shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors">
+            {isExpanded ? <IconChevronDown /> : <IconChevronRight />}
+          </span>
+        )}
 
         <a
           href={node.href}
@@ -171,24 +191,19 @@ function GeistNode({ node, depth, isLast, ...shared }: { node: RcTreeNode; depth
           `}
           onClick={(e) => e.stopPropagation()}
         >
-          {node.title}
+          <HighlightedText text={node.title} query={searchQuery} />
         </a>
 
         {hasChildren && (
-          <>
-            <span className={`text-xs flex-shrink-0 font-mono transition-colors ${isExpanded ? 'text-gray-300' : 'text-gray-400'}`}>
-              ({node.childrenCount})
-            </span>
-            <span className="flex-shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors">
-              {isExpanded ? <IconChevronDown /> : <IconChevronRight />}
-            </span>
-          </>
+          <span className={`text-sm flex-shrink-0 transition-colors ${isExpanded ? 'text-gray-300' : 'text-gray-400'}`}>
+            ({node.childrenCount})
+          </span>
         )}
 
         {node.comment && (
           <>
             <span className="text-gray-300 flex-shrink-0 text-xs select-none">·</span>
-            <span className="text-xs text-gray-400 italic truncate flex-1 min-w-0">
+            <span className="text-sm text-gray-400 italic truncate flex-1 min-w-0">
               {node.comment}
             </span>
           </>
@@ -300,6 +315,7 @@ export default function DatasetTreeRcTree({
     checkedIds,
     onCheckChange: handleCheckChange,
     noFade,
+    searchQuery,
   };
 
   if (!filteredRoots.length) {
@@ -357,7 +373,7 @@ export default function DatasetTreeRcTree({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
         <span className="text-xs font-medium text-gray-400 tracking-widest uppercase">Datasets</span>
-        <span className="text-xs text-gray-300 font-mono">
+        <span className="text-xs text-gray-300">
           {filteredRoots.length} root{filteredRoots.length !== 1 ? 's' : ''}
         </span>
       </div>
