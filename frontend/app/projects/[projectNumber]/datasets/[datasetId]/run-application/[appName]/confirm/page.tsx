@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { JobSubmissionRequest } from "@/lib/types";
+import { JobSubmissionRequest, DryRunResponse } from "@/lib/types";
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
 import { useDatasetBase, useJobSubmission } from '@/lib/hooks';
+import { jobApi } from "@/lib/api/jobs";
 
 interface StoredJobData {
   projectNumber: number;
@@ -31,6 +32,9 @@ export default function ConfirmJobPage() {
 
   const [jobData, setJobData] = useState<StoredJobData | null>(null);
   const [dataLoadError, setDataLoadError] = useState<string | null>(null);
+  const [dryRunResult, setDryRunResult] = useState<DryRunResponse | null>(null);
+  const [isDryRunning, setIsDryRunning] = useState(false);
+  const [dryRunError, setDryRunError] = useState<string | null>(null);
 
   // Use existing hook for dataset data
   const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
@@ -90,12 +94,30 @@ export default function ConfirmJobPage() {
     }
   }, [submitSuccess, router, projectNumber, datasetId]);
 
-  const handleMockRun = () => {
-    // TODO: Implement mock run functionality
-    console.log('Mock run requested with data:', jobData);
-    // Clear sessionStorage after mock run
-    sessionStorage.removeItem('sushi_job_submission_data');
-    alert('Mock run functionality not yet implemented');
+  const handleDryRun = async () => {
+    if (!jobData) return;
+
+    setIsDryRunning(true);
+    setDryRunError(null);
+    setDryRunResult(null);
+
+    try {
+      const submissionData: JobSubmissionRequest = {
+        project_number: jobData.projectNumber,
+        dataset_id: jobData.datasetId,
+        app_name: jobData.appName,
+        next_dataset: jobData.nextDataset,
+        parameters: jobData.parameters,
+      };
+
+      const result = await jobApi.dryRun(submissionData);
+      setDryRunResult(result);
+    } catch (error) {
+      console.error('Dry run failed:', error);
+      setDryRunError(error instanceof Error ? error.message : 'Dry run failed');
+    } finally {
+      setIsDryRunning(false);
+    }
   };
 
   const handleGoBack = () => {
@@ -262,12 +284,60 @@ export default function ConfirmJobPage() {
           </div>
         </div>
 
+        {/* Dry Run Results */}
+        {dryRunResult && (
+          <div className="bg-white border border-blue-200 rounded-lg overflow-hidden">
+            <div className="bg-blue-50 px-6 py-3 border-b border-blue-200">
+              <h3 className="text-lg font-semibold text-blue-800">Dry Run Results</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Script Path</dt>
+                  <dd className="mt-1 text-sm text-gray-900 font-mono break-all">{dryRunResult.script_path}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Result Directory</dt>
+                  <dd className="mt-1 text-sm text-gray-900 font-mono break-all">{dryRunResult.result_dir}</dd>
+                </div>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Resources</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <span className="inline-flex items-center px-2 py-1 mr-2 bg-gray-100 rounded">
+                    Cores: {dryRunResult.resources.cores}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 mr-2 bg-gray-100 rounded">
+                    RAM: {dryRunResult.resources.ram}G
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 mr-2 bg-gray-100 rounded">
+                    Scratch: {dryRunResult.resources.scratch}G
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 bg-gray-100 rounded">
+                    Partition: {dryRunResult.resources.partition}
+                  </span>
+                </dd>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error/Success Messages */}
         {submitError && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-md">
             <div className="flex">
               <div className="text-red-600 text-sm">
                 <strong>Submission failed:</strong> {submitError}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {dryRunError && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex">
+              <div className="text-red-600 text-sm">
+                <strong>Dry run failed:</strong> {dryRunError}
               </div>
             </div>
           </div>
@@ -294,11 +364,11 @@ export default function ConfirmJobPage() {
           </button>
           
           <button
-            onClick={handleMockRun}
-            disabled={isSubmitting}
+            onClick={handleDryRun}
+            disabled={isSubmitting || isDryRunning}
             className="flex-1 px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Mock Run (Preview)
+            {isDryRunning ? "Running Dry Run..." : "Dry Run (Preview)"}
           </button>
         </div>
 

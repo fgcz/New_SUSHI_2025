@@ -134,25 +134,28 @@ export function useApplicationForm({
   };
 
   const handleFieldBlur = async (fieldName: string) => {
-    try {
-      const validationResponse = await applicationApi.validateAppConfig(appName, formValues);
-
-      if (validationResponse.application?.param_groups) {
-        setGroupConfig(validationResponse.application.param_groups);
-
-        // Update form values with new defaults from validation
-        const newValues = { ...formValues };
-        const allFields = flattenParamGroups(validationResponse.application.param_groups);
-        allFields.forEach((field) => {
-          if (field.default_value !== undefined) {
-            newValues[field.name] = field.default_value;
-          }
-        });
-        setFormValues(newValues);
-      }
-    } catch (error) {
-      console.error('Validation error:', error);
-    }
+    // TODO: Re-enable dynamic form updates once we implement proper "touched" field tracking
+    // Currently disabled because it overwrites all user input with defaults on every blur
+    //
+    // try {
+    //   const validationResponse = await applicationApi.validateAppConfig(appName, formValues);
+    //
+    //   if (validationResponse.application?.param_groups) {
+    //     setGroupConfig(validationResponse.application.param_groups);
+    //
+    //     // Update form values with new defaults from validation
+    //     const newValues = { ...formValues };
+    //     const allFields = flattenParamGroups(validationResponse.application.param_groups);
+    //     allFields.forEach((field) => {
+    //       if (field.default_value !== undefined) {
+    //         newValues[field.name] = field.default_value;
+    //       }
+    //     });
+    //     setFormValues(newValues);
+    //   }
+    // } catch (error) {
+    //   console.error('Validation error:', error);
+    // }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, fieldName: string) => {

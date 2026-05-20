@@ -1,12 +1,20 @@
 import { httpClient } from "./client";
-import { JobFullResponse, JobListResponse, JobSubmissionRequest, JobSubmissionResponse } from "../types/job";
+import { DryRunResponse, JobFullResponse, JobListResponse, JobSubmissionRequest, JobSubmissionResponse } from "../types/job";
 
 export const jobApi = {
   async submitJob(
     jobData: JobSubmissionRequest,
   ): Promise<JobSubmissionResponse> {
-    // Backend returns mock response - real job submission not yet implemented
     return httpClient.request<JobSubmissionResponse>('/jobs/', {
+      method: 'POST',
+      body: JSON.stringify(jobData),
+    });
+  },
+
+  async dryRun(
+    jobData: JobSubmissionRequest,
+  ): Promise<DryRunResponse> {
+    return httpClient.request<DryRunResponse>('/jobs/dry-run', {
       method: 'POST',
       body: JSON.stringify(jobData),
     });

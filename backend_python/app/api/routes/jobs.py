@@ -197,6 +197,31 @@ def submit_job(
     )
 
 
+@router.post("/dry-run")
+def dry_run_job(
+    request: JobSubmitRequest,
+    current_user: CurrentUserDep,
+    submission_service: JobSubmissionServiceDep,
+) -> dict:
+    """Preview job submission without actually submitting to SLURM.
+
+    Performs all validation and script generation, writes the script to disk,
+    but does NOT create a database record or submit to SLURM.
+
+    Returns script path and resource details for inspection.
+    """
+    return submission_service.submit(
+        dataset_id=request.dataset_id,
+        project_number=request.project_number,
+        user_login=current_user.login,
+        app_name=request.app_name,
+        params=request.parameters,
+        next_dataset_name=request.next_dataset.name,
+        next_dataset_comment=request.next_dataset.comment,
+        dry_run=True,
+    )
+
+
 @router.post("/test/hello-world")
 def submit_hello_world_job(
     current_user: CurrentUserDep,

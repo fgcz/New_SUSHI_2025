@@ -64,3 +64,18 @@ export interface JobSubmissionResponse {
   created_at: string;
   message: string;
 }
+
+export interface DryRunResponse {
+  dry_run: true;
+  script_path: string;
+  stdout_path: string;
+  stderr_path: string;
+  result_dir: string;
+  input_dataset_tsv_path: string;
+  resources: {
+    cores: number;
+    ram: number;
+    scratch: number;
+    partition: string;
+  };
+}

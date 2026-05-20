@@ -569,3 +569,77 @@ Import traces:
  GET /projects/35611/datasets/276/run-application/CountQC?step=1 200 in 305ms (compile: 133ms, render: 171ms)
  GET /projects/35611/datasets/276/run-application/CountQC?step=2 200 in 68ms (compile: 51ms, render: 17ms)
  GET /projects/35611/datasets/276/run-application/CountQC?step=1 200 in 77ms (compile: 55ms, render: 22ms)
+
+> frontend@0.1.0 dev
+> next dev --port 4070 --hostname 0.0.0.0
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:4070
+- Network:       http://0.0.0.0:4070
+✓ Ready in 281ms
+
+Browserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ GET /login 200 in 177ms (next.js: 95ms, application-code: 82ms)
+ GET / 200 in 47ms (next.js: 25ms, application-code: 22ms)
+ GET /projects/1001 200 in 186ms (next.js: 169ms, application-code: 17ms)
+ GET /projects/1001 200 in 8ms (next.js: 1540µs, application-code: 7ms)
+[browser] Image with src "/images/tamago.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /projects/1001/datasets 200 in 206ms (next.js: 198ms, application-code: 8ms)
+ GET /projects/1001/datasets/273 200 in 228ms (next.js: 200ms, application-code: 29ms)
+ GET /projects/1001/datasets 200 in 33ms (next.js: 8ms, application-code: 24ms)
+ GET /projects/1001/datasets?q=test&page=1 200 in 30ms (next.js: 7ms, application-code: 23ms)
+ GET /projects/1001/datasets?q=test&page=1&view=tree3 200 in 27ms (next.js: 6ms, application-code: 21ms)
+ GET /projects/1001/datasets/133 200 in 63ms (next.js: 7ms, application-code: 56ms)
+ GET /projects/1001/datasets/133/run-application/FastQC 200 in 205ms (next.js: 195ms, application-code: 9ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 10ms (next.js: 1785µs, application-code: 8ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 27ms (next.js: 6ms, application-code: 21ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 29ms (next.js: 6ms, application-code: 23ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 28ms (next.js: 6ms, application-code: 23ms)
+ GET /projects/1001/datasets/133/run-application/FastQC/confirm 200 in 201ms (next.js: 192ms, application-code: 9ms)
+ GET /login 200 in 49ms (next.js: 7ms, application-code: 42ms)
+ GET / 200 in 12ms (next.js: 3ms, application-code: 9ms)
+ GET /projects/1001 200 in 38ms (next.js: 5ms, application-code: 34ms)
+ GET /projects/1001 200 in 17ms (next.js: 2ms, application-code: 15ms)
+[browser] Image with src "/images/tamago.png" was detected as the Largest Contentful Paint (LCP). Please add the `loading="eager"` property if this image is above the fold.
+Read more: https://nextjs.org/docs/app/api-reference/components/image#loading
+ GET /projects/1001/datasets 200 in 26ms (next.js: 9ms, application-code: 17ms)
+ GET /projects/1001/datasets?view=tree3 200 in 26ms (next.js: 7ms, application-code: 19ms)
+ GET /projects/1001/datasets/133 200 in 53ms (next.js: 8ms, application-code: 44ms)
+ GET /projects/1001/datasets/133/run-application/FastQC 200 in 34ms (next.js: 8ms, application-code: 26ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 11ms (next.js: 1033µs, application-code: 10ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 28ms (next.js: 6ms, application-code: 22ms)
+ GET /projects/1001/datasets/133/run-application/FastQC/confirm 200 in 34ms (next.js: 9ms, application-code: 26ms)
+⚠ Fast Refresh had to perform a full reload when ./lib/api/jobs.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 87ms
+ GET /projects/1001/datasets/133/run-application/FastQC/confirm 200 in 42ms (next.js: 6ms, application-code: 37ms)
+✓ Compiled in 42ms
+✓ Compiled in 19ms
+✓ Compiled in 102ms
+✓ Compiled in 61ms
+✓ Compiled in 35ms
+ GET /projects/1001/datasets/133/run-application/FastQC/confirm 200 in 60ms (next.js: 14ms, application-code: 46ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 29ms (next.js: 12ms, application-code: 17ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 63ms (next.js: 9ms, application-code: 55ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 32ms (next.js: 6ms, application-code: 26ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 30ms (next.js: 6ms, application-code: 23ms)
+ GET /projects/1001/datasets/133/run-application/FastQC/confirm 200 in 34ms (next.js: 6ms, application-code: 29ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 30ms (next.js: 6ms, application-code: 23ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 35ms (next.js: 7ms, application-code: 27ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 30ms (next.js: 6ms, application-code: 24ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 32ms (next.js: 6ms, application-code: 26ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 30ms (next.js: 6ms, application-code: 24ms)
+✓ Compiled in 262ms
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 37ms (next.js: 5ms, application-code: 31ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 56ms (next.js: 7ms, application-code: 49ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 33ms (next.js: 7ms, application-code: 26ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 30ms (next.js: 7ms, application-code: 23ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 31ms (next.js: 6ms, application-code: 24ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 30ms (next.js: 7ms, application-code: 24ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 31ms (next.js: 7ms, application-code: 24ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=1 200 in 29ms (next.js: 6ms, application-code: 23ms)
+ GET /projects/1001/datasets/133/run-application/FastQC?step=2 200 in 32ms (next.js: 7ms, application-code: 25ms)
+ GET /projects/1001/datasets/133/run-application/FastQC/confirm 200 in 37ms (next.js: 12ms, application-code: 25ms)
+✓ Compiled in 21ms

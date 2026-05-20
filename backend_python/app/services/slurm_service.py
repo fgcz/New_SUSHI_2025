@@ -2,26 +2,28 @@
 
 Handles:
 - Building complete SLURM job scripts (header + modules + commands + footer)
-- Writing scripts to disk
 - Submitting jobs to SLURM
 - Checking job status
 """
 
-import os
 import re
 import subprocess
-from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from app.core.config import settings
 from sushi_apps.base import SushiApp
+
+if TYPE_CHECKING:
+    from app.services.filesystem_service import FilesystemService
 
 
 class SlurmService:
     """Builds SLURM scripts and manages job submission."""
 
-    def __init__(self):
-        # Default script directory - can be overridden
+    def __init__(self, filesystem_service: "FilesystemService"):
+        self.filesystem_service = filesystem_service
+        # Keep for backwards compatibility, but prefer filesystem_service
         self.script_dir = Path.home() / "slurm_scripts"
         self.script_dir.mkdir(parents=True, exist_ok=True)
 
@@ -244,30 +246,21 @@ cd $SCRATCH_DIR || exit 1
             "#### JOB IS DONE - COPY RESULTS AND CLEAN UP",
         ]
 
-        # Copy output files from scratch to gstore
-        for file_path in app.output_files:
-            src_file = os.path.basename(file_path)
-            dest_dir = os.path.dirname(os.path.join(app.gstore_dir, file_path))
-            lines.append(f"mkdir -p {dest_dir}")
-            lines.append(f"cp -r $SCRATCH_DIR/{src_file} {dest_dir}/ || true")
+        # Copy output files from scratch to gstore (via FilesystemService)
+        lines.extend(
+            self.filesystem_service.build_output_copy_commands(
+                app.output_files, app.gstore_dir
+            )
+        )
 
-        # Copy grandchild dataset files
-        for ds in app.grandchild_datasets():
-            for key, path in ds.items():
-                if "[File]" in key and path:
-                    src_file = os.path.basename(path)
-                    dest_dir = os.path.dirname(os.path.join(app.gstore_dir, path))
-                    lines.append(f"mkdir -p {dest_dir}")
-                    lines.append(f"cp -r $SCRATCH_DIR/{src_file} {dest_dir}/ || true")
+        # Copy grandchild dataset files (via FilesystemService)
+        lines.extend(
+            self.filesystem_service.build_grandchild_copy_commands(
+                app.grandchild_datasets(), app.gstore_dir
+            )
+        )
 
-        # Cleanup
-        lines.extend([
-            "",
-            "# Cleanup scratch",
-            "cd /",
-            "rm -rf $SCRATCH_DIR || true",
-            "",
-            "echo '__SCRIPT END__'",
-        ])
+        # Cleanup (via FilesystemService)
+        lines.extend(self.filesystem_service.build_cleanup_commands())
 
         return "\n".join(lines)

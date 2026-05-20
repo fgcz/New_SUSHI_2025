@@ -22,6 +22,7 @@ from app.repositories import (
 from app.services import (
     AuthService,
     DatasetService,
+    FilesystemService,
     JobService,
     JobSubmissionService,
     ProjectService,
@@ -92,8 +93,14 @@ def get_auth_service(
     return AuthService(refresh_token_repo, ldap_service)
 
 
-def get_slurm_service() -> SlurmService:
-    return SlurmService()
+def get_filesystem_service() -> FilesystemService:
+    return FilesystemService()
+
+
+def get_slurm_service(
+    filesystem_service: Annotated[FilesystemService, Depends(get_filesystem_service)],
+) -> SlurmService:
+    return SlurmService(filesystem_service)
 
 
 def get_job_submission_service(
@@ -101,8 +108,11 @@ def get_job_submission_service(
     dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
     sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
     slurm_service: Annotated[SlurmService, Depends(get_slurm_service)],
+    filesystem_service: Annotated[FilesystemService, Depends(get_filesystem_service)],
 ) -> JobSubmissionService:
-    return JobSubmissionService(job_repo, dataset_repo, sample_repo, slurm_service)
+    return JobSubmissionService(
+        job_repo, dataset_repo, sample_repo, slurm_service, filesystem_service
+    )
 
 
 def get_dataset_import_service(session: SessionDep) -> DatasetImportService:
