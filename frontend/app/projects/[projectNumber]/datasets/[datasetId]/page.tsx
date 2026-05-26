@@ -129,7 +129,15 @@ export default function DatasetDetailPage() {
         {/* Quick Actions - top right */}
         <div className="flex items-center gap-1">
           {/* Data Folder button - handles single or multiple paths */}
-          {dataset.data_paths.length === 1 ? (
+          {dataset.data_paths.length === 0 ? (
+            <button
+              disabled
+              className="px-2.5 py-1.5 text-xs font-medium text-gray-400 bg-white border border-gray-200 rounded cursor-not-allowed"
+              title="No data folder"
+            >
+              Data Folder
+            </button>
+          ) : dataset.data_paths.length === 1 ? (
             <button
               onClick={() => router.push(`/files/${dataset.data_paths[0]}`)}
               className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -137,7 +145,7 @@ export default function DatasetDetailPage() {
             >
               Data Folder
             </button>
-          ) : dataset.data_paths.length > 1 ? (
+          ) : (
             <div className="relative group">
               <button
                 className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -157,14 +165,7 @@ export default function DatasetDetailPage() {
                 ))}
               </div>
             </div>
-          ) : null}
-          <button
-            onClick={() => router.push(`/projects/${projectNumber}/datasets/${datasetId}/samples/edit`)}
-            className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            title="Edit Samples"
-          >
-            Edit Samples
-          </button>
+          )}
           <button
             onClick={() => router.push(`/projects/${projectNumber}/datasets/${datasetId}/jobs`)}
             className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"

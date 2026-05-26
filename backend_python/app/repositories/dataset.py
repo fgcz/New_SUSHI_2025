@@ -194,6 +194,14 @@ class DatasetRepository(BaseRepository[DataSet]):
 
         return nodes
 
+    def set_bfabric_id(self, dataset: DataSet, bfabric_id: int) -> DataSet:
+        """Set the B-Fabric ID on a dataset."""
+        dataset.bfabric_id = bfabric_id
+        self.session.add(dataset)
+        self.session.commit()
+        self.session.refresh(dataset)
+        return dataset
+
     def get_project_number(self, dataset: DataSet) -> int | None:
         """Get the project number for a dataset."""
         if dataset.project_id is None:

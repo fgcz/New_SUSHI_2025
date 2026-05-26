@@ -24,6 +24,7 @@ This service abstracts away the actual paths (gstore, scratch, scripts) making i
 easy to swap between production paths and local development paths.
 """
 
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
@@ -36,12 +37,6 @@ class FilesystemService:
     def __init__(self):
         self.gstore_dir = Path(settings.GSTORE_DIR)
         self.scratch_dir = Path(settings.SCRATCH_DIR)
-        self.script_dir = Path.home() / "slurm_scripts"
-        self._ensure_script_dir()
-
-    def _ensure_script_dir(self) -> None:
-        """Ensure the script directory exists."""
-        self.script_dir.mkdir(parents=True, exist_ok=True)
 
     # === Path generation ===
 
@@ -53,6 +48,17 @@ class FilesystemService:
         timestamp = datetime.now().strftime("%Y-%m-%d--%H-%M-%S")
         return f"p{project_number}/{dataset_name}_{timestamp}"
 
+    def generate_scratch_result_dir(self, result_dir: str) -> str:
+        """Generate the scratch working directory path for a job.
+
+        Mirrors Ruby's @scratch_result_dir: uses only the base name (no project prefix)
+        so that /scratch/DatasetName_timestamp/ is created on the submission server.
+
+        Returns: e.g. "/scratch/MyDataset_2026-05-19--10-30-00"
+        """
+        base = Path(result_dir).name
+        return str(self.scratch_dir / base)
+
     def generate_input_dataset_path(self, result_dir: str) -> str:
         """Generate the full path for input_dataset.tsv.
 
@@ -60,13 +66,21 @@ class FilesystemService:
         """
         return f"{self.gstore_dir}/{result_dir}/input_dataset.tsv"
 
-    def generate_script_path(self, app_name: str) -> str:
-        """Generate a unique script path for a job.
+    def generate_script_path(self, app_name: str, scratch_result_dir: str) -> str:
+        """Generate the script path inside the scratch scripts/ subdirectory.
 
-        Returns: e.g. "/Users/me/slurm_scripts/FastQC_20260519103000.sh"
+        Returns: e.g. "/scratch/MyDataset_ts/scripts/FastQC_20260519103000.sh"
         """
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        return str(self.script_dir / f"{app_name}_{timestamp}.sh")
+        return str(Path(scratch_result_dir) / "scripts" / f"{app_name}_{timestamp}.sh")
+
+    def gstore_script_path(self, scratch_script_path: str, scratch_result_dir: str, result_dir: str) -> str:
+        """Translate a scratch script path to its gstore equivalent after copy.
+
+        Returns: e.g. "/srv/gstore/projects/p1234/MyDataset_ts/scripts/FastQC_ts.sh"
+        """
+        rel = Path(scratch_script_path).relative_to(scratch_result_dir)
+        return str(self.gstore_dir / result_dir / rel)
 
     def generate_log_paths(self, script_path: str) -> tuple[str, str]:
         """Generate stdout and stderr log paths from script path.
@@ -89,17 +103,68 @@ class FilesystemService:
         path.write_text(content)
         path.chmod(0o755)
 
-    def create_result_dir(self, result_dir: str) -> Path:
-        """Create the result directory in gstore for job outputs."""
-        raise NotImplementedError
+    def create_result_dir(self, scratch_result_dir: str) -> Path:
+        """Create the scratch working directory and scripts/ subdirectory for a job.
 
-    def write_input_dataset_tsv(self, result_dir: str, samples: list[dict]) -> Path:
-        """Write input_dataset.tsv to the result directory."""
-        raise NotImplementedError
+        Returns: Path to the created scratch result directory.
+        """
+        path = Path(scratch_result_dir)
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "scripts").mkdir(exist_ok=True)
+        return path
 
-    def write_parameters_tsv(self, result_dir: str, params: dict) -> Path:
-        """Write parameters.tsv to the result directory."""
-        raise NotImplementedError
+    def write_input_dataset_tsv(self, scratch_result_dir: str, samples: list[dict]) -> Path:
+        """Write input_dataset.tsv to the scratch working directory.
+
+        Preserves column tags (e.g. [File], [Factor]) in headers as-is.
+        Name column always first, then all others alphabetically.
+        """
+        import csv
+
+        if not samples:
+            raise ValueError("No samples to write input_dataset.tsv")
+
+        all_keys: set[str] = set()
+        for sample in samples:
+            all_keys.update(sample.keys())
+
+        name_headers = sorted(k for k in all_keys if k.lower() == "name")
+        other_headers = sorted(k for k in all_keys if k.lower() != "name")
+        headers = name_headers + other_headers
+
+        path = Path(scratch_result_dir) / "input_dataset.tsv"
+        with path.open("w", newline="") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=headers, delimiter="\t", extrasaction="ignore"
+            )
+            writer.writeheader()
+            writer.writerows(samples)
+
+        return path
+
+    def write_parameters_tsv(self, scratch_result_dir: str, params: dict) -> Path:
+        """Write parameters.tsv to the scratch working directory.
+
+        Format mirrors Ruby SUSHI: two-column TSV with headers
+        'parameterId' and 'value', one row per parameter.
+        """
+        path = Path(scratch_result_dir) / "parameters.tsv"
+        lines = ["parameterId\tvalue"]
+        for key, value in params.items():
+            lines.append(f"{key}\t{value}")
+        path.write_text("\n".join(lines) + "\n")
+        return path
+
+    def copy_scratch_to_gstore(self, scratch_result_dir: str, result_dir: str) -> None:
+        """Copy the scratch working directory to gstore using the configured COPY_COMMAND.
+
+        The scratch dir is copied into the gstore project dir so the result is:
+          {gstore_dir}/{result_dir}/  (with all pre-submission files inside)
+        """
+        gstore_project_dir = self.gstore_dir / Path(result_dir).parent
+        gstore_project_dir.mkdir(parents=True, exist_ok=True)
+        cmd = settings.COPY_COMMAND.split() + [scratch_result_dir, str(gstore_project_dir)]
+        subprocess.run(cmd, check=True)
 
     # === Post-submission operations ===
 
@@ -133,30 +198,6 @@ class FilesystemService:
             dest_dir = os.path.dirname(os.path.join(gstore_dir, file_path))
             lines.append(f"mkdir -p {dest_dir}")
             lines.append(f"cp -r $SCRATCH_DIR/{src_file} {dest_dir}/ || true")
-        return lines
-
-    def build_grandchild_copy_commands(
-        self, grandchild_datasets: list[dict], gstore_dir: str
-    ) -> list[str]:
-        """Generate bash commands to copy grandchild dataset files.
-
-        Args:
-            grandchild_datasets: List of grandchild dataset dicts with file paths
-            gstore_dir: The gstore directory path
-
-        Returns:
-            List of bash command lines
-        """
-        import os
-
-        lines = []
-        for ds in grandchild_datasets:
-            for key, path in ds.items():
-                if "[File]" in key and path:
-                    src_file = os.path.basename(path)
-                    dest_dir = os.path.dirname(os.path.join(gstore_dir, path))
-                    lines.append(f"mkdir -p {dest_dir}")
-                    lines.append(f"cp -r $SCRATCH_DIR/{src_file} {dest_dir}/ || true")
         return lines
 
     def build_cleanup_commands(self) -> list[str]:

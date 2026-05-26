@@ -25,7 +25,9 @@ export interface JobFullResponse {
   input_dataset_id: number;
   next_dataset_id: number;
   created_at: string;
-  script_path: string;
+  script_path: string | null;
+  stdout_path: string | null;
+  stderr_path: string | null;
   submit_job_id: number;
   start_time: string;
   end_time: string;

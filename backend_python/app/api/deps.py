@@ -107,11 +107,12 @@ def get_job_submission_service(
     job_repo: Annotated[JobRepository, Depends(get_job_repository)],
     dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
     sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
+    user_repo: Annotated[UserRepository, Depends(get_user_repository)],
     slurm_service: Annotated[SlurmService, Depends(get_slurm_service)],
     filesystem_service: Annotated[FilesystemService, Depends(get_filesystem_service)],
 ) -> JobSubmissionService:
     return JobSubmissionService(
-        job_repo, dataset_repo, sample_repo, slurm_service, filesystem_service
+        job_repo, dataset_repo, sample_repo, user_repo, slurm_service, filesystem_service
     )
 
 

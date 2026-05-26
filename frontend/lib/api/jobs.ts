@@ -33,11 +33,11 @@ export const jobApi = {
   },
 
   async getJobScript(jobId: number): Promise<string> {
-    const response = await httpClient.request<{ script: string }>(`/jobs/${jobId}/script_mock`);
+    const response = await httpClient.request<{ script: string }>(`/jobs/${jobId}/script`);
     return response.script;
   },
 
   async getJobLogs(jobId: number): Promise<{ stdout: string; stderr: string }> {
-    return httpClient.request<{ stdout: string; stderr: string }>(`/jobs/${jobId}/logs_mock`);
+    return httpClient.request<{ stdout: string; stderr: string }>(`/jobs/${jobId}/logs`);
   }
 };

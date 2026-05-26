@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { datasetApi } from '@/lib/api';
-import { ProjectDataset } from '@/lib/types';
+import { DatasetFullResponse } from '@/lib/types';
 
 interface UseDatasetBaseReturn {
-  dataset: ProjectDataset | undefined;
+  dataset: DatasetFullResponse | undefined;
   isLoading: boolean;
   error: Error | null;
   notFound: boolean;

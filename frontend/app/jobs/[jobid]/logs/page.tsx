@@ -87,7 +87,7 @@ export default function JobLogsPage() {
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500 text-white">
             STDOUT
           </span>
-          <span className="text-sm text-gray-300">Standard Output</span>
+          <span className="text-sm text-gray-300 font-mono">{job?.stdout_path ?? 'Standard Output'}</span>
         </div>
         <div className="bg-gray-900">
           <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}} className="text-sm text-green-400 p-4 overflow-x-auto font-mono max-h-96 overflow-y-auto">
@@ -102,7 +102,7 @@ export default function JobLogsPage() {
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-500 text-black">
             STDERR
           </span>
-          <span className="text-sm text-gray-300">Standard Error</span>
+          <span className="text-sm text-gray-300 font-mono">{job?.stderr_path ?? 'Standard Error'}</span>
         </div>
         <div className="bg-gray-900">
           <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}} className="text-sm text-yellow-400 p-4 overflow-x-auto font-mono max-h-96 overflow-y-auto">

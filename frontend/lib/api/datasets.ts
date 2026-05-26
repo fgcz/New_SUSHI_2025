@@ -50,10 +50,10 @@ export const datasetApi = {
     },
 
     async setBFabricId(datasetId: number, bfabricId: string): Promise<void> {
-        await httpClient.request(
-            `/datasets/${datasetId}/bfabric-id?bfabric_id=${encodeURIComponent(bfabricId)}`,
-            { method: 'PATCH' }
-        );
+        await httpClient.request(`/datasets/${datasetId}/bfabric-id`, {
+            method: 'PUT',
+            body: JSON.stringify({ bfabric_id: parseInt(bfabricId, 10) }),
+        });
     },
 
     async announceDataset(datasetId: number): Promise<void> {

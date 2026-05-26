@@ -16,7 +16,7 @@ export interface DatasetFullResponse {
   id: number;
   name: string;
   created_at: string;
-  user_login?: string | null;
+  user?: string | null;
   project_number: number;
   samples_count?: number;
   completed_samples?: number;

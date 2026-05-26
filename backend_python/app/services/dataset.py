@@ -193,6 +193,12 @@ class DatasetService:
         # Get matching applications
         return get_runnable_apps(headers)
 
+    def set_bfabric_id(self, dataset_id: int, bfabric_id: int, user: "CurrentUser") -> dict:
+        """Set the B-Fabric ID for a dataset."""
+        dataset = self._get_authorized_dataset(dataset_id, user)
+        self.dataset_repo.set_bfabric_id(dataset, bfabric_id)
+        return {"dataset_id": dataset_id, "bfabric_id": bfabric_id}
+
     def get_samples(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get all samples for a dataset."""
         dataset = self._get_authorized_dataset(dataset_id, user)

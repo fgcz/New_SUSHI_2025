@@ -35,7 +35,8 @@ class Settings(BaseSettings):
     GSTORE_DIR: str = "/srv/gstore/projects"
     GSTORE_URL: str = "https://fgcz-gstore.uzh.ch"  # External URL for file downloads
     SCRATCH_DIR: str = "/scratch"
-    MODULE_SOURCE: str = "/usr/share/Modules/init/bash"  # For 'source' before module load
+    MODULE_SOURCE: str = "/usr/local/ngseq/etc/lmod_profile"
+    COPY_COMMAND: str = "g-req copynow"  # Dev: "cp -r"
 
     # Tool paths
     EZ_GLOBAL_VARIABLES: str = "/usr/local/ngseq/opt/EZ_GLOBAL_VARIABLES.txt"

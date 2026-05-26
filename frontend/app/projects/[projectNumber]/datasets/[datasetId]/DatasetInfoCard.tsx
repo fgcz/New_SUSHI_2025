@@ -1,7 +1,7 @@
-import { ProjectDataset } from '@/lib/types';
+import { DatasetFullResponse } from '@/lib/types';
 
 interface DatasetInfoCardProps {
-  dataset: ProjectDataset;
+  dataset: DatasetFullResponse;
 }
 
 export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
@@ -36,7 +36,7 @@ export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
           </div>
           <div className="flex">
             <span className="text-gray-600 mr-2">Samples:</span>
-            <span>{dataset.completed_samples ?? 0} / {dataset.samples_count ?? 0}</span>
+            <span>{dataset.samples_count ?? 0}</span>
           </div>
           <div className="flex">
             <span className="text-gray-600 mr-2">BFabric ID:</span>

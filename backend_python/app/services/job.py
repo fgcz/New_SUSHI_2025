@@ -96,6 +96,8 @@ class JobService:
             "next_dataset_id": job.next_dataset_id,
             "created_at": job.created_at.isoformat() if job.created_at else None,
             "script_path": job.script_path,
+            "stdout_path": job.stdout_path,
+            "stderr_path": job.stderr_path,
             "submit_job_id": job.submit_job_id,
             "start_time": job.start_time.isoformat() if job.start_time else None,
             "end_time": job.end_time.isoformat() if job.end_time else None,

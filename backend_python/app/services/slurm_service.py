@@ -8,7 +8,6 @@ Handles:
 
 import re
 import subprocess
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from app.core.config import settings
@@ -23,9 +22,6 @@ class SlurmService:
 
     def __init__(self, filesystem_service: "FilesystemService"):
         self.filesystem_service = filesystem_service
-        # Keep for backwards compatibility, but prefer filesystem_service
-        self.script_dir = Path.home() / "slurm_scripts"
-        self.script_dir.mkdir(parents=True, exist_ok=True)
 
     def build_script(self, app: SushiApp) -> str:
         """Build complete SLURM job script from configured app.
@@ -49,19 +45,6 @@ class SlurmService:
             self._build_footer(app),
         ]
         return "\n".join(parts)
-
-    def write_script(self, path: str, content: str) -> None:
-        """Write job script to disk.
-
-        Args:
-            path: Absolute path to write script
-            content: Script content
-        """
-        script_path = Path(path)
-        script_path.parent.mkdir(parents=True, exist_ok=True)
-        script_path.write_text(content)
-        # Make executable
-        script_path.chmod(0o755)
 
     def submit(
         self,
@@ -182,22 +165,6 @@ class SlurmService:
         """
         subprocess.run(["scancel", slurm_job_id], check=True)
 
-    def generate_script_path(self, app: SushiApp, suffix: str = "") -> str:
-        """Generate a unique script path for a job.
-
-        Args:
-            app: The SushiApp instance
-            suffix: Optional suffix (e.g., sample name for SAMPLE mode)
-
-        Returns:
-            Absolute path for the script file
-        """
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        name = f"{app.name}_{timestamp}"
-        if suffix:
-            name = f"{name}_{suffix}"
-        return str(self.script_dir / f"{name}.sh")
-
     # === Private helpers ===
 
     def _build_header(self, app: SushiApp) -> str:
@@ -229,7 +196,7 @@ cd $SCRATCH_DIR || exit 1
         lines = [
             "#### LOAD MODULES",
             f"source {settings.MODULE_SOURCE}",
-            f"module load {' '.join(app.modules)}",
+            f"module add {' '.join(app.modules)}",
             "",
         ]
         return "\n".join(lines)
@@ -246,17 +213,10 @@ cd $SCRATCH_DIR || exit 1
             "#### JOB IS DONE - COPY RESULTS AND CLEAN UP",
         ]
 
-        # Copy output files from scratch to gstore (via FilesystemService)
+        # Copy output directories from scratch to gstore (via FilesystemService)
         lines.extend(
             self.filesystem_service.build_output_copy_commands(
                 app.output_files, app.gstore_dir
-            )
-        )
-
-        # Copy grandchild dataset files (via FilesystemService)
-        lines.extend(
-            self.filesystem_service.build_grandchild_copy_commands(
-                app.grandchild_datasets(), app.gstore_dir
             )
         )
 

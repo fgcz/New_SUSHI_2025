@@ -1,6 +1,7 @@
 """Dataset routes - thin handlers delegating to services."""
 
 from fastapi import APIRouter, File, Form, UploadFile
+from pydantic import BaseModel
 
 from app.api.deps import CurrentUserDep, DatasetImportServiceDep, DatasetServiceDep
 from app.api.deps import require_project_access
@@ -180,15 +181,19 @@ def update_dataset_size(
     return {"success": True, "dataset_id": dataset_id, "size_bytes": 1024000}
 
 
-@router.patch("/{dataset_id}/bfabric-id")
+class SetBFabricIdRequest(BaseModel):
+    bfabric_id: int
+
+
+@router.put("/{dataset_id}/bfabric-id")
 def set_bfabric_id(
     dataset_id: int,
-    bfabric_id: str,
+    body: SetBFabricIdRequest,
     current_user: CurrentUserDep,
+    service: DatasetServiceDep,
 ) -> dict:
     """Set the B-Fabric ID for a dataset."""
-    # TODO: Implement actual bfabric_id update
-    return {"success": True, "dataset_id": dataset_id, "bfabric_id": bfabric_id}
+    return service.set_bfabric_id(dataset_id, body.bfabric_id, current_user)
 
 
 @router.post("/{dataset_id}/announce")

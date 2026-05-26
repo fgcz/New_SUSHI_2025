@@ -10,6 +10,16 @@ FastAPI backend with SQLite and LDAP authentication.
 - SQlite database
 - LDAP server
 
+## Configuration
+
+Configuration is split across two files with distinct responsibilities:
+
+**`.env`** — environment-specific values that change between deployments (dev, staging, production). This file is not committed to version control. It covers infrastructure paths (`GSTORE_DIR`, `SCRATCH_DIR`), credentials (`LDAP_BIND_PASSWORD`, `JWT_SECRET_KEY`), database location, CORS origins, and operational flags like `COPY_COMMAND` (set to `cp -r` in dev, `g-req copynow` in production). Copy `.env.example` to get started.
+
+**`app/core/config.py`** — the schema and defaults for all settings, defined as a pydantic `Settings` class. Every key that the application uses must be declared here with its type and a safe default. Values from `.env` override the defaults at runtime. This file is committed and serves as the authoritative reference for what can be configured and what the production defaults are.
+
+The rule: if it changes between environments, it belongs in `.env`. If it is a structural default that works out of the box, it belongs in `config.py`.
+
 ## Setup
 
 1. Copy environment variables:
@@ -17,7 +27,7 @@ FastAPI backend with SQLite and LDAP authentication.
    cp .env.example .env
    ```
 
-2. Edit `.env` with your MariaDB and LDAP credentials.
+2. Edit `.env` with your infrastructure paths and credentials.
 
 ### Option A: Run with Docker (recommended)
 

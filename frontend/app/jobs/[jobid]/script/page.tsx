@@ -74,8 +74,8 @@ export default function JobScriptPage() {
 
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Script Content</h2>
-          <p className="text-sm text-gray-500">data_processing.py</p>
+          <h2 className="text-lg font-medium text-gray-900">{job?.script_path?.split('/').pop() ?? 'Script'}</h2>
+          <p className="text-xs text-gray-400 font-mono mt-0.5">{job?.script_path ?? ''}</p>
         </div>
         <div className="p-0">
           <pre style={{wordWrap: 'break-word', whiteSpace: 'pre-wrap'}} className="text-sm text-gray-900 p-4 overflow-x-auto">
