@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { jobApi } from '@/lib/api';
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
+import { useLastProjectNumber } from '@/lib/hooks';
 
 export default function JobScriptPage() {
   const params = useParams<{ jobid: string }>();
@@ -24,7 +25,7 @@ export default function JobScriptPage() {
   });
 
   const isLoading = jobLoading || scriptLoading;
-  const projectNumber = job?.project_number ?? null;
+  const projectNumber = useLastProjectNumber(job?.project_number);
 
   if (isLoading) {
     return (
@@ -56,10 +57,12 @@ export default function JobScriptPage() {
   return (
     <div className="container mx-auto px-6 py-8">
       <Breadcrumbs items={[
-        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
-        { label: 'Jobs', href: `/projects/${projectNumber}/jobs` },
+        ...(projectNumber ? [
+          { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+          { label: 'Jobs', href: `/projects/${projectNumber}/jobs` },
+        ] : []),
         { label: `Job ${jobId}` },
-        { label: "Script", active: true }
+        { label: 'Script', active: true },
       ]} />
 
       <div className="flex items-center justify-between mb-6">

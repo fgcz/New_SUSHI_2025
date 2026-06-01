@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/providers/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useProjectList } from '@/lib/hooks';
+import { useProjectList, useLastProjectNumber } from '@/lib/hooks';
 
 // Authentication status component
 const AuthStatus = () => {
@@ -65,14 +65,13 @@ export default function Header() {
   const { userProjects, isLoading: projectsLoading } = useProjectList();
 
   const projectNumber = params?.projectNumber ? Number(params.projectNumber) : null;
+  const activeProject = useLastProjectNumber(projectNumber);
   const userName = authStatus?.current_user || "Guest";
 
-  // Prepopulate search with current project number
+  // Keep search bar in sync with active project
   useEffect(() => {
-    if (projectNumber) {
-      setSearchQuery(projectNumber.toString());
-    }
-  }, [projectNumber]);
+    if (activeProject) setSearchQuery(activeProject.toString());
+  }, [activeProject]);
 
   // Show loading screen while checking authentication
   if (loading) {
@@ -167,12 +166,12 @@ export default function Header() {
           </div>
           
           <nav className="flex items-center space-x-4">
-            {projectNumber && (
-              <Link href={`/projects/${projectNumber}/datasets`} className="text-gray-600 hover:text-brand-600">DataSets</Link>
+            {activeProject && (
+              <Link href={`/projects/${activeProject}/datasets`} className="text-gray-600 hover:text-brand-600">DataSets</Link>
             )}
-            <Link href={`/projects/${projectNumber}/datasets/import`} className="text-gray-600 hover:text-brand-600">Import</Link>
-            <Link href={`/projects/${projectNumber}/jobs`} className="text-gray-600 hover:text-brand-600">Jobs</Link>
-            <Link href={`/files/p${projectNumber}`} className="text-gray-600 hover:text-brand-600">gStore</Link>
+            <Link href={activeProject ? `/projects/${activeProject}/datasets/import` : '/projects'} className="text-gray-600 hover:text-brand-600">Import</Link>
+            <Link href={activeProject ? `/projects/${activeProject}/jobs` : '/jobs'} className="text-gray-600 hover:text-brand-600">Jobs</Link>
+            <Link href={activeProject ? `/files/p${activeProject}` : '/files'} className="text-gray-600 hover:text-brand-600">gStore</Link>
             <Link href="/docs" className="text-gray-600 hover:text-brand-600">Docs</Link>
             <Link href="/dataset/list" className="text-gray-600 hover:text-brand-600">Find</Link>
             <Link href="/help" className="text-gray-600 hover:text-brand-600">Help</Link>

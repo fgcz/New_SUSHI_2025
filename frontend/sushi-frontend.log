@@ -1372,3 +1372,40 @@ Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
  GET /projects/1001/datasets/343 200 in 265ms (compile: 98ms, render: 167ms)
 ✓ Compiled in 67ms
 ✓ Compiled in 170ms
+✓ Compiled in 134ms
+✓ Compiled in 79ms
+✓ Compiled in 87ms
+ GET /projects/1001/datasets/343 200 in 287ms (compile: 111ms, render: 176ms)
+ GET /projects/1001/jobs 200 in 144ms (compile: 118ms, render: 26ms)
+ GET /projects/1001/datasets 200 in 142ms (compile: 112ms, render: 30ms)
+ GET /files/p1001 200 in 134ms (compile: 109ms, render: 25ms)
+ GET /projects/1001/datasets/import 200 in 147ms (compile: 117ms, render: 30ms)
+ GET /projects/1001/jobs 200 in 46ms (compile: 32ms, render: 14ms)
+ GET /projects/1001/datasets 200 in 54ms (compile: 35ms, render: 18ms)
+ GET /projects/36114 200 in 141ms (compile: 114ms, render: 26ms)
+ GET /projects/36114/datasets 200 in 48ms (compile: 34ms, render: 14ms)
+ GET /projects/36614 200 in 47ms (compile: 34ms, render: 13ms)
+ GET /projects/36614/datasets 200 in 48ms (compile: 33ms, render: 15ms)
+ GET /projects/36614/datasets?view=tree3 200 in 54ms (compile: 38ms, render: 16ms)
+ GET /projects/36614/jobs 200 in 48ms (compile: 33ms, render: 15ms)
+ GET /jobs 200 in 55ms (compile: 38ms, render: 18ms)
+ GET /projects/36614/datasets 200 in 55ms (compile: 38ms, render: 17ms)
+✓ Compiled in 289ms
+ GET /jobs 200 in 216ms (compile: 75ms, render: 141ms)
+ GET /jobs 200 in 29ms (compile: 1821µs, render: 28ms)
+✓ Compiled in 0ms
+ GET /jobs 200 in 40ms (compile: 1642µs, render: 38ms)
+✓ Compiled in 152ms
+ GET /jobs 200 in 218ms (compile: 75ms, render: 144ms)
+ GET /projects/36614/jobs 200 in 175ms (compile: 148ms, render: 27ms)
+ GET /projects/36614/datasets/338 200 in 165ms (compile: 134ms, render: 31ms)
+ GET /projects/36614/jobs 200 in 55ms (compile: 41ms, render: 15ms)
+ GET /jobs/214/logs 200 in 495ms (compile: 475ms, render: 20ms)
+ GET /jobs/214/script 200 in 532ms (compile: 514ms, render: 18ms)
+ GET /projects/36614/jobs 200 in 57ms (compile: 43ms, render: 14ms)
+✓ Compiled in 81ms
+ GET /jobs/214/script 200 in 237ms (compile: 110ms, render: 126ms)
+ GET /projects/36614/jobs 200 in 56ms (compile: 41ms, render: 15ms)
+ GET /jobs/214/logs 200 in 56ms (compile: 42ms, render: 14ms)
+✓ Finished filesystem cache database compaction in 29.9s
+✓ Finished writing to filesystem cache in 29.5s

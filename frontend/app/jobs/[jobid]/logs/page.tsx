@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { jobApi } from '@/lib/api';
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
+import { useLastProjectNumber } from '@/lib/hooks';
 import LogContent, { extractIssues, LogIssue } from './LogContent';
 
 type Tab = 'stderr' | 'stdout' | 'issues';
@@ -54,7 +55,7 @@ export default function JobLogsPage() {
   });
 
   const isLoading = jobLoading || logsLoading;
-  const projectNumber = job?.project_number ?? null;
+  const projectNumber = useLastProjectNumber(job?.project_number);
 
   if (isLoading) {
     return (
@@ -102,8 +103,10 @@ export default function JobLogsPage() {
     <div className="container mx-auto px-6 py-8">
 
       <Breadcrumbs items={[
-        { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
-        { label: 'Jobs', href: `/projects/${projectNumber}/jobs` },
+        ...(projectNumber ? [
+          { label: `Project ${projectNumber}`, href: `/projects/${projectNumber}` },
+          { label: 'Jobs', href: `/projects/${projectNumber}/jobs` },
+        ] : []),
         { label: `Job ${jobId}` },
         { label: 'Logs', active: true },
       ]} />
