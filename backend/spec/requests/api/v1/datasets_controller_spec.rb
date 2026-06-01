@@ -111,8 +111,8 @@ RSpec.describe 'Api::V1::Datasets', type: :request do
         qc_category = body.find { |c| c['category'] == 'QC' }
         mapping_category = body.find { |c| c['category'] == 'Mapping' }
         
-        expect(qc_category['applications']).to include('FastqcApp')
-        expect(mapping_category['applications']).to include('BwaApp')
+        expect(qc_category['applications']).to include('Fastqc')
+        expect(mapping_category['applications']).to include('Bwa')
       end
 
       it 'returns empty array when no apps match' do

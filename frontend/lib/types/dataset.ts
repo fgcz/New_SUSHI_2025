@@ -80,4 +80,6 @@ export type DatasetTreeResponse = {
   project_number?: number;
 }
 
-
+// Legacy type aliases for backward compatibility
+export type ProjectDataset = DatasetFullResponse;
+export type ProjectDatasetsResponse = DatasetListResponse;

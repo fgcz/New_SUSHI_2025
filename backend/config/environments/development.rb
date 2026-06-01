@@ -51,7 +51,12 @@ Rails.application.configure do
   config.active_support.disallowed_deprecation_warnings = []
 
   # Raise an error on page load if there are pending migrations.
-  config.active_record.migration_error = :page_load
+  # Skip migration check in legacy database mode (old SUSHI MySQL DB)
+  if ENV['LEGACY_DATABASE'] == 'true'
+    config.active_record.migration_error = false
+  else
+    config.active_record.migration_error = :page_load
+  end
 
   # Highlight code that triggered database queries in logs.
   config.active_record.verbose_query_logs = true

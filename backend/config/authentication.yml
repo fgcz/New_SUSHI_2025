@@ -1,6 +1,10 @@
 # Authentication Configuration
 # 5 types of login methods can be enabled/disabled here
 defaults: &defaults
+  # Legacy database mode: set to true when using old SUSHI MySQL database
+  # This disables email/password validations since those columns don't exist in old DB
+  legacy_database: <%= ENV.fetch("LEGACY_DATABASE", "false") == "true" %>
+  
   # 1. Standard login (username/email + password)
   standard_login:
     enabled: false

@@ -1,5 +1,26 @@
 require 'csv'
 
+# Helper method to convert datetime strings with timezone to MySQL-compatible format
+def convert_datetime_for_mysql(value)
+  return value if value.nil? || value.empty?
+  
+  # Check if value looks like a datetime with timezone (e.g., "2025-04-01 15:07:02 +0200")
+  if value =~ /\A\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [+-]\d{4}\z/
+    # Parse and convert to MySQL-compatible format (without timezone)
+    Time.parse(value).strftime('%Y-%m-%d %H:%M:%S')
+  else
+    value
+  end
+rescue ArgumentError
+  # If parsing fails, return original value
+  value
+end
+
+def quote_value(value, column_name = nil)
+  converted = convert_datetime_for_mysql(value)
+  ActiveRecord::Base.connection.quote(converted)
+end
+
 ActiveRecord::Base.connection.disable_referential_integrity do
   Dir.glob("db/csv_data/*.csv").each do |file|
     table = File.basename(file, ".csv")
@@ -28,7 +49,7 @@ ActiveRecord::Base.connection.disable_referential_integrity do
           when 'encrypted_password'
             ActiveRecord::Base.connection.quote(encrypted_password)
           else
-            ActiveRecord::Base.connection.quote(row[col])
+            quote_value(row[col], col)
           end
         end
         
@@ -42,10 +63,9 @@ ActiveRecord::Base.connection.disable_referential_integrity do
       csv.each do |row|
         ActiveRecord::Base.connection.execute <<-SQL
           INSERT INTO #{table} (#{csv.headers.join(',')})
-          VALUES (#{csv.headers.map { |h| ActiveRecord::Base.connection.quote(row[h]) }.join(',')})
+          VALUES (#{csv.headers.map { |h| quote_value(row[h], h) }.join(',')})
         SQL
       end
     end
   end
 end
-

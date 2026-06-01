@@ -22,6 +22,7 @@ EOS
     @params['ram', 'description'] = "GB"
     @params['scratch'] = [100, 10, 50, 100]
     @params['scratch', 'description'] = "GB"
+    @params['partition'] = ''
     @params['paired'] = false
     @params['showNativeReports'] = false
     @params['showNativeReports', 'description'] = "uses the multi qc summary as primary report; native reports are generated and can be downloaded"

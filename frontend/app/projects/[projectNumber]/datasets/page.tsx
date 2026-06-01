@@ -37,8 +37,8 @@ export default function ProjectDatasetsPage() {
   };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['datasets', projectNumber, { q: searchQuery, page, per }],
-    queryFn: () => projectApi.getProjectDatasets(projectNumber, { q: searchQuery, page, per }),
+    queryKey: ['datasets', projectNumber, { datasetName: searchQuery, page, per }],
+    queryFn: () => projectApi.getProjectDatasets(projectNumber, { datasetName: searchQuery, page, per }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   });

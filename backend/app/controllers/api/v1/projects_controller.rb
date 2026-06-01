@@ -153,8 +153,10 @@ module Api
       end
 
       def resolve_user_projects
-        # Anonymous mode → default [1001]
-        return [1001] if AuthenticationHelper.authentication_skipped?
+        # Anonymous mode → allow access to all existing projects
+        if AuthenticationHelper.authentication_skipped?
+          return Project.pluck(:number).uniq.sort
+        end
 
         # Course mode
         if AuthenticationHelper.respond_to?(:course_mode?) && AuthenticationHelper.course_mode?
@@ -173,8 +175,8 @@ module Api
           end
         end
 
-        # Fallback
-        [1001]
+        # Fallback - allow access to all existing projects
+        Project.pluck(:number).uniq.sort
       end
 
       def authorized_project_numbers

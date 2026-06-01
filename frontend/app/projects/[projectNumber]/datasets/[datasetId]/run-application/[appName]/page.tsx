@@ -93,14 +93,14 @@ export default function RunApplicationPage() {
   // Redirect to step=1 if no step param and we have groups
   useEffect(() => {
     if (paramGroups.length > 0 && currentStepParam === null) {
-      const newParams = new URLSearchParams(searchParams);
+      const newParams = new URLSearchParams(searchParams.toString());
       newParams.set("step", "1");
       router.replace(`${pathname}?${newParams.toString()}`);
     }
   }, [paramGroups.length, currentStepParam, searchParams, pathname, router]);
 
   const goToStep = useCallback((stepIndex: number) => {
-    const newParams = new URLSearchParams(searchParams);
+    const newParams = new URLSearchParams(searchParams.toString());
     // stepIndex is 0-based from FormStepper, convert to 1-based for URL
     newParams.set("step", (stepIndex + 1).toString());
     router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
@@ -108,7 +108,7 @@ export default function RunApplicationPage() {
 
   const goNext = useCallback(() => {
     if (currentStepNumber < paramGroups.length) {
-      const newParams = new URLSearchParams(searchParams);
+      const newParams = new URLSearchParams(searchParams.toString());
       newParams.set("step", (currentStepNumber + 1).toString());
       router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
@@ -116,7 +116,7 @@ export default function RunApplicationPage() {
 
   const goBack = useCallback(() => {
     if (currentStepNumber > 1) {
-      const newParams = new URLSearchParams(searchParams);
+      const newParams = new URLSearchParams(searchParams.toString());
       newParams.set("step", (currentStepNumber - 1).toString());
       router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }

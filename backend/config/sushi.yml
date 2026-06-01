@@ -1,0 +1,72 @@
+# SUSHI Application Configuration
+# Configure SLURM partitions and other settings based on deployment type
+
+defaults: &defaults
+  # SLURM partition configuration
+  partition:
+    # Default partition to use
+    default: employee
+    # Available partitions (if empty, fetch dynamically from sinfo)
+    available: []
+    # Whether to fetch partitions dynamically from SLURM (sinfo command)
+    dynamic: true
+  
+  # Storage configuration
+  storage:
+    # Scratch directory for temporary files (local to compute nodes)
+    scratch_dir: /scratch
+    # GStore directory (shared storage, read-only from application server)
+    gstore_dir: /srv/gstore/projects
+    # Copy method: 'g-req' for production (FGCZ), 'rsync' for demo/local
+    copy_method: g-req
+
+development:
+  <<: *defaults
+  # In development, always use 'employee' partition
+  partition:
+    default: employee
+    available: [employee]
+    dynamic: false
+  storage:
+    scratch_dir: /scratch
+    gstore_dir: /srv/gstore/projects
+    copy_method: g-req  # Use g-req for FGCZ environment
+
+test:
+  <<: *defaults
+  partition:
+    default: employee
+    available: [employee]
+    dynamic: false
+  storage:
+    scratch_dir: /tmp/scratch
+    gstore_dir: /tmp/gstore
+    copy_method: rsync  # Use rsync for test environment
+
+# Production deployment types
+# Set SUSHI_TYPE environment variable to select: production, demo, course, test_server
+production:
+  <<: *defaults
+  # Production type-specific settings (selected by SUSHI_TYPE env var)
+  types:
+    production:
+      partition:
+        default: employee
+        available: []  # empty = fetch dynamically from sinfo
+        dynamic: true
+    demo:
+      partition:
+        default: user
+        available: [user, employee]
+        dynamic: false
+    course:
+      partition:
+        default: course
+        available: [course]
+        dynamic: false
+    test_server:
+      partition:
+        default: employee
+        available: [employee, user]
+        dynamic: false
+

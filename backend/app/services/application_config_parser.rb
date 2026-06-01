@@ -35,17 +35,16 @@ class ApplicationConfigParser
       # Sanitize app_name to prevent directory traversal
       sanitized_name = app_name.gsub(/[^a-zA-Z0-9_]/, '')
       
-      # Remove 'App' suffix if present (e.g., 'FastqcApp' -> 'Fastqc')
-      # This handles both 'Fastqc' and 'FastqcApp' as input
-      sanitized_name = sanitized_name.sub(/App$/, '')
+      # Remove trailing "App" suffix if present (to handle both "Fastqc" and "FastqcApp")
+      base_name = sanitized_name.sub(/App$/, '')
       
-      app_file = APPS_DIR.join("#{sanitized_name}App.rb")
+      app_file = APPS_DIR.join("#{base_name}App.rb")
       
       return app_file if File.exist?(app_file)
       
       # Try case-insensitive search
       Dir.glob(APPS_DIR.join('*App.rb')).find do |file|
-        File.basename(file, 'App.rb').downcase == sanitized_name.downcase
+        File.basename(file, 'App.rb').downcase == base_name.downcase
       end
     end
     
@@ -98,8 +97,14 @@ class ApplicationConfigParser
         description: meta['description'] || meta[:description]
       }
       
+      # Special handling for partition field - get options from config/SLURM
+      if key.to_s == 'partition'
+        partitions = SushiConfigHelper.available_partitions
+        field[:type] = 'select'
+        field[:options] = partitions
+        field[:default_value] = SushiConfigHelper.default_partition
       # Add options for select fields
-      if value.is_a?(Array)
+      elsif value.is_a?(Array)
         field[:options] = value
       end
       

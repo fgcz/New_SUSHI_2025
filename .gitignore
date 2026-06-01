@@ -1,3 +1,7 @@
+Renewal_SUSHI_plan_2025/
+.kairos/
+.mcp.json
+
 # Backend (Rails)
 backend/log/*
 backend/tmp/*
@@ -17,6 +21,7 @@ frontend/.next/
 frontend/out/
 frontend/.env*
 frontend/*.tsbuildinfo
+frontend/pnpm-lock.yaml
 
 # OS
 .DS_Store
@@ -44,3 +49,4 @@ frontend/sushi-frontend.log
 # PID files
 .backend-python.pid
 .frontend.pid
+log/

@@ -343,10 +343,10 @@ export default function ProjectJobsPage() {
                   </Link>
                 </td>
                 <td className="px-3 py-1.5 text-sm text-gray-900 border-r border-gray-200">
-                  {formatDuration(job.time.start_time, job.time.end_time)}
+                  {job.time ? formatDuration(job.time.start_time, job.time.end_time) : '-'}
                 </td>
                 <td className="px-3 py-1.5 text-sm text-gray-900">
-                  {formatDateTime(job.time.start_time)}
+                  {job.time ? formatDateTime(job.time.start_time) : formatDateTime(job.created_at)}
                 </td>
               </tr>
             ))}

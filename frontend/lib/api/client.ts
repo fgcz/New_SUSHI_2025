@@ -116,7 +116,8 @@ export class HttpClient {
   buildQueryString(params: Record<string, any>): string {
     const search = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      // Exclude undefined, null, and empty strings
+      if (value !== undefined && value !== null && value !== '') {
         search.set(key, String(value));
       }
     });

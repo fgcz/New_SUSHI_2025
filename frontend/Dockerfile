@@ -1,5 +1,5 @@
 # Use the official Node.js runtime as the base image
-FROM node:18-slim AS base
+FROM node:22-slim AS base
 
 # Install dependencies only when needed
 FROM base AS deps

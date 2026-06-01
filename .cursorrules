@@ -1,0 +1,44 @@
+# SUSHI Project Rules and Notes for AI Assistants
+
+## Environment-Specific Dependencies
+
+### SLURM Cluster Integration
+- **Location**: `backend/app/helpers/sushi_config_helper.rb`, `backend/config/sushi.yml`
+- **Note**: The partition management system assumes a SLURM cluster environment
+- **Commands used**: `sinfo --format=%R` to fetch available partitions
+- **If SLURM is not available**: 
+  - Set `dynamic: false` in `config/sushi.yml`
+  - Manually specify available partitions in the config
+  - Or implement alternative job scheduler support
+
+### GStore File Server (FGCZ-specific)
+- **Location**: `backend/app/helpers/sushi_config_helper.rb`, `backend/config/sushi.yml`
+- **Note**: GStore (`/srv/gstore/`) is a read-only file server from the application server
+- **Write access**: Use `g-req` command to copy files to gstore
+- **Workflow**: 
+  1. Create files in scratch directory (`/scratch/`)
+  2. Use `g-req copynow <src> <dest>` to copy to gstore before job submission
+  3. Job scripts reference gstore paths for input files
+- **If not on FGCZ environment**:
+  - Set `copy_method: rsync` in `config/sushi.yml`
+  - Or implement alternative file transfer mechanism
+
+### Job Manager Integration
+- **Location**: `backend/app/services/job_submission_service.rb`
+- **Note**: Creates `parameters.tsv` file for external job_manager
+- **Required parameters for job_manager**: cores, ram, scratch, partition
+- **Job manager looks for**: `parameters.tsv` at `dirname(dirname(script_path))`
+
+## Database Compatibility
+
+### Legacy Database Mode
+- **Env var**: `LEGACY_DATABASE=true`
+- **Purpose**: Connect to old SUSHI MySQL database without email/password columns
+- **Location**: `backend/config/authentication.yml`, `backend/app/models/user.rb`
+- **Note**: Skips Devise validatable module and email-related features
+
+## Coding Conventions
+- Comments in source code should be in English
+- Chat responses should be in Japanese
+- Use the same language as user input for responses
+

@@ -18,11 +18,7 @@ module Api
             token = generate_jwt_token(user)
             render json: {
               token: token,
-              user: {
-                id: user.id,
-                login: user.login,
-                email: user.email
-              },
+              user: serialize_user(user),
               message: 'LDAP login successful'
             }
             return
@@ -31,17 +27,18 @@ module Api
         
         # Fallback to standard authentication if LDAP fails or is disabled
         if AuthenticationHelper.standard_login_enabled?
-          user = User.find_by(login: login_param) || User.find_by(email: login_param)
+          # In legacy mode, only search by login (email column doesn't exist)
+          user = if AuthenticationHelper.legacy_database?
+                   User.find_by(login: login_param)
+                 else
+                   User.find_by(login: login_param) || User.find_by(email: login_param)
+                 end
           
           if user&.valid_password?(password)
             token = generate_jwt_token(user)
             render json: {
               token: token,
-              user: {
-                id: user.id,
-                login: user.login,
-                email: user.email
-              },
+              user: serialize_user(user),
               message: 'Standard login successful'
             }
             return
@@ -55,6 +52,7 @@ module Api
       # JWT register
       def register
         return render json: { error: 'Registration disabled' }, status: :forbidden unless AuthenticationHelper.standard_login_enabled? && AuthenticationHelper.config['standard_login']['allow_registration']
+        return render json: { error: 'Registration not available in legacy database mode' }, status: :forbidden if AuthenticationHelper.legacy_database?
         
         user = User.new(
           login: params[:login],
@@ -67,11 +65,7 @@ module Api
           token = generate_jwt_token(user)
           render json: {
             token: token,
-            user: {
-              id: user.id,
-              login: user.login,
-              email: user.email
-            },
+            user: serialize_user(user),
             message: 'Registration successful'
           }, status: :created
         else
@@ -98,16 +92,19 @@ module Api
         return render json: { valid: false, error: 'User not found' }, status: :unauthorized unless user
         
         render json: {
-          user: {
-            id: user.id,
-            login: user.login,
-            email: user.email
-          },
+          user: serialize_user(user),
           valid: true
         }
       end
       
       private
+      
+      # Serialize user data, excluding email in legacy database mode
+      def serialize_user(user)
+        data = { id: user.id, login: user.login }
+        data[:email] = user.email unless AuthenticationHelper.legacy_database?
+        data
+      end
       
       def authenticate_with_ldap(login, password)
         return nil unless AuthenticationHelper.ldap_auth_enabled?
@@ -150,22 +147,15 @@ module Api
           )
             # LDAP authentication successful
             
-            # If user doesn't exist and auto_create_user is enabled, create user
-            if !user && AuthenticationHelper.ldap_config['auto_create_user']
-              user = User.create!(
-                login: login,
-                email: "#{login}@bfabric.org",
-                password: Devise.friendly_token[0, 20] # Random password for database
-              )
-            end
-            
-            # If user doesn't exist and auto_create_user is disabled, create user anyway
-            if !user && !AuthenticationHelper.ldap_config['auto_create_user']
-              user = User.create!(
-                login: login,
-                email: "#{login}@bfabric.org",
-                password: Devise.friendly_token[0, 20] # Random password for database
-              )
+            # If user doesn't exist, create user (regardless of auto_create_user setting)
+            if !user
+              user_attrs = { login: login }
+              # Only set email/password if not in legacy database mode
+              unless AuthenticationHelper.legacy_database?
+                user_attrs[:email] = "#{login}@bfabric.org"
+                user_attrs[:password] = Devise.friendly_token[0, 20]
+              end
+              user = User.create!(user_attrs)
             end
             
             return user
@@ -182,10 +172,11 @@ module Api
         payload = {
           user_id: user.id,
           login: user.login,
-          email: user.email,
           exp: JWT_EXPIRATION_TIME.to_i,
           iat: Time.current.to_i
         }
+        # Include email only if not in legacy database mode
+        payload[:email] = user.email unless AuthenticationHelper.legacy_database?
         
         JWT.encode(payload, JWT_SECRET_KEY, JWT_ALGORITHM)
       end

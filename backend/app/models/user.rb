@@ -6,13 +6,17 @@ class User < ActiveRecord::Base
   # Dynamic devise configuration based on authentication settings
   devise_modules = []
   
+  # Check if legacy database mode (old SUSHI MySQL DB without email/password columns)
+  legacy_mode = AuthenticationHelper.legacy_database?
+  
   # Check if any authentication method is enabled
   if AuthenticationHelper.enabled_auth_methods.any?
     # Always include basic modules
     devise_modules << :registerable if AuthenticationHelper.standard_login_enabled?
     devise_modules << :rememberable
     devise_modules << :trackable
-    devise_modules << :validatable
+    # Only include :validatable if not in legacy database mode (requires email/password columns)
+    devise_modules << :validatable unless legacy_mode
     
     # Add authentication strategies based on configuration
     if AuthenticationHelper.standard_login_enabled?
@@ -40,8 +44,12 @@ class User < ActiveRecord::Base
     devise *devise_modules
   else
     # No authentication enabled - skip all authentication
-    # This will require custom authentication handling
-    devise :trackable, :validatable
+    # In legacy mode, skip :validatable as well
+    if legacy_mode
+      devise :trackable
+    else
+      devise :trackable, :validatable
+    end
   end
 
   # Setup accessible (or protected) attributes for your model
@@ -49,22 +57,26 @@ class User < ActiveRecord::Base
   # attr_accessible :title, :body
   has_many :data_sets
   
-  # OAuth2 associations
-  has_many :oauth_applications, class_name: 'Doorkeeper::Application', as: :owner
-  
-  # Two-factor authentication fields
-  if AuthenticationHelper.two_factor_auth_enabled?
-    has_one_time_password
-  end
-  
-  # Wallet authentication fields
-  if AuthenticationHelper.wallet_auth_enabled?
-    has_one :wallet_connection, dependent: :destroy
+  # Skip additional associations and features in legacy database mode
+  unless AuthenticationHelper.legacy_database?
+    # OAuth2 associations
+    has_many :oauth_applications, class_name: 'Doorkeeper::Application', as: :owner
+    
+    # Two-factor authentication fields
+    if AuthenticationHelper.two_factor_auth_enabled?
+      has_one_time_password
+    end
+    
+    # Wallet authentication fields
+    if AuthenticationHelper.wallet_auth_enabled?
+      has_one :wallet_connection, dependent: :destroy
+    end
   end
   
   # LDAP attribute mapping for bfabric LDAP
   def ldap_before_save
     return unless AuthenticationHelper.ldap_auth_enabled?
+    return if AuthenticationHelper.legacy_database?
     return unless defined?(Devise::LDAP::Adapter)
     
     # Map LDAP attributes to user model
@@ -78,8 +90,10 @@ class User < ActiveRecord::Base
     end
   end
   
-  # OAuth2 methods
+  # OAuth2 methods (not available in legacy database mode)
   def self.from_omniauth(auth)
+    return nil if AuthenticationHelper.legacy_database?
+    
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.email = auth.info.email
       user.login = auth.info.name || auth.info.email.split('@').first
@@ -87,9 +101,10 @@ class User < ActiveRecord::Base
     end
   end
   
-  # Wallet authentication methods
+  # Wallet authentication methods (not available in legacy database mode)
   def connect_wallet(address, signature = nil)
     return unless AuthenticationHelper.wallet_auth_enabled?
+    return if AuthenticationHelper.legacy_database?
     
     wallet_connection || build_wallet_connection
     wallet_connection.update(
@@ -100,6 +115,7 @@ class User < ActiveRecord::Base
   end
   
   def wallet_connected?
+    return false if AuthenticationHelper.legacy_database?
     wallet_connection&.address.present?
   end
 end

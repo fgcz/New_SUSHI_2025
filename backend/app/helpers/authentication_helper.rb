@@ -54,6 +54,10 @@ module AuthenticationHelper
     config['wallet_auth']
   end
 
+  def self.legacy_database?
+    config['legacy_database'] == true
+  end
+
   def self.enabled_auth_methods
     methods = []
     methods << :standard if standard_login_enabled?
@@ -70,6 +74,11 @@ module AuthenticationHelper
   
   def self.get_default_user
     # Return non-persistent anonymous user when not found
-    User.find_by(login: 'anonymous') || User.new(login: 'anonymous', email: 'anonymous@example.com')
+    if legacy_database?
+      # In legacy mode, email column doesn't exist
+      User.find_by(login: 'anonymous') || User.new(login: 'anonymous')
+    else
+      User.find_by(login: 'anonymous') || User.new(login: 'anonymous', email: 'anonymous@example.com')
+    end
   end
 end 

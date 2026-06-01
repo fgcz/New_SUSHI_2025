@@ -178,11 +178,11 @@ export const handlers = [
   // Error simulation handlers (useful for testing error states)
   // Uncomment these to test error handling
   /*
-  http.get('/api/v1/projects/9999/datasets', () => {
+  http.get(`${API_BASE}/api/v1/projects/9999/datasets`, () => {
     return new HttpResponse(null, { status: 500 })
   }),
 
-  http.get('/api/v1/projects/timeout/datasets', async () => {
+  http.get(`${API_BASE}/api/v1/projects/timeout/datasets`, async () => {
     // Simulate slow response
     await new Promise(resolve => setTimeout(resolve, 5000))
     return HttpResponse.json(mockDatasetsResponse)

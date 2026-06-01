@@ -27,11 +27,16 @@ class JobSubmissionService
     script_path = generate_job_script
     return false unless script_path
 
+    # Copy scratch files to gstore (input_dataset.tsv, parameters.tsv, scripts)
+    # This must happen BEFORE job execution so the job can access these files
+    return false unless copy_scratch_to_gstore
+
     # Create output dataset
     return false unless create_output_dataset
 
-    # Save job record
-    return false unless create_job_record(script_path)
+    # Save job record (with gstore script path)
+    gstore_script_path = File.join(@sushi_app.gstore_script_dir, File.basename(script_path))
+    return false unless create_job_record(gstore_script_path)
 
     true
   rescue StandardError => e
@@ -50,7 +55,9 @@ class JobSubmissionService
     end
 
     # Check if app file exists
-    app_file = Rails.root.join('lib', 'apps', "#{@app_name}.rb")
+    # Normalize app_name: add "App" suffix if not present
+    @normalized_app_name = @app_name.end_with?('App') ? @app_name : "#{@app_name}App"
+    app_file = Rails.root.join('lib', 'apps', "#{@normalized_app_name}.rb")
     unless File.exist?(app_file)
       @errors << "Application not found: #{@app_name}"
       return false
@@ -60,15 +67,15 @@ class JobSubmissionService
   end
 
   def load_sushi_app
-    # Require the app file
-    app_file = Rails.root.join('lib', 'apps', "#{@app_name}.rb")
+    # Require the app file (use normalized name with App suffix)
+    app_file = Rails.root.join('lib', 'apps', "#{@normalized_app_name}.rb")
     require app_file
 
-    # Instantiate the app
-    @sushi_app = Object.const_get(@app_name).new
+    # Instantiate the app (use normalized class name)
+    @sushi_app = Object.const_get(@normalized_app_name).new
     true
   rescue NameError => e
-    @errors << "Failed to load application class: #{@app_name} - #{e.message}"
+    @errors << "Failed to load application class: #{@normalized_app_name} - #{e.message}"
     false
   rescue StandardError => e
     @errors << "Error loading application: #{e.message}"
@@ -84,7 +91,10 @@ class JobSubmissionService
     @sushi_app.next_dataset_name = @next_dataset_name || "#{@sushi_app.name}_#{@dataset_id}"
     @sushi_app.next_dataset_comment = @next_dataset_comment
 
-    # Load input dataset
+    # Prepare result directory FIRST (needed for input dataset TSV path)
+    @sushi_app.prepare_result_dir
+
+    # Load input dataset (creates TSV in result_dir for job nodes to access)
     @sushi_app.set_input_dataset
 
     # Set default parameters first
@@ -95,9 +105,6 @@ class JobSubmissionService
     normalized_params.each do |key, value|
       @sushi_app.params[key] = value
     end
-
-    # Prepare result directory
-    @sushi_app.prepare_result_dir
   end
 
   def generate_job_script
@@ -116,11 +123,80 @@ class JobSubmissionService
     File.write(script_path, script_content)
     FileUtils.chmod(0755, script_path)
 
+    # Create parameters.tsv for job_manager
+    # job_manager looks for parameters.tsv in parent of parent directory of script_path
+    create_parameters_tsv(script_path)
+
     Rails.logger.info("Generated job script: #{script_path}")
     script_path
   rescue StandardError => e
     @errors << "Failed to generate job script: #{e.message}"
     nil
+  end
+
+  # Copy scratch directory to gstore before job submission
+  # Uses g-req command for FGCZ environment (gstore is read-only)
+  def copy_scratch_to_gstore
+    src = @sushi_app.scratch_result_dir
+    dest = @sushi_app.gstore_project_dir
+    
+    copy_cmd = SushiConfigHelper.copy_command(src, dest, now: true)
+    Rails.logger.info("Copying scratch to gstore: #{copy_cmd}")
+    
+    success = system(copy_cmd)
+    unless success
+      @errors << "Failed to copy files from scratch to gstore: #{copy_cmd}"
+      Rails.logger.error("Copy command failed: #{copy_cmd}")
+      return false
+    end
+    
+    # Wait for script file to appear in gstore (g-req may have NFS delay)
+    wait_for_gstore_file(@sushi_app.gstore_script_dir, max_wait: 30)
+    
+    Rails.logger.info("Successfully copied scratch to gstore")
+    true
+  rescue StandardError => e
+    @errors << "Error copying to gstore: #{e.message}"
+    Rails.logger.error("Copy to gstore error: #{e.message}")
+    false
+  end
+  
+  # Wait for files to appear in gstore directory (handles NFS cache delay)
+  def wait_for_gstore_file(gstore_dir, max_wait: 30)
+    start_time = Time.now
+    while (Time.now - start_time) < max_wait
+      if Dir.exist?(gstore_dir) && Dir.glob(File.join(gstore_dir, '*.sh')).any?
+        Rails.logger.info("Script file found in gstore after #{(Time.now - start_time).round(1)}s")
+        return true
+      end
+      sleep 1
+    end
+    Rails.logger.warn("Waited #{max_wait}s but script file not yet visible in gstore")
+    true # Continue anyway, file may appear soon
+  end
+
+  def create_parameters_tsv(script_path)
+    # job_manager expects parameters.tsv at: dirname(dirname(script_path))/parameters.tsv
+    # In scratch, this is scratch_result_dir/parameters.tsv
+    parameters_file = File.join(@sushi_app.scratch_result_dir, 'parameters.tsv')
+    
+    # Write parameters as TSV
+    CSV.open(parameters_file, 'w', col_sep: "\t") do |out|
+      @sushi_app.params.each do |key, value|
+        # Convert arrays to first value (user-selected value)
+        actual_value = value.is_a?(Array) ? value.first : value
+        out << [key, actual_value]
+      end
+      # Add additional required parameters
+      out << ['dataRoot', @sushi_app.gstore_dir]
+      out << ['resultDir', @sushi_app.result_dir]
+      out << ['sushi_app', @normalized_app_name]
+    end
+    
+    Rails.logger.info("Created parameters.tsv: #{parameters_file}")
+  rescue StandardError => e
+    Rails.logger.error("Failed to create parameters.tsv: #{e.message}")
+    # Don't fail the job submission if parameters.tsv creation fails
   end
 
   def create_output_dataset
