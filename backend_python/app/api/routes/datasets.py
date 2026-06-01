@@ -39,6 +39,21 @@ def get_dataset(
     return service.get_by_id(dataset_id, current_user)
 
 
+@router.get("/{dataset_id}/suggested-name")
+def get_suggested_name(
+    dataset_id: int,
+    app: str,
+    current_user: CurrentUserDep,
+    service: DatasetServiceDep,
+) -> dict:
+    """Return the suggested output dataset name for a given app.
+
+    Format: o{id1}[_o{id2}...]_{app_name}
+    Timestamp is appended server-side on actual submission.
+    """
+    return service.get_suggested_name(dataset_id, app, current_user)
+
+
 @router.get("/{dataset_id}/tree")
 def get_dataset_tree(
     dataset_id: int,

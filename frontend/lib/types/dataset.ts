@@ -23,7 +23,7 @@ export interface DatasetFullResponse {
   parent_id?: number | null;
   children_ids?: number[];
   bfabric_id?: number | null;
-  order_id?: number | null;
+  order_ids?: number[];
   comment?: string;
   sushi_app_name?: string;
   samples: DatasetSample[];
@@ -42,7 +42,7 @@ interface DatasetMinimal {
   user_login?: string | null;
   created_at: string;
   bfabric_id?: number | null;
-  order_id?: number | null;
+  order_ids?: number[];
   project_number: number;
   comment?: string;
 }
@@ -61,8 +61,8 @@ export interface DatasetAppCategory {
   apps: DatasetApp[];
 }
 
-interface DatasetApp{
-  class_name: string;
+interface DatasetApp {
+  name: string;
   description: string;
 }
 

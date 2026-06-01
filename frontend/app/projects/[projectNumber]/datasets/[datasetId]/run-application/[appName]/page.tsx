@@ -73,7 +73,6 @@ export default function RunApplicationPage() {
   } = useApplicationForm({
     appName,
     datasetId,
-    datasetName: dataset?.name,
     paramGroups: formConfig?.param_groups,
     resubmitParams: resubmitData?.parameters,
     isResubmit,

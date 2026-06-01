@@ -61,9 +61,10 @@ export interface JobSubmissionRequest {
 }
 
 export interface JobSubmissionResponse {
-  id: number;
+  job_id: number;
+  output_dataset_id: number;
+  slurm_job_id: string;
   status: "submitted" | "running" | "completed" | "failed";
-  created_at: string;
   message: string;
 }
 

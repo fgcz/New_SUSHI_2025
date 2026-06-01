@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { applicationApi } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
+import { applicationApi, datasetApi } from '@/lib/api';
 import { DynamicFormData, ParamGroup } from '@/lib/types';
 import { initializeFormDataFromGroups, flattenParamGroups } from '@/lib/utils/form-renderer';
 
 interface UseApplicationFormParams {
   appName: string;
   datasetId: number;
-  datasetName: string | undefined;
   paramGroups: ParamGroup[] | undefined;
   resubmitParams: Record<string, any> | undefined;
   isResubmit: boolean;
@@ -45,7 +45,6 @@ function getStoredJobData(appName: string, datasetId: number): StoredJobData | n
 export function useApplicationForm({
   appName,
   datasetId,
-  datasetName,
   paramGroups,
   resubmitParams,
   isResubmit,
@@ -64,25 +63,23 @@ export function useApplicationForm({
   // EFFECTS
   // ============================================
 
-  // Update output dataset name when input dataset loads
+  const { data: suggestedNameData } = useQuery({
+    queryKey: ['suggested-name', datasetId, appName],
+    queryFn: () => datasetApi.getSuggestedName(datasetId, appName),
+    staleTime: Infinity,
+  });
+
   useEffect(() => {
-    if (datasetName) {
-      // Check for stored data first (from Review -> Back navigation)
-      const storedData = getStoredJobData(appName, datasetId);
-      if (storedData?.nextDataset) {
-        setNextDatasetData({
-          datasetName: storedData.nextDataset.name,
-          datasetComment: storedData.nextDataset.comment || '',
-        });
-      } else {
-        const baseName = `${appName}_${datasetName}_${new Date().toISOString().slice(0, 10)}`;
-        setNextDatasetData((prev) => ({
-          ...prev,
-          datasetName: baseName,
-        }));
-      }
+    const storedData = getStoredJobData(appName, datasetId);
+    if (storedData?.nextDataset) {
+      setNextDatasetData({
+        datasetName: storedData.nextDataset.name,
+        datasetComment: storedData.nextDataset.comment || '',
+      });
+    } else if (suggestedNameData) {
+      setNextDatasetData(prev => ({ ...prev, datasetName: suggestedNameData.suggested_name }));
     }
-  }, [datasetName, appName, datasetId]);
+  }, [suggestedNameData, appName, datasetId]);
 
   // Initialize form when schema loads (with optional resubmit or stored data prepopulation)
   useEffect(() => {

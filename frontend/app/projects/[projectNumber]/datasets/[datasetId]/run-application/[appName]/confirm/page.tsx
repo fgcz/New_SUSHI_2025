@@ -40,7 +40,7 @@ export default function ConfirmJobPage() {
   const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
 
   // Use custom hook for job submission
-  const { submitJob, isSubmitting, error: submitError, success: submitSuccess } = useJobSubmission();
+  const { submitJob, isSubmitting, error: submitError, success: submitSuccess, submissionResult } = useJobSubmission();
 
   // Load data from sessionStorage on mount
   useEffect(() => {
@@ -86,13 +86,11 @@ export default function ConfirmJobPage() {
 
   // Handle successful submission
   useEffect(() => {
-    if (submitSuccess) {
-      // Clear sessionStorage after successful submission
+    if (submitSuccess && submissionResult) {
       sessionStorage.removeItem('sushi_job_submission_data');
-      // Navigate to jobs page or dataset page
-      router.push(`/projects/${projectNumber}/datasets/${datasetId}`);
+      router.push(`/projects/${projectNumber}/datasets/${submissionResult.output_dataset_id}`);
     }
-  }, [submitSuccess, router, projectNumber, datasetId]);
+  }, [submitSuccess, submissionResult, router, projectNumber]);
 
   const handleDryRun = async () => {
     if (!jobData) return;

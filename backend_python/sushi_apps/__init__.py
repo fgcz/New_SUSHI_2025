@@ -104,7 +104,7 @@ def get_runnable_apps(headers: list[str]) -> list[dict]:
 
     Returns:
         List of dicts grouped by category:
-        [{"category": "QC", "apps": [{"class_name": "FastQC", "description": "..."}]}]
+        [{"category": "QC", "apps": [{"name": "FastQC", "description": "..."}]}]
     """
     normalized_headers = {_normalize_header(h) for h in headers}
 
@@ -118,12 +118,12 @@ def get_runnable_apps(headers: list[str]) -> list[dict]:
             if category not in matching_apps:
                 matching_apps[category] = []
             matching_apps[category].append({
-                "class_name": name,
+                "name": name,
                 "description": getattr(app_cls, "description", ""),
             })
 
     # Convert to list format, sorted by category and app name
     return [
-        {"category": cat, "apps": sorted(matching_apps[cat], key=lambda x: x["class_name"])}
+        {"category": cat, "apps": sorted(matching_apps[cat], key=lambda x: x["name"])}
         for cat in sorted(matching_apps.keys())
     ]

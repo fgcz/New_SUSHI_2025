@@ -130,7 +130,7 @@ class DatasetService:
             "parent_id": dataset.parent_id,
             "children_ids": children_ids,
             "bfabric_id": dataset.bfabric_id,
-            "order_id": dataset.primary_order_id,
+            "order_ids": [int(x) for x in dataset.order_ids] if dataset.order_ids else [],
             "comment": dataset.comment,
             "sushi_app_name": dataset.sushi_app_name,
             "headers": headers,
@@ -183,6 +183,17 @@ class DatasetService:
         dataset = self._get_authorized_dataset(dataset_id, user)
         return self.dataset_repo.get_tree_for_dataset(dataset)
 
+    def get_suggested_name(self, dataset_id: int, app_name: str, user: "CurrentUser") -> dict:
+        """Return the suggested output dataset name for a given app."""
+        dataset = self._get_authorized_dataset(dataset_id, user)
+        order_ids = [int(x) for x in dataset.order_ids] if dataset.order_ids else []
+        if order_ids:
+            prefix = '_'.join(f'o{oid}' for oid in order_ids)
+            suggested = f"{prefix}_{app_name}"
+        else:
+            suggested = app_name
+        return {"suggested_name": suggested}
+
     def get_runnable_apps(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get runnable applications for a dataset."""
         dataset = self._get_authorized_dataset(dataset_id, user)
@@ -223,7 +234,7 @@ class DatasetService:
             "user_login": users_map.get(ds.user_id) if ds.user_id else None,
             "created_at": ds.created_at.isoformat() if ds.created_at else None,
             "bfabric_id": ds.bfabric_id,
-            "order_id": ds.primary_order_id,
+            "order_ids": [int(x) for x in ds.order_ids] if ds.order_ids else [],
             "project_number": project_number,
             "comment": ds.comment,
         }

@@ -9,6 +9,10 @@ export const datasetApi = {
         return httpClient.request<DatasetTreeResponse>(`/datasets/${id}/tree`);
     },
 
+    async getSuggestedName(datasetId: number, appName: string): Promise<{ suggested_name: string }> {
+        return httpClient.request(`/datasets/${datasetId}/suggested-name?app=${encodeURIComponent(appName)}`);
+    },
+
     async addComment(datasetId: number, comment: string): Promise<void> {
         await httpClient.request(`/datasets/${datasetId}/comment?comment=${encodeURIComponent(comment)}`, {
             method: 'POST',

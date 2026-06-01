@@ -56,16 +56,19 @@ export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
           <div className="flex">
             <span className="text-gray-600 mr-2">Order ID:</span>
             <span>
-              {dataset.order_id ? (
-                <a
-                  href={`https://fgcz-bfabric.uzh.ch/bfabric/dataset/show.html?id=${dataset.bfabric_id}&tab=details`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-brand-600 hover:underline"
-                >
-                  {dataset.order_id}
-                </a>
-              ) : 'N/A'}
+              {dataset.order_ids && dataset.order_ids.length > 0
+                ? dataset.order_ids.map(id => (
+                    <a
+                      key={id}
+                      href={`https://fgcz-bfabric.uzh.ch/bfabric/order/show.html?id=${id}&tab=details`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-600 hover:underline mr-2"
+                    >
+                      o{id}
+                    </a>
+                  ))
+                : 'N/A'}
             </span>
           </div>
         </div>
