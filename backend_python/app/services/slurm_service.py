@@ -80,6 +80,7 @@ class SlurmService:
         # Build sbatch command
         cmd = [
             "sbatch",
+            "--chdir=/tmp",
             "-o", stdout_path,
             "-e", stderr_path,
             "-N", "1",

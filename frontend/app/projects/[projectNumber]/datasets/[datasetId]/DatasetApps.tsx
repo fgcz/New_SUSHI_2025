@@ -33,14 +33,7 @@ export default function DatasetApps({runnableApps, datasetId, projectNumber }: D
   // }
 
   if (runnableApps.length == 0) {
-    return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <div className="text-gray-400 text-lg mb-2">⚙️</div>
-        <h4 className="text-lg font-medium text-gray-900 mb-2">No runnable applications found</h4>
-        <p className="text-gray-500 text-sm mb-4">There are no applications available to run on this dataset.</p>
-        <p className="text-gray-400 text-xs">Available applications will appear here based on the dataset type and configuration.</p>
-      </div>
-    );
+    return <p className="text-sm text-gray-400">No applications available for this dataset.</p>;
   }
 
   return (
