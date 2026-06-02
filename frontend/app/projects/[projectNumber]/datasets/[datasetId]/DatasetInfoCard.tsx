@@ -31,8 +31,8 @@ export default function DatasetInfoCard({ dataset }: DatasetInfoCardProps) {
             <span>{dataset.user || 'N/A'}</span>
           </div>
           <div className="flex">
-            <span className="text-gray-600 mr-2">SushiApp:</span>
-            <span>{dataset.sushi_app_name || 'N/A'}</span>
+            <span className="text-gray-600 mr-2">App:</span>
+            <span>{dataset.app_name || 'N/A'}</span>
           </div>
           <div className="flex">
             <span className="text-gray-600 mr-2">Samples:</span>

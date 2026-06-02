@@ -1,7 +1,7 @@
 # State Management and Data Persistence
 **Last Updated:** 2026-03-19
 
-This document explains how we handle different types of state in the Sushi frontend application.
+This document explains how we handle different types of state in the MultiOmicsStudio frontend application.
 
 ## Overview
 

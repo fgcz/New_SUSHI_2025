@@ -141,7 +141,7 @@ export default function RunApplicationPage() {
     };
 
     try {
-      sessionStorage.setItem("sushi_job_submission_data", JSON.stringify(jobData));
+      sessionStorage.setItem("omics_job_submission_data", JSON.stringify(jobData));
       router.push(
         `/projects/${projectNumber}/datasets/${datasetId}/run-application/${appName}/confirm`
       );

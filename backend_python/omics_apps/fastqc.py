@@ -3,11 +3,11 @@
 Mirrors Ruby's FastqcApp.rb - uses ezRun's EzAppFastqc for the actual analysis.
 """
 
-from sushi_apps.base import SushiApp
-from sushi_apps.r_heredoc import generate_r_heredoc
+from omics_apps.base import MultiOmicsApp
+from omics_apps.r_heredoc import generate_r_heredoc
 
 
-class FastQCApp(SushiApp):
+class FastQCApp(MultiOmicsApp):
     """Quality control analysis for FASTQ files."""
 
     name = "FastQC"

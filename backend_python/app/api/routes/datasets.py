@@ -168,7 +168,7 @@ def get_dataset_parameters(
     current_user: CurrentUserDep,
 ) -> dict:
     """Get the parameters used to create this dataset."""
-    # TODO: Implement actual parameter retrieval from job/sushi_app
+    # TODO: Implement actual parameter retrieval from job/app
     return {
         "cores": "8",
         "ram": "32",

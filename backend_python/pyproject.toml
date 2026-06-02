@@ -1,7 +1,7 @@
 [project]
-name = "sushi-backend"
+name = "multiomics-studio-backend"
 version = "0.1.0"
-description = "SUSHI FastAPI backend with SQLite and LDAP"
+description = "MultiOmicsStudio FastAPI backend with SQLite and LDAP"
 requires-python = ">=3.11"
 dependencies = [
     # Web framework

@@ -238,7 +238,7 @@ export default function ProjectDatasetsPage() {
                   </th>
                   <th className="px-3 py-2 text-left font-semibold">ID</th>
                   <th className="px-3 py-2 text-left font-semibold">Name</th>
-                  <th className="px-3 py-2 text-left font-semibold">SushiApp</th>
+                  <th className="px-3 py-2 text-left font-semibold">App</th>
                   <th className="px-3 py-2 text-left font-semibold">Samples</th>
                   <th className="px-3 py-2 text-left font-semibold">ParentID</th>
                   <th className="px-3 py-2 text-left font-semibold">Children</th>
@@ -258,8 +258,8 @@ export default function ProjectDatasetsPage() {
                     <td className="px-3 py-2">
                       <a href={`/projects/${projectNumber}/datasets/${ds.id}`} className="text-brand-700 hover:text-brand-900 hover:underline font-medium">{ds.name}</a>
                     </td>
-                    {/* <td className="px-3 py-2 text-gray-600 max-w-[150px] truncate" title={ds.sushi_app_name || ''}>{ds.sushi_app_name || ''}</td> */}
-                    <td className="px-3 py-2">{ds.sushi_app_name || ''}</td>
+                    {/* <td className="px-3 py-2 text-gray-600 max-w-[150px] truncate" title={ds.app_name || ''}>{ds.app_name || ''}</td> */}
+                    <td className="px-3 py-2">{ds.app_name || ''}</td>
                     <td className="px-3 py-2 text-gray-600">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                     <td className="px-3 py-2">
                       {ds.parent_id ? (

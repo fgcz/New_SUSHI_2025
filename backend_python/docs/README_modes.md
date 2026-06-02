@@ -1,6 +1,6 @@
-# SUSHI Environment Modes and Configuration Analysis
+# MultiOmicsStudio Environment Modes and Configuration Analysis
 
-This document analyzes how the original Ruby SUSHI application handles different deployment modes (production, demo, course, test, development) and provides guidance for architecting the Python/FastAPI rewrite to avoid the pitfalls discovered through organic growth.
+This document analyzes how the original Ruby SUSHI application handles different deployment modes (production, demo, course, test, development) and provides guidance for architecting the MultiOmicsStudio implementation to avoid the pitfalls discovered through organic growth.
 
 ---
 
@@ -21,7 +21,7 @@ This document analyzes how the original Ruby SUSHI application handles different
 
 ## Overview of the Problem
 
-SUSHI needs to run in multiple contexts:
+MultiOmicsStudio needs to run in multiple contexts:
 
 | Context | Authentication | File Storage | Job Submission | External Services |
 |---------|---------------|--------------|----------------|-------------------|
@@ -320,7 +320,7 @@ Define mode as explicit environment variable:
 
 ```bash
 # .env
-SUSHI_MODE=production  # production, demo, course, development, test
+MOS_MODE=production  # production, demo, course, development, test
 ```
 
 ### Separate Concern Settings
@@ -432,7 +432,7 @@ For convenience, define mode presets that set multiple settings:
 ```python
 # app/core/config.py
 class Settings(BaseSettings):
-    SUSHI_MODE: str = "development"
+    MOS_MODE: str = "development"
 
     # Individual settings with defaults
     AUTH_ENABLED: bool = True
@@ -447,7 +447,7 @@ class Settings(BaseSettings):
         self._apply_mode_presets()
 
     def _apply_mode_presets(self):
-        """Apply default settings based on SUSHI_MODE."""
+        """Apply default settings based on MOS_MODE."""
         presets = {
             "production": {
                 "AUTH_ENABLED": True,
@@ -502,7 +502,7 @@ class Settings(BaseSettings):
 ```
 
 Example:
-- `SUSHI_MODE=production` sets `AUTH_ENABLED=true` by default
+- `MOS_MODE=production` sets `AUTH_ENABLED=true` by default
 - But `AUTH_ENABLED=false` in env explicitly overrides
 
 ### Configuration Validation
@@ -512,11 +512,11 @@ Example:
 from pydantic import field_validator
 
 class Settings(BaseSettings):
-    @field_validator("SUSHI_MODE")
+    @field_validator("MOS_MODE")
     def validate_mode(cls, v):
         valid_modes = ["production", "demo", "course", "development", "test"]
         if v not in valid_modes:
-            raise ValueError(f"SUSHI_MODE must be one of {valid_modes}")
+            raise ValueError(f"MOS_MODE must be one of {valid_modes}")
         return v
 
     @field_validator("FILE_TRANSFER_METHOD")
@@ -597,7 +597,7 @@ from app.core.config import Settings
 def production_settings():
     """Settings configured for production mode."""
     return Settings(
-        SUSHI_MODE="production",
+        MOS_MODE="production",
         LDAP_HOST="ldap://test-ldap:389",
         GSTORE_DIR="/tmp/test-gstore",
     )
@@ -605,13 +605,13 @@ def production_settings():
 @pytest.fixture
 def development_settings():
     """Settings configured for development mode."""
-    return Settings(SUSHI_MODE="development")
+    return Settings(MOS_MODE="development")
 
 @pytest.fixture
 def course_settings():
     """Settings configured for course mode."""
     return Settings(
-        SUSHI_MODE="course",
+        MOS_MODE="course",
         COURSE_PROJECTS="1001,1002",
     )
 ```
@@ -708,7 +708,7 @@ Frontend can then adapt its UI based on capabilities without hardcoding mode che
 
 ### Do
 
-- Use explicit `SUSHI_MODE` environment variable
+- Use explicit `MOS_MODE` environment variable
 - Separate concerns into independent settings
 - Define interfaces (protocols) for external services
 - Use dependency injection
@@ -733,7 +733,7 @@ Frontend can then adapt its UI based on capabilities without hardcoding mode che
 
 For gradual adoption in the FastAPI rewrite:
 
-1. **Phase 1**: Implement explicit `SUSHI_MODE` setting
+1. **Phase 1**: Implement explicit `MOS_MODE` setting
 2. **Phase 2**: Create `AuthProvider` protocol and implementations
 3. **Phase 3**: Create `FileTransferService` protocol and implementations
 4. **Phase 4**: Add `/capabilities` endpoint

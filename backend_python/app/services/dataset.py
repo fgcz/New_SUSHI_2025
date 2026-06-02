@@ -8,7 +8,7 @@ from app.models import DataSet
 from app.repositories.dataset import DatasetRepository
 from app.repositories.sample import SampleRepository
 from app.repositories.user import UserRepository
-from sushi_apps import get_runnable_apps
+from omics_apps import get_runnable_apps
 
 if TYPE_CHECKING:
     from app.api.deps import CurrentUser
@@ -132,7 +132,7 @@ class DatasetService:
             "bfabric_id": dataset.bfabric_id,
             "order_ids": [int(x) for x in dataset.order_ids] if dataset.order_ids else [],
             "comment": dataset.comment,
-            "sushi_app_name": dataset.sushi_app_name,
+            "app_name": dataset.app_name,
             "headers": headers,
             "samples": samples,
             "applications": applications,
@@ -226,7 +226,7 @@ class DatasetService:
         return {
             "id": ds.id,
             "name": ds.name,
-            "sushi_app_name": ds.sushi_app_name,
+            "app_name": ds.app_name,
             "completed_samples": ds.completed_samples,
             "samples_length": ds.num_samples,
             "parent_id": ds.parent_id,

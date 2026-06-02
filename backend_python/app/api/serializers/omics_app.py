@@ -1,13 +1,13 @@
-"""Serializers for converting SushiApp to API response format."""
+"""Serializers for converting MultiOmicsApp to API response format."""
 
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 
-def serialize_app_config(app: SushiApp, params_override: list[dict] | None = None) -> dict:
+def serialize_app_config(app: MultiOmicsApp, params_override: list[dict] | None = None) -> dict:
     """Convert app definition to frontend config format.
 
     Args:
-        app: The SushiApp instance
+        app: The MultiOmicsApp instance
         params_override: Optional params to use instead of app.params_definition
                         (used by /validate endpoint for dynamic forms)
     """

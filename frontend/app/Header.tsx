@@ -79,7 +79,7 @@ export default function Header() {
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
           <div className="text-3xl font-bold" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>
-            <h1>Sushi</h1>
+            <h1>MultiOmicsStudio</h1>
           </div>
           <div className="flex items-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-600 mr-2"></div>
@@ -114,7 +114,7 @@ export default function Header() {
         <div className="container mx-auto py-2 flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/" className="text-3xl font-bold hover:text-brand-600 transition-colors mr-4" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>
-              <h1>Sushi</h1>
+              <h1>MultiOmicsStudio</h1>
             </Link>
             
             {/* Projects dropdown */}

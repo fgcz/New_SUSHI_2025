@@ -1,20 +1,20 @@
-# SUSHI Apps
+# Omics Apps
 
 Apps define **what** to compute. The service layer handles **how** to run it.
 
 ## Structure
 
 ```
-sushi_apps/
+omics_apps/
 ├── __init__.py      # Registry: get_app(), list_apps()
-├── base.py          # SushiApp base class
+├── base.py          # MultiOmicsApp base class
 ├── config.py        # Constants (paths, defaults)
 ├── r_heredoc.py     # R script generation for ezRun apps
 ├── fastqc.py        # FastQC app
 └── countqc.py       # CountQC app
 
 app/
-├── api/serializers/sushi.py   # Convert app → frontend JSON
+├── api/serializers/omics_app.py   # Convert app → frontend JSON
 └── services/
     ├── job_submission.py      # Orchestrates submission
     └── slurm_service.py       # Script building + SLURM
@@ -23,7 +23,7 @@ app/
 ## Public API
 
 ```python
-from sushi_apps import get_app, list_apps, get_runnable_apps
+from omics_apps import get_app, list_apps, get_runnable_apps
 
 list_apps()                  # ["FastQC", "CountQC", ...]
 get_app("FastQC")            # App instance for execution
@@ -32,8 +32,8 @@ get_runnable_apps(headers)   # Apps matching dataset headers
 
 For frontend config:
 ```python
-from sushi_apps import get_app
-from app.api.serializers.sushi import serialize_app_config
+from omics_apps import get_app
+from app.api.serializers.omics_app import serialize_app_config
 
 app = get_app("FastQC")
 config = serialize_app_config(app)  # Config dict for frontend form
@@ -41,7 +41,7 @@ config = serialize_app_config(app)  # Config dict for frontend form
 
 For filtering apps by dataset:
 ```python
-from sushi_apps import get_runnable_apps
+from omics_apps import get_runnable_apps
 
 headers = ["Name", "Read1 [File]", "Read2 [File]"]
 apps = get_runnable_apps(headers)
@@ -61,7 +61,7 @@ This simplifies the architecture: app definitions live only in code, with no syn
 
 ## App Definition
 
-Each app inherits from `SushiApp` and defines:
+Each app inherits from `MultiOmicsApp` and defines:
 
 | Attribute/Method | Required | Description |
 |------------------|----------|-------------|
@@ -109,7 +109,7 @@ They have opposite data flows:
 FastQC can run in single-end or paired-end mode. In paired mode, it needs the Read2 column.
 
 ```python
-class FastQCApp(SushiApp):
+class FastQCApp(MultiOmicsApp):
     required_columns = ["Name", "Read1"]  # Read2 not required by default
 
     def set_default_parameters(self):
@@ -205,7 +205,7 @@ This dict specifies:
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│ SUSHI (after job completes)                                     │
+│ MultiOmicsStudio (after job completes)                                     │
 │                                                                 │
 │ 1. Checks files exist at expected paths                         │
 │ 2. Registers output dataset with columns from next_dataset()    │
@@ -252,10 +252,10 @@ Each parameter in `params_definition` is a dict:
 ## Example App
 
 ```python
-from sushi_apps.base import SushiApp
-from sushi_apps.r_heredoc import generate_r_heredoc
+from omics_apps.base import MultiOmicsApp
+from omics_apps.r_heredoc import generate_r_heredoc
 
-class FastQCApp(SushiApp):
+class FastQCApp(MultiOmicsApp):
     name = "FastQC"
     category = "QC"
     description = "Quality control for sequencing data"
@@ -293,14 +293,14 @@ class FastQCApp(SushiApp):
 
 ## Adding a New App
 
-Create a file in `sushi_apps/` - it's auto-discovered:
+Create a file in `omics_apps/` - it's auto-discovered:
 
 ```python
-# sushi_apps/star.py
-from sushi_apps.base import SushiApp
-from sushi_apps.r_heredoc import generate_r_heredoc
+# omics_apps/star.py
+from omics_apps.base import MultiOmicsApp
+from omics_apps.r_heredoc import generate_r_heredoc
 
-class STARApp(SushiApp):
+class STARApp(MultiOmicsApp):
     name = "STAR"
     category = "Alignment"
     # ... define params, commands, next_dataset
@@ -308,12 +308,12 @@ class STARApp(SushiApp):
 
 Auto-discovery imports all `.py` files except those listed in `_EXCLUDED` in `__init__.py`. If you add a new utility module (e.g., a heredoc generator), add its name to `_EXCLUDED` to prevent it from being scanned as an app module.
 
-**Startup-time registration:** The app registry is built once when the `sushi_apps` module is first imported (typically at server startup). Python caches imported modules, so subsequent imports return the cached registry without re-scanning. This means adding a new app file requires a server restart to be discovered.
+**Startup-time registration:** The app registry is built once when the `omics_apps` module is first imported (typically at server startup). Python caches imported modules, so subsequent imports return the cached registry without re-scanning. This means adding a new app file requires a server restart to be discovered.
 
 **Abstract intermediate base classes:** Only subclasses with a `name` attribute are registered. Omitting `name` allows you to create shared base classes that aren't exposed as apps:
 
 ```python
-class RBaseApp(SushiApp):
+class RBaseApp(MultiOmicsApp):
     """Base for all R apps - no name, not registered."""
     modules = ["Dev/R"]
 

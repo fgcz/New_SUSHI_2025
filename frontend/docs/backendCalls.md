@@ -104,7 +104,7 @@
 | `getResubmitData()` | `GET /api/v1/datasets/{id}/resubmit-data` | `datasetId` | `{ appName, parameters }` | 🔶 Mock |
 
 **Return Types:**
-- `DatasetFullResponse`: `{ id, name, sushi_app_name, completed_samples, samples_length, parent_id?, children_ids: number[], user_login, created_at, bfabric_id?, project_number, comment?, applications: DatasetAppCategory[] }`
+- `DatasetFullResponse`: `{ id, name, app_name, completed_samples, samples_length, parent_id?, children_ids: number[], user_login, created_at, bfabric_id?, project_number, comment?, applications: DatasetAppCategory[] }`
 
 ---
 

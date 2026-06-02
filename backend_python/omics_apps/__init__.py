@@ -1,10 +1,10 @@
-"""SUSHI application registry with auto-discovery."""
+"""application registry with auto-discovery."""
 
 import importlib
 import re
 from pathlib import Path
 
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 # Files that are not app modules
 _EXCLUDED = {"__init__", "base", "config", "r_heredoc"}
@@ -14,27 +14,27 @@ _this_dir = Path(__file__).parent
 
 for _py_file in _this_dir.glob("*.py"):
     if _py_file.stem not in _EXCLUDED:
-        importlib.import_module(f"sushi_apps.{_py_file.stem}")
+        importlib.import_module(f"omics_apps.{_py_file.stem}")
 
 
-def get_app(name: str) -> SushiApp:
+def get_app(name: str) -> MultiOmicsApp:
     """Get an app instance by name."""
-    if name not in SushiApp._registry:
-        available = ", ".join(SushiApp._registry.keys())
+    if name not in MultiOmicsApp._registry:
+        available = ", ".join(MultiOmicsApp._registry.keys())
         raise ValueError(f"Unknown app: {name}. Available: {available}")
-    return SushiApp._registry[name]()
+    return MultiOmicsApp._registry[name]()
 
 
 def list_apps() -> list[str]:
     """List all registered app names."""
-    return list(SushiApp._registry.keys())
+    return list(MultiOmicsApp._registry.keys())
 
 
-def get_app_class(name: str) -> type[SushiApp]:
+def get_app_class(name: str) -> type[MultiOmicsApp]:
     """Get the app class (not instance) by name."""
-    if name not in SushiApp._registry:
+    if name not in MultiOmicsApp._registry:
         raise ValueError(f"Unknown app: {name}")
-    return SushiApp._registry[name]
+    return MultiOmicsApp._registry[name]
 
 
 def get_all_apps_with_details() -> list[dict]:
@@ -45,7 +45,7 @@ def get_all_apps_with_details() -> list[dict]:
         [{"name": "FastQC", "category": "QC", "description": "...", "required_columns": [...]}]
     """
     apps = []
-    for name, app_cls in SushiApp._registry.items():
+    for name, app_cls in MultiOmicsApp._registry.items():
         apps.append({
             "name": name,
             "category": getattr(app_cls, "category", "Other"),
@@ -110,7 +110,7 @@ def get_runnable_apps(headers: list[str]) -> list[dict]:
 
     matching_apps: dict[str, list[dict]] = {}
 
-    for name, app_cls in SushiApp._registry.items():
+    for name, app_cls in MultiOmicsApp._registry.items():
         required = getattr(app_cls, "required_columns", []) or []
 
         if _check_required_columns_satisfied(required, normalized_headers):

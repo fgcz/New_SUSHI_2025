@@ -235,7 +235,7 @@ describe('useApplicationForm', () => {
       nextDataset: { name: 'CustomName', comment: 'My comment' },
       parameters: { cores: 16, ram: 64, inputFile: 'test.txt' },
     };
-    sessionStorage.setItem('sushi_job_submission_data', JSON.stringify(storedData));
+    sessionStorage.setItem('omics_job_submission_data', JSON.stringify(storedData));
 
     const { result } = renderHook(() =>
       useApplicationForm({
@@ -263,7 +263,7 @@ describe('useApplicationForm', () => {
       nextDataset: { name: 'CustomName' },
       parameters: { cores: 16 },
     };
-    sessionStorage.setItem('sushi_job_submission_data', JSON.stringify(storedData));
+    sessionStorage.setItem('omics_job_submission_data', JSON.stringify(storedData));
 
     const { result } = renderHook(() =>
       useApplicationForm({
@@ -289,7 +289,7 @@ describe('useApplicationForm', () => {
       nextDataset: { name: 'CustomName' },
       parameters: { cores: 16 },
     };
-    sessionStorage.setItem('sushi_job_submission_data', JSON.stringify(storedData));
+    sessionStorage.setItem('omics_job_submission_data', JSON.stringify(storedData));
 
     const { result } = renderHook(() =>
       useApplicationForm({

@@ -1,6 +1,6 @@
 # Environment-Specific Notes
 
-This document records environment-specific dependencies and considerations for the SUSHI application.
+This document records environment-specific dependencies and considerations for the MultiOmicsStudio application.
 
 ## SLURM Cluster Dependency
 
@@ -55,7 +55,7 @@ The external job_manager expects specific files and formats.
 
 ### Overview
 For connecting to old SUSHI MySQL database that lacks email/password columns.
-This mode allows the new SUSHI frontend to work with the existing production database.
+This mode allows the MultiOmicsStudio frontend to work with the existing production database.
 
 ### Usage
 
@@ -108,7 +108,7 @@ bundle exec rails db:migrate  # This will modify the production database!
 ```
 
 ⚠️ **The old database schema is read-only** from this application's perspective.
-Any schema changes should be done through the old SUSHI system.
+Any schema changes should be done through the old MultiOmicsStudio.
 
 ⚠️ **User authentication** is limited in legacy mode:
 - Standard email/password login is disabled

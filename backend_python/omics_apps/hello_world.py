@@ -2,10 +2,10 @@
 
 import shlex
 
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 
-class HelloWorldApp(SushiApp):
+class HelloWorldApp(MultiOmicsApp):
     """Writes a configurable message and a sample count to a text file."""
 
     name = "HelloWorld"
@@ -18,11 +18,11 @@ class HelloWorldApp(SushiApp):
         {"name": "ram", "type": "integer", "default": 4, "description": "RAM in GB"},
         {"name": "scratch", "type": "integer", "default": 10, "description": "Scratch space in GB"},
         {"name": "partition", "type": "select", "default": "employee", "options": ["employee", "normal"], "description": "Cluster partition"},
-        {"name": "message", "type": "string", "default": "Hello, SUSHI!", "description": "Message to write into the output file"},
+        {"name": "message", "type": "string", "default": "Hello, MultiOmicsStudio!", "description": "Message to write into the output file"},
     ]
 
     def commands(self) -> str:
-        message = shlex.quote(self.params.get("message", "Hello, SUSHI!"))
+        message = shlex.quote(self.params.get("message", "Hello, MultiOmicsStudio!"))
         n_samples = len(self.samples)
         return "\n".join([
             f"echo {message} > hello.txt",

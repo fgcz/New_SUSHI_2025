@@ -44,12 +44,12 @@ flowchart TD
         end
     end
 
-    subgraph Domain["Domain Layer (sushi_apps/)"]
-        D1[SushiApp.configure]
-        D2[SushiApp.set_default_parameters]
-        D3[SushiApp.adjust_requirements]
-        D4[SushiApp.commands]
-        D5[SushiApp.next_dataset]
+    subgraph Domain["Domain Layer (omics_apps/)"]
+        D1[MultiOmicsApp.configure]
+        D2[MultiOmicsApp.set_default_parameters]
+        D3[MultiOmicsApp.adjust_requirements]
+        D4[MultiOmicsApp.commands]
+        D5[MultiOmicsApp.next_dataset]
         D6[generate_r_heredoc]
     end
 
@@ -107,8 +107,8 @@ flowchart LR
 | 4 | Configure app | `base.py` | ✅ Done |
 | 5 | set_default_parameters | `base.py` | ✅ Done |
 | 5 | adjust_requirements | `base.py` | ✅ Done |
-| 6 | Validate columns | `sushi_validators.py` | 🔶 Stub |
-| 6 | Validate params | `sushi_validators.py` | 🔶 Stub |
+| 6 | Validate columns | `omics_app_validators.py` | 🔶 Stub |
+| 6 | Validate params | `omics_app_validators.py` | 🔶 Stub |
 | 7 | Create output dataset | `job_submission.py` | 🔶 Stub |
 | 8 | Write input TSV | `job_submission.py` | 🔶 Stub |
 | 9 | Generate scripts | `job_submission.py` | 🔶 Stub |
@@ -147,8 +147,8 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph sushi_apps["sushi_apps/ (Domain)"]
-        SA1[base.py - SushiApp class]
+    subgraph omics_apps["omics_apps/ (Domain)"]
+        SA1[base.py - MultiOmicsApp class]
         SA2[r_heredoc.py - R script generation]
         SA3[config.py - constants]
         SA4[fastqc.py, countqc.py - apps]
@@ -157,7 +157,7 @@ flowchart TD
     subgraph services["app/services/ (Orchestration)"]
         SV1[job_submission.py - main orchestrator]
         SV2[slurm_service.py - SLURM interaction]
-        SV3[sushi_validators.py - validation]
+        SV3[omics_app_validators.py - validation]
     end
 
     subgraph repos["app/repositories/ (Data Access)"]
@@ -168,7 +168,7 @@ flowchart TD
 
     subgraph api["app/api/ (HTTP)"]
         API1[routes/jobs.py]
-        API2[serializers/sushi.py]
+        API2[serializers/omics_app.py]
     end
 
     API1 --> SV1

@@ -1,7 +1,7 @@
 # Frontend Architecture
 **Last Updated:** 2026-03-19
 
-This document describes the folder structure, technology stack, and architectural decisions for the Sushi frontend application.
+This document describes the folder structure, technology stack, and architectural decisions for the MultiOmicsStudio frontend application.
 
 ## Technology Stack
 
@@ -39,7 +39,7 @@ frontend/
 │   │       │       ├── factors/edit/     # Edit factors (Handsontable)
 │   │       │       ├── parameters/       # View parameters
 │   │       │       ├── jobs/             # Dataset-specific jobs
-│   │       │       └── run-application/  # Run sushi applications
+│   │       │       └── run-application/  # Run omics applications
 │   │       │           └── [appName]/
 │   │       │               ├── page.tsx  # Dynamic form
 │   │       │               └── confirm/  # Submission confirmation

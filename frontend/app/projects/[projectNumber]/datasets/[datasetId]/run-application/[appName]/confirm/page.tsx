@@ -45,7 +45,7 @@ export default function ConfirmJobPage() {
   // Load data from sessionStorage on mount
   useEffect(() => {
     try {
-      const storedData = sessionStorage.getItem('sushi_job_submission_data');
+      const storedData = sessionStorage.getItem('omics_job_submission_data');
       if (!storedData) {
         setDataLoadError('No job data found. Please go back and fill out the form.');
         return;
@@ -87,7 +87,7 @@ export default function ConfirmJobPage() {
   // Handle successful submission
   useEffect(() => {
     if (submitSuccess && submissionResult) {
-      sessionStorage.removeItem('sushi_job_submission_data');
+      sessionStorage.removeItem('omics_job_submission_data');
       router.push(`/projects/${projectNumber}/datasets/${submissionResult.output_dataset_id}`);
     }
   }, [submitSuccess, submissionResult, router, projectNumber]);

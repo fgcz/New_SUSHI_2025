@@ -11,7 +11,7 @@ from app.core.exceptions import (
     generic_exception_handler,
 )
 
-app = FastAPI(title="SUSHI Backend")
+app = FastAPI(title="MultiOmicsStudio Backend")
 
 # Register exception handlers
 app.add_exception_handler(AppException, app_exception_handler)

@@ -3,8 +3,8 @@
 from fastapi import APIRouter, HTTPException
 
 from app.api.deps import CurrentUserDep
-from app.api.serializers.sushi import serialize_app_config
-from sushi_apps import get_app, list_apps
+from app.api.serializers.omics_app import serialize_app_config
+from omics_apps import get_app, list_apps
 
 router = APIRouter()
 
@@ -13,7 +13,7 @@ router = APIRouter()
 def get_applications_list(current_user: CurrentUserDep) -> dict:
     """Get list of available applications."""
     return {
-        "sushi_apps": list_apps(),
+        "omics_apps": list_apps(),
     }
 
 

@@ -11,7 +11,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from app.core.config import settings
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 if TYPE_CHECKING:
     from app.services.filesystem_service import FilesystemService
@@ -23,7 +23,7 @@ class SlurmService:
     def __init__(self, filesystem_service: "FilesystemService"):
         self.filesystem_service = filesystem_service
 
-    def build_script(self, app: SushiApp) -> str:
+    def build_script(self, app: MultiOmicsApp) -> str:
         """Build complete SLURM job script from configured app.
 
         Structure:
@@ -33,7 +33,7 @@ class SlurmService:
         4. Footer - copy results, cleanup
 
         Args:
-            app: A configured SushiApp instance
+            app: A configured MultiOmicsApp instance
 
         Returns:
             Complete bash script as string
@@ -168,7 +168,7 @@ class SlurmService:
 
     # === Private helpers ===
 
-    def _build_header(self, app: SushiApp) -> str:
+    def _build_header(self, app: MultiOmicsApp) -> str:
         """Build bash header with environment setup."""
         scratch_dir = f"{settings.SCRATCH_DIR}/{app.name}_temp$$"
 
@@ -189,7 +189,7 @@ mkdir -p $SCRATCH_DIR || exit 1
 cd $SCRATCH_DIR || exit 1
 """
 
-    def _build_module_loads(self, app: SushiApp) -> str:
+    def _build_module_loads(self, app: MultiOmicsApp) -> str:
         """Build module load commands."""
         if not app.modules:
             return "# No modules to load\n"
@@ -202,13 +202,13 @@ cd $SCRATCH_DIR || exit 1
         ]
         return "\n".join(lines)
 
-    def _build_main(self, app: SushiApp) -> str:
+    def _build_main(self, app: MultiOmicsApp) -> str:
         """Build main execution section with app commands."""
         return f"""#### NOW THE ACTUAL JOB STARTS
 {app.commands()}
 """
 
-    def _build_footer(self, app: SushiApp) -> str:
+    def _build_footer(self, app: MultiOmicsApp) -> str:
         """Build footer with result copying and cleanup."""
         lines = [
             "#### JOB IS DONE - COPY RESULTS AND CLEAN UP",

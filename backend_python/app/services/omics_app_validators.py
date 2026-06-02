@@ -1,4 +1,4 @@
-"""Validators for SUSHI app execution.
+"""Validators for OmicsApp execution.
 
 Validates that:
 - Input dataset has required columns
@@ -6,10 +6,10 @@ Validates that:
 - Parameter values are valid types/ranges
 """
 
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 
-class SushiValidationError(Exception):
+class OmicsAppValidationError(Exception):
     """Raised when validation fails."""
 
     def __init__(self, message: str, errors: list[str] | None = None):
@@ -18,15 +18,15 @@ class SushiValidationError(Exception):
         self.errors = errors or []
 
 
-def validate_columns(app: SushiApp, sample_columns: list[str]) -> None:
+def validate_columns(app: MultiOmicsApp, sample_columns: list[str]) -> None:
     """Check that samples have all required columns.
 
     Args:
-        app: Configured SushiApp instance
+        app: Configured MultiOmicsApp instance
         sample_columns: List of column names from input dataset
 
     Raises:
-        SushiValidationError: If required columns are missing
+        OmicsAppValidationError: If required columns are missing
     """
     # TODO: Implement column validation
     # - Handle column tags like [File], [Factor]
@@ -34,15 +34,15 @@ def validate_columns(app: SushiApp, sample_columns: list[str]) -> None:
     raise NotImplementedError("validate_columns not yet implemented")
 
 
-def validate_params(app: SushiApp, params: dict) -> None:
+def validate_params(app: MultiOmicsApp, params: dict) -> None:
     """Check that required parameters are provided and valid.
 
     Args:
-        app: SushiApp instance (uses params_definition)
+        app: MultiOmicsApp instance (uses params_definition)
         params: User-provided parameters
 
     Raises:
-        SushiValidationError: If required params missing or invalid
+        OmicsAppValidationError: If required params missing or invalid
     """
     # TODO: Implement parameter validation
     # - Check required params are present
@@ -51,14 +51,14 @@ def validate_params(app: SushiApp, params: dict) -> None:
     raise NotImplementedError("validate_params not yet implemented")
 
 
-def validate_app(app: SushiApp) -> None:
+def validate_app(app: MultiOmicsApp) -> None:
     """Run all validations on a configured app.
 
     Args:
-        app: Fully configured SushiApp instance
+        app: Fully configured MultiOmicsApp instance
 
     Raises:
-        SushiValidationError: If any validation fails
+        OmicsAppValidationError: If any validation fails
     """
     # TODO: Implement full validation
     # - validate_columns

@@ -2,9 +2,9 @@
 
 ## Overview
 
-This document describes the implementation plan and architecture for the Job Submission API in the new SUSHI system. The goal is to enable programmatic job submission through a REST API, separate from the UI implementation, and clearly define the responsibilities between SUSHI API and the Job Manager component.
+This document describes the implementation plan and architecture for the Job Submission API in MultiOmicsStudio. The goal is to enable programmatic job submission through a REST API, separate from the UI implementation, and clearly define the responsibilities between MultiOmicsStudio API and the Job Manager component.
 
-**Primary Goal**: Use DataSet information and SUSHIApp classes to generate job scripts and register job metadata in the database (up to `status="CREATED"`).
+**Primary Goal**: Use DataSet information and MultiOmicsApp classes to generate job scripts and register job metadata in the database (up to `status="CREATED"`).
 
 ---
 
@@ -12,12 +12,12 @@ This document describes the implementation plan and architecture for the Job Sub
 
 ### Separation of Concerns
 
-The new SUSHI architecture clearly separates job processing into two distinct components:
+The MultiOmicsStudio architecture clearly separates job processing into two distinct components:
 
-#### 1. SUSHI API (This Implementation Scope)
+#### 1. MultiOmicsStudio API (This Implementation Scope)
 
 **Responsibilities:**
-- Generate job scripts using SUSHIApp instances
+- Generate job scripts using MultiOmicsApp instances
 - Save scripts to designated directory (`submit_job_script_dir`)
 - Register metadata in database:
   - Create output DataSet (with parent_id, project info, etc.)
@@ -30,7 +30,7 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 - Monitor job execution
 - Update job status beyond "CREATED"
 
-#### 2. Job Manager (Separate Module - Outside SUSHI Scope)
+#### 2. Job Manager (Separate Module - Outside MultiOmicsStudio Scope)
 
 **Responsibilities:**
 - Poll database for `status="CREATED"` jobs
@@ -49,10 +49,10 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 
 ## Design Benefits
 
-1. **Platform Independence**: SUSHI is agnostic to job execution systems
+1. **Platform Independence**: MultiOmicsStudio is agnostic to job execution systems
 2. **Scalability**: Job Manager can be scaled independently
-3. **Flexibility**: Job system changes don't affect SUSHI core
-4. **Testability**: SUSHI API can be tested without external dependencies
+3. **Flexibility**: Job system changes don't affect MultiOmicsStudio core
+4. **Testability**: MultiOmicsStudio API can be tested without external dependencies
 5. **Clear Responsibilities**: Each component has well-defined role
 
 ---
@@ -61,11 +61,11 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ Phase 1: SUSHI API (This Implementation)            │
+│ Phase 1: MultiOmicsStudio API (This Implementation)            │
 ├─────────────────────────────────────────────────────┤
 │ 1. User → POST /api/v1/jobs                         │
 │ 2. Retrieve DataSet information                     │
-│ 3. Instantiate SUSHIApp class                       │
+│ 3. Instantiate MultiOmicsApp class                       │
 │ 4. Generate job script                              │
 │ 5. Register in database:                            │
 │    - Output DataSet                                 │
@@ -99,10 +99,10 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 
 2. **ActiveJob**: `app/jobs/submit_job.rb`
    - Background job processing
-   - Loads, instantiates, and configures SushiApp
+   - Loads, instantiates, and configures MultiOmicsApp
    - Executes `sushi_app.run`
 
-3. **SushiApp**: `lib/sushi_fabric/lib/sushi_fabric/sushiApp.rb` (~1300 lines)
+3. **MultiOmicsApp**: `lib/sushi_fabric/lib/sushi_fabric/sushiApp.rb` (~1300 lines)
    - Job script generation
    - Dataset creation
    - Job record saving
@@ -117,11 +117,11 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 
 2. **Service**: `app/services/job_submission_service.rb`
    - Orchestrates job submission process
-   - Loads and configures SushiApp
+   - Loads and configures MultiOmicsApp
    - Generates scripts, creates datasets, saves job records
    - Equivalent to `SubmitJob` + part of `sushiApp.rb`
 
-3. **SushiApp**: `lib/sushi_fabric.rb` (~200 lines, simplified)
+3. **MultiOmicsApp**: `lib/sushi_fabric.rb` (~200 lines, simplified)
    - Minimal stub implementation
    - Basic functionality only
    - Reduced from 1300 lines to 200 lines
@@ -132,7 +132,7 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 
 | Aspect | Old SUSHI | New SUSHI |
 |--------|-----------|-----------|
-| Job Submission | SUSHI directly executes `sbatch` | Job Manager executes (SUSHI only registers in DB) |
+| Job Submission | MultiOmicsStudio directly executes `sbatch` | Job Manager executes (MultiOmicsStudio only registers in DB) |
 | Architecture | Monolithic (1300 lines) | Separation of concerns (Controller/Service/Domain) |
 | Platform | SLURM fixed | Platform independent |
 | Testing | External dependencies | No external dependencies (up to script generation) |
@@ -163,7 +163,7 @@ The new SUSHI architecture clearly separates job processing into two distinct co
 - `GET /api/v1/jobs` - List jobs (with filtering/pagination)
 
 **2.2 JobSubmissionService** (`app/services/job_submission_service.rb`)
-- Load and instantiate SushiApp
+- Load and instantiate MultiOmicsApp
 - Configure with parameters
 - Generate job script
 - Create output dataset
@@ -198,7 +198,7 @@ resources :jobs, only: [:create, :show, :index]
 
 ## Success Criteria
 
-### SUSHI API Goals (This Implementation Scope)
+### MultiOmicsStudio API Goals (This Implementation Scope)
 
 1. ✅ POST /api/v1/jobs successfully submits jobs
 2. ✅ Job record is created in database with:
@@ -214,7 +214,7 @@ resources :jobs, only: [:create, :show, :index]
    - Executable permissions (755) set
 5. ✅ Test succeeds with FastqcApp using real dataset (ventricles_100k)
 
-### Job Manager Goals (Separate Module - Outside SUSHI Scope)
+### Job Manager Goals (Separate Module - Outside MultiOmicsStudio Scope)
 
 - Retrieve jobs with `status="CREATED"` from DB
 - Submit to job systems (SLURM/AWS/GCP/Azure, etc.)
@@ -233,7 +233,7 @@ To avoid excessive complexity, the following simplifications are made:
 2. **gstore Copy**: Optional file copying (directory structure only)
 3. **process_mode**: Support DATASET mode only initially
 4. **Validation**: Basic checks only
-5. **Job Submission**: SUSHI API does not execute (Job Manager's responsibility)
+5. **Job Submission**: MultiOmicsStudio API does not execute (Job Manager's responsibility)
 
 ---
 
@@ -367,11 +367,11 @@ Tests verify:
 
 ```ruby
 - id                  # Primary key
-- script_path         # Path to generated job script (SUSHI sets)
+- script_path         # Path to generated job script (MultiOmicsStudio sets)
 - status              # Job status (SUSHI: "CREATED", Job Manager: others)
-- user                # Username who submitted (SUSHI sets)
-- input_dataset_id    # Input dataset ID (SUSHI sets)
-- next_dataset_id     # Output dataset ID (SUSHI sets)
+- user                # Username who submitted (MultiOmicsStudio sets)
+- input_dataset_id    # Input dataset ID (MultiOmicsStudio sets)
+- next_dataset_id     # Output dataset ID (MultiOmicsStudio sets)
 - submit_job_id       # External job system ID (Job Manager sets)
 - start_time          # Job start timestamp (Job Manager sets)
 - end_time            # Job end timestamp (Job Manager sets)
@@ -379,7 +379,7 @@ Tests verify:
 - updated_at          # Record update time
 ```
 
-**Key Point**: SUSHI only sets fields marked "SUSHI sets". Job Manager handles execution-related fields.
+**Key Point**: MultiOmicsStudio only sets fields marked "MultiOmicsStudio sets". Job Manager handles execution-related fields.
 
 ---
 
@@ -443,7 +443,7 @@ Tests verify:
 
 ## Conclusion
 
-This implementation provides a clean, testable, and platform-independent job submission API. By separating SUSHI's responsibilities (script generation, metadata registration) from Job Manager's responsibilities (job execution, status management), the system achieves better modularity, testability, and flexibility.
+This implementation provides a clean, testable, and platform-independent job submission API. By separating MultiOmicsStudio's responsibilities (script generation, metadata registration) from Job Manager's responsibilities (job execution, status management), the system achieves better modularity, testability, and flexibility.
 
 The API-first approach allows testing without UI implementation and provides a foundation for future enhancements while maintaining clear architectural boundaries.
 

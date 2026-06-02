@@ -2,14 +2,14 @@
 
 This service is responsible for:
 - Loading input data (dataset, samples, project defaults)
-- Configuring the SushiApp instance
+- Configuring the MultiOmicsApp instance
 - Running validation
 - Generating job scripts (via SlurmService)
 - Creating DB records (job, output dataset)
 - Writing files to disk (via FilesystemService)
 - Submitting to SLURM (or mock mode)
 
-The SushiApp itself is a pure domain model - this service handles all I/O.
+The MultiOmicsApp itself is a pure domain model - this service handles all I/O.
 """
 
 import json
@@ -24,7 +24,7 @@ from app.repositories.sample import SampleRepository
 from app.repositories.user import UserRepository
 from app.services.filesystem_service import FilesystemService
 from app.services.slurm_service import SlurmService
-from sushi_apps import get_app
+from omics_apps import get_app
 
 
 class JobSubmissionService:
@@ -138,7 +138,7 @@ class JobSubmissionService:
             name=next_dataset_name,
             project_id=dataset.project_id,
             parent_id=dataset_id,
-            sushi_app_name=app.name,
+            app_name=app.name,
             job_parameters=json.dumps(params),
             comment=next_dataset_comment,
             num_samples=len(samples),
@@ -165,7 +165,7 @@ class JobSubmissionService:
                 name=grandchild_name,
                 project_id=dataset.project_id,
                 parent_id=output_dataset.id,
-                sushi_app_name=app.name,
+                app_name=app.name,
                 num_samples=1,
                 user_id=user.id if user else None,
                 created_at=now,

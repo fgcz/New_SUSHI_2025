@@ -5,14 +5,14 @@ running real FastQC/R. Useful for testing job submission, file copying,
 and dataset registration without real FASTQ input or cluster dependencies.
 """
 
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 
 def _strip_tags(key: str) -> str:
     return key.split("[")[0].strip()
 
 
-class FastQCTestApp(SushiApp):
+class FastQCTestApp(MultiOmicsApp):
     """Pipeline smoke test mirroring FastQC output schema."""
 
     name = "FastQCTest"

@@ -64,7 +64,7 @@ export const projectApi = {
     });
   },
 
-  async getApplicationsList(): Promise<{ sushi_apps: string[]; retired_apps: string[] }> {
+  async getApplicationsList(): Promise<{ omics_apps: string[]; retired_apps?: string[] }> {
     return httpClient.request('/applications/');
   }
 };

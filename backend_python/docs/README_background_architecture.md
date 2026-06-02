@@ -1,6 +1,6 @@
 # Background Processing Architecture
 
-This document explains the architectural decisions for handling background work in the SUSHI FastAPI application: job submission, SLURM monitoring, and heavy computational tasks.
+This document explains the architectural decisions for handling background work in the MultiOmicsStudio FastAPI application: job submission, SLURM monitoring, and heavy computational tasks.
 
 ---
 
@@ -86,7 +86,7 @@ One deployment. One thing to monitor. One thing that can fail.
 
 | Aspect | Benefit |
 |--------|---------|
-| **Deployment** | Single unit. `systemctl restart sushi` handles everything. |
+| **Deployment** | Single unit. `systemctl restart multiomics-studio` handles everything. |
 | **Monitoring** | One process to monitor. If FastAPI is up, daemon is up. |
 | **Logging** | One log stream. All activity in one place. |
 | **Failure recovery** | systemd restarts the process, daemon comes back automatically. |
@@ -103,7 +103,7 @@ One deployment. One thing to monitor. One thing that can fail.
 
 **No data loss. Just a brief delay in status updates.**
 
-#### Why This Works for SUSHI
+#### Why This Works for MultiOmicsStudio
 
 The daemon does **light work**:
 - One `squeue` call every 5 seconds
@@ -305,7 +305,7 @@ The `jobs` table acts as a task queue:
 | **Reliability?** | ACID guarantees, data survives crashes |
 | **Operational overhead?** | Zero. It's a file. |
 
-SQLite is not ideal for high-concurrency web apps, but SUSHI has:
+SQLite is not ideal for high-concurrency web apps, but MultiOmicsStudio has:
 - ~10 concurrent users maximum
 - ~10 job submissions per hour at peak
 - Simple queries (no complex joins under load)
@@ -352,13 +352,13 @@ Day-to-day operations involve exactly one thing:
 
 ```bash
 # Deploy
-git pull && systemctl restart sushi
+git pull && systemctl restart multiomics-studio
 
 # Check status
-systemctl status sushi
+systemctl status multiomics-studio
 
 # View logs
-journalctl -u sushi -f
+journalctl -u multiomics-studio -f
 
 # That's it.
 ```

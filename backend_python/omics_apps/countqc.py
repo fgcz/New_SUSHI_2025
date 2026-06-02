@@ -1,9 +1,9 @@
 """CountQC application - quality control for count data."""
 
-from sushi_apps.base import SushiApp
+from omics_apps.base import MultiOmicsApp
 
 
-class CountQCApp(SushiApp):
+class CountQCApp(MultiOmicsApp):
     """Quality control analysis for count data (RNA-seq, etc.)."""
 
     name = "CountQC"

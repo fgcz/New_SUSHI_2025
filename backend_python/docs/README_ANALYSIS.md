@@ -1,6 +1,6 @@
-# SUSHI Authentication & User Management Analysis
+# MultiOmicsStudio Authentication & User Management Analysis
 
-This document analyzes the authentication, user management, and LDAP integration from the original Ruby SUSHI application and provides guidance for the Python/FastAPI rewrite. It identifies pitfalls from organic growth in the legacy system and documents requirements that must be addressed.
+This document analyzes the authentication, user management, and LDAP integration from the original Ruby SUSHI application and provides guidance for the MultiOmicsStudio implementation. It identifies pitfalls from organic growth in the legacy system and documents requirements that must be addressed.
 
 ---
 
@@ -21,7 +21,7 @@ This document analyzes the authentication, user management, and LDAP integration
 
 ## Executive Summary
 
-SUSHI is a bioinformatics workflow management system that authenticates users against an LDAP directory (FGCZ). Users have access to **projects** based on their LDAP group memberships. A special class of users called **employees** (bioinformaticians) have access to ALL projects.
+MultiOmicsStudio is a bioinformatics workflow management system that authenticates users against an LDAP directory (FGCZ). Users have access to **projects** based on their LDAP group memberships. A special class of users called **employees** (bioinformaticians) have access to ALL projects.
 
 **Key architectural decision for the rewrite**: Project context will be URL-based (`/projects/{project_number}/...`) rather than session-based. This eliminates the complex state management that plagued the Ruby version.
 

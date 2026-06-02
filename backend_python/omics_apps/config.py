@@ -1,4 +1,4 @@
-"""Constants for SUSHI apps.
+"""Constants for MultiOmicsStudio apps.
 
 Infrastructure paths (GSTORE_DIR, SCRATCH_DIR, etc.) are in app/core/config.py
 and can be overridden via environment variables.

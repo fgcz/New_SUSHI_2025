@@ -5,7 +5,7 @@ This document describes the Job Submission API endpoints for submitting and mana
 ## Overview
 
 The Job Submission API allows users to:
-- Submit new analysis jobs using SUSHI applications
+- Submit new analysis jobs using MultiOmicsStudio applications
 - Generate job scripts automatically
 - Create output datasets linked to jobs
 - Track job status and retrieve job information
@@ -60,7 +60,7 @@ Submits a new analysis job for processing. This endpoint:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `dataset_id` | Integer | Yes | ID of the input dataset |
-| `app_name` | String | Yes | Name of the SUSHI application (e.g., "FastqcApp") |
+| `app_name` | String | Yes | Name of the MultiOmicsStudio application (e.g., "FastqcApp") |
 | `parameters` | Object | No | Application-specific parameters |
 | `next_dataset_name` | String | No | Name for the output dataset (auto-generated if not provided) |
 | `next_dataset_comment` | String | No | Comment/description for the output dataset |
@@ -299,7 +299,7 @@ else:
 
 1. **Client submits job** via POST `/api/v1/jobs`
 2. **API validates** input dataset and application
-3. **API loads** the SUSHI application class
+3. **API loads** the MultiOmicsStudio application class
 4. **API configures** application with user parameters
 5. **API generates** job script file
 6. **API creates** output dataset record

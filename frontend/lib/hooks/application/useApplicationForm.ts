@@ -17,7 +17,7 @@ interface NextDatasetData {
   datasetComment: string;
 }
 
-const STORAGE_KEY = 'sushi_job_submission_data';
+const STORAGE_KEY = 'omics_job_submission_data';
 
 interface StoredJobData {
   datasetId: number;

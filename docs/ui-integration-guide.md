@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Job Submission API has been implemented and is ready for frontend integration. This API enables users to submit bioinformatics analysis jobs, track their status, and manage output datasets through the SUSHI web interface.
+The Job Submission API has been implemented and is ready for frontend integration. This API enables users to submit bioinformatics analysis jobs, track their status, and manage output datasets through the MultiOmicsStudio web interface.
 
 **Key Capability**: The API handles job script generation and metadata registration. Actual job execution is managed by a separate Job Manager component (not part of this API).
 
@@ -13,7 +13,7 @@ The Job Submission API has been implemented and is ready for frontend integratio
 **POST** `/api/v1/jobs`
 
 Submit a new job for analysis. This endpoint will:
-- Generate a job script based on the selected SushiApp
+- Generate a job script based on the selected MultiOmicsApp
 - Create an output dataset linked to the input dataset
 - Register job metadata in the database with status "CREATED"
 
@@ -38,7 +38,7 @@ Submit a new job for analysis. This endpoint will:
 
 **Parameters:**
 - `dataset_id` (required): ID of the input dataset
-- `app_name` (required): Name of the SushiApp class (e.g., "FastqcApp", "STARApp")
+- `app_name` (required): Name of the MultiOmicsApp class (e.g., "FastqcApp", "STARApp")
 - `parameters` (required): Hash of application-specific parameters
 - `next_dataset_name` (optional): Name for the output dataset (auto-generated if not provided)
 - `next_dataset_comment` (optional): Description for the output dataset
@@ -252,13 +252,13 @@ CREATED → SUBMITTED → RUNNING → COMPLETED
                               ↘ FAILED
 ```
 
-- **CREATED**: Job record exists, script generated (handled by SUSHI API)
+- **CREATED**: Job record exists, script generated (handled by MultiOmicsStudio API)
 - **SUBMITTED, RUNNING, COMPLETED, FAILED**: Managed by external Job Manager
 - **UI Consideration**: Poll job status periodically or implement WebSocket for real-time updates
 
 ### Application Parameters
 
-- Each SushiApp has different required and optional parameters
+- Each MultiOmicsApp has different required and optional parameters
 - Use `GET /api/v1/application_configs/:app_name` to get parameter definitions
 - Common parameters: `cores`, `ram`, `scratch`
 - Application-specific parameters vary (e.g., `paired` for FastqcApp, `refBuild` for aligners)
@@ -302,14 +302,14 @@ All example requests and responses can be found in:
 
 ### Job Script Generation
 
-- Scripts are generated based on SushiApp class definitions
+- Scripts are generated based on MultiOmicsApp class definitions
 - Stored in: `backend/tmp/job_scripts/` (configurable via `SUBMIT_JOB_SCRIPT_DIR`)
 - Format: `{AppName}_{DatasetId}_{Timestamp}.sh`
 - Scripts are executable bash files with proper shebang and error handling
 
 ### Output Dataset Structure
 
-- Automatically created with predefined structure based on SushiApp
+- Automatically created with predefined structure based on MultiOmicsApp
 - Contains expected output file paths (will be created when job runs)
 - Linked to input dataset for traceability
 - Includes job parameters for reproducibility
@@ -339,7 +339,7 @@ All example requests and responses can be found in:
    - Add error handling and loading states
 
 4. **Integration Testing**
-   - Test with various SushiApps
+   - Test with various MultiOmicsApps
    - Verify error scenarios
    - Test pagination and filtering
    - Validate data consistency

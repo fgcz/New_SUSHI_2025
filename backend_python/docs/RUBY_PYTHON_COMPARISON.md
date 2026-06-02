@@ -1,6 +1,6 @@
 # Ruby vs Python Implementation Comparison
 
-This document provides a comprehensive comparison between the original Ruby SUSHI implementation and the Python replacement for the files/directory listing API.
+This document provides a comprehensive comparison between the original Ruby SUSHI implementation and the MultiOmicsStudio replacement for the files/directory listing API.
 
 ---
 

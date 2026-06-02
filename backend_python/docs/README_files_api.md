@@ -197,7 +197,7 @@ The route should:
 
 ## Comparison with Ruby SUSHI
 
-| Aspect | Ruby SUSHI | Python SUSHI |
+| Aspect | Ruby SUSHI | MultiOmicsStudio |
 |--------|------------|--------------|
 | Caching | None | LRU with TTL |
 | Pagination | In-memory slice | In-memory slice |

@@ -1,7 +1,6 @@
 """R heredoc generation for ezRun apps.
 
 Generates bash script fragments containing R heredocs that invoke ezRun apps.
-Mirrors Ruby SUSHI's run_RApp() from global_variables.rb.
 """
 
 from typing import TYPE_CHECKING, Any
@@ -9,21 +8,19 @@ from typing import TYPE_CHECKING, Any
 from app.core.config import settings
 
 if TYPE_CHECKING:
-    from sushi_apps.base import SushiApp
+    from omics_apps.base import MultiOmicsApp
 
 
 def generate_r_heredoc(
-    app: "SushiApp",
+    app: "MultiOmicsApp",
     app_name: str | None = None,
     lib_path: str | None = None,
     conda_env: str | None = None,
 ) -> str:
     """Generate R heredoc command that invokes an ezRun app.
 
-    This mirrors Ruby's run_RApp() from global_variables.rb.
-
     Args:
-        app: Configured SushiApp instance
+        app: Configured MultiOmicsApp instance
         app_name: R class name to invoke (e.g., "EzAppFastqc").
                   Defaults to "EzApp{app.name}"
         lib_path: Optional custom R library path
@@ -139,7 +136,7 @@ def _escape_r_string(s: str) -> str:
     return s.replace("\\", "\\\\").replace("'", "\\'")
 
 
-def _get_current_sample(app: "SushiApp") -> dict:
+def _get_current_sample(app: "MultiOmicsApp") -> dict:
     """Get the current sample row for SAMPLE mode."""
     if isinstance(app.dataset, dict):
         return app.dataset

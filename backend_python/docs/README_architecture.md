@@ -1,6 +1,6 @@
 # Backend Architecture: Layered Design
 
-This document explains the layered architecture used in the SUSHI FastAPI backend, how each layer handles its responsibilities, and how data flows through the system.
+This document explains the layered architecture used in the MultiOmicsStudio FastAPI backend, how each layer handles its responsibilities, and how data flows through the system.
 
 ---
 
@@ -102,7 +102,7 @@ from app.core.exceptions import NotFoundError
 from app.repositories.dataset import DatasetRepository
 from app.repositories.sample import SampleRepository
 from app.repositories.user import UserRepository
-from sushi_apps import get_runnable_apps
+from omics_apps import get_runnable_apps
 
 class DatasetService:
     def __init__(
@@ -327,7 +327,7 @@ DatasetServiceDep
             └── SampleRepository ← get_sample_repository()
                     └── Session ← get_session() [same instance]
 
-Note: App matching uses sushi_apps module directly (no repository needed)
+Note: App matching uses omics_apps module directly (no repository needed)
 ```
 
 All repositories share the same database session within a request.
@@ -400,9 +400,9 @@ app/
 │   ├── user.py              # UserRepository
 │   └── refresh_token.py     # RefreshTokenRepository
 │
-sushi_apps/                   # App definitions and registry
+omics_apps/                   # App definitions and registry
 ├── __init__.py              # Registry, get_app(), get_runnable_apps()
-├── base.py                  # SushiApp base class
+├── base.py                  # MultiOmicsApp base class
 ├── fastqc.py                # FastQC app definition
 └── countqc.py               # CountQC app definition
 │

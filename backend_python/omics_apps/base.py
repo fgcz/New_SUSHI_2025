@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Literal
 
 
-class SushiApp(ABC):
-    """Base class all SUSHI apps must inherit from.
+class MultiOmicsApp(ABC):
+    """Base class all MultiOmicsStudio apps must inherit from.
 
     Apps must implement:
     - commands()
@@ -30,12 +30,12 @@ class SushiApp(ABC):
 
     # === Auto-registration ===
 
-    _registry: dict[str, type["SushiApp"]] = {}
+    _registry: dict[str, type["MultiOmicsApp"]] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if hasattr(cls, "name") and cls.name:
-            SushiApp._registry[cls.name] = cls
+            MultiOmicsApp._registry[cls.name] = cls
 
     # === Instance state ===
 

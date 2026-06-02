@@ -52,14 +52,14 @@ export default function GlobalDatasetListPage() {
       {/* Filters */}
       <div className="flex flex-col gap-1 mb-4">
         <div className="flex items-center gap-1 text-sm">
-          <span className="text-gray-700 font-medium">SUSHIApp:</span>
+          <span className="text-gray-700 font-medium">App:</span>
           <select
             value={selectedApp}
             onChange={(e) => { setSelectedApp(e.target.value); setSelectedRetiredApp(''); }}
             className="w-40 border border-gray-300 rounded-md px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           >
             <option value="">--- select ---</option>
-            {appsData?.sushi_apps.map((app) => (
+            {appsData?.omics_apps.map((app) => (
               <option key={app} value={app}>{app}</option>
             ))}
           </select>
@@ -104,7 +104,7 @@ export default function GlobalDatasetListPage() {
               <th className="px-3 py-2 text-left font-semibold">ID</th>
               <th className="px-3 py-2 text-left font-semibold">Name</th>
               <th className="px-3 py-2 text-left font-semibold">Project</th>
-              <th className="px-3 py-2 text-left font-semibold">SushiApp</th>
+              <th className="px-3 py-2 text-left font-semibold">App</th>
               <th className="px-3 py-2 text-left font-semibold">Samples</th>
               <th className="px-3 py-2 text-left font-semibold">ParentID</th>
               <th className="px-3 py-2 text-left font-semibold">Children</th>
@@ -123,7 +123,7 @@ export default function GlobalDatasetListPage() {
                 <td className="px-3 py-2">
                   <a href={`/projects/${ds.project_number}`} className="text-brand-600 hover:text-brand-800 hover:underline">{ds.project_number}</a>
                 </td>
-                <td className="px-3 py-2">{ds.sushi_app_name || ''}</td>
+                <td className="px-3 py-2">{ds.app_name || ''}</td>
                 <td className="px-3 py-2 text-gray-600">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                 <td className="px-3 py-2">
                   {ds.parent_id ? (

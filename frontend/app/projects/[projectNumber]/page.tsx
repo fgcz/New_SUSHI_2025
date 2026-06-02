@@ -41,7 +41,7 @@ export default function ProjectPage() {
   const menuItems: MenuItem[] = [
     {
       title: 'DataSets',
-      description: 'You can see, edit and delete DataSets.\nYou can execute a SUSHI application.',
+      description: 'You can see, edit and delete DataSets.\nYou can execute an application.',
       link: `/projects/${projectNumber}/datasets`,
       icon: '/images/tamago.png',
     },

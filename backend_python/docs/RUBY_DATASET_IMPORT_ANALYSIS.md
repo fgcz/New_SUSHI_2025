@@ -287,7 +287,7 @@ end
 - `bfabric_id`, `workunit_id`
 - `order_ids` (serialized Array)
 - `job_parameters` (serialized Hash)
-- `sushi_app_name`, `run_name_order_id`
+- `app_name`, `run_name_order_id`
 - `num_samples`, `completed_samples`, `refreshed_apps`, `runnable_apps`
 - `created_at`, `updated_at`
 
@@ -467,7 +467,7 @@ def merge_with(other_dataset, options: {})
   # Handles Read1/Read2 concatenation
   # Sums Read Count columns
   # Excludes "Sample Id [B-Fabric]" by default
-  # Creates child dataset with sushi_app_name = "MergeReadDatasets"
+  # Creates child dataset with app_name = "MergeReadDatasets"
 end
 ```
 
@@ -730,7 +730,7 @@ with transaction():
 
 5. **Order IDs for B-Fabric** - Extract from `Order Id [B-Fabric]` column, store for future B-Fabric integration
 
-6. **sushi_app_name** - Set when dataset is created by an app, null for imported root datasets
+6. **app_name** - Set when dataset is created by an app, null for imported root datasets
 
 7. **No file existence check** - We don't verify that `[File]` paths actually exist on GStore (Ruby uses `--skip-file-check`)
 

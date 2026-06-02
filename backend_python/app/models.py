@@ -75,7 +75,7 @@ class DataSet(SQLModel, table=True):
     completed_samples: int | None = Field(default=0)
 
     # App that created this dataset (null if imported directly)
-    sushi_app_name: str | None = None
+    app_name: str | None = None
 
     # Job parameters used when app created this dataset (JSON or Ruby YAML)
     job_parameters: dict[str, Any] | None = Field(

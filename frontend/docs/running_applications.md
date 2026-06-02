@@ -122,7 +122,7 @@ The job submission follows a multi-page flow with state persistence:
 
 Form data is stored in `sessionStorage` to survive navigation between the form and review pages.
 
-**Storage Key:** `sushi_job_submission_data`
+**Storage Key:** `omics_job_submission_data`
 
 **Stored Data Structure:**
 ```typescript

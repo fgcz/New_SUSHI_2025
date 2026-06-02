@@ -76,7 +76,7 @@ All endpoints are prefixed with `/api`.
 
 | Endpoint | Returns | Errors | Authorization |
 |----------|---------|--------|---------------|
-| `GET /` | `{sushi_apps, retired_apps}` (MOCK) | 401 | CurrentUserDep |
+| `GET /` | `{omics_apps, retired_apps}` (MOCK) | 401 | CurrentUserDep |
 | `GET /{app_name}` | Application config/form schema | 401, 404 | CurrentUserDep |
 | `POST /{app_name}/validate` | Validated config | 401, 404 | CurrentUserDep |
 

@@ -62,7 +62,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('renders loading skeleton initially', () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
   });
@@ -78,7 +78,7 @@ describe('ConfirmJobPage', () => {
 
   it('displays error when job data does not match URL params', async () => {
     const mismatchedData = { ...mockJobData, projectNumber: 9999 };
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mismatchedData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mismatchedData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('No Job Data Found')).toBeInTheDocument();
@@ -87,7 +87,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays page title and application info after loading', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Confirm Job Submission')).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays breadcrumbs', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Confirm Job Submission')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays result dataset section', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Result Dataset')).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays application parameters section', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Application Parameters')).toBeInTheDocument();
@@ -130,7 +130,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays submit and mock run buttons', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Confirm Job Submission')).toBeInTheDocument();
@@ -140,7 +140,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays back to edit button', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Confirm Job Submission')).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('calls router.back when back button is clicked', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     const { user } = renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Confirm Job Submission')).toBeInTheDocument();
@@ -159,7 +159,7 @@ describe('ConfirmJobPage', () => {
   });
 
   it('displays error when dataset API fails', async () => {
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(mockJobData));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(mockJobData));
     server.use(
       http.get('*/api/v1/datasets/:datasetId', () => {
         return new HttpResponse(null, { status: 500 });
@@ -173,7 +173,7 @@ describe('ConfirmJobPage', () => {
 
   it('shows empty parameters message when no parameters', async () => {
     const dataWithoutParams = { ...mockJobData, parameters: {} };
-    localStorage.setItem('sushi_job_submission_data', JSON.stringify(dataWithoutParams));
+    localStorage.setItem('omics_job_submission_data', JSON.stringify(dataWithoutParams));
     renderWithProviders(<ConfirmJobPage />);
     await waitFor(() => {
       expect(screen.getByText('Application Parameters')).toBeInTheDocument();

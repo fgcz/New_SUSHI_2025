@@ -1,6 +1,6 @@
-# Sushi Frontend
+# MultiOmicsStudio Frontend
 
-This is a [Next.js](https://nextjs.org) project for the Sushi dataset management application, bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project for the MultiOmicsStudio dataset management application, bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 

@@ -145,8 +145,7 @@ class FilesystemService:
     def write_parameters_tsv(self, scratch_result_dir: str, params: dict) -> Path:
         """Write parameters.tsv to the scratch working directory.
 
-        Format mirrors Ruby SUSHI: two-column TSV with headers
-        'parameterId' and 'value', one row per parameter.
+        Two-column TSV with headers 'parameterId' and 'value', one row per parameter.
         """
         path = Path(scratch_result_dir) / "parameters.tsv"
         lines = ["parameterId\tvalue"]
