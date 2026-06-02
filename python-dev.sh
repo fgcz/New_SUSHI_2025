@@ -7,8 +7,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 BACKEND_PID_FILE="$ROOT_DIR/.backend-python.pid"
 FRONTEND_PID_FILE="$ROOT_DIR/.frontend.pid"
-BACKEND_LOG="$ROOT_DIR/backend_python/sushi-backend.log"
-FRONTEND_LOG="$ROOT_DIR/frontend/sushi-frontend.log"
+BACKEND_LOG="$ROOT_DIR/backend_python/backend.log"
+FRONTEND_LOG="$ROOT_DIR/frontend/frontend.log"
 
 BACKEND_PORT="${BACKEND_PORT:-4071}"
 FRONTEND_PORT="${FRONTEND_PORT:-4070}"

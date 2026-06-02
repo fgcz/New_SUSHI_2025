@@ -43,7 +43,7 @@ export default function ProjectDatasetsPage() {
     staleTime: 60_000,
   });
 
-  const isTreeView = viewMode === 'tree' || viewMode === 'tree3';
+  const isTreeView = viewMode === 'tree';
 
   // Tree data query (shared across all three tree views)
   const { data: treeData, isLoading: isTreeLoading, error: treeError } = useQuery({
@@ -89,7 +89,7 @@ export default function ProjectDatasetsPage() {
       <div className="flex items-center gap-3 mb-4">
         {/* View toggle group */}
         <div className="inline-flex rounded-md bg-gray-100 p-0.5">
-          {(['table', 'tree', 'tree3'] as const).map((mode) => (
+          {(['table', 'tree'] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => {
@@ -104,7 +104,7 @@ export default function ProjectDatasetsPage() {
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              {mode === 'table' ? 'Table' : mode === 'tree' ? 'Tree' : 'Tree 3'}
+              {mode === 'table' ? 'Table' : 'Tree'}
             </button>
           ))}
         </div>
@@ -207,7 +207,7 @@ export default function ProjectDatasetsPage() {
               onSelectionChange={selectMode ? setSelectedSet : undefined}
               projectNumber={projectNumber}
               searchQuery={treeSearchQuery}
-              variant={viewMode === 'tree3' ? 'geist' : 'rctree'}
+              variant="geist"
             />
           )}
         </div>

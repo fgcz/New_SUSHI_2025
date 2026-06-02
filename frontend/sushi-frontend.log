@@ -1409,3 +1409,104 @@ Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
  GET /jobs/214/logs 200 in 56ms (compile: 42ms, render: 14ms)
 ✓ Finished filesystem cache database compaction in 29.9s
 ✓ Finished writing to filesystem cache in 29.5s
+
+> frontend@0.1.0 dev
+> next dev --port 4070 --hostname 0.0.0.0
+
+⚠ Invalid next.config.js options detected: 
+⚠     Unrecognized key(s) in object: 'ignored' at "watchOptions"
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+▲ Next.js 16.1.1 (Turbopack)
+- Local:         http://localhost:4070
+- Network:       http://0.0.0.0:4070
+- Environments: .env.local
+
+✓ Starting...
+
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following mandatory changes were made to your tsconfig.json:
+
+  	- jsx was set to react-jsx (next.js uses the React automatic runtime)
+
+✓ Ready in 657ms
+Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ GET /projects/1001 200 in 1813ms (compile: 1603ms, render: 210ms)
+ GET /projects/1001 200 in 81ms (compile: 29ms, render: 52ms)
+ GET /projects/1001/datasets 200 in 562ms (compile: 537ms, render: 25ms)
+ GET /projects/1001/datasets/343 200 in 504ms (compile: 420ms, render: 84ms)
+ GET /projects/1001/datasets 200 in 91ms (compile: 33ms, render: 58ms)
+ GET /files/p1001 200 in 448ms (compile: 426ms, render: 22ms)
+ GET /p36614 404 in 199ms (compile: 132ms, render: 66ms)
+ GET /files/p1001 200 in 80ms (compile: 37ms, render: 43ms)
+ GET /files/p1001/HelloWorld_EzPyzENACTApp_2026-06-01_2026-06-01--13-14-44 200 in 55ms (compile: 36ms, render: 20ms)
+ GET /files/p1001/HelloWorld_EzPyzENACTApp_2026-06-01_2026-06-01--14-57-03 200 in 48ms (compile: 34ms, render: 14ms)
+ GET /files/p1001/HelloWorld_2026-06-01--15-13-55 200 in 46ms (compile: 33ms, render: 13ms)
+ GET /files 200 in 207ms (compile: 195ms, render: 13ms)
+ GET /files/p1001 200 in 51ms (compile: 38ms, render: 13ms)
+ GET / 200 in 37ms (compile: 25ms, render: 12ms)
+ GET /projects/1001 200 in 76ms (compile: 38ms, render: 38ms)
+ GET /projects/1001 200 in 19ms (compile: 2ms, render: 17ms)
+ GET /projects/1001/datasets 200 in 51ms (compile: 37ms, render: 14ms)
+ GET /projects/1001/datasets/343 200 in 79ms (compile: 38ms, render: 41ms)
+ GET /files/p1001/HelloWorld_2026-06-01--15-13-55 200 in 59ms (compile: 39ms, render: 19ms)
+ GET /projects/1001/datasets/343/run-application/HelloWorld 200 in 462ms (compile: 439ms, render: 23ms)
+ GET /projects/1001/datasets/343/run-application/HelloWorld?step=1 200 in 58ms (compile: 39ms, render: 19ms)
+ GET /projects/1001/datasets/265 200 in 84ms (compile: 38ms, render: 46ms)
+ GET /projects/1001/datasets 200 in 53ms (compile: 36ms, render: 16ms)
+ GET /projects/1001/datasets?view=tree3 200 in 50ms (compile: 35ms, render: 15ms)
+ GET /projects/36614 200 in 51ms (compile: 36ms, render: 15ms)
+ GET /projects/36614/datasets 200 in 55ms (compile: 39ms, render: 15ms)
+ GET /projects/36614/datasets?view=tree3 200 in 52ms (compile: 38ms, render: 14ms)
+ GET /projects/36614/datasets/327 200 in 84ms (compile: 38ms, render: 46ms)
+ GET /projects/36614/datasets/327/run-application/FastQC 200 in 57ms (compile: 38ms, render: 19ms)
+ GET /projects/36614/datasets/327/run-application/FastQC?step=1 200 in 18ms (compile: 1686µs, render: 16ms)
+ GET /projects/36614/datasets/327/run-application/FastQC?step=2 200 in 55ms (compile: 38ms, render: 17ms)
+ GET /files/p36614 200 in 51ms (compile: 38ms, render: 13ms)
+ GET /dataset/list 200 in 96ms (compile: 78ms, render: 18ms)
+ GET /docs 200 in 88ms (compile: 68ms, render: 20ms)
+ GET /dataset/list 200 in 15ms (compile: 1680µs, render: 13ms)
+ GET /help 200 in 84ms (compile: 70ms, render: 14ms)
+ GET /dataset/list 200 in 19ms (compile: 3ms, render: 16ms)
+ GET / 200 in 32ms (compile: 2ms, render: 30ms)
+ GET /dataset/list 200 in 53ms (compile: 1872µs, render: 51ms)
+ GET /files/p36614 200 in 32ms (compile: 17ms, render: 15ms)
+ GET /projects/36614/datasets 200 in 35ms (compile: 14ms, render: 21ms)
+ GET / 200 in 13ms (compile: 1934µs, render: 11ms)
+ GET /projects/1001 200 in 38ms (compile: 21ms, render: 17ms)
+ GET /projects/1001 200 in 21ms (compile: 3ms, render: 18ms)
+ GET / 200 in 28ms (compile: 1749µs, render: 26ms)
+✓ Compiled in 151ms
+ GET /projects/1001 200 in 150ms (compile: 117ms, render: 33ms)
+ GET /projects/1001 200 in 145ms (compile: 25ms, render: 120ms)
+✓ Compiled in 132ms
+✓ Compiled in 81ms
+ GET /projects/1001 200 in 258ms (compile: 111ms, render: 147ms)
+ GET /files/p1001 200 in 54ms (compile: 37ms, render: 18ms)
+ GET /projects/1001/datasets 200 in 59ms (compile: 40ms, render: 18ms)
+ GET /projects/1001/datasets?view=tree3 200 in 44ms (compile: 28ms, render: 16ms)
+ GET /projects/36614 200 in 47ms (compile: 30ms, render: 16ms)
+ GET /projects/36614/datasets 200 in 48ms (compile: 30ms, render: 17ms)
+ GET /projects/36614/datasets?view=tree3 200 in 47ms (compile: 32ms, render: 15ms)
+ GET / 200 in 23ms (compile: 11ms, render: 12ms)
+ GET /projects/1001 200 in 45ms (compile: 29ms, render: 16ms)
+ GET /projects/1001 200 in 16ms (compile: 1686µs, render: 14ms)
+✓ Compiled in 107ms
+✓ Compiled in 91ms
+✓ Compiled in 83ms
+✓ Compiled in 73ms
+✓ Compiled in 86ms
+ GET / 200 in 14ms (compile: 2ms, render: 12ms)
+ GET /projects/1001 200 in 133ms (compile: 105ms, render: 28ms)
+ GET /projects/1001 200 in 27ms (compile: 4ms, render: 24ms)
+ GET /projects/1001 200 in 148ms (compile: 29ms, render: 119ms)
+ GET /projects/1001/datasets?view=tree 200 in 137ms (compile: 107ms, render: 30ms)
+ GET /projects/1001/datasets 200 in 44ms (compile: 31ms, render: 13ms)
+ GET /projects/1001/datasets?view=tree 200 in 46ms (compile: 30ms, render: 16ms)
+ GET /projects/1001/datasets 200 in 42ms (compile: 29ms, render: 13ms)
+ GET /projects/1001/datasets?view=tree 200 in 50ms (compile: 31ms, render: 19ms)
+ GET /projects/1001/datasets 200 in 43ms (compile: 28ms, render: 16ms)
+ GET / 200 in 13ms (compile: 1799µs, render: 11ms)
+ GET /projects/1001 200 in 43ms (compile: 26ms, render: 17ms)
+ GET /projects/1001 200 in 16ms (compile: 1713µs, render: 14ms)
