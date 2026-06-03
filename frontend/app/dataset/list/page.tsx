@@ -123,7 +123,7 @@ export default function GlobalDatasetListPage() {
                 <td className="px-3 py-2">
                   <a href={`/projects/${ds.project_number}`} className="text-brand-600 hover:text-brand-800 hover:underline">{ds.project_number}</a>
                 </td>
-                <td className="px-3 py-2">{ds.app_name || ''}</td>
+                <td className="px-3 py-2">{ds.omics_app_name || ''}</td>
                 <td className="px-3 py-2 text-gray-600">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                 <td className="px-3 py-2">
                   {ds.parent_id ? (

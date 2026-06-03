@@ -121,9 +121,6 @@ class FilesystemService:
         """
         import csv
 
-        if not samples:
-            raise ValueError("No samples to write input_dataset.tsv")
-
         all_keys: set[str] = set()
         for sample in samples:
             all_keys.update(sample.keys())

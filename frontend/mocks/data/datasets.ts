@@ -2,7 +2,7 @@ export const mockDatasets = [
   {
     id: 1,
     name: "RNA-seq Analysis Dataset",
-    app_name: "RNASeqAnalysis",
+    omics_app_name: "RNASeqAnalysis",
     completed_samples: 45,
     samples_count: 50,
     parent_id: null,
@@ -15,7 +15,7 @@ export const mockDatasets = [
   {
     id: 2,
     name: "Quality Control Report",
-    app_name: "FastQC",
+    omics_app_name: "FastQC",
     completed_samples: 50,
     samples_count: 50,
     parent_id: 1,
@@ -28,7 +28,7 @@ export const mockDatasets = [
   {
     id: 3,
     name: "Differential Expression",
-    app_name: "EdgeR",
+    omics_app_name: "EdgeR",
     completed_samples: 30,
     samples_count: 45,
     parent_id: 1,
@@ -41,7 +41,7 @@ export const mockDatasets = [
   {
     id: 4,
     name: "Pathway Analysis",
-    app_name: "GSEA",
+    omics_app_name: "GSEA",
     completed_samples: 0,
     samples_count: 20,
     parent_id: 3,
@@ -54,7 +54,7 @@ export const mockDatasets = [
   {
     id: 5,
     name: "Proteomics Dataset",
-    app_name: "MaxQuant",
+    omics_app_name: "MaxQuant",
     completed_samples: 25,
     samples_count: 30,
     parent_id: null,
@@ -103,7 +103,7 @@ export const mockDatasetFull = {
   bfabric_id: 12345,
   order_id: 9001,
   comment: "Initial RNA-seq analysis",
-  app_name: "RNASeqAnalysis",
+  omics_app_name: "RNASeqAnalysis",
   samples: [
     { id: 101, name: "Sample_A1", status: "completed", read_count: 25000000 },
     { id: 102, name: "Sample_A2", status: "completed", read_count: 28000000 },

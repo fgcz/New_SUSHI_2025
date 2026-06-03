@@ -106,7 +106,7 @@ export default function ProjectPage() {
                         {ds.name}
                       </Link>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {ds.app_name ?? 'imported'}
+                        {ds.omics_app_name ?? 'imported'}
                         {ds.samples_count != null ? ` · ${ds.completed_samples ?? 0}/${ds.samples_count} samples` : ''}
                       </p>
                     </div>

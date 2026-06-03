@@ -258,8 +258,8 @@ export default function ProjectDatasetsPage() {
                     <td className="px-3 py-2">
                       <a href={`/projects/${projectNumber}/datasets/${ds.id}`} className="text-brand-700 hover:text-brand-900 hover:underline font-medium">{ds.name}</a>
                     </td>
-                    {/* <td className="px-3 py-2 text-gray-600 max-w-[150px] truncate" title={ds.app_name || ''}>{ds.app_name || ''}</td> */}
-                    <td className="px-3 py-2">{ds.app_name || ''}</td>
+                    {/* <td className="px-3 py-2 text-gray-600 max-w-[150px] truncate" title={ds.omics_app_name || ''}>{ds.omics_app_name || ''}</td> */}
+                    <td className="px-3 py-2">{ds.omics_app_name || ''}</td>
                     <td className="px-3 py-2 text-gray-600">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                     <td className="px-3 py-2">
                       {ds.parent_id ? (
