@@ -1,11 +1,16 @@
 """Job service for job-related business logic."""
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
+from app.core.auth import require_project_access
 from app.core.exceptions import NotFoundError
 from app.repositories.dataset import DatasetRepository
 from app.repositories.job import JobRepository
 from app.repositories.project import ProjectRepository
+
+if TYPE_CHECKING:
+    from app.api.deps import CurrentUser
 
 
 class JobService:
@@ -38,7 +43,7 @@ class JobService:
 
         # Batch load dataset names
         job_dataset_ids = {j.next_dataset_id for j in jobs if j.next_dataset_id}
-        dataset_names = self.dataset_repo.get_names_by_ids(job_dataset_ids)
+        dataset_names = {ds_id: name for ds_id, name in self.dataset_repo.get_id_name_pairs(job_dataset_ids)}
 
         serialized_jobs = []
         for job in jobs:
@@ -158,8 +163,11 @@ class JobService:
         status: str | None = None,
         user: str | None = None,
         search: str | None = None,
+        *,
+        caller: "CurrentUser",
     ) -> dict:
         """Get paginated jobs for a project."""
+        require_project_access(project_number, caller)
         # Clamp per to [1, 200]
         per = max(1, min(per, 200))
 
@@ -173,7 +181,7 @@ class JobService:
 
         # Batch load dataset names
         job_dataset_ids = {j.next_dataset_id for j in jobs if j.next_dataset_id}
-        dataset_names = self.dataset_repo.get_names_by_ids(job_dataset_ids)
+        dataset_names = {ds_id: name for ds_id, name in self.dataset_repo.get_id_name_pairs(job_dataset_ids)}
 
         # Serialize jobs
         serialized_jobs = []

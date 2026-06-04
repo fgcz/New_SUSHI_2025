@@ -2,12 +2,14 @@
 
 from typing import TYPE_CHECKING
 
+from app.core.auth import require_project_access
 from app.core.config import settings
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models import DataSet
 from app.repositories.dataset import DatasetRepository
 from app.repositories.sample import SampleRepository
 from app.repositories.user import UserRepository
+from app.utils.sample_parser import extract_data_paths, extract_headers, parse_sample_data
 from omics_apps import get_runnable_apps
 
 if TYPE_CHECKING:
@@ -56,8 +58,11 @@ class DatasetService:
         page: int,
         per: int,
         search: str = "",
+        *,
+        caller: "CurrentUser",
     ) -> dict:
         """Get paginated datasets for a project."""
+        require_project_access(project_number, caller)
         # Clamp per to [1, 200]
         per = max(1, min(per, 200))
 
@@ -68,11 +73,14 @@ class DatasetService:
 
         # Batch load users
         user_ids = {ds.user_id for ds in datasets if ds.user_id}
-        users_map = self.user_repo.get_logins_by_ids(user_ids)
+        users_map = {u.id: u.login for u in self.user_repo.get_by_ids(user_ids)}
 
         # Batch load children
         dataset_ids = [ds.id for ds in datasets]
-        children_map = self.dataset_repo.get_children_map(dataset_ids)
+        children_rows = self.dataset_repo.get_children_parent_rows(dataset_ids)
+        children_map: dict[int, list[int]] = {ds_id: [] for ds_id in dataset_ids}
+        for child_id, parent_id in children_rows:
+            children_map[parent_id].append(child_id)
 
         return {
             "datasets": [
@@ -98,8 +106,8 @@ class DatasetService:
         # Get user login
         user_login = None
         if dataset.user_id:
-            users_map = self.user_repo.get_logins_by_ids({dataset.user_id})
-            user_login = users_map.get(dataset.user_id)
+            users = self.user_repo.get_by_ids({dataset.user_id})
+            user_login = users[0].login if users else None
 
         # Get project number
         project_number = self.dataset_repo.get_project_number(dataset)
@@ -107,17 +115,14 @@ class DatasetService:
         # Get children IDs
         children_ids = self.dataset_repo.get_children_ids(dataset.id)
 
-        # Get samples
-        samples = self.sample_repo.get_samples_as_dicts(dataset.id)
-
-        # Get headers
-        headers = self.sample_repo.get_headers(dataset.id)
+        # Parse samples and derive headers/paths
+        raw_samples = self.sample_repo.get_by_dataset_id(dataset.id)
+        samples = [parse_sample_data(s.key_value) for s in raw_samples]
+        headers = extract_headers(samples)
+        data_paths = extract_data_paths(samples)
 
         # Get runnable applications
         applications = get_runnable_apps(headers)
-
-        # Get data folder paths from sample file paths
-        data_paths = self.sample_repo.get_data_paths(dataset.id)
 
         return {
             "id": dataset.id,
@@ -139,8 +144,9 @@ class DatasetService:
             "data_paths": data_paths,
         }
 
-    def get_tree(self, project_number: int) -> dict:
+    def get_tree(self, project_number: int, caller: "CurrentUser") -> dict:
         """Get datasets in tree structure for a project."""
+        require_project_access(project_number, caller)
         rows = self.dataset_repo.get_tree_data_by_project(project_number)
 
         # Unpack tuples into a list of dicts
@@ -153,7 +159,8 @@ class DatasetService:
         dataset_ids = {ds["id"] for ds in datasets}
 
         # Batch load children counts
-        children_counts = self.dataset_repo.get_children_counts(dataset_ids)
+        count_rows = self.dataset_repo.count_children_per_parent(dataset_ids)
+        children_counts = {parent_id: count for parent_id, count in count_rows}
 
         # Build tree nodes
         tree_nodes = []
@@ -181,7 +188,32 @@ class DatasetService:
     def get_tree_for_dataset(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get tree structure for a specific dataset (ancestors + self + descendants)."""
         dataset = self._get_authorized_dataset(dataset_id, user)
-        return self.dataset_repo.get_tree_for_dataset(dataset)
+        return self._build_tree_nodes(dataset)
+
+    def _build_tree_nodes(self, dataset: DataSet) -> list[dict]:
+        """Build jstree-compatible node list for a dataset and its full lineage."""
+        nodes = []
+
+        for ancestor in self.dataset_repo.get_ancestors(dataset):
+            node = {"id": ancestor.id, "name": ancestor.name,
+                    "parent": "#" if ancestor.parent_id is None else ancestor.parent_id}
+            if ancestor.comment:
+                node["comment"] = ancestor.comment
+            nodes.append(node)
+
+        node = {"id": dataset.id, "name": dataset.name,
+                "parent": "#" if dataset.parent_id is None else dataset.parent_id}
+        if dataset.comment:
+            node["comment"] = dataset.comment
+        nodes.append(node)
+
+        for desc in self.dataset_repo.get_all_descendants(dataset.id):
+            node = {"id": desc.id, "name": desc.name, "parent": desc.parent_id}
+            if desc.comment:
+                node["comment"] = desc.comment
+            nodes.append(node)
+
+        return nodes
 
     def get_suggested_name(self, dataset_id: int, app_name: str, user: "CurrentUser") -> dict:
         """Return the suggested output dataset name for a given app."""
@@ -198,11 +230,9 @@ class DatasetService:
         """Get runnable applications for a dataset."""
         dataset = self._get_authorized_dataset(dataset_id, user)
 
-        # Get headers from samples
-        headers = self.sample_repo.get_headers(dataset.id)
-
-        # Get matching applications
-        return get_runnable_apps(headers)
+        raw_samples = self.sample_repo.get_by_dataset_id(dataset.id)
+        samples = [parse_sample_data(s.key_value) for s in raw_samples]
+        return get_runnable_apps(extract_headers(samples))
 
     def set_bfabric_id(self, dataset_id: int, bfabric_id: int, user: "CurrentUser") -> dict:
         """Set the B-Fabric ID for a dataset."""
@@ -213,7 +243,8 @@ class DatasetService:
     def get_samples(self, dataset_id: int, user: "CurrentUser") -> list[dict]:
         """Get all samples for a dataset."""
         dataset = self._get_authorized_dataset(dataset_id, user)
-        return self.sample_repo.get_samples_as_dicts(dataset.id)
+        raw_samples = self.sample_repo.get_by_dataset_id(dataset.id)
+        return [parse_sample_data(s.key_value) for s in raw_samples]
 
     def _serialize_dataset_list(
         self,

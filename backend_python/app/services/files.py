@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from time import time
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.api.deps import CurrentUser
 
 
 def format_size(size_bytes: int | None) -> str:
@@ -259,6 +263,93 @@ def is_file(full_path: str) -> bool:
     """
     path = Path(full_path)
     return path.is_file()
+
+
+class FileService:
+    """Orchestrates file/directory access: validation, authorization, and listing."""
+
+    def get(
+        self,
+        path: str,
+        caller: "CurrentUser",
+        page: int = 1,
+        per_page: int = 50,
+        sort_by: str | None = None,
+        sort_desc: bool | None = None,
+    ) -> dict:
+        """Validate path, check access, and return file info or directory listing."""
+        from app.core.auth import require_project_access
+        from app.core.config import settings
+        from app.core.exceptions import NotFoundError, ValidationError
+
+        path = path.strip("/")
+
+        if not validate_path(path):
+            raise ValidationError(
+                f"Invalid path: '{path}'. Must start with project identifier "
+                "(e.g., p1234) and cannot contain '..' or be absolute."
+            )
+
+        project_number = extract_project_number(path)
+        if project_number is None:
+            raise ValidationError(f"Could not extract project number from path: '{path}'")
+
+        require_project_access(project_number, caller)
+
+        full_path = f"{settings.GSTORE_DIR}/{path}"
+
+        if is_file(full_path):
+            info = get_path_info(full_path)
+            if not info:
+                raise NotFoundError("File", path)
+            return {
+                "type": "file",
+                "name": info["name"],
+                "path": path,
+                "size": info["size"],
+                "size_bytes": info["size_bytes"],
+                "modified": info["modified"],
+                "download_url": f"{settings.GSTORE_URL}/projects/{path}",
+            }
+
+        return self._list_dir(path, full_path, project_number, page, per_page, sort_by, sort_desc)
+
+    def _list_dir(
+        self,
+        path: str,
+        full_path: str,
+        project_number: int,
+        page: int,
+        per_page: int,
+        sort_by: str | None,
+        sort_desc: bool | None,
+    ) -> dict:
+        is_root = bool(re.match(r"^p\d+$", path))
+
+        if sort_by is None:
+            sort_by = "modified" if is_root else "name"
+            sort_desc = (sort_desc if sort_desc is not None else True) if is_root else (sort_desc if sort_desc is not None else False)
+        else:
+            if sort_by not in ("name", "modified", "size"):
+                sort_by = "name"
+            sort_desc = False if sort_desc is None else sort_desc
+
+        result = list_directory(
+            directory=full_path,
+            page=page,
+            per_page=per_page,
+            sort_by=sort_by,
+            sort_desc=sort_desc,
+        )
+
+        path_parts = path.split("/") if path else []
+        parent_path = "/".join(path_parts[:-1]) if len(path_parts) > 1 else None
+
+        result["type"] = "directory"
+        result["path"] = path
+        result["parent_path"] = parent_path
+        result["project_number"] = project_number
+        return result
 
 
 def clear_cache() -> None:

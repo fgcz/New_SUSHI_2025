@@ -24,6 +24,7 @@ from app.repositories.sample import SampleRepository
 from app.repositories.user import UserRepository
 from app.services.filesystem_service import FilesystemService
 from app.services.slurm_service import SlurmService
+from app.utils.sample_parser import parse_sample_data
 from omics_apps import get_app
 
 
@@ -79,7 +80,8 @@ class JobSubmissionService:
         if not dataset:
             raise NotFoundError("Dataset", dataset_id)
 
-        samples = self.sample_repo.get_samples_as_dicts(dataset_id)
+        raw_samples = self.sample_repo.get_by_dataset_id(dataset_id)
+        samples = [parse_sample_data(s.key_value) for s in raw_samples]
 
         # 3. Build paths and create scratch working directory (via FilesystemService)
         result_dir = self.filesystem_service.generate_result_dir(

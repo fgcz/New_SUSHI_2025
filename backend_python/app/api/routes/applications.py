@@ -1,9 +1,10 @@
 """Application routes - application configs and form schemas."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from app.api.deps import CurrentUserDep
 from app.api.serializers.omics_app import serialize_app_config
+from app.core.exceptions import NotFoundError
 from omics_apps import get_app, list_apps
 
 router = APIRouter()
@@ -27,7 +28,7 @@ def get_application_config(
         app = get_app(app_name)
         return serialize_app_config(app)
     except ValueError:
-        raise HTTPException(status_code=404, detail=f"Application '{app_name}' not found")
+        raise NotFoundError("Application", app_name)
 
 
 @router.post("/{app_name}/validate")
@@ -36,19 +37,11 @@ def validate_application_config(
     current_user: CurrentUserDep,
     config: dict,
 ) -> dict:
-    """Validate and adjust application configuration based on current values.
-
-    Apps can override adjust_params() to dynamically modify the form schema
-    based on user input (e.g., show/hide fields, change options).
-    """
+    """Validate and adjust application configuration based on current values."""
     try:
         app = get_app(app_name)
         current_values = config.get("config", {})
-
-        # Let app adjust params based on current form values
         adjusted_params = app.adjust_params(current_values)
-
-        # Return updated schema
         return serialize_app_config(app, adjusted_params)
     except ValueError:
-        raise HTTPException(status_code=404, detail=f"Application '{app_name}' not found")
+        raise NotFoundError("Application", app_name)

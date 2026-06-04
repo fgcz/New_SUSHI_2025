@@ -9,7 +9,6 @@ from app.api.deps import (
     DatasetServiceDep,
     JobServiceDep,
     ProjectServiceDep,
-    require_project_access,
 )
 
 router: APIRouter = APIRouter()
@@ -49,8 +48,7 @@ def get_project_datasets(
     q: str = "",
 ) -> dict:
     """Get paginated datasets for a project."""
-    require_project_access(project_number, current_user)
-    return service.get_paginated(project_number, page, per, q)
+    return service.get_paginated(project_number, page, per, q, caller=current_user)
 
 
 @router.get("/{project_number}/jobs")
@@ -65,8 +63,7 @@ def get_project_jobs(
     q: str | None = None,
 ) -> dict:
     """Get paginated jobs for a project."""
-    require_project_access(project_number, current_user)
-    return service.get_paginated(project_number, page, per, status, user, q)
+    return service.get_paginated(project_number, page, per, status, user, q, caller=current_user)
 
 
 @router.get("/{project_number}/datasets/tree")
@@ -76,8 +73,7 @@ def get_project_datasets_tree(
     service: DatasetServiceDep,
 ) -> dict:
     """Get datasets in tree structure for a project (jstree format)."""
-    require_project_access(project_number, current_user)
-    return service.get_tree(project_number)
+    return service.get_tree(project_number, caller=current_user)
 
 
 @router.get("/rankings")
@@ -99,25 +95,15 @@ async def import_dataset(
     parent_id: int | None = Form(None),
     allow_duplicate: bool = Form(False),
 ) -> dict:
-    """Import a dataset into a project from a TSV file.
-
-    The dataset name and other metadata are extracted from the TSV content.
-    """
-    require_project_access(project_number, current_user)
-
-    # Read file content
+    """Import a dataset into a project from a TSV file."""
     content = await file.read()
-    content_str = content.decode("utf-8")
-
-    # Import dataset
     dataset = import_service.import_from_tsv(
-        content=content_str,
+        content=content.decode("utf-8"),
         project_number=project_number,
         user=current_user,
         parent_id=parent_id,
         allow_duplicate=allow_duplicate,
     )
-
     return {
         "success": True,
         "dataset": {
@@ -137,26 +123,11 @@ async def preview_dataset_import(
     import_service: DatasetImportServiceDep,
     file: UploadFile = File(...),
 ) -> dict:
-    """Preview what would be imported without actually importing.
-
-    Parses the TSV, validates structure, and checks for duplicates
-    in the target project. Does NOT create any database records.
-
-    Args:
-        project_number: Target project
-        file: TSV file to preview
-
-    Returns:
-        Preview info including name, samples count, columns, and duplicate check
-    """
-    require_project_access(project_number, current_user)
-
-    # Read file content
+    """Preview what would be imported without actually importing."""
     content = await file.read()
-    content_str = content.decode("utf-8")
-
-    # Get preview
-    return import_service.preview_import(content_str, project_number)
+    return import_service.preview_import(
+        content.decode("utf-8"), project_number, caller=current_user
+    )
 
 
 class DatasetRegisterRequest(BaseModel):
@@ -173,8 +144,7 @@ def register_dataset(
 ) -> dict:
     """Register a dataset from a server-side TSV file path.
 
-    The project is created automatically if it does not exist.
-    Intended for script/btools callers; no authentication required.
+    No authentication required — intended for script/btools callers.
     """
     dataset = import_service.import_from_path(
         path=body.path,

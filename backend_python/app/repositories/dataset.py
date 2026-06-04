@@ -54,39 +54,23 @@ class DatasetRepository(BaseRepository[DataSet]):
 
         return datasets, total_count, total_pages
 
-    def get_children_map(self, dataset_ids: list[int]) -> dict[int, list[int]]:
-        """Get a mapping of parent dataset IDs to their children IDs."""
-        if not dataset_ids:
-            return {}
+    def get_children_parent_rows(self, parent_ids: list[int]) -> list[tuple[int, int]]:
+        """Get (child_id, parent_id) pairs for the given parent IDs."""
+        if not parent_ids:
+            return []
+        return list(self.session.exec(
+            select(DataSet.id, DataSet.parent_id).where(DataSet.parent_id.in_(parent_ids))
+        ).all())
 
-        children_map: dict[int, list[int]] = {ds_id: [] for ds_id in dataset_ids}
-        children_rows = self.session.exec(
-            select(DataSet.id, DataSet.parent_id).where(
-                DataSet.parent_id.in_(dataset_ids)
-            )
-        ).all()
-
-        for child_id, parent_id in children_rows:
-            children_map[parent_id].append(child_id)
-
-        return children_map
-
-    def get_children_counts(self, dataset_ids: set[int]) -> dict[int, int]:
-        """Get count of children for each dataset ID."""
-        if not dataset_ids:
-            return {}
-
-        children_counts: dict[int, int] = {ds_id: 0 for ds_id in dataset_ids}
-        children_rows = self.session.exec(
+    def count_children_per_parent(self, parent_ids: set[int]) -> list[tuple[int, int]]:
+        """Get (parent_id, count) pairs for the given parent IDs."""
+        if not parent_ids:
+            return []
+        return list(self.session.exec(
             select(DataSet.parent_id, func.count(DataSet.id))
-            .where(DataSet.parent_id.in_(dataset_ids))
+            .where(DataSet.parent_id.in_(parent_ids))
             .group_by(DataSet.parent_id)
-        ).all()
-
-        for parent_id, count in children_rows:
-            children_counts[parent_id] = count
-
-        return children_counts
+        ).all())
 
     def get_tree_data_by_project(
         self, project_number: int
@@ -103,14 +87,13 @@ class DatasetRepository(BaseRepository[DataSet]):
         )
         return list(self.session.exec(statement).all())
 
-    def get_names_by_ids(self, dataset_ids: set[int]) -> dict[int, str]:
-        """Get a mapping of dataset IDs to names."""
+    def get_id_name_pairs(self, dataset_ids: set[int]) -> list[tuple[int, str]]:
+        """Get (id, name) pairs for the given dataset IDs."""
         if not dataset_ids:
-            return {}
-        rows = self.session.exec(
+            return []
+        return list(self.session.exec(
             select(DataSet.id, DataSet.name).where(DataSet.id.in_(dataset_ids))
-        ).all()
-        return {ds_id: name for ds_id, name in rows}
+        ).all())
 
     def get_children_ids(self, dataset_id: int) -> list[int]:
         """Get direct children IDs for a dataset."""
@@ -147,52 +130,6 @@ class DatasetRepository(BaseRepository[DataSet]):
 
         # Return in order from root to immediate parent
         return list(reversed(ancestors))
-
-    def get_tree_for_dataset(self, dataset: DataSet) -> list[dict]:
-        """Get full tree structure for a dataset (ancestors + self + descendants).
-
-        Returns jstree-compatible format:
-        [{"id": 1, "name": "...", "parent": "#" or parent_id, "comment": "..."}]
-        """
-        nodes = []
-
-        # Get ancestors
-        ancestors = self.get_ancestors(dataset)
-        for ancestor in ancestors:
-            parent_val = "#" if ancestor.parent_id is None else ancestor.parent_id
-            node = {
-                "id": ancestor.id,
-                "name": ancestor.name,
-                "parent": parent_val,
-            }
-            if ancestor.comment:
-                node["comment"] = ancestor.comment
-            nodes.append(node)
-
-        # Add current dataset
-        parent_val = "#" if dataset.parent_id is None else dataset.parent_id
-        node = {
-            "id": dataset.id,
-            "name": dataset.name,
-            "parent": parent_val,
-        }
-        if dataset.comment:
-            node["comment"] = dataset.comment
-        nodes.append(node)
-
-        # Get descendants
-        descendants = self.get_all_descendants(dataset.id)
-        for desc in descendants:
-            node = {
-                "id": desc.id,
-                "name": desc.name,
-                "parent": desc.parent_id,
-            }
-            if desc.comment:
-                node["comment"] = desc.comment
-            nodes.append(node)
-
-        return nodes
 
     def set_bfabric_id(self, dataset: DataSet, bfabric_id: int) -> DataSet:
         """Set the B-Fabric ID on a dataset."""

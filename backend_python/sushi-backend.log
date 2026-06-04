@@ -31615,3 +31615,1187 @@ WHERE datasets.id IN (?, ?, ?, ?, ?)
 2026-06-03 11:20:23,721 INFO sqlalchemy.engine.Engine [cached since 9.884s ago] (333, 334, 338, 344, 345)
 INFO:     130.60.193.7:52734 - "GET /projects/36614/jobs?page=1&per=8 HTTP/1.1" 200 OK
 2026-06-03 11:20:23,722 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52866 - "OPTIONS /projects/36614/datasets?page=1&per=10 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52867 - "OPTIONS /projects/36614/datasets/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:07,968 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:07,969 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-03 11:49:07,969 INFO sqlalchemy.engine.Engine [cached since 1734s ago] (36614,)
+2026-06-03 11:49:07,969 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-03 11:49:07,969 INFO sqlalchemy.engine.Engine [cached since 1734s ago] (36614, 10, 0)
+2026-06-03 11:49:07,970 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-03 11:49:07,970 INFO sqlalchemy.engine.Engine [cached since 1734s ago] (345, 344, 338, 339, 334, 335, 333, 332, 331, 330)
+INFO:     130.60.193.7:52868 - "GET /projects/36614/datasets?page=1&per=10 HTTP/1.1" 200 OK
+2026-06-03 11:49:07,972 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-03 11:49:07,973 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:07,974 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-03 11:49:07,974 INFO sqlalchemy.engine.Engine [generated in 0.00013s] (36614,)
+2026-06-03 11:49:07,975 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-06-03 11:49:07,975 INFO sqlalchemy.engine.Engine [generated in 0.00018s] (286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 330, 331, 332, 333, 334, 335, 338, 339, 344, 345)
+INFO:     130.60.193.7:52869 - "GET /projects/36614/datasets/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:07,976 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52873 - "OPTIONS /projects/1001/datasets?page=1&per=8 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52874 - "OPTIONS /projects/1001/jobs?page=1&per=8 HTTP/1.1" 200 OK
+2026-06-03 11:49:23,831 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:23,831 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-03 11:49:23,832 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (1001,)
+2026-06-03 11:49:23,832 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-03 11:49:23,832 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (1001, 8, 0)
+2026-06-03 11:49:23,838 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-03 11:49:23,838 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (2,)
+2026-06-03 11:49:23,838 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-03 11:49:23,838 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (343, 342, 341, 273, 272, 270, 269, 268)
+INFO:     130.60.193.7:52875 - "GET /projects/1001/datasets?page=1&per=8 HTTP/1.1" 200 OK
+2026-06-03 11:49:23,840 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-03 11:49:23,841 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:23,842 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-03 11:49:23,842 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (1001,)
+2026-06-03 11:49:23,843 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM jobs 
+WHERE jobs.next_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) OR jobs.input_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-03 11:49:23,843 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (17, 18, 19, 20, 23, 37, 39, 44, 47, 51, 53, 54, 127, 129, 130, 131, 132, 133, 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222 ... 32 parameters truncated ... 132, 133, 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222, 224, 228, 234, 243, 245, 265, 266, 267, 268, 269, 270, 272, 273, 341, 342, 343)
+2026-06-03 11:49:23,844 INFO sqlalchemy.engine.Engine SELECT jobs.id, jobs.submit_job_id, jobs.input_dataset_id, jobs.next_dataset_id, jobs.created_at, jobs.updated_at, jobs.script_path, jobs.stdout_path, jobs.stderr_path, jobs.submit_command, jobs.status, jobs.user, jobs.start_time, jobs.end_time 
+FROM jobs 
+WHERE jobs.next_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) OR jobs.input_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ORDER BY jobs.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-03 11:49:23,844 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (17, 18, 19, 20, 23, 37, 39, 44, 47, 51, 53, 54, 127, 129, 130, 131, 132, 133, 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222 ... 34 parameters truncated ... 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222, 224, 228, 234, 243, 245, 265, 266, 267, 268, 269, 270, 272, 273, 341, 342, 343, 8, 0)
+2026-06-03 11:49:23,845 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.name 
+FROM datasets 
+WHERE datasets.id IN (?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-03 11:49:23,845 INFO sqlalchemy.engine.Engine [cached since 1750s ago] (268, 269, 270, 272, 273, 341, 342, 343)
+INFO:     130.60.193.7:52876 - "GET /projects/1001/jobs?page=1&per=8 HTTP/1.1" 200 OK
+2026-06-03 11:49:23,846 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52874 - "OPTIONS /projects/1001/datasets?page=1&per=10 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52873 - "OPTIONS /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:28,355 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:28,356 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-03 11:49:28,356 INFO sqlalchemy.engine.Engine [cached since 1755s ago] (1001,)
+2026-06-03 11:49:28,356 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-03 11:49:28,356 INFO sqlalchemy.engine.Engine [cached since 1755s ago] (1001, 10, 0)
+2026-06-03 11:49:28,364 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-03 11:49:28,365 INFO sqlalchemy.engine.Engine [cached since 1755s ago] (2,)
+2026-06-03 11:49:28,365 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-03 11:49:28,366 INFO sqlalchemy.engine.Engine [cached since 1755s ago] (343, 342, 341, 273, 272, 270, 269, 268, 267, 266)
+2026-06-03 11:49:28,366 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:28,367 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-03 11:49:28,367 INFO sqlalchemy.engine.Engine [cached since 20.39s ago] (1001,)
+INFO:     130.60.193.7:52876 - "GET /projects/1001/datasets?page=1&per=10 HTTP/1.1" 200 OK
+2026-06-03 11:49:28,368 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-03 11:49:28,369 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-06-03 11:49:28,369 INFO sqlalchemy.engine.Engine [cached since 20.39s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 341, 342, 343, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:52875 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:28,370 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52873 - "OPTIONS /datasets/268 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52874 - "OPTIONS /datasets/268/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52874 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+2026-06-03 11:49:30,072 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:30,074 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 11:49:30,074 INFO sqlalchemy.engine.Engine [generated in 0.00015s] (268,)
+2026-06-03 11:49:30,077 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 11:49:30,077 INFO sqlalchemy.engine.Engine [cached since 0.003721s ago] (265,)
+2026-06-03 11:49:30,078 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:30,078 INFO sqlalchemy.engine.Engine [generated in 0.00028s] (268,)
+2026-06-03 11:49:30,079 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:30,079 INFO sqlalchemy.engine.Engine [cached since 0.001081s ago] (341,)
+2026-06-03 11:49:30,080 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:30,080 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+INFO:     130.60.193.7:52875 - "GET /datasets/268/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:30,081 INFO sqlalchemy.engine.Engine [cached since 0.007161s ago] (268,)
+2026-06-03 11:49:30,081 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-03 11:49:30,083 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-03 11:49:30,083 INFO sqlalchemy.engine.Engine [cached since 1756s ago] (2,)
+2026-06-03 11:49:30,084 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-06-03 11:49:30,084 INFO sqlalchemy.engine.Engine [generated in 0.00011s] (3,)
+2026-06-03 11:49:30,085 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:30,085 INFO sqlalchemy.engine.Engine [generated in 0.00010s] (268,)
+2026-06-03 11:49:30,086 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 11:49:30,086 INFO sqlalchemy.engine.Engine [generated in 0.00018s] (268,)
+2026-06-03 11:49:30,087 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 11:49:30,087 INFO sqlalchemy.engine.Engine [cached since 0.001439s ago] (268,)
+INFO:     130.60.193.7:52883 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-06-03 11:49:30,088 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 11:49:30,088 INFO sqlalchemy.engine.Engine [cached since 0.002351s ago] (268,)
+INFO:     130.60.193.7:52876 - "GET /datasets/268 HTTP/1.1" 200 OK
+2026-06-03 11:49:30,089 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52874 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52876 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52874 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52876 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52882 - "OPTIONS /datasets/265/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:35,296 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:35,296 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 11:49:35,296 INFO sqlalchemy.engine.Engine [cached since 5.222s ago] (265,)
+2026-06-03 11:49:35,296 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,296 INFO sqlalchemy.engine.Engine [cached since 5.218s ago] (265,)
+2026-06-03 11:49:35,301 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,301 INFO sqlalchemy.engine.Engine [cached since 5.223s ago] (266,)
+2026-06-03 11:49:35,301 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,301 INFO sqlalchemy.engine.Engine [cached since 5.223s ago] (267,)
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine [cached since 5.223s ago] (268,)
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine [cached since 5.224s ago] (342,)
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine [cached since 5.224s ago] (341,)
+2026-06-03 11:49:35,302 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:35,303 INFO sqlalchemy.engine.Engine [cached since 5.224s ago] (343,)
+INFO:     130.60.193.7:52884 - "GET /datasets/265/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:35,303 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52882 - "OPTIONS /datasets/267 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52884 - "GET /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:52892 - "OPTIONS /datasets/267/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:37,699 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:37,699 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 11:49:37,699 INFO sqlalchemy.engine.Engine [cached since 7.626s ago] (267,)
+2026-06-03 11:49:37,701 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-03 11:49:37,701 INFO sqlalchemy.engine.Engine [cached since 1764s ago] (2,)
+2026-06-03 11:49:37,702 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-06-03 11:49:37,702 INFO sqlalchemy.engine.Engine [cached since 7.618s ago] (3,)
+2026-06-03 11:49:37,702 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:37,702 INFO sqlalchemy.engine.Engine [cached since 7.617s ago] (267,)
+2026-06-03 11:49:37,702 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 11:49:37,702 INFO sqlalchemy.engine.Engine [cached since 7.617s ago] (267,)
+2026-06-03 11:49:37,703 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 11:49:37,703 INFO sqlalchemy.engine.Engine [cached since 7.617s ago] (267,)
+2026-06-03 11:49:37,703 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 11:49:37,703 INFO sqlalchemy.engine.Engine [cached since 7.618s ago] (267,)
+INFO:     130.60.193.7:52884 - "GET /datasets/267 HTTP/1.1" 200 OK
+2026-06-03 11:49:37,704 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52893 - "GET /auth/me HTTP/1.1" 200 OK
+2026-06-03 11:49:37,711 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 11:49:37,712 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 11:49:37,712 INFO sqlalchemy.engine.Engine [cached since 7.638s ago] (267,)
+2026-06-03 11:49:37,713 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 11:49:37,714 INFO sqlalchemy.engine.Engine [cached since 7.64s ago] (265,)
+2026-06-03 11:49:37,714 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:37,714 INFO sqlalchemy.engine.Engine [cached since 7.636s ago] (267,)
+2026-06-03 11:49:37,714 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:37,714 INFO sqlalchemy.engine.Engine [cached since 7.636s ago] (342,)
+2026-06-03 11:49:37,714 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 11:49:37,715 INFO sqlalchemy.engine.Engine [cached since 7.636s ago] (343,)
+INFO:     130.60.193.7:52894 - "GET /datasets/267/tree HTTP/1.1" 200 OK
+2026-06-03 11:49:37,715 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:52893 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.54:50408 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.7:53064 - "OPTIONS /datasets/267 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:53065 - "OPTIONS /datasets/267/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:53066 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+2026-06-03 13:44:03,604 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 13:44:03,605 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 13:44:03,605 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+2026-06-03 13:44:03,607 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-03 13:44:03,607 INFO sqlalchemy.engine.Engine [cached since 8630s ago] (2,)
+2026-06-03 13:44:03,608 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-06-03 13:44:03,608 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (3,)
+2026-06-03 13:44:03,609 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:44:03,609 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+INFO:     130.60.193.7:53069 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-06-03 13:44:03,610 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 13:44:03,610 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+2026-06-03 13:44:03,611 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 13:44:03,611 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 13:44:03,612 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 13:44:03,612 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+2026-06-03 13:44:03,612 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+2026-06-03 13:44:03,614 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 13:44:03,614 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (265,)
+2026-06-03 13:44:03,615 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 13:44:03,615 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:44:03,615 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+2026-06-03 13:44:03,615 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (267,)
+2026-06-03 13:44:03,616 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+INFO:     130.60.193.7:53070 - "GET /datasets/267 HTTP/1.1" 200 OK
+2026-06-03 13:44:03,617 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (342,)
+2026-06-03 13:44:03,617 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-03 13:44:03,617 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:44:03,618 INFO sqlalchemy.engine.Engine [cached since 6874s ago] (343,)
+INFO:     130.60.193.7:53068 - "GET /datasets/267/tree HTTP/1.1" 200 OK
+2026-06-03 13:44:03,618 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:53066 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:53068 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:53066 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:53068 - "GET /projects/ HTTP/1.1" 200 OK
+2026-06-03 13:51:42,685 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 13:51:42,686 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 13:51:42,686 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,688 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-03 13:51:42,689 INFO sqlalchemy.engine.Engine [cached since 9089s ago] (2,)
+2026-06-03 13:51:42,689 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-06-03 13:51:42,689 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (3,)
+2026-06-03 13:51:42,690 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:51:42,690 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,690 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+INFO:     130.60.193.7:53110 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-06-03 13:51:42,690 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,691 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-03 13:51:42,691 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 13:51:42,692 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,692 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 13:51:42,692 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,694 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-03 13:51:42,694 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (265,)
+2026-06-03 13:51:42,695 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:51:42,695 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-03 13:51:42,696 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,696 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (267,)
+2026-06-03 13:51:42,696 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:51:42,696 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (342,)
+INFO:     130.60.193.7:53108 - "GET /datasets/267 HTTP/1.1" 200 OK
+2026-06-03 13:51:42,697 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-03 13:51:42,698 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-03 13:51:42,698 INFO sqlalchemy.engine.Engine [cached since 7333s ago] (343,)
+INFO:     130.60.193.7:53109 - "GET /datasets/267/tree HTTP/1.1" 200 OK
+2026-06-03 13:51:42,698 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:53110 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:53110 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.54:60290 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:36976 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:42370 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:60536 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:54978 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:59788 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:44858 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:51478 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:56640 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:40136 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:42940 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.7:55027 - "OPTIONS /projects/1001/datasets?page=1&per=8 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55028 - "OPTIONS /projects/1001/jobs?page=1&per=8 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55029 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55032 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-06-04 10:24:42,932 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 10:24:42,933 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-04 10:24:42,933 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (1001,)
+2026-06-04 10:24:42,933 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 10:24:42,934 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-04 10:24:42,934 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (1001,)
+2026-06-04 10:24:42,935 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM jobs 
+WHERE jobs.next_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) OR jobs.input_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-04 10:24:42,935 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (17, 18, 19, 20, 23, 37, 39, 44, 47, 51, 53, 54, 127, 129, 130, 131, 132, 133, 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222 ... 32 parameters truncated ... 132, 133, 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222, 224, 228, 234, 243, 245, 265, 266, 267, 268, 269, 270, 272, 273, 341, 342, 343)
+2026-06-04 10:24:42,936 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-04 10:24:42,936 INFO sqlalchemy.engine.Engine SELECT jobs.id, jobs.submit_job_id, jobs.input_dataset_id, jobs.next_dataset_id, jobs.created_at, jobs.updated_at, jobs.script_path, jobs.stdout_path, jobs.stderr_path, jobs.submit_command, jobs.status, jobs.user, jobs.start_time, jobs.end_time 
+FROM jobs 
+WHERE jobs.next_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) OR jobs.input_dataset_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ORDER BY jobs.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-04 10:24:42,936 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (1001, 8, 0)
+2026-06-04 10:24:42,936 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (17, 18, 19, 20, 23, 37, 39, 44, 47, 51, 53, 54, 127, 129, 130, 131, 132, 133, 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222 ... 34 parameters truncated ... 137, 141, 145, 147, 150, 151, 152, 153, 154, 155, 168, 169, 172, 173, 179, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 220, 221, 222, 224, 228, 234, 243, 245, 265, 266, 267, 268, 269, 270, 272, 273, 341, 342, 343, 8, 0)
+2026-06-04 10:24:42,942 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-04 10:24:42,942 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (2,)
+2026-06-04 10:24:42,943 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-04 10:24:42,943 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (343, 342, 341, 273, 272, 270, 269, 268)
+2026-06-04 10:24:42,944 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.name 
+FROM datasets 
+WHERE datasets.id IN (?, ?, ?, ?, ?, ?, ?, ?)
+INFO:     130.60.193.7:55030 - "GET /projects/1001/datasets?page=1&per=8 HTTP/1.1" 200 OK
+2026-06-04 10:24:42,944 INFO sqlalchemy.engine.Engine [cached since 8.307e+04s ago] (268, 269, 270, 272, 273, 341, 342, 343)
+2026-06-04 10:24:42,944 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:55031 - "GET /projects/1001/jobs?page=1&per=8 HTTP/1.1" 200 OK
+2026-06-04 10:24:42,945 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:55029 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55031 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55029 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55031 - "GET /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55037 - "OPTIONS /projects/1001/datasets?page=1&per=10 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55038 - "OPTIONS /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-06-04 10:24:51,976 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 10:24:51,976 INFO sqlalchemy.engine.Engine SELECT count(*) AS count_1 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-04 10:24:51,976 INFO sqlalchemy.engine.Engine [cached since 8.308e+04s ago] (1001,)
+2026-06-04 10:24:51,977 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 10:24:51,977 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ? ORDER BY datasets.created_at DESC
+ LIMIT ? OFFSET ?
+2026-06-04 10:24:51,978 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id, datasets.name, datasets.comment 
+FROM datasets JOIN projects ON datasets.project_id = projects.id 
+WHERE projects.number = ?
+2026-06-04 10:24:51,978 INFO sqlalchemy.engine.Engine [cached since 8.308e+04s ago] (1001, 10, 0)
+2026-06-04 10:24:51,978 INFO sqlalchemy.engine.Engine [cached since 8.134e+04s ago] (1001,)
+2026-06-04 10:24:51,986 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-04 10:24:51,986 INFO sqlalchemy.engine.Engine [cached since 8.308e+04s ago] (2,)
+2026-06-04 10:24:51,986 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.parent_id 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-04 10:24:51,987 INFO sqlalchemy.engine.Engine [cached since 8.308e+04s ago] (343, 342, 341, 273, 272, 270, 269, 268, 267, 266)
+2026-06-04 10:24:51,987 INFO sqlalchemy.engine.Engine SELECT datasets.parent_id, count(datasets.id) AS count_1 
+FROM datasets 
+WHERE datasets.parent_id IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) GROUP BY datasets.parent_id
+2026-06-04 10:24:51,988 INFO sqlalchemy.engine.Engine [cached since 8.134e+04s ago] (129, 130, 131, 132, 133, 137, 265, 266, 267, 141, 268, 269, 270, 17, 18, 19, 20, 145, 147, 23, 150, 151, 152, 153, 154, 155, 37, 39, 168, 169, 44, 172, 173, 47, 51, 179, 53, 54, 180, 182, 185, 186, 188, 189, 190, 199, 200, 201, 202, 203, 205, 206, 341, 342, 343, 272, 220, 221, 222, 273, 224, 228, 234, 243, 245, 127)
+INFO:     130.60.193.7:55039 - "GET /projects/1001/datasets?page=1&per=10 HTTP/1.1" 200 OK
+2026-06-04 10:24:51,988 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:55040 - "GET /projects/1001/datasets/tree HTTP/1.1" 200 OK
+2026-06-04 10:24:51,990 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:55038 - "OPTIONS /datasets/268 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55037 - "OPTIONS /datasets/268/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55040 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-06-04 10:24:53,515 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 10:24:53,515 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-04 10:24:53,515 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+2026-06-04 10:24:53,517 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-04 10:24:53,518 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (265,)
+2026-06-04 10:24:53,519 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-04 10:24:53,519 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+2026-06-04 10:24:53,519 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-04 10:24:53,519 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (341,)
+2026-06-04 10:24:53,520 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO:     130.60.193.7:55039 - "GET /datasets/268/tree HTTP/1.1" 200 OK
+2026-06-04 10:24:53,520 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-04 10:24:53,521 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-04 10:24:53,521 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+2026-06-04 10:24:53,523 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-04 10:24:53,523 INFO sqlalchemy.engine.Engine [cached since 8.308e+04s ago] (2,)
+2026-06-04 10:24:53,523 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-06-04 10:24:53,523 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (3,)
+2026-06-04 10:24:53,524 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-04 10:24:53,524 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+2026-06-04 10:24:53,524 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-04 10:24:53,524 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+2026-06-04 10:24:53,525 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-04 10:24:53,525 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+2026-06-04 10:24:53,525 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-04 10:24:53,525 INFO sqlalchemy.engine.Engine [cached since 8.132e+04s ago] (268,)
+INFO:     130.60.193.7:55044 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55040 - "GET /datasets/268 HTTP/1.1" 200 OK
+2026-06-04 10:24:53,527 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:55040 - "GET /projects/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/utils/sample_parser.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2133264]
+INFO:     Started server process [2668714]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/sample.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2668714]
+INFO:     Started server process [2668806]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2668806]
+INFO:     Started server process [2668930]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2668930]
+INFO:     Started server process [2669504]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669504]
+INFO:     Started server process [2669600]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/user.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669600]
+INFO:     Started server process [2669654]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669654]
+INFO:     Started server process [2669733]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669733]
+INFO:     Started server process [2669791]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669791]
+INFO:     Started server process [2669880]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669880]
+INFO:     Started server process [2669958]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2669958]
+INFO:     Started server process [2670024]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2670024]
+INFO:     Started server process [2670050]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2670050]
+INFO:     Started server process [2670131]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job_submission.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2670131]
+INFO:     Started server process [2670178]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job_submission.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2670178]
+INFO:     Started server process [2670259]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2670259]
+INFO:     Started server process [2670325]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/core/auth.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2670325]
+INFO:     Started server process [2673800]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2673800]
+INFO:     Started server process [2673845]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2673845]
+INFO:     Started server process [2674022]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674022]
+INFO:     Started server process [2674051]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674051]
+INFO:     Started server process [2674131]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674131]
+INFO:     Started server process [2674200]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674200]
+INFO:     Started server process [2674274]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674274]
+INFO:     Started server process [2674329]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674329]
+INFO:     Started server process [2674408]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674408]
+INFO:     Started server process [2674435]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674435]
+INFO:     Started server process [2674517]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/files.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674517]
+INFO:     Started server process [2674605]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/files.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674605]
+INFO:     Started server process [2674691]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674691]
+INFO:     Started server process [2674769]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674769]
+INFO:     Started server process [2674784]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674784]
+INFO:     Started server process [2674860]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674860]
+INFO:     Started server process [2674941]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/applications.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2674941]
+INFO:     Started server process [2675021]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/projects.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2675021]
+INFO:     Started server process [2675848]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/files.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2675848]
+INFO:     Started server process [2676209]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2676209]
+Process SpawnProcess-45:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 4, in <module>
+    from app.services.dataset import DatasetService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/dataset.py", line 61
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+Process SpawnProcess-46:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 4, in <module>
+    from app.services.dataset import DatasetService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/dataset.py", line 61
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+Process SpawnProcess-47:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 4, in <module>
+    from app.services.dataset import DatasetService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/dataset.py", line 61
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+Process SpawnProcess-48:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 4, in <module>
+    from app.services.dataset import DatasetService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/dataset.py", line 61
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+Process SpawnProcess-49:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 4, in <module>
+    from app.services.dataset import DatasetService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/dataset.py", line 61
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+Process SpawnProcess-50:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 4, in <module>
+    from app.services.dataset import DatasetService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/dataset.py", line 61
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/dataset.py'. Reloading...
+Process SpawnProcess-51:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/applications.py", line 5, in <module>
+    from app.api.deps import CurrentUserDep
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/deps.py", line 23, in <module>
+    from app.services import (
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/__init__.py", line 6, in <module>
+    from app.services.job import JobService
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/services/job.py", line 166
+    caller: "CurrentUser",
+    ^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: parameter without a default follows parameter with a default
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Started server process [2686322]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

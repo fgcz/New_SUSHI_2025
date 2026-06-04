@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import Cookie, Depends, Header
 from sqlmodel import Session
 
+from app.core.auth import require_project_access  # re-exported for routes that still import it  # noqa: F401
 from app.core.config import settings
 from app.core.db import get_session
 from app.core.exceptions import AuthenticationError, ForbiddenError
@@ -29,6 +30,7 @@ from app.services import (
     SlurmService,
 )
 from app.services.dataset_import import DatasetImportService
+from app.services.files import FileService
 
 # Session dependency
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -193,29 +195,6 @@ def get_optional_current_user(
         return None
 
 
-def require_project_access(project_number: int, user: CurrentUser) -> None:
-    """Check if user has access to a project.
-
-    Args:
-        project_number: The project number to check access for
-        user: The current authenticated user
-
-    Raises:
-        ForbiddenError: If user doesn't have access to the project
-    """
-    # Skip project access check in development mode
-    if settings.SKIP_AUTH:
-        return
-
-    # Employees have global read access to all projects
-    if user.is_employee:
-        return
-
-    # Check if user has explicit project membership
-    if project_number not in user.projects:
-        raise ForbiddenError(f"You don't have access to project {project_number}")
-
-
 def get_refresh_token_from_cookie(
     refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> str:
@@ -252,6 +231,11 @@ JobSubmissionServiceDep = Annotated[JobSubmissionService, Depends(get_job_submis
 ProjectServiceDep = Annotated[ProjectService, Depends(get_project_service)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
+def get_file_service() -> FileService:
+    return FileService()
+
+
 CurrentUserDep = Annotated[CurrentUser, Depends(get_current_user)]
 OptionalCurrentUserDep = Annotated[CurrentUser | None, Depends(get_optional_current_user)]
 RefreshTokenDep = Annotated[str, Depends(get_refresh_token_from_cookie)]
+FileServiceDep = Annotated[FileService, Depends(get_file_service)]

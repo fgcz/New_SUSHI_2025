@@ -123,16 +123,20 @@ class DatasetService:
         if not dataset:
             raise NotFoundError("Dataset", dataset_id)
 
-        # 2. Fetch related data from multiple repositories
+        # 2. Fetch related data — repos return raw models/primitives, service transforms
         user_login = None
         if dataset.user_id:
-            users_map = self.user_repo.get_logins_by_ids({dataset.user_id})
-            user_login = users_map.get(dataset.user_id)
+            users = self.user_repo.get_by_ids({dataset.user_id})  # list[User]
+            user_login = users[0].login if users else None
 
         project_number = self.dataset_repo.get_project_number(dataset)
         children_ids = self.dataset_repo.get_children_ids(dataset.id)
-        samples = self.sample_repo.get_samples_as_dicts(dataset.id)
-        headers = self.sample_repo.get_headers(dataset.id)
+
+        # Repositories return raw Sample instances; parsing and header extraction is
+        # done here because it is interpretation of the key_value blob, not data access.
+        raw_samples = self.sample_repo.get_by_dataset_id(dataset.id)  # list[Sample]
+        samples = [parse_sample_data(s.key_value) for s in raw_samples]
+        headers = extract_headers(samples)
         applications = get_runnable_apps(headers)
 
         # 3. Transform into API response format
@@ -255,15 +259,15 @@ class DatasetRepository(BaseRepository[DataSet]):
 ### What Repositories Do
 
 1. **Encapsulate SQL** - All queries in one place
-2. **Return models or primitives** - Not dicts (that's service's job)
+2. **Return raw models or primitives** - `list[DataSet]`, `list[tuple[int, str]]`, scalars — never dicts
 3. **Handle joins and filters** - Complex query logic
-4. **Provide batch operations** - `get_logins_by_ids({1, 2, 3})`
+4. **Provide batch operations** - `get_by_ids({1, 2, 3})` returning `list[User]`
 
 ### What Repositories Should NOT Do
 
 - ❌ Contain business logic
 - ❌ Know about HTTP or API formats
-- ❌ Transform data into response format
+- ❌ Build dicts, sort by business rules, or parse serialized blobs — that is transformation and belongs in the service
 
 ---
 
@@ -355,10 +359,11 @@ All repositories share the same database session within a request.
    │
    ▼
 5. Service orchestrates:
-   │   dataset = self.dataset_repo.get_by_id(123)      → SQL: SELECT * FROM datasets WHERE id=123
-   │   users_map = self.user_repo.get_logins_by_ids()  → SQL: SELECT id, login FROM users WHERE id IN (...)
-   │   samples = self.sample_repo.get_samples_as_dicts() → SQL: SELECT * FROM samples WHERE data_set_id=123
-   │   ... more repository calls ...
+   │   dataset = self.dataset_repo.get_by_id(123)       → SQL: SELECT * FROM datasets WHERE id=123
+   │   users   = self.user_repo.get_by_ids({user_id})   → SQL: SELECT * FROM users WHERE id IN (...)
+   │   raw     = self.sample_repo.get_by_dataset_id(123)→ SQL: SELECT * FROM samples WHERE data_set_id=123
+   │   samples = [parse_sample_data(s.key_value) ...]   ← transformation: service parses key_value blob
+   │   ... more repository calls and transformations ...
    │   return {"id": 123, "name": "...", "samples": [...]}
    │
    ▼

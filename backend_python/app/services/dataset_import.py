@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import Session
 
+from app.core.auth import require_project_access
 from app.core.exceptions import ConflictError, NotFoundError, ValidationError
 from app.models import DataSet, Project, Sample, User
 from app.utils.sample_parser import serialize_sample_data
@@ -42,10 +43,10 @@ class DatasetImportService:
         except OSError as e:
             raise ValidationError(f"Cannot read dataset file: {e}")
 
-        return self.import_from_tsv(
+        return self._do_import(
             content=content,
             project_number=project_number,
-            user=None,
+            user_id=None,
             parent_id=parent_id,
             name_override=name_override,
             auto_create_project=True,
@@ -55,31 +56,47 @@ class DatasetImportService:
         self,
         content: str,
         project_number: int,
-        user: "CurrentUser | None",
+        caller: "CurrentUser",
+        *,
+        parent_id: int | None = None,
+        allow_duplicate: bool = True,
+        name_override: str | None = None,
+    ) -> DataSet:
+        """Import a dataset from TSV content for an authenticated user.
+
+        Raises:
+            ForbiddenError: If caller does not have access to the project
+            ValidationError: If TSV is invalid
+            NotFoundError: If project doesn't exist
+            ConflictError: If duplicate dataset exists (and allow_duplicate=False)
+        """
+        require_project_access(project_number, caller)
+        db_user = self.session.query(User).filter(User.login == caller.login).first()
+        user_id = db_user.id if db_user else None
+        return self._do_import(
+            content=content,
+            project_number=project_number,
+            user_id=user_id,
+            parent_id=parent_id,
+            allow_duplicate=allow_duplicate,
+            name_override=name_override,
+        )
+
+    def _do_import(
+        self,
+        content: str,
+        project_number: int,
+        user_id: int | None,
         *,
         parent_id: int | None = None,
         allow_duplicate: bool = True,
         name_override: str | None = None,
         auto_create_project: bool = False,
     ) -> DataSet:
-        """Import a dataset from TSV content.
+        """Perform the actual import with no authentication check.
 
-        Args:
-            content: TSV file content
-            project_number: Project to import into
-            user: Current user performing import
-            parent_id: Optional parent dataset ID (for child datasets)
-            allow_duplicate: If True, skip MD5 duplicate check
-
-        Returns:
-            Created DataSet
-
-        Raises:
-            ValidationError: If TSV is invalid
-            NotFoundError: If project doesn't exist
-            ConflictError: If duplicate dataset exists (and allow_duplicate=False)
+        Called by import_from_tsv (after auth) and import_from_path (server-side, no user).
         """
-        # Parse TSV
         try:
             parsed = parse_tsv(content)
         except ValueError as e:
@@ -92,13 +109,9 @@ class DatasetImportService:
         if not parsed.samples:
             raise ValidationError("Dataset must have at least one sample")
 
-        # Get project, optionally creating it if missing
         project = self._get_project(project_number, auto_create=auto_create_project)
-
-        # Compute MD5 for duplicate detection
         md5 = self._compute_md5(content)
 
-        # Check for duplicates
         if not allow_duplicate:
             existing = self._find_duplicate(project.id, md5)
             if existing:
@@ -106,13 +119,6 @@ class DatasetImportService:
                     f"Duplicate dataset exists: '{existing.name}' (ID: {existing.id})"
                 )
 
-        # Resolve user_id from login if a user was provided
-        user_id = None
-        if user is not None:
-            db_user = self.session.query(User).filter(User.login == user.login).first()
-            user_id = db_user.id if db_user else None
-
-        # Create dataset
         dataset = DataSet(
             project_id=project.id,
             parent_id=parent_id,
@@ -128,11 +134,8 @@ class DatasetImportService:
         )
 
         self.session.add(dataset)
-        self.session.flush()  # Get dataset.id
-
-        # Create samples
+        self.session.flush()
         self._create_samples(dataset.id, parsed)
-
         self.session.commit()
 
         return dataset
@@ -174,6 +177,7 @@ class DatasetImportService:
         self,
         content: str,
         project_number: int,
+        caller: "CurrentUser",
     ) -> dict:
         """Preview what would be imported without actually importing.
 
@@ -184,6 +188,7 @@ class DatasetImportService:
         Returns:
             Dict with preview information
         """
+        require_project_access(project_number, caller)
         parsed = self.validate_tsv(content)
         project = self._get_project(project_number)
         md5 = self._compute_md5(content)

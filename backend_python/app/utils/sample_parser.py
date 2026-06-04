@@ -273,6 +273,51 @@ def _parse_ruby_literal(s: str, pos: int) -> tuple[Any, int]:
     raise ValueError(f"Cannot parse value at position {pos}: {s[pos:pos+20]}")
 
 
+def extract_headers(samples: list[dict[str, Any]]) -> list[str]:
+    """Extract unique column headers from parsed sample dicts.
+
+    Sorted: Name first, then Factor fields, then others alphabetically.
+    """
+    all_keys: set[str] = set()
+    for sample in samples:
+        all_keys.update(sample.keys())
+
+    name_headers, factor_headers, other_headers = [], [], []
+    for key in all_keys:
+        if key.lower() == "name":
+            name_headers.append(key)
+        elif "factor" in key.lower():
+            factor_headers.append(key)
+        else:
+            other_headers.append(key)
+
+    return sorted(name_headers) + sorted(factor_headers) + sorted(other_headers)
+
+
+def extract_data_paths(samples: list[dict[str, Any]]) -> list[str]:
+    """Extract unique dataset-level paths (first 2 segments) from sample [File]/[Link] fields."""
+    sample_paths: set[str] = set()
+    for sample in samples:
+        for header, value in sample.items():
+            if "[File]" not in header and "[Link]" not in header:
+                continue
+            if not value:
+                continue
+            for file_path in str(value).split(","):
+                file_path = file_path.strip()
+                if "/" in file_path:
+                    dir_path = "/".join(file_path.split("/")[:-1])
+                    if dir_path:
+                        sample_paths.add(dir_path)
+
+    dataset_paths: set[str] = set()
+    for path in sample_paths:
+        segments = path.split("/")
+        dataset_paths.add("/".join(segments[:2]) if len(segments) >= 2 else segments[0])
+
+    return sorted(dataset_paths)
+
+
 def serialize_sample_data(data: dict[str, Any]) -> str:
     """Serialize sample data to JSON format.
 

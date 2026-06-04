@@ -12,12 +12,11 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, session: Session):
         super().__init__(session, User)
 
-    def get_logins_by_ids(self, ids: set[int]) -> dict[int, str]:
-        """Get a mapping of user IDs to login names."""
+    def get_by_ids(self, ids: set[int]) -> list[User]:
+        """Get users by a set of IDs."""
         if not ids:
-            return {}
-        users = self.session.exec(select(User).where(User.id.in_(ids))).all()
-        return {u.id: u.login for u in users}
+            return []
+        return list(self.session.exec(select(User).where(User.id.in_(ids))).all())
 
     def get_by_login(self, login: str) -> User | None:
         """Get a user by their login name."""
