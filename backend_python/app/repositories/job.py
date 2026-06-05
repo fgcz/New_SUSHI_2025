@@ -1,5 +1,6 @@
 """Job repository for job-related database operations."""
 
+from datetime import datetime, timezone
 from math import ceil
 
 from sqlmodel import Session, func, or_, select
@@ -13,6 +14,27 @@ class JobRepository(BaseRepository[Job]):
 
     def __init__(self, session: Session):
         super().__init__(session, Job)
+
+    def update_fields(self, job_id: int, fields: dict) -> Job | None:
+        """Apply a partial update to a job. Returns None if job not found."""
+        job = self.get_by_id(job_id)
+        if not job:
+            return None
+        for key, value in fields.items():
+            setattr(job, key, value)
+        job.updated_at = datetime.now(timezone.utc)
+        self.session.add(job)
+        self.session.commit()
+        self.session.refresh(job)
+        return job
+
+    def get_by_next_dataset_id(self, dataset_id: int) -> list[Job]:
+        statement = select(Job).where(Job.next_dataset_id == dataset_id)
+        return list(self.session.exec(statement).all())
+
+    def get_by_statuses(self, statuses: list[str]) -> list[Job]:
+        statement = select(Job).where(Job.status.in_(statuses))
+        return list(self.session.exec(statement).all())
 
     def get_all_paginated(
         self,

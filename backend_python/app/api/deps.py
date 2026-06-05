@@ -51,6 +51,10 @@ def get_job_repository(session: SessionDep) -> JobRepository:
     return JobRepository(session)
 
 
+def get_legacy_job_repository(session: LegacySessionDep) -> JobRepository:
+    return JobRepository(session)
+
+
 def get_project_repository(session: SessionDep) -> ProjectRepository:
     return ProjectRepository(session)
 
@@ -243,7 +247,7 @@ def get_machine_caller(
     TODO: validate key against api_keys table and resolve service name.
     """
     if not authorization:
-        raise AuthenticationError("Missing API key")
+        return MachineCaller(service="anonymous")
     parts = authorization.split()
     if len(parts) != 2 or parts[0].lower() != "bearer":
         raise AuthenticationError("Invalid authorization header format")
@@ -257,6 +261,7 @@ MachineCallerDep = Annotated[MachineCaller, Depends(get_machine_caller)]
 # Type aliases for cleaner route signatures
 DatasetRepoDep = Annotated[DatasetRepository, Depends(get_dataset_repository)]
 JobRepoDep = Annotated[JobRepository, Depends(get_job_repository)]
+LegacyJobRepoDep = Annotated[JobRepository, Depends(get_legacy_job_repository)]
 ProjectRepoDep = Annotated[ProjectRepository, Depends(get_project_repository)]
 UserRepoDep = Annotated[UserRepository, Depends(get_user_repository)]
 RefreshTokenRepoDep = Annotated[

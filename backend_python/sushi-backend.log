@@ -33126,3 +33126,279 @@ INFO:     Finished server process [3187159]
 INFO:     Started server process [3187205]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3187205]
+INFO:     Started server process [3205281]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     130.60.193.54:53444 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'app/repositories/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3205281]
+INFO:     Started server process [3269387]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3269387]
+INFO:     Started server process [3269478]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3269478]
+INFO:     Started server process [3269597]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3269597]
+INFO:     Started server process [3270006]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3270006]
+INFO:     Started server process [3270276]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3270276]
+INFO:     Started server process [3274919]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3274919]
+INFO:     Started server process [3275098]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3275098]
+INFO:     Started server process [3276200]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3276200]
+INFO:     Started server process [3276313]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+2026-06-05 15:55:38,406 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-05 15:55:38,411 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.number = ?
+2026-06-05 15:55:38,411 INFO sqlalchemy.engine.Engine [generated in 0.00015s] (2000,)
+2026-06-05 15:55:38,413 INFO sqlalchemy.engine.Engine INSERT INTO projects (number, created_at, updated_at) VALUES (?, ?, ?)
+2026-06-05 15:55:38,413 INFO sqlalchemy.engine.Engine [generated in 0.00013s] (2000, '2026-06-05 13:55:38.412089', '2026-06-05 13:55:38.412089')
+2026-06-05 15:55:38,414 INFO sqlalchemy.engine.Engine INSERT INTO datasets (project_id, parent_id, user_id, name, md5, comment, num_samples, completed_samples, omics_app_name, job_parameters, bfabric_id, workunit_id, order_ids, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-06-05 15:55:38,414 INFO sqlalchemy.engine.Engine [generated in 0.00017s] (15, None, None, 'o40000_QC-Report_2026-06-05--15-49-13', '6e40c6791bcb6417be940aef69d649b8', None, 1, 0, None, None, None, None, None, '2026-06-05 13:55:38.413527', '2026-06-05 13:55:38.413529')
+2026-06-05 15:55:38,417 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-05 15:55:38,417 INFO sqlalchemy.engine.Engine [generated in 0.00011s] (346,)
+2026-06-05 15:55:38,418 INFO sqlalchemy.engine.Engine INSERT INTO samples (key_value, data_set_id, created_at, updated_at) VALUES (?, ?, ?, ?)
+2026-06-05 15:55:38,418 INFO sqlalchemy.engine.Engine [generated in 0.00012s] ('{"Name":"QC-Report","Report [Link]":"p2000/o40000_QC-Report_2026-06-05--15-49-13/CellQC/QC.html","ResultDir [File]":"p2000/o40000_QC-Report_2026-06-05--15-49-13/CellQC","Order Id [B-Fabric]":"40000"}', 346, '2026-06-05 13:55:38.417390', '2026-06-05 13:55:38.417390')
+2026-06-05 15:55:38,418 INFO sqlalchemy.engine.Engine COMMIT
+2026-06-05 15:55:38,464 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-05 15:55:38,466 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-05 15:55:38,466 INFO sqlalchemy.engine.Engine [generated in 0.00011s] (346,)
+INFO:     130.60.193.54:49636 - "POST /projects/2000/datasets/register HTTP/1.1" 200 OK
+2026-06-05 15:55:38,467 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.54:46854 - "GET /projects/2000/datasets/346 HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:38200 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3276313]
+INFO:     Started server process [3287016]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3287016]
+INFO:     Started server process [3287073]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3287073]
+INFO:     Started server process [3287201]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3287201]
+Process SpawnProcess-99:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, internal, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/internal.py", line 42, in <module>
+    job_repo: JobRepoDep,
+              ^^^^^^^^^^
+NameError: name 'JobRepoDep' is not defined. Did you mean: 'JobResponse'?
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+Process SpawnProcess-100:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, internal, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/internal.py", line 65, in <module>
+    job_repo: JobRepoDep,
+              ^^^^^^^^^^
+NameError: name 'JobRepoDep' is not defined. Did you mean: 'JobResponse'?
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+Process SpawnProcess-101:
+Traceback (most recent call last):
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
+    target(sockets=sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 75, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 79, in serve
+    await self._serve(sockets)
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 86, in _serve
+    config.load()
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 441, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/misc/ngseq12/miniforge3/envs/gi_py3.12.8/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/main.py", line 6, in <module>
+    from app.api.main import api_router
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/main.py", line 3, in <module>
+    from app.api.routes import applications, auth, datasets, files, internal, jobs, projects
+  File "/srv/sushi/rdom_test_new_sushi_20251030/backend_python/app/api/routes/internal.py", line 93, in <module>
+    job_repo: JobRepoDep,
+              ^^^^^^^^^^
+NameError: name 'JobRepoDep' is not defined. Did you mean: 'JobResponse'?
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Started server process [3287510]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
