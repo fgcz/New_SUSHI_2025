@@ -8,7 +8,7 @@ from sqlmodel import Session
 
 from app.core.auth import require_project_access  # re-exported for routes that still import it  # noqa: F401
 from app.core.config import settings
-from app.core.db import get_session
+from app.core.db import get_legacy_session, get_session
 from app.core.exceptions import AuthenticationError, ForbiddenError
 from app.core.ldap import LDAPService, get_ldap_service
 from app.core.security import decode_access_token
@@ -30,10 +30,12 @@ from app.services import (
     SlurmService,
 )
 from app.services.dataset_import import DatasetImportService
+from app.services.dataset_import_legacy import LegacyDatasetImportService
 from app.services.files import FileService
 
-# Session dependency
+# Session dependencies
 SessionDep = Annotated[Session, Depends(get_session)]
+LegacySessionDep = Annotated[Session, Depends(get_legacy_session)]
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -118,8 +120,17 @@ def get_job_submission_service(
     )
 
 
-def get_dataset_import_service(session: SessionDep) -> DatasetImportService:
-    return DatasetImportService(session)
+def get_dataset_import_service(
+    dataset_repo: Annotated[DatasetRepository, Depends(get_dataset_repository)],
+    sample_repo: Annotated[SampleRepository, Depends(get_sample_repository)],
+    project_repo: Annotated[ProjectRepository, Depends(get_project_repository)],
+    user_repo: Annotated[UserRepository, Depends(get_user_repository)],
+) -> DatasetImportService:
+    return DatasetImportService(dataset_repo, sample_repo, project_repo, user_repo)
+
+
+def get_legacy_dataset_import_service(session: LegacySessionDep) -> LegacyDatasetImportService:
+    return LegacyDatasetImportService(session)
 
 
 # Authentication dependencies
@@ -214,6 +225,35 @@ def get_refresh_token_from_cookie(
     return refresh_token
 
 
+# Machine caller dependency (internal services: job_manager, btools, etc.)
+class MachineCaller:
+    """Represents an authenticated internal service."""
+
+    def __init__(self, service: str):
+        self.service = service
+
+
+def get_machine_caller(
+    authorization: Annotated[str | None, Header()] = None,
+) -> MachineCaller:
+    """Validate machine API key.
+
+    Expects: Authorization: Bearer <api-key>
+    Currently mock — any non-empty Bearer token is accepted.
+    TODO: validate key against api_keys table and resolve service name.
+    """
+    if not authorization:
+        raise AuthenticationError("Missing API key")
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise AuthenticationError("Invalid authorization header format")
+    # TODO: look up hashed key in api_keys table, raise if not found or inactive
+    return MachineCaller(service="unknown")
+
+
+MachineCallerDep = Annotated[MachineCaller, Depends(get_machine_caller)]
+
+
 # Type aliases for cleaner route signatures
 DatasetRepoDep = Annotated[DatasetRepository, Depends(get_dataset_repository)]
 JobRepoDep = Annotated[JobRepository, Depends(get_job_repository)]
@@ -226,6 +266,7 @@ SampleRepoDep = Annotated[SampleRepository, Depends(get_sample_repository)]
 
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
 DatasetImportServiceDep = Annotated[DatasetImportService, Depends(get_dataset_import_service)]
+LegacyDatasetImportServiceDep = Annotated[LegacyDatasetImportService, Depends(get_legacy_dataset_import_service)]
 JobServiceDep = Annotated[JobService, Depends(get_job_service)]
 JobSubmissionServiceDep = Annotated[JobSubmissionService, Depends(get_job_submission_service)]
 ProjectServiceDep = Annotated[ProjectService, Depends(get_project_service)]

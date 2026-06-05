@@ -42,7 +42,7 @@ def get_job(
     service: JobServiceDep,
 ) -> dict:
     """Get full job details by ID."""
-    return service.get_by_id(job_id)
+    return service.get_by_id(job_id, current_user)
 
 
 @router.get("/{job_id}/script")
@@ -52,7 +52,7 @@ def get_job_script(
     service: JobServiceDep,
 ) -> dict:
     """Get job script content."""
-    script = service.get_script(job_id)
+    script = service.get_script(job_id, current_user)
     return {"script": script}
 
 
@@ -63,7 +63,7 @@ def get_job_logs(
     service: JobServiceDep,
 ) -> dict:
     """Get job logs (stdout and stderr separately)."""
-    return service.get_logs(job_id)
+    return service.get_logs(job_id, current_user)
 
 
 @router.post("/")

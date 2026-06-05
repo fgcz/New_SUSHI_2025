@@ -48,3 +48,19 @@ class BaseRepository(Generic[T]):
         """Delete a record."""
         self.session.delete(entity)
         self.session.commit()
+
+    def persist(self, entity: T) -> T:
+        """Stage entity for write and flush to DB, but do not commit.
+
+        Use instead of create() when multiple writes must succeed or fail
+        together. The caller is responsible for calling commit() once all
+        related entities have been persisted.
+        """
+        self.session.add(entity)
+        self.session.flush()
+        self.session.refresh(entity)
+        return entity
+
+    def commit(self) -> None:
+        """Commit the current unit of work."""
+        self.session.commit()

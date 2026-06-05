@@ -6,20 +6,16 @@ requires-python = ">=3.11"
 dependencies = [
     # Web framework
     "fastapi[standard]>=0.115.0",
-
-    # Database (SQLite is built-in)
+    # Database (SQLite is built-in; PyMySQL for legacy MariaDB connection)
     "sqlmodel>=0.0.22",
     "alembic>=1.13.0",
-
+    "pymysql>=1.1.0",
     # LDAP authentication
     "ldap3>=2.9.0",
-
     # JWT authentication
     "PyJWT[crypto]>=2.8.0",
-
     # Configuration
     "pydantic-settings>=2.0.0",
-
     # Utilities
     "tenacity>=8.2.0",
 ]

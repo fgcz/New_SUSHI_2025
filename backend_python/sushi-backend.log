@@ -32799,3 +32799,330 @@ WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
 INFO:     Started server process [2686322]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:     130.60.193.54:56378 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:37108 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.7:55634 - "OPTIONS /datasets/268 HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55635 - "OPTIONS /datasets/268/tree HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55633 - "OPTIONS /auth/login_options HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55638 - "GET /auth/login_options HTTP/1.1" 200 OK
+2026-06-04 15:11:01,397 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 15:11:01,397 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-06-04 15:11:01,404 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-04 15:11:01,404 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-04 15:11:01,404 INFO sqlalchemy.engine.Engine [generated in 0.00055s] (268,)
+2026-06-04 15:11:01,405 INFO sqlalchemy.engine.Engine [cached since 0.0006511s ago] (268,)
+2026-06-04 15:11:01,408 INFO sqlalchemy.engine.Engine SELECT datasets.id AS datasets_id, datasets.project_id AS datasets_project_id, datasets.parent_id AS datasets_parent_id, datasets.user_id AS datasets_user_id, datasets.name AS datasets_name, datasets.md5 AS datasets_md5, datasets.comment AS datasets_comment, datasets.num_samples AS datasets_num_samples, datasets.completed_samples AS datasets_completed_samples, datasets.omics_app_name AS datasets_omics_app_name, datasets.job_parameters AS datasets_job_parameters, datasets.bfabric_id AS datasets_bfabric_id, datasets.workunit_id AS datasets_workunit_id, datasets.order_ids AS datasets_order_ids, datasets.created_at AS datasets_created_at, datasets.updated_at AS datasets_updated_at 
+FROM datasets 
+WHERE datasets.id = ?
+2026-06-04 15:11:01,408 INFO sqlalchemy.engine.Engine [cached since 0.003862s ago] (265,)
+2026-06-04 15:11:01,409 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-04 15:11:01,412 INFO sqlalchemy.engine.Engine SELECT users.id, users.login, users.email 
+FROM users 
+WHERE users.id IN (?)
+2026-06-04 15:11:01,412 INFO sqlalchemy.engine.Engine [generated in 0.00315s] (268,)
+2026-06-04 15:11:01,412 INFO sqlalchemy.engine.Engine [generated in 0.00028s] (2,)
+2026-06-04 15:11:01,413 INFO sqlalchemy.engine.Engine SELECT datasets.id, datasets.project_id, datasets.parent_id, datasets.user_id, datasets.name, datasets.md5, datasets.comment, datasets.num_samples, datasets.completed_samples, datasets.omics_app_name, datasets.job_parameters, datasets.bfabric_id, datasets.workunit_id, datasets.order_ids, datasets.created_at, datasets.updated_at 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-04 15:11:01,414 INFO sqlalchemy.engine.Engine SELECT projects.id, projects.number, projects.created_at, projects.updated_at 
+FROM projects 
+WHERE projects.id = ?
+2026-06-04 15:11:01,414 INFO sqlalchemy.engine.Engine [cached since 0.005113s ago] (341,)
+2026-06-04 15:11:01,414 INFO sqlalchemy.engine.Engine [generated in 0.00022s] (3,)
+INFO:     130.60.193.7:55637 - "GET /datasets/268/tree HTTP/1.1" 200 OK
+2026-06-04 15:11:01,416 INFO sqlalchemy.engine.Engine SELECT datasets.id 
+FROM datasets 
+WHERE datasets.parent_id = ?
+2026-06-04 15:11:01,416 INFO sqlalchemy.engine.Engine ROLLBACK
+2026-06-04 15:11:01,416 INFO sqlalchemy.engine.Engine [generated in 0.00042s] (268,)
+2026-06-04 15:11:01,417 INFO sqlalchemy.engine.Engine SELECT samples.id, samples.key_value, samples.data_set_id, samples.created_at, samples.updated_at 
+FROM samples 
+WHERE samples.data_set_id = ?
+2026-06-04 15:11:01,417 INFO sqlalchemy.engine.Engine [generated in 0.00012s] (268,)
+INFO:     130.60.193.7:55636 - "GET /datasets/268 HTTP/1.1" 200 OK
+2026-06-04 15:11:01,419 INFO sqlalchemy.engine.Engine ROLLBACK
+INFO:     130.60.193.7:55633 - "OPTIONS /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55636 - "GET /auth/me HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55633 - "OPTIONS /projects/ HTTP/1.1" 200 OK
+INFO:     130.60.193.7:55636 - "GET /projects/ HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2686322]
+INFO:     Started server process [2774183]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774183]
+INFO:     Started server process [2774325]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774325]
+INFO:     Started server process [2774417]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774417]
+INFO:     Started server process [2774463]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/job.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774463]
+INFO:     Started server process [2774560]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/jobs.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774560]
+INFO:     Started server process [2774639]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/jobs.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774639]
+INFO:     Started server process [2774659]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/jobs.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774659]
+INFO:     Started server process [2774686]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     130.60.193.54:42540 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2774686]
+INFO:     Started server process [2788853]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2788853]
+INFO:     Started server process [2788988]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/main.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2788988]
+INFO:     Started server process [2789073]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     130.60.193.54:33394 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:42084 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:51592 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:60316 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:51442 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:35366 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:50620 - "GET / HTTP/1.1" 404 Not Found
+INFO:     130.60.193.54:35684 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'app/repositories/base.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [2789073]
+INFO:     Started server process [3124614]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/project.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3124614]
+INFO:     Started server process [3124699]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/dataset.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3124699]
+INFO:     Started server process [3124834]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/repositories/sample.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3124834]
+INFO:     Started server process [3127629]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/utils/sample_parser.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3127629]
+INFO:     Started server process [3127731]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3127731]
+INFO:     Started server process [3128068]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import_legacy.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3128068]
+INFO:     Started server process [3128267]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3128267]
+INFO:     Started server process [3128318]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3128318]
+INFO:     Started server process [3128406]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3128406]
+INFO:     Started server process [3128484]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3128484]
+INFO:     Started server process [3128571]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     130.60.193.54:55038 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3128571]
+INFO:     Started server process [3137885]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/services/dataset_import_legacy.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3137885]
+INFO:     Started server process [3137943]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3137943]
+INFO:     Started server process [3137948]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/routes/internal.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3137948]
+INFO:     Started server process [3138041]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/core/config.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3138041]
+INFO:     Started server process [3144646]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/core/db.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3144646]
+INFO:     Started server process [3145090]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3145090]
+INFO:     Started server process [3145164]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3145164]
+INFO:     Started server process [3145184]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in '.venv/lib64/python3.12/site-packages/pymysql/converters.py', '.venv/lib64/python3.12/site-packages/pymysql/optionfile.py', '.venv/lib64/python3.12/site-packages/pymysql/err.py', '.venv/lib64/python3.12/site-packages/pymysql/_auth.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/SERVER_STATUS.py', '.venv/lib64/python3.12/site-packages/pymysql/cursors.py', '.venv/lib64/python3.12/site-packages/pymysql/times.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/FLAG.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/__init__.py', '.venv/lib64/python3.12/site-packages/pymysql/connections.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/CLIENT.py', '.venv/lib64/python3.12/site-packages/pymysql/charset.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/FIELD_TYPE.py', '.venv/lib64/python3.12/site-packages/pymysql/protocol.py', '.venv/lib64/python3.12/site-packages/pymysql/__init__.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/ER.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/CR.py', '.venv/lib64/python3.12/site-packages/pymysql/constants/COMMAND.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3145184]
+INFO:     Started server process [3145517]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     130.60.193.54:48866 - "GET / HTTP/1.1" 404 Not Found
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3145517]
+INFO:     Started server process [3187159]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'app/api/deps.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3187159]
+INFO:     Started server process [3187205]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from app.core.auth import require_project_access
-from app.core.exceptions import NotFoundError
+from app.core.config import settings
+from app.core.exceptions import ForbiddenError, NotFoundError
 from app.repositories.dataset import DatasetRepository
 from app.repositories.job import JobRepository
 from app.repositories.project import ProjectRepository
@@ -25,6 +26,36 @@ class JobService:
         self.job_repo = job_repo
         self.project_repo = project_repo
         self.dataset_repo = dataset_repo
+
+    def _resolve_project_number(self, job) -> int | None:
+        """Walk job → dataset → project to get the project number."""
+        dataset_id = job.next_dataset_id or job.input_dataset_id
+        if not dataset_id:
+            return None
+        dataset = self.dataset_repo.get_by_id(dataset_id)
+        if not dataset or not dataset.project_id:
+            return None
+        project = self.project_repo.get_by_id(dataset.project_id)
+        return project.number if project else None
+
+    def _get_authorized_job(self, job_id: int, caller: "CurrentUser"):
+        """Fetch job and verify caller has access to its project.
+
+        Employees bypass the check. When no project can be resolved (orphaned
+        job), non-employees are denied rather than silently allowed.
+        """
+        job = self.job_repo.get_by_id(job_id)
+        if not job:
+            raise NotFoundError("Job", job_id)
+
+        project_number = self._resolve_project_number(job)
+
+        if project_number is not None:
+            require_project_access(project_number, caller)
+        elif not settings.SKIP_AUTH and not caller.is_employee:
+            raise ForbiddenError(f"No access to job {job_id}")
+
+        return job, project_number
 
     def get_all_paginated(
         self,
@@ -76,21 +107,9 @@ class JobService:
             },
         }
 
-    def get_by_id(self, job_id: int) -> dict:
+    def get_by_id(self, job_id: int, caller: "CurrentUser") -> dict:
         """Get full job details by ID."""
-        job = self.job_repo.get_by_id(job_id)
-        if not job:
-            raise NotFoundError("Job", job_id)
-
-        # Get project_number from dataset -> project
-        project_number = None
-        dataset_id = job.next_dataset_id or job.input_dataset_id
-        if dataset_id:
-            dataset = self.dataset_repo.get_by_id(dataset_id)
-            if dataset and dataset.project_id:
-                project = self.project_repo.get_by_id(dataset.project_id)
-                if project:
-                    project_number = project.number
+        job, project_number = self._get_authorized_job(job_id, caller)
 
         return {
             "id": job.id,
@@ -109,11 +128,9 @@ class JobService:
             "updated_at": job.updated_at.isoformat() if job.updated_at else None,
         }
 
-    def get_script(self, job_id: int) -> str:
+    def get_script(self, job_id: int, caller: "CurrentUser") -> str:
         """Get job script content from filesystem."""
-        job = self.job_repo.get_by_id(job_id)
-        if not job:
-            raise NotFoundError("Job", job_id)
+        job, _ = self._get_authorized_job(job_id, caller)
 
         if not job.script_path:
             return ""
@@ -124,11 +141,9 @@ class JobService:
 
         return script_file.read_text()
 
-    def get_logs(self, job_id: int) -> dict:
+    def get_logs(self, job_id: int, caller: "CurrentUser") -> dict:
         """Get job logs (stdout + stderr) from filesystem."""
-        job = self.job_repo.get_by_id(job_id)
-        if not job:
-            raise NotFoundError("Job", job_id)
+        job, _ = self._get_authorized_job(job_id, caller)
 
         stdout = ""
         stderr = ""

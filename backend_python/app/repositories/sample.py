@@ -16,3 +16,7 @@ class SampleRepository(BaseRepository[Sample]):
         """Get all samples for a dataset."""
         statement = select(Sample).where(Sample.data_set_id == dataset_id)
         return list(self.session.exec(statement).all())
+
+    def bulk_persist(self, samples: list[Sample]) -> None:
+        """Stage multiple samples for insert. Does not commit."""
+        self.session.add_all(samples)

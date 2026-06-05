@@ -49,9 +49,27 @@ class Settings(BaseSettings):
             return []
         return [origin.strip() for origin in self.BACKEND_CORS_ORIGINS.split(",")]
 
+    # Legacy MariaDB (Ruby SUSHI database on fgcz-h-082)
+    # Password intentionally separate — matches the SUSHI_DB_PASSWORD env var used by btools.
+    # Leave SUSHI_DB_PASSWORD unset to disable legacy endpoints.
+    SUSHI_DB_HOST: str = "fgcz-h-082"
+    SUSHI_DB_PORT: int = 3306
+    SUSHI_DB_USER: str = "sushilover"
+    SUSHI_DB_PASSWORD: str = ""
+    SUSHI_DB_NAME: str = "sushi"
+
     @property
     def DATABASE_URI(self) -> str:
         return f"sqlite:///{self.DATABASE_PATH}"
+
+    @property
+    def LEGACY_DATABASE_URI(self) -> str | None:
+        if not self.SUSHI_DB_PASSWORD:
+            return None
+        return (
+            f"mysql+pymysql://{self.SUSHI_DB_USER}:{self.SUSHI_DB_PASSWORD}"
+            f"@{self.SUSHI_DB_HOST}:{self.SUSHI_DB_PORT}/{self.SUSHI_DB_NAME}"
+        )
 
 
 settings = Settings()

@@ -139,6 +139,12 @@ class DatasetRepository(BaseRepository[DataSet]):
         self.session.refresh(dataset)
         return dataset
 
+    def find_by_md5(self, project_id: int, md5: str) -> DataSet | None:
+        """Find an existing dataset with the same MD5 hash in a project."""
+        return self.session.exec(
+            select(DataSet).where(DataSet.project_id == project_id, DataSet.md5 == md5)
+        ).first()
+
     def get_project_number(self, dataset: DataSet) -> int | None:
         """Get the project number for a dataset."""
         if dataset.project_id is None:

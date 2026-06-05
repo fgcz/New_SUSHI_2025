@@ -318,6 +318,24 @@ def extract_data_paths(samples: list[dict[str, Any]]) -> list[str]:
     return sorted(dataset_paths)
 
 
+def serialize_sample_data_ruby(data: dict[str, Any]) -> str:
+    """Serialize sample data to Ruby Hash#inspect format for the legacy SUSHI database.
+
+    The legacy DB stores key_value as a Ruby hash literal that Ruby reads back
+    with eval(). Format must match Ruby's Hash#inspect exactly.
+    Example: {"Name"=>"sample1", "Read1 [File]"=>"/path/file.gz"}
+    """
+    parts = []
+    for k, v in data.items():
+        key_s = '"' + str(k).replace("\\", "\\\\").replace('"', '\\"') + '"'
+        if v is None:
+            val_s = "nil"
+        else:
+            val_s = '"' + str(v).replace("\\", "\\\\").replace('"', '\\"') + '"'
+        parts.append(f"{key_s}=>{val_s}")
+    return "{" + ", ".join(parts) + "}"
+
+
 def serialize_sample_data(data: dict[str, Any]) -> str:
     """Serialize sample data to JSON format.
 
