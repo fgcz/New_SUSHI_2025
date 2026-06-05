@@ -43,8 +43,8 @@ old_sushi/
 cursor_log/
 
 # Runtime logs
-backend_python/backend.log
-frontend/frontend.log
+backend_python/*.log
+frontend/*.log
 
 # PID files
 .backend-python.pid

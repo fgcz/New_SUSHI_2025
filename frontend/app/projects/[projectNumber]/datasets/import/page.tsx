@@ -171,7 +171,7 @@ export default function ImportDatasetPage() {
                     value={treeSearch}
                     onChange={(e) => setTreeSearch(e.target.value)}
                     placeholder="Search datasets..."
-                    className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white"
                   />
                 </div>
 

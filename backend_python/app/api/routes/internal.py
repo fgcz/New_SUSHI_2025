@@ -7,6 +7,10 @@ Routes:
   GET   /internal/legacy/jobs                    → poll jobs by status (job_manager → legacy MariaDB)
   GET   /internal/legacy/datasets/{id}/jobs      → parent jobs for dependency resolution (job_manager)
   PATCH /internal/legacy/jobs/{id}              → partial job update (job_manager → legacy MariaDB)
+  GET   /internal/legacy/projects/{n}/datasets         → datasets for a project (GeoUploader)
+  GET   /internal/legacy/datasets/{id}/project         → project number for a dataset (GeoUploader)
+  GET   /internal/legacy/datasets/{id}/samples         → parsed sample rows (GeoUploader)
+  GET   /internal/legacy/datasets/by-bfabric/{bfid}   → dataset id from bfabric id (GeoUploader)
   POST  /internal/datasets/register             → new MultiOmicsStudio schema
   POST  /internal/legacy/datasets/register      → legacy Ruby SUSHI schema (transition period)
 """
@@ -15,8 +19,11 @@ from datetime import datetime
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
+from sqlalchemy import text
 
-from app.api.deps import DatasetImportServiceDep, LegacyDatasetImportServiceDep, LegacyJobRepoDep, MachineCallerDep
+from app.api.deps import DatasetImportServiceDep, LegacyDatasetImportServiceDep, LegacyJobRepoDep, LegacySessionDep
+from app.core.exceptions import NotFoundError
+from app.utils.sample_parser import parse_sample_data
 
 router = APIRouter()
 
@@ -38,7 +45,7 @@ class JobResponse(BaseModel):
 
 @router.get("/legacy/jobs")
 def get_jobs_by_status(
-    caller: MachineCallerDep,
+
     job_repo: LegacyJobRepoDep,
     status: str = Query(description="Comma-separated list of statuses to filter by"),
 ) -> list[JobResponse]:
@@ -61,7 +68,7 @@ class ParentJobResponse(BaseModel):
 @router.get("/legacy/datasets/{dataset_id}/jobs")
 def get_jobs_by_dataset(
     dataset_id: int,
-    caller: MachineCallerDep,
+
     job_repo: LegacyJobRepoDep,
 ) -> list[ParentJobResponse]:
     """Return jobs that produce a given dataset (next_dataset_id = dataset_id).
@@ -89,7 +96,7 @@ class PatchJobRequest(BaseModel):
 def patch_job(
     job_id: int,
     body: PatchJobRequest,
-    caller: MachineCallerDep,
+
     job_repo: LegacyJobRepoDep,
 ) -> JobResponse:
     """Partially update a job row.
@@ -107,6 +114,101 @@ def patch_job(
     return JobResponse.model_validate(job, from_attributes=True)
 
 
+class LegacyDatasetItem(BaseModel):
+    id: int
+    name: str | None
+    parent_id: int | None
+
+
+@router.get("/legacy/projects/{project_number}/datasets")
+def get_legacy_project_datasets(
+    project_number: int,
+
+    session: LegacySessionDep,
+) -> list[LegacyDatasetItem]:
+    """Return all datasets for a project from the legacy SUSHI schema.
+
+    Replaces GeoUploader SushiService.get_project_datasets() direct DB call.
+    Used to render the jsTree dataset selector in the GeoUploader upload flow.
+    """
+    rows = session.execute(
+        text(
+            "SELECT data_sets.id, data_sets.name, data_sets.parent_id"
+            " FROM data_sets"
+            " JOIN projects ON data_sets.project_id = projects.id"
+            " WHERE projects.number = :num"
+        ),
+        {"num": project_number},
+    ).fetchall()
+    return [LegacyDatasetItem(id=r[0], name=r[1], parent_id=r[2]) for r in rows]
+
+
+@router.get("/legacy/datasets/by-bfabric/{bfabric_id}")
+def get_legacy_dataset_by_bfabric(
+    bfabric_id: int,
+
+    session: LegacySessionDep,
+) -> dict:
+    """Return the SUSHI dataset id for a given B-Fabric dataset id.
+
+    Replaces GeoUploader SushiService.get_dataset_id_from_bfabric_dataset_id().
+    Called at login when a B-Fabric token carries a bfabric dataset id.
+    """
+    row = session.execute(
+        text("SELECT id FROM data_sets WHERE bfabric_id = :bfid"),
+        {"bfid": bfabric_id},
+    ).fetchone()
+    if not row:
+        raise NotFoundError("Dataset", bfabric_id)
+    return {"dataset_id": row[0]}
+
+
+@router.get("/legacy/datasets/{dataset_id}/project")
+def get_legacy_dataset_project(
+    dataset_id: int,
+
+    session: LegacySessionDep,
+) -> dict:
+    """Return the project number that owns a dataset.
+
+    Replaces GeoUploader SushiService.get_project_from_dataset_id().
+    Called when GeoUploader receives a dataset_id redirect from SUSHI and
+    needs the parent project number to pre-select it in the UI.
+    """
+    row = session.execute(
+        text(
+            "SELECT projects.number"
+            " FROM data_sets"
+            " JOIN projects ON data_sets.project_id = projects.id"
+            " WHERE data_sets.id = :id"
+        ),
+        {"id": dataset_id},
+    ).fetchone()
+    if not row:
+        raise NotFoundError("Dataset", dataset_id)
+    return {"project_number": row[0]}
+
+
+@router.get("/legacy/datasets/{dataset_id}/samples")
+def get_legacy_dataset_samples(
+    dataset_id: int,
+
+    session: LegacySessionDep,
+) -> list[dict]:
+    """Return parsed sample rows for a dataset.
+
+    Replaces GeoUploader SushiService.query_key_value_from_dataset_id() and
+    get_dataset_column_names() — both derived the same key_value rows.
+    Ruby Hash#inspect strings are parsed to plain dicts; the caller can derive
+    column names from the keys of the first item.
+    """
+    rows = session.execute(
+        text("SELECT key_value FROM samples WHERE data_set_id = :id"),
+        {"id": dataset_id},
+    ).fetchall()
+    return [parse_sample_data(r[0]) for r in rows]
+
+
 class RegisterDatasetRequest(BaseModel):
     path: str
     project_number: int
@@ -121,7 +223,7 @@ class SetBFabricIdRequest(BaseModel):
 @router.post("/datasets/register")
 def register_dataset(
     body: RegisterDatasetRequest,
-    caller: MachineCallerDep,
+
     service: DatasetImportServiceDep,
 ) -> dict:
     """Register a dataset from a server-side TSV path into the new schema.
@@ -140,7 +242,7 @@ def register_dataset(
 @router.post("/legacy/datasets/register")
 def register_dataset_legacy(
     body: RegisterDatasetRequest,
-    caller: MachineCallerDep,
+
     service: LegacyDatasetImportServiceDep,
 ) -> dict:
     """Register a dataset from a server-side TSV path into the Ruby SUSHI schema.
@@ -161,7 +263,7 @@ def register_dataset_legacy(
 def set_bfabric_id(
     dataset_id: int,
     body: SetBFabricIdRequest,
-    caller: MachineCallerDep,
+
     service: DatasetImportServiceDep,
 ) -> dict:
     """Write B-Fabric dataset ID back onto a MultiOmicsStudio dataset.
@@ -176,7 +278,7 @@ def set_bfabric_id(
 def set_bfabric_id_legacy(
     dataset_id: int,
     body: SetBFabricIdRequest,
-    caller: MachineCallerDep,
+
     service: LegacyDatasetImportServiceDep,
 ) -> dict:
     """Write B-Fabric dataset ID back onto a legacy SUSHI dataset.
