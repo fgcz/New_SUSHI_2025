@@ -8,6 +8,7 @@ Routes:
   GET   /internal/legacy/datasets/{id}/jobs      → parent jobs for dependency resolution (job_manager)
   PATCH /internal/legacy/jobs/{id}              → partial job update (job_manager → legacy MariaDB)
   GET   /internal/legacy/projects/{n}/datasets         → datasets for a project (GeoUploader)
+  GET   /internal/legacy/datasets/{id}/parent          → parent dataset id for a dataset
   GET   /internal/legacy/datasets/{id}/project         → project number for a dataset (GeoUploader)
   GET   /internal/legacy/datasets/{id}/samples         → parsed sample rows (GeoUploader)
   GET   /internal/legacy/datasets/by-bfabric/{bfid}   → dataset id from bfabric id (GeoUploader)
@@ -163,6 +164,26 @@ def get_legacy_dataset_by_bfabric(
     return {"dataset_id": row[0]}
 
 
+@router.get("/legacy/datasets/{dataset_id}/parent")
+def get_legacy_dataset_parent(
+    dataset_id: int,
+
+    session: LegacySessionDep,
+) -> dict:
+    """Return the parent dataset id for a given dataset.
+
+    Returns null for parent_id if the dataset has no parent (root dataset).
+    404 if the dataset itself does not exist.
+    """
+    row = session.execute(
+        text("SELECT parent_id FROM data_sets WHERE id = :id"),
+        {"id": dataset_id},
+    ).fetchone()
+    if row is None:
+        raise NotFoundError("Dataset", dataset_id)
+    return {"parent_id": row[0]}
+
+
 @router.get("/legacy/datasets/{dataset_id}/project")
 def get_legacy_dataset_project(
     dataset_id: int,
@@ -214,6 +235,7 @@ class RegisterDatasetRequest(BaseModel):
     project_number: int
     name: str | None = None
     parent_id: int | None = None
+    user: str | None = None
 
 
 class SetBFabricIdRequest(BaseModel):
@@ -255,6 +277,7 @@ def register_dataset_legacy(
         project_number=body.project_number,
         name_override=body.name,
         parent_id=body.parent_id,
+        user=body.user,
     )
     return {"message": "OK", "data_set_id": result.id}
 

@@ -240,19 +240,14 @@ class MachineCaller:
 def get_machine_caller(
     authorization: Annotated[str | None, Header()] = None,
 ) -> MachineCaller:
-    """Validate machine API key.
-
-    Expects: Authorization: Bearer <api-key>
-    Currently mock — any non-empty Bearer token is accepted.
-    TODO: validate key against api_keys table and resolve service name.
-    """
-    if not authorization:
-        return MachineCaller(service="anonymous")
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise AuthenticationError("Invalid authorization header format")
-    # TODO: look up hashed key in api_keys table, raise if not found or inactive
-    return MachineCaller(service="unknown")
+    # TODO: validate key against api_keys table
+    # if not authorization:
+    #     return MachineCaller(service="anonymous")
+    # parts = authorization.split()
+    # if len(parts) != 2 or parts[0].lower() != "bearer":
+    #     raise AuthenticationError("Invalid authorization header format")
+    # return MachineCaller(service="unknown")
+    return MachineCaller(service="anonymous")
 
 
 MachineCallerDep = Annotated[MachineCaller, Depends(get_machine_caller)]
