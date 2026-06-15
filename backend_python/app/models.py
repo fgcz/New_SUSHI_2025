@@ -32,19 +32,45 @@ class Project(SQLModel, table=True):
     __tablename__ = "projects"
 
     id: int | None = Field(default=None, primary_key=True)
-    number: int
+    number: int = Field(index=True)
+    data_set_tree: str | None = Field(default=None, sa_column=Column(String))
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
 
 class User(SQLModel, table=True):
-    """Maps to the production users table."""
+    """Maps to the production users table.
+
+    Devise/OTP columns are managed exclusively by the Rails app.
+    The Python backend reads login/email and uses LDAP for auth.
+    """
 
     __tablename__ = "users"
 
     id: int | None = Field(default=None, primary_key=True)
-    login: str
-    email: str
+    login: str = Field(index=True)
+    email: str | None = Field(default=None, index=True)
+
+    # Devise session tracking (managed by Rails)
+    sign_in_count: int | None = Field(default=0)
+    current_sign_in_at: datetime | None = None
+    last_sign_in_at: datetime | None = None
+    current_sign_in_ip: str | None = None
+    last_sign_in_ip: str | None = None
+    remember_created_at: datetime | None = None
+    selected_project: int | None = Field(default=-1)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    # Devise password / OAuth / OTP (managed by Rails, never written by Python)
+    encrypted_password: str | None = None
+    reset_password_token: str | None = None
+    reset_password_sent_at: datetime | None = None
+    provider: str | None = None
+    uid: str | None = None
+    otp_secret_key: str | None = None
+    otp_required_for_login: bool | None = Field(default=False)
+    otp_backup_codes: str | None = None
 
 
 class DataSet(SQLModel, table=True):
@@ -55,8 +81,8 @@ class DataSet(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
 
     # Relationships
-    project_id: int | None = Field(default=None, foreign_key="projects.id")
-    parent_id: int | None = Field(default=None, foreign_key="data_sets.id")
+    project_id: int | None = Field(default=None, foreign_key="projects.id", index=True)
+    parent_id: int | None = Field(default=None, foreign_key="data_sets.id", index=True)
     user_id: int | None = Field(default=None, foreign_key="users.id")
 
     # Core fields
@@ -70,6 +96,13 @@ class DataSet(SQLModel, table=True):
 
     # App that created this dataset (null if imported directly)
     sushi_app_name: str | None = None
+
+    # Production columns managed by Rails
+    child: bool = Field(default=False)
+    runnable_apps: str | None = None
+    refreshed_apps: bool | None = None
+    run_name_order_id: str | None = None
+    order_id: int | None = Field(default=None, index=True)
 
     # Job parameters used when app created this dataset (JSON or Ruby YAML)
     job_parameters: dict[str, Any] | None = Field(
@@ -123,15 +156,15 @@ class Job(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     submit_job_id: int | None = None
-    input_dataset_id: int | None = None
-    next_dataset_id: int | None = None
+    input_dataset_id: int | None = Field(default=None, index=True)
+    next_dataset_id: int | None = Field(default=None, index=True)
     created_at: datetime
     updated_at: datetime
     script_path: str | None = None
     stdout_path: str | None = None
     stderr_path: str | None = None
     submit_command: str | None = None
-    status: str | None = None
+    status: str | None = Field(default=None, index=True)
     user: str | None = None
     start_time: datetime | None = None
     end_time: datetime | None = None
@@ -144,7 +177,36 @@ class Sample(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     key_value: str | None = None  # Serialized Ruby hash string
-    data_set_id: int | None = Field(default=None, foreign_key="data_sets.id")
+    data_set_id: int | None = Field(default=None, foreign_key="data_sets.id", index=True)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class NotificationSetting(SQLModel, table=True):
+    """Maps to the production notification_settings table."""
+
+    __tablename__ = "notification_settings"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    notification_enabled: bool | None = None
+    last_notification_date: datetime | None = None
+    last_error_date: datetime | None = None
+    last_warning_date: datetime | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class Notification(SQLModel, table=True):
+    """Maps to the production notifications table."""
+
+    __tablename__ = "notifications"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True)
+    message: str | None = None
+    notification_type: str | None = None
+    read: bool | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
