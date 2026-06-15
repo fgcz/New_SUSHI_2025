@@ -137,7 +137,7 @@ class DatasetService:
             "bfabric_id": dataset.bfabric_id,
             "order_ids": [int(x) for x in dataset.order_ids] if dataset.order_ids else [],
             "comment": dataset.comment,
-            "omics_app_name": dataset.omics_app_name,
+            "sushi_app_name": dataset.sushi_app_name,
             "headers": headers,
             "samples": samples,
             "applications": applications,
@@ -257,7 +257,7 @@ class DatasetService:
         return {
             "id": ds.id,
             "name": ds.name,
-            "omics_app_name": ds.omics_app_name,
+            "sushi_app_name": ds.sushi_app_name,
             "completed_samples": ds.completed_samples,
             "samples_length": ds.num_samples,
             "parent_id": ds.parent_id,

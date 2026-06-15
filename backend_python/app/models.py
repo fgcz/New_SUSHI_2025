@@ -27,7 +27,7 @@ class RubySerializedJSON(TypeDecorator):
 
 
 class Project(SQLModel, table=True):
-    """Maps to the existing projects table."""
+    """Maps to the production projects table."""
 
     __tablename__ = "projects"
 
@@ -38,7 +38,7 @@ class Project(SQLModel, table=True):
 
 
 class User(SQLModel, table=True):
-    """Maps to the existing users table."""
+    """Maps to the production users table."""
 
     __tablename__ = "users"
 
@@ -48,21 +48,15 @@ class User(SQLModel, table=True):
 
 
 class DataSet(SQLModel, table=True):
-    """Maps to the existing datasets table.
+    """Maps to the production data_sets table."""
 
-    Note: Some database columns are intentionally not mapped:
-    - runnable_apps, refreshed_apps: We compute on demand instead of caching
-    - child: Derived from (parent_id is not None)
-    - order_id (singular): Use order_ids[0] via primary_order_id property
-    """
-
-    __tablename__ = "datasets"
+    __tablename__ = "data_sets"
 
     id: int | None = Field(default=None, primary_key=True)
 
     # Relationships
     project_id: int | None = Field(default=None, foreign_key="projects.id")
-    parent_id: int | None = Field(default=None, foreign_key="datasets.id")
+    parent_id: int | None = Field(default=None, foreign_key="data_sets.id")
     user_id: int | None = Field(default=None, foreign_key="users.id")
 
     # Core fields
@@ -75,7 +69,7 @@ class DataSet(SQLModel, table=True):
     completed_samples: int | None = Field(default=0)
 
     # App that created this dataset (null if imported directly)
-    omics_app_name: str | None = None
+    sushi_app_name: str | None = None
 
     # Job parameters used when app created this dataset (JSON or Ruby YAML)
     job_parameters: dict[str, Any] | None = Field(
@@ -97,19 +91,33 @@ class DataSet(SQLModel, table=True):
 
     @property
     def is_child(self) -> bool:
-        """Whether this dataset was created by an app (has parent)."""
         return self.parent_id is not None
 
     @property
     def primary_order_id(self) -> int | None:
-        """Get first order ID for B-Fabric registration."""
         if self.order_ids and len(self.order_ids) > 0:
             return self.order_ids[0]
         return None
 
 
+class SushiApplication(SQLModel, table=True):
+    """Maps to the production sushi_applications table."""
+
+    __tablename__ = "sushi_applications"
+
+    id: int | None = Field(default=None, primary_key=True)
+    class_name: str | None = None
+    analysis_category: str | None = None
+    required_columns: str | None = None
+    next_dataset_keys: str | None = None
+    description: str | None = None
+    employee: bool | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
 class Job(SQLModel, table=True):
-    """Maps to the existing jobs table."""
+    """Maps to the production jobs table."""
 
     __tablename__ = "jobs"
 
@@ -130,19 +138,19 @@ class Job(SQLModel, table=True):
 
 
 class Sample(SQLModel, table=True):
-    """Maps to the existing samples table."""
+    """Maps to the production samples table."""
 
     __tablename__ = "samples"
 
     id: int | None = Field(default=None, primary_key=True)
     key_value: str | None = None  # Serialized Ruby hash string
-    data_set_id: int | None = Field(default=None, foreign_key="datasets.id")
+    data_set_id: int | None = Field(default=None, foreign_key="data_sets.id")
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
 
 class RefreshToken(SQLModel, table=True):
-    """Stores refresh tokens for JWT authentication."""
+    """Stores refresh tokens for JWT authentication (Python backend only)."""
 
     __tablename__ = "refresh_tokens"
 
