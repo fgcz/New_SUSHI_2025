@@ -23,6 +23,10 @@ class JobSubmissionService
     # Configure app with parameters
     configure_sushi_app
 
+    # Resolve raw form-shaped defaults and enforce required params BEFORE anything with a
+    # side effect (job scripts, gstore copy, DB rows). See the method comment.
+    return false unless resolve_and_validate_params
+
     # Build job units: one per sample in SAMPLE mode (legacy fan-out), one for the
     # whole dataset in DATASET/BATCH mode. Each unit is a written job script plus the
     # next_dataset row it produces.
@@ -113,6 +117,116 @@ class JobSubmissionService
     normalized_params = normalize_parameters(@parameters)
     normalized_params.each do |key, value|
       @sushi_app.params[key] = value
+    end
+  end
+
+  # Legacy-parity gate for the API submit path.
+  #
+  # The legacy Web UI renders EVERY param as a form control (set_parameters.html.erb
+  # iterates @sushi_app.params with no skip list) so the browser always POSTs a resolved
+  # scalar: a choice Array arrives as the selected option, a selector Hash as the selected
+  # option's value. An app's raw default shape therefore never reaches a job script.
+  #
+  # The API has no form. Without this step an unspecified selector param is serialized
+  # verbatim into the job script and into the output dataset row:
+  #     param[['refBuild']] = '{"select"=>"", "Arabidopsis_thaliana/..."=>...}'
+  # ezRun rejects that ("special characters not allowed in option string"), so the job dies
+  # only AFTER SLURM accepted it and after a corrupt row is already stored. Observed
+  # 2026-07-30: STAR on dataset 775, jobs 685/686 -> SLURM 279873/279874 -> FAILED, with
+  # refBuild (Hash) and strandMode (Array) unresolved in output dataset 776. 13 of the 16
+  # allow-listed legacy apps set refBuild from ref_selector, so this is not STAR-specific.
+  #
+  # So: resolve the shapes the way the form's default selection would, then apply legacy's
+  # own required-param check — run_application_controller.rb:434 refuses a required value
+  # that is empty or '-'. Legacy needs no shape check there because its UI cannot produce a
+  # Hash/Array; the API can, so the shape is checked too.
+  def resolve_and_validate_params
+    # Remember which params arrived as an unchosen selector/option list. Resolution runs
+    # first, so by validation time the value is just a blank string and that context —
+    # the part that tells a caller WHY it is blank — would otherwise be lost.
+    @unchosen = {}
+
+    @sushi_app.params.keys.each do |key|
+      current = @sushi_app.params[key]
+      resolved = resolve_default_selection(key, current)
+      @unchosen[key] = current.is_a?(Hash) ? :selector : :option_list if current.is_a?(Hash) || current.is_a?(Array)
+      @sushi_app.params[key] = resolved unless resolved.equal?(current)
+    end
+
+    unsatisfied = Array(@sushi_app.required_params).select { |key| required_param_unsatisfied?(key) }
+    return true if unsatisfied.empty?
+
+    unsatisfied.each do |key|
+      @errors << "Required parameter '#{key}' has no value (#{unsatisfied_reason(key)}). " \
+                 "Choose one explicitly, e.g. parameters: { \"#{key}\": \"<value>\" }. " \
+                 "GET /api/v1/application_configs/#{@normalized_app_name} lists the options."
+    end
+    Rails.logger.warn("Rejected #{@app_name} submission on dataset #{@dataset_id}: " \
+                      "unsatisfied required params #{unsatisfied.inspect}")
+    false
+  end
+
+  # Mirror the default option the legacy form would have pre-selected.
+  def resolve_default_selection(key, value)
+    meta = @sushi_app.params.metadata_for(key)
+    selected = meta['selected']
+
+    case value
+    when Array
+      # A multi-selection param legitimately stays a list (the legacy control is a
+      # multiple <select>). None of the currently allow-listed apps sets this meta, so
+      # the branch is preserved rather than exercised.
+      return value if meta['multi_selection']
+      return value[selected] if selected.is_a?(Integer) && selected < value.length
+      return selected unless selected.nil?
+
+      value.first
+    when Hash
+      # Rails `select` pre-selects the first option. ref_selector's first entry is the
+      # deliberate 'select' => '' placeholder, i.e. "nothing chosen yet" — which then
+      # fails the required-param check below rather than reaching the job script.
+      return selected unless selected.nil? || selected.to_s.empty?
+
+      value.values.first
+    else
+      value
+    end
+  rescue StandardError => e
+    Rails.logger.warn("Could not resolve default selection for param '#{key}': #{e.message}")
+    value
+  end
+
+  def required_param_unsatisfied?(key)
+    value = @sushi_app.params[key]
+
+    if value.is_a?(Array)
+      # only legitimate for a multi-selection param, and then only when it holds a value
+      return true unless @sushi_app.params.metadata_for(key)['multi_selection']
+
+      return value.reject { |v| v.to_s.strip.empty? }.empty?
+    end
+
+    # A Hash here means resolution could not reduce the selector to a choice.
+    return true if value.is_a?(Hash)
+
+    stringified = value.to_s.strip
+    stringified.empty? || stringified == '-'
+  end
+
+  def unsatisfied_reason(key)
+    value = @sushi_app.params[key]
+
+    # Shape it arrived as, when that is the real explanation
+    case (@unchosen || {})[key]
+    when :selector    then return 'an unresolved selector — no option was chosen'
+    when :option_list then return 'an unresolved option list — no option was chosen'
+    end
+
+    case value
+    when ::Hash  then 'an unresolved selector — no option was chosen'
+    when ::Array then 'an unresolved option list — no option was chosen'
+    when nil     then 'not set'
+    else "set to #{value.to_s.strip.inspect}"
     end
   end
 
