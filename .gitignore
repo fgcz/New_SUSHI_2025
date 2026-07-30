@@ -10,6 +10,13 @@ backend/storage/*
 backend/.env
 backend/.env.*
 backend/config/master.key
+# Pinned secret_key_base per node (ApiToken hash salt = SHA256(secret_key_base + raw),
+# so this file is credential material) — NEVER commit. Wildcard on purpose: the pattern
+# used to name 083 only, which left a production node's secret showing up as an untracked
+# file in git status, one `git add -A` away from being published.
+backend/.secret_key_base_*
+# Node-local operational launch scripts (node-specific paths, policy env, not shared)
+run_backend_*.sh
 backend/coverage/*
 backend/vendor/bundle/*
 
@@ -31,8 +38,8 @@ Thumbs.db
 # Editor
 *.swp
 *.swo
-*~ 
- 
+*~
+
 # LDAP dev-only assets (not committed)
 docker_files/gems/
 docker_files/FGCZ_CA_2019.crt
