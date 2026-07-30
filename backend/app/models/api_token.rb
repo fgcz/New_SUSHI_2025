@@ -21,9 +21,21 @@ require 'securerandom'
 #     the /v1 surface rejects it.
 class ApiToken < ActiveRecord::Base
   serialize :scope, type: Array, coder: YAML
+  serialize :capabilities, type: Array, coder: YAML
 
   # Mandatory upper bound on a `user` token's lifetime (design v0.7 P-INV-10).
   MAX_USER_TOKEN_TTL_DAYS = 90
+
+  # Write authority, orthogonal to project scope. Scope answers "which projects";
+  # this answers "may it change anything there at all".
+  #
+  # FAIL-CLOSED: a token with no capabilities recorded (every token issued before
+  # this column existed) is READ-ONLY. That is deliberate — the production node is
+  # only safe today because the whole instance is server-side read-only, and
+  # flipping SUSHI_WRITE_POLICY to `additive` would otherwise silently promote the
+  # read-only MCP credential into a job submitter. Grant write explicitly.
+  CAPABILITIES = %w[read write].freeze
+  DEFAULT_CAPABILITIES = %w[read].freeze
 
   # Raised when the live project-membership resolver cannot answer (transport
   # failure). The controller maps this to 503, distinct from an authorization
@@ -45,7 +57,11 @@ class ApiToken < ActiveRecord::Base
   #
   # principal: "static" (default) requires a non-empty scope; "user" requires a
   # non-blank login and a TTL within MAX_USER_TOKEN_TTL_DAYS (scope is ignored).
-  def self.issue(name:, scope: [], ttl_days: nil, principal: "static", login: nil)
+  #
+  # capabilities: subset of CAPABILITIES. Omitted ⇒ read-only (see CAPABILITIES).
+  def self.issue(name:, scope: [], ttl_days: nil, principal: "static", login: nil,
+                 capabilities: nil)
+    caps = normalize_capabilities(capabilities)
     principal = principal.to_s
     case principal
     when "user"
@@ -76,14 +92,29 @@ class ApiToken < ActiveRecord::Base
 
     raw = SecureRandom.urlsafe_base64(32)
     record = create!(
-      name:       name,
-      token_hash: digest(raw),
-      scope:      Array(scope).map(&:to_i),
-      principal:  principal,
-      login:      (principal == "user" ? login.to_s.strip : nil),
-      expires_at: ttl_days ? Time.now + ttl_days.to_i.days : nil
+      name:         name,
+      token_hash:   digest(raw),
+      scope:        Array(scope).map(&:to_i),
+      principal:    principal,
+      login:        (principal == "user" ? login.to_s.strip : nil),
+      capabilities: caps,
+      expires_at:   ttl_days ? Time.now + ttl_days.to_i.days : nil
     )
     [raw, record]
+  end
+
+  # Unknown names are rejected rather than ignored, so a typo ("wirte") cannot
+  # quietly produce a token that is not what the operator asked for.
+  def self.normalize_capabilities(list)
+    caps = Array(list).map { |c| c.to_s.strip.downcase }.reject(&:empty?).uniq
+    return DEFAULT_CAPABILITIES.dup if caps.empty?
+
+    unknown = caps - CAPABILITIES
+    raise ArgumentError, "unknown capabilities #{unknown.inspect} (expected #{CAPABILITIES.join('|')})" if unknown.any?
+
+    # "write" without "read" would be a token that can change what it cannot see.
+    caps |= DEFAULT_CAPABILITIES
+    caps
   end
 
   # Look up an active token by its raw value. Fail-closed: returns nil for any
@@ -105,6 +136,44 @@ class ApiToken < ActiveRecord::Base
 
   def machine?
     principal.to_s == "machine"
+  end
+
+  # True when the backing column has actually been added to the connected database.
+  #
+  # This is not paranoia: New SUSHI runs against the legacy `sushi` schema, whose
+  # migration history is managed out-of-band (api_tokens itself is marked `down`
+  # while existing, and some applied migrations have no file). A deploy that skips
+  # the ALTER TABLE therefore silently fail-closes every token to read-only, which
+  # looks like a mysterious 403 rather than a missing column. Say so instead.
+  def self.capabilities_column_present?
+    column_names.include?("capabilities")
+  rescue ActiveRecord::ActiveRecordError
+    false
+  end
+
+  # Recorded capabilities, or the fail-closed default for a token issued before
+  # the column existed (NULL ⇒ read-only).
+  def effective_capabilities
+    unless self.class.capabilities_column_present?
+      Rails.logger.warn(
+        "ApiToken#capabilities column is MISSING in this database; every token is " \
+        "treated as read-only. Run the AddCapabilitiesToApiTokens migration (or the " \
+        "equivalent ALTER TABLE) against this DB."
+      )
+      return DEFAULT_CAPABILITIES.dup
+    end
+
+    caps = Array(capabilities).map { |c| c.to_s.strip.downcase }.reject(&:empty?)
+    caps.empty? ? DEFAULT_CAPABILITIES.dup : caps
+  end
+
+  # May this token change anything? The /internal bridge credential is exempt:
+  # it is the job_manager advancing job state, which the write policy also
+  # exempts, and it has no project scope to gate on.
+  def can_write?
+    return true if machine?
+
+    effective_capabilities.include?("write")
   end
 
   def active?

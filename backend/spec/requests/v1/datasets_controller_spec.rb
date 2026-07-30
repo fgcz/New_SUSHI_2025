@@ -31,9 +31,21 @@ RSpec.describe 'V1::Datasets (bearer registration API)', type: :request do
     end
 
     it 'returns 400 for a malformed JSON body' do
-      token = ApiToken.issue(name: 'reg', scope: [1001])[0]
+      token = ApiToken.issue(name: 'reg', scope: [1001], capabilities: %w[read write])[0]
       post '/v1/datasets/validate', params: 'not-json', headers: bearer(token)
       expect(response).to have_http_status(:bad_request)
+    end
+
+    # The endpoint allowlist above restricts USER principals only; a static principal
+    # passes it unconditionally. Write authority is what constrains a static service
+    # credential, so registration now requires it explicitly.
+    it 'returns 403 for a read-only token, whatever its project scope' do
+      ro = ApiToken.issue(name: 'reg-ro', scope: [1001])[0]
+      post '/v1/datasets/register',
+           params: { dataset_tsv: tsv, project_number: 1001, name: 'DS' }.to_json,
+           headers: bearer(ro)
+      expect(response).to have_http_status(:forbidden)
+      expect(JSON.parse(response.body)['error']).to eq('action not permitted for this token')
     end
   end
 
@@ -51,7 +63,7 @@ RSpec.describe 'V1::Datasets (bearer registration API)', type: :request do
     end
 
     it 'does not 500 on a bearer POST (CSRF is skipped, not null-session-handled)' do
-      token = ApiToken.issue(name: 'reg', scope: [1001])[0]
+      token = ApiToken.issue(name: 'reg', scope: [1001], capabilities: %w[read write])[0]
       post '/v1/datasets/register',
            params: { dataset_tsv: tsv, project_number: 1001, name: 'DS' }.to_json,
            headers: bearer(token)
@@ -60,7 +72,7 @@ RSpec.describe 'V1::Datasets (bearer registration API)', type: :request do
   end
 
   describe 'static token' do
-    let!(:token) { ApiToken.issue(name: 'reg', scope: [1001])[0] }
+    let!(:token) { ApiToken.issue(name: 'reg', scope: [1001], capabilities: %w[read write])[0] }
 
     it 'validates a manifest for an in-scope project' do
       post '/v1/datasets/validate',
@@ -111,7 +123,8 @@ RSpec.describe 'V1::Datasets (bearer registration API)', type: :request do
   end
 
   describe 'user token' do
-    let!(:token) { ApiToken.issue(name: 'u', principal: 'user', login: 'masaomi', ttl_days: 30)[0] }
+    let!(:token) { ApiToken.issue(name: 'u', principal: 'user', login: 'masaomi', ttl_days: 30,
+                              capabilities: %w[read write])[0] }
 
     before { allow(FGCZ).to receive(:get_user_projects2).with('masaomi').and_return(['p1001']) }
 

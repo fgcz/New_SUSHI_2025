@@ -29,6 +29,7 @@ module V1
     before_action :reject_machine_principal!
     before_action :reject_blank_user_login!
     before_action :authorize_endpoint!
+    before_action :authorize_token_write!
 
     # A user token whose live membership resolver is unreachable fails closed with
     # 503 (a retryable availability failure, distinct from a 403 authz denial).
@@ -130,12 +131,29 @@ module V1
 
     # Deny-unless-listed endpoint authority for user tokens. A user principal may
     # only reach the non-destructive whitelist; anything else (today destroy; any
-    # future route) is 403. Static principals pass unconditionally.
+    # future route) is 403. Static principals pass unconditionally — which is why
+    # authorize_token_write! runs next: on its own this gate leaves a static
+    # service credential MORE authority than a person's token, since a static
+    # principal is unscoped by action and is attributed only as "apitoken:<name>".
     USER_ALLOWED_ACTIONS = %w[validate register set_bfabric_id].freeze
     def authorize_endpoint!
       return unless @api_token&.user?
       return if USER_ALLOWED_ACTIONS.include?(action_name)
       render json: { error: "action not permitted for this token" }, status: :forbidden
+    end
+
+    # Principal-independent write authority. Applies to static tokens too, closing
+    # the asymmetry above. Fail-closed for tokens issued before the capabilities
+    # column existed. See ApiToken::CAPABILITIES.
+    def authorize_token_write!
+      return if ApiTokenAuthenticatable::SAFE_HTTP_METHODS.include?(request.request_method)
+      return if @api_token.nil? || @api_token.can_write?
+
+      render json: {
+        error: "action not permitted for this token",
+        message: "This token is read-only. Grant write authority explicitly " \
+                 "(rake api_token:grant_write ID=<id>) or use a token that has it."
+      }, status: :forbidden
     end
 
     def bearer_token

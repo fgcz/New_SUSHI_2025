@@ -44,7 +44,22 @@ RSpec.describe Middleware::SushiReadOnlyGuard do
       status, _h, body = mw.call(env_for('DELETE', '/v1/datasets/1'))
       expect(status).to eq 403
       expect(JSON.parse(body.join)['error']).to eq 'additive'
-      expect(mw.call(env_for('PUT', '/v1/datasets/1/bfabric-id'))[0]).to eq 403
+    end
+
+    # A PUT by verb, but set-once by behaviour: DatasetRegistrationService.set_bfabric_id
+    # fills the field only when NULL and answers 409 for a different value, so it never
+    # rewrites. Denying it left a dataset New SUSHI created on a production DB with no way
+    # to record its B-Fabric id at all.
+    it 'allows the set-once B-Fabric id link (id segment, pattern-matched)' do
+      expect(mw.call(env_for('PUT', '/v1/datasets/1/bfabric-id'))[0]).to eq 200
+      expect(mw.call(env_for('PUT', '/v1/datasets/12345/bfabric-id'))[0]).to eq 200
+    end
+
+    it 'does not let the bfabric-id pattern widen into neighbouring routes' do
+      expect(mw.call(env_for('PUT',    '/v1/datasets/1/bfabric-id/extra'))[0]).to eq 403
+      expect(mw.call(env_for('PUT',    '/v1/datasets/abc/bfabric-id'))[0]).to eq 403
+      expect(mw.call(env_for('DELETE', '/v1/datasets/1/bfabric-id'))[0]).to eq 403
+      expect(mw.call(env_for('PUT',    '/v1/datasets/1'))[0]).to eq 403
     end
 
     it 'blocks a non-allowlisted mutating POST' do

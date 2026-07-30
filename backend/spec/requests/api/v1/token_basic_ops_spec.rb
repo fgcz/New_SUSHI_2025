@@ -84,4 +84,51 @@ RSpec.describe 'API v1 basic ops via SUSHI_API_TOKEN', type: :request do
       expect(response).to have_http_status(:service_unavailable)
     end
   end
+
+  # Project scope says WHICH projects; it never said whether the token may change
+  # anything there. On a production instance that gap only stayed harmless because the
+  # whole process ran read-only — moving the write policy to `additive` for the write-path
+  # cutover would otherwise turn a read-only inspection credential into a job submitter.
+  describe 'write authority (capabilities)' do
+    it 'lets a read-only static token read but not submit' do
+      token = ApiToken.issue(name: 'chain-ro', scope: [1001])[0]
+
+      get '/api/v1/projects/1001/datasets', headers: bearer(token)
+      expect(response).to have_http_status(:ok)
+
+      post '/api/v1/jobs',
+           params: { job: { dataset_id: ds1001.id, app_name: 'Fastqc' } },
+           headers: bearer(token)
+      expect(response).to have_http_status(:forbidden)
+      expect(body['error']).to eq('action not permitted for this token')
+    end
+
+    it 'rejects the write before authorization can even consider the payload' do
+      token = ApiToken.issue(name: 'chain-ro', scope: [1001])[0]
+
+      # out-of-scope project AND no write authority: the write gate answers first, so a
+      # read-only token learns nothing about what it was denied.
+      post '/api/v1/jobs',
+           params: { job: { dataset_id: ds2002.id, app_name: 'Fastqc' } },
+           headers: bearer(token)
+      expect(response).to have_http_status(:forbidden)
+      expect(body['error']).to eq('action not permitted for this token')
+    end
+
+    it 'admits a static token that was granted write' do
+      token = ApiToken.issue(name: 'chain-rw', scope: [1001], capabilities: %w[read write])[0]
+
+      post '/api/v1/jobs',
+           params: { job: { dataset_id: ds1001.id, app_name: 'Fastqc' } },
+           headers: bearer(token)
+      # Past the write gate: whatever happens next is submission logic, not authorization.
+      expect(response).not_to have_http_status(:forbidden)
+    end
+
+    it 'leaves safe methods untouched for a read-only token' do
+      token = ApiToken.issue(name: 'chain-ro', scope: [1001])[0]
+      get '/api/v1/jobs', headers: bearer(token)
+      expect(response).to have_http_status(:ok)
+    end
+  end
 end

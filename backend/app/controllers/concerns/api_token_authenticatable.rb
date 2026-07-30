@@ -17,6 +17,8 @@
 module ApiTokenAuthenticatable
   extend ActiveSupport::Concern
 
+  SAFE_HTTP_METHODS = %w[GET HEAD OPTIONS TRACE].freeze
+
   included do
     # prepend so it runs BEFORE the inherited JWT before_action; a valid ApiToken
     # then satisfies authentication and the JWT layer stands down (see
@@ -42,6 +44,23 @@ module ApiTokenAuthenticatable
     end
 
     @api_token = token
+    authorize_token_write!
+  end
+
+  # Project scope answers "which projects"; it never answered "may it change
+  # anything". Without this, moving a production instance from read_only to
+  # `additive` would silently turn every in-scope token — including a credential
+  # issued purely for read-only inspection — into a job submitter. Fail-closed:
+  # a token with no recorded capabilities is read-only (see ApiToken::CAPABILITIES).
+  def authorize_token_write!
+    return if SAFE_HTTP_METHODS.include?(request.request_method)
+    return if @api_token.can_write?
+
+    render json: {
+      error: 'action not permitted for this token',
+      message: 'This token is read-only. Grant write authority explicitly ' \
+               '(rake api_token:grant_write ID=<id>) or use a token that has it.'
+    }, status: :forbidden
   end
 
   def token_authenticated?

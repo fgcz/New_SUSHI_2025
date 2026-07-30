@@ -36,12 +36,26 @@ module Middleware
 
     # Additive (create-only) routes allowed under the `additive` policy. Each entry is
     # [METHOD, normalized-path]. These CREATE new rows/jobs; they never delete or rewrite
-    # existing data. Deliberately excludes DELETE /v1/datasets/:id (deregister) and
-    # PUT /v1/datasets/:id/bfabric-id (set-once mutate) — those stay denied.
+    # existing data. Deliberately excludes DELETE /v1/datasets/:id (deregister).
     ADDITIVE_ROUTES = [
       ["POST", "/api/v1/jobs"],           # job submission
       ["POST", "/v1/datasets/register"],  # content-based dataset import (idempotent)
       ["POST", "/api/v1/datasets/from_tsv"] # TSV-body dataset import
+    ].freeze
+
+    # Same rule, for routes carrying an id segment.
+    #
+    # PUT /v1/datasets/:id/bfabric-id is here despite being a PUT because
+    # DatasetRegistrationService.set_bfabric_id is strictly SET-ONCE: it fills the field
+    # when NULL, returns 200 idempotently for the same value, and refuses a different
+    # value with 409. It therefore satisfies this policy's own criterion — never delete
+    # or rewrite existing data — and only the HTTP verb made it look like a mutation.
+    # Denying it meant a dataset New SUSHI created on a production DB could never be
+    # linked to its B-Fabric record through the API at all, which breaks parity with the
+    # legacy system sharing that DB. Registration IN B-Fabric remains a separate,
+    # caller-controlled step; this only records the resulting id.
+    ADDITIVE_ROUTE_PATTERNS = [
+      ["PUT", %r{\A/v1/datasets/\d+/bfabric-id\z}]
     ].freeze
 
     def initialize(app)
@@ -89,7 +103,9 @@ module Middleware
     end
 
     def additive?(method, path)
-      ADDITIVE_ROUTES.include?([method, path])
+      return true if ADDITIVE_ROUTES.include?([method, path])
+
+      ADDITIVE_ROUTE_PATTERNS.any? { |m, re| m == method && re.match?(path) }
     end
 
     def deny(pol, method, path)

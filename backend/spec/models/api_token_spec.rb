@@ -134,4 +134,50 @@ RSpec.describe ApiToken, type: :model do
       expect { token.allowed_projects }.to raise_error(ApiToken::ResolverUnavailable)
     end
   end
+
+  # Write authority is orthogonal to project scope. Before this existed, a token's authority
+  # was "which projects" only, and the /v1 endpoint allowlist restricted USER principals
+  # while static ones passed unconditionally — so a long-lived service credential outranked
+  # a person's token. The production instance was safe only because it ran wholly read-only;
+  # flipping the write policy to `additive` would otherwise promote every in-scope token,
+  # including the read-only MCP credential, into a job submitter.
+  describe 'capabilities' do
+    it 'defaults to read-only when none are given' do
+      _raw, token = ApiToken.issue(name: 'ro', scope: [1001])
+      expect(token.effective_capabilities).to eq(['read'])
+      expect(token.can_write?).to be false
+    end
+
+    it 'treats a token predating the column (NULL) as read-only' do
+      _raw, token = ApiToken.issue(name: 'legacy', scope: [1001])
+      token.update_column(:capabilities, nil)
+      expect(token.reload.effective_capabilities).to eq(['read'])
+      expect(token.can_write?).to be false
+    end
+
+    it 'grants write when asked for' do
+      _raw, token = ApiToken.issue(name: 'rw', scope: [1001], capabilities: %w[read write])
+      expect(token.can_write?).to be true
+    end
+
+    it 'implies read for a write-only request, so it cannot change what it cannot see' do
+      _raw, token = ApiToken.issue(name: 'w', scope: [1001], capabilities: ['write'])
+      expect(token.effective_capabilities).to contain_exactly('read', 'write')
+    end
+
+    it 'rejects an unknown capability instead of ignoring the typo' do
+      expect { ApiToken.issue(name: 'x', scope: [1001], capabilities: ['wirte']) }
+        .to raise_error(ArgumentError, /unknown capabilities/)
+    end
+
+    it 'exempts the machine principal (the /internal job_manager bridge)' do
+      _raw, token = ApiToken.issue(name: 'jm', principal: 'machine')
+      expect(token.can_write?).to be true
+    end
+
+    it 'is case- and whitespace-insensitive' do
+      _raw, token = ApiToken.issue(name: 'rw', scope: [1001], capabilities: [' Write '])
+      expect(token.can_write?).to be true
+    end
+  end
 end
