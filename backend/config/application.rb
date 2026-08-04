@@ -2,6 +2,7 @@ require_relative "boot"
 
 require "rails/all"
 require_relative "../lib/middleware/sushi_read_only_guard"
+require_relative "../lib/env_api_token"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -16,7 +17,12 @@ module Backend
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     # Ignore lib directory entirely to avoid Zeitwerk naming conflicts
-    config.autoload_lib(ignore: %w[assets tasks apps middleware fgcz.rb global_variables.rb sushi_fabric.rb])
+    # env_api_token.rb is required above rather than autoloaded ON PURPOSE: the
+    # development reloader discards autoloaded constants between requests, which
+    # would re-read ENV and undo the once-per-process freeze of the credential —
+    # and the production node runs in development mode. See lib/env_api_token.rb.
+    config.autoload_lib(ignore: %w[assets tasks apps middleware fgcz.rb global_variables.rb sushi_fabric.rb
+                                   env_api_token.rb])
 
     # Server-side write-policy guard (SUSHI_WRITE_POLICY = read_only | additive | full;
     # SUSHI_READ_ONLY=1 still means read_only; default full). Rack-level so it covers

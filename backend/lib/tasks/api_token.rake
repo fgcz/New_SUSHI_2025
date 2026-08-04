@@ -82,4 +82,47 @@ namespace :api_token do
     token.update!(revoked_at: Time.now)
     puts "Revoked API token id=#{token.id} name=#{token.name}"
   end
+
+  # Mint a credential for the ENV-provisioned principal (see lib/env_api_token.rb).
+  #
+  # Note the DELIBERATE absence of `:environment`: this task never loads Rails and
+  # never opens a database connection. That is the whole point — it is the way to
+  # provision a credential for the production node, whose `api_tokens` table
+  # belongs to legacy SUSHI and must be neither written nor altered.
+  #
+  # The raw token is printed once and stored nowhere; only its digest goes into
+  # the node's launch script.
+  desc "Generate an ENV-provisioned API token credential (NAME=, SCOPE=comma,projects) — no DB access"
+  task :env_token do
+    require "digest"
+    require "securerandom"
+    require_relative "../env_api_token"
+
+    name  = ENV["NAME"].to_s.strip
+    scope = ENV["SCOPE"].to_s.split(",").map(&:strip).reject(&:empty?)
+    abort("NAME is required") if name.empty?
+    # Same charset the server enforces, so a name accepted here can never be
+    # rejected at boot — and so the `export` line printed below cannot carry a
+    # newline or a shell metacharacter into the operator's paste buffer.
+    unless name.match?(EnvApiToken::NAME_FORMAT)
+      abort("NAME must be 1-64 characters of [A-Za-z0-9._-]")
+    end
+    abort("SCOPE is required (comma-separated project numbers)") if scope.empty?
+    unless scope.all? { |s| s.match?(/\A\d+\z/) && s.to_i.positive? }
+      abort("SCOPE must contain only positive integers")
+    end
+
+    raw = SecureRandom.urlsafe_base64(32)
+
+    puts "RAW TOKEN (shown once, stored nowhere — this is the bearer value clients send):"
+    puts raw
+    puts
+    puts "Add to the node's launch script. The server keeps only the DIGEST:"
+    puts "export SUSHI_ENV_TOKEN_SHA256=#{EnvApiToken.digest_of(raw)}"
+    puts "export SUSHI_ENV_TOKEN_SCOPE=#{scope.join(',')}"
+    puts "export SUSHI_ENV_TOKEN_NAME=#{name}"
+    puts
+    puts "The credential is READ-ONLY by construction (static principal, no capabilities),"
+    puts "and is rejected by the /internal machine bridge."
+  end
 end

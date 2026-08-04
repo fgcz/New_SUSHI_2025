@@ -151,8 +151,7 @@ module V1
 
       render json: {
         error: "action not permitted for this token",
-        message: "This token is read-only. Grant write authority explicitly " \
-                 "(rake api_token:grant_write ID=<id>) or use a token that has it."
+        message: @api_token.write_denied_message
       }, status: :forbidden
     end
 

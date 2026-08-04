@@ -119,12 +119,51 @@ class ApiToken < ActiveRecord::Base
 
   # Look up an active token by its raw value. Fail-closed: returns nil for any
   # missing/unknown/expired/revoked token.
+  #
+  # DB first; the ENV-provisioned credential (EnvApiToken) is a strictly ADDITIVE
+  # fallback, tried only on a DB miss. Two consequences worth stating:
+  #   - a row that exists but is expired or revoked stays denied — the ENV path
+  #     can never resurrect it;
+  #   - a node that configures no ENV credential behaves exactly as it did before
+  #     this path existed.
+  # Every surface authenticates through this one method (/api/v1 via
+  # ApiTokenAuthenticatable, /v1 via V1::DatasetsController#require_bearer_token,
+  # /internal via Internal::LegacyController#require_machine_token), so the ENV
+  # credential is available — and equally constrained — on all of them.
   def self.authenticate(raw)
     return nil if raw.to_s.empty?
+
     token = find_by(token_hash: digest(raw))
-    return nil unless token && token.active?
-    token
+    return token if token&.active?
+
+    # The ENV credential is consulted ONLY on a DB miss. A row that exists but is
+    # expired or revoked must stay denied, so it never reaches this branch — but
+    # it does still fall through to the log below, because a withdrawn credential
+    # being presented over and over is exactly the event worth seeing.
+    if token.nil?
+      env = EnvApiToken.token_for(raw)
+      return env if env
+    end
+
+    log_failed_bearer_attempt
+    nil
   end
+
+  # A failed bearer attempt used to be completely silent, so a probing client or a
+  # client still using a revoked token left no evidence at all. Keyed on
+  # `intended?` (any of the ENV variables set) rather than `enabled?`, because a
+  # misconfiguration is precisely the case where the silence was most misleading —
+  # and keyed on the ENV credential at all so that no node's log volume changes
+  # without opting in. Never logs the token or its digest; this seam has no
+  # request context to log.
+  def self.log_failed_bearer_attempt
+    return unless EnvApiToken.intended?
+
+    Rails.logger.warn(
+      "ApiToken: bearer authentication failed (no active row, no ENV credential match)"
+    )
+  end
+  private_class_method :log_failed_bearer_attempt
 
   def user?
     principal.to_s == "user"
@@ -174,6 +213,24 @@ class ApiToken < ActiveRecord::Base
     return true if machine?
 
     effective_capabilities.include?("write")
+  end
+
+  # Operator guidance for a 403 from the write gate. The two surfaces share it so
+  # they cannot drift apart.
+  #
+  # An ENV-provisioned credential has no row and therefore no id, so pointing its
+  # holder at `grant_write ID=` would send them looking for a record that does not
+  # exist — on the production node, where nothing may be written to `api_tokens`
+  # anyway. Say what is actually true instead.
+  def write_denied_message
+    if persisted?
+      "This token is read-only. Grant write authority explicitly " \
+      "(rake api_token:grant_write ID=#{id}) or use a token that has it."
+    else
+      "This token is read-only. It is provisioned from the environment " \
+      "(#{EnvApiToken::NAME_VAR}) and is read-only by construction; write " \
+      "authority cannot be granted to it through configuration."
+    end
   end
 
   def active?
