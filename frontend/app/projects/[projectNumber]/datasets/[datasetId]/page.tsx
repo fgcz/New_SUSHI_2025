@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
+import { useQuery } from '@tanstack/react-query';
 import { useDatasetBase, useDatasetTree } from '@/lib/hooks';
 import { datasetApi } from '@/lib/api';
 import DatasetTreeRcTree from '../DatasetTreeRcTree';
@@ -19,6 +20,17 @@ export default function DatasetDetailPage() {
 
   const { dataset, isLoading: isDatasetLoading, error: datasetError, notFound: datasetNotFound } = useDatasetBase(datasetId);
   const { datasetTree, isLoading: isTreeLoading, error: treeError } = useDatasetTree(datasetId);
+  const [showFullTree, setShowFullTree] = useState(false);
+
+  const rootId = datasetTree?.tree?.find((n: any) => n.parent === '#')?.id ?? null;
+  const isAlreadyRoot = rootId === datasetId;
+
+  const { data: fullTreeData, isLoading: isFullTreeLoading } = useQuery({
+    queryKey: ['dataset-tree', rootId],
+    queryFn: () => datasetApi.getDatasetTree(rootId!),
+    enabled: showFullTree && rootId !== null && !isAlreadyRoot,
+    staleTime: 60_000,
+  });
 
   // State for expandable input actions
   const [activeAction, setActiveAction] = useState<'comment' | 'rename' | 'bfabricId' | null>(null);
@@ -33,7 +45,8 @@ export default function DatasetDetailPage() {
     } else if (activeAction === 'bfabricId') {
       await datasetApi.setBFabricId(datasetId, inputValue);
     }
-    alert('Mock call api');
+    // TODO: Replace alert with toast notification and data refresh
+    alert(`${activeAction === 'comment' ? 'Comment added' : activeAction === 'rename' ? 'Dataset renamed' : 'B-Fabric ID set'} successfully`);
     setActiveAction(null);
     setInputValue('');
   };
@@ -115,23 +128,44 @@ export default function DatasetDetailPage() {
 
         {/* Quick Actions - top right */}
         <div className="flex items-center gap-1">
-          <button
-            onClick={async () => {
-              const { path } = await datasetApi.getDatasetDataFolder(datasetId);
-              router.push(`/files/${path}`);
-            }}
-            className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            title="Data Folder"
-          >
-            Data Folder
-          </button>
-          <button
-            onClick={() => router.push(`/projects/${projectNumber}/datasets/${datasetId}/samples/edit`)}
-            className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            title="Edit Samples"
-          >
-            Edit Samples
-          </button>
+          {/* Data Folder button - handles single or multiple paths */}
+          {dataset.data_paths.length === 0 ? (
+            <button
+              disabled
+              className="px-2.5 py-1.5 text-xs font-medium text-gray-400 bg-white border border-gray-200 rounded cursor-not-allowed"
+              title="No data folder"
+            >
+              Data Folder
+            </button>
+          ) : dataset.data_paths.length === 1 ? (
+            <button
+              onClick={() => router.push(`/files/${dataset.data_paths[0]}`)}
+              className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              title="Data Folder"
+            >
+              Data Folder
+            </button>
+          ) : (
+            <div className="relative group">
+              <button
+                className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                title="Data Folders"
+              >
+                Data Folders ({dataset.data_paths.length})
+              </button>
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-48 hidden group-hover:block">
+                {dataset.data_paths.map((path) => (
+                  <button
+                    key={path}
+                    onClick={() => router.push(`/files/${path}`)}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {path}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <button
             onClick={() => router.push(`/projects/${projectNumber}/datasets/${datasetId}/jobs`)}
             className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
@@ -158,7 +192,11 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          onClick={async () => { await datasetApi.downloadDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            const { downloadUrl } = await datasetApi.downloadDataset(datasetId);
+            // TODO: Trigger actual download when backend returns real URL
+            alert(`Download URL: ${downloadUrl}`);
+          }}
         >
           Download
         </button>
@@ -170,7 +208,13 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          onClick={async () => { await datasetApi.mergeDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            const targetId = prompt('Enter target dataset ID to merge with:');
+            if (targetId && !isNaN(Number(targetId))) {
+              await datasetApi.mergeDataset(datasetId, Number(targetId));
+              alert('Merge request submitted');
+            }
+          }}
         >
           Merge with another dataset
         </button>
@@ -203,7 +247,12 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-red-600 bg-white border border-red-300 rounded hover:bg-red-50"
-          onClick={async () => { await datasetApi.deleteDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            if (confirm(`Are you sure you want to delete dataset "${dataset.name}"?`)) {
+              await datasetApi.deleteDataset(datasetId);
+              router.push(`/projects/${projectNumber}/datasets`);
+            }
+          }}
         >
           Delete
         </button>
@@ -249,15 +298,35 @@ export default function DatasetDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
         {/* Left side - Tree (70%) */}
         <div className="lg:col-span-7">
-          {isTreeLoading && <div className="h-64 border rounded-lg bg-gray-50 flex items-center justify-center"><div className="text-gray-500">Loading tree...</div></div>}
+          <div className="flex items-center justify-end mb-2 gap-2">
+            {!isAlreadyRoot && (
+              <label className="flex items-center gap-1.5 text-sm text-gray-500 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="rounded border-gray-300 text-brand-600"
+                  checked={showFullTree}
+                  onChange={(e) => setShowFullTree(e.target.checked)}
+                />
+                Show full tree
+              </label>
+            )}
+          </div>
+          {(isTreeLoading || isFullTreeLoading) && <div className="h-64 border rounded-lg bg-gray-50 flex items-center justify-center"><div className="text-gray-500">Loading tree...</div></div>}
           {treeError && <div className="h-64 border rounded-lg bg-red-50 flex items-center justify-center"><div className="text-red-600">Failed to load tree data</div></div>}
-          {datasetTree && (
-            <DatasetTreeRcTree
-              treeNodes={datasetTree}
-              projectNumber={projectNumber}
-              currentDatasetId={datasetId}
-            />
-          )}
+          {!isTreeLoading && !isFullTreeLoading && (() => {
+            const activeTree = showFullTree
+              ? (isAlreadyRoot ? datasetTree : fullTreeData)
+              : datasetTree;
+            return activeTree ? (
+              <DatasetTreeRcTree
+                treeNodes={activeTree.tree}
+                projectNumber={projectNumber}
+                currentDatasetId={datasetId}
+                variant="geist"
+                noFade
+              />
+            ) : null;
+          })()}
         </div>
         
         {/* Right side - Dataset Information (30%) */}
@@ -268,7 +337,7 @@ export default function DatasetDetailPage() {
       
       <div className="bg-white border rounded-lg overflow-hidden mt-6">
         <div className="p-6">
-          <DatasetSamples samples={dataset.samples} datasetId={datasetId} projectNumber={projectNumber} />
+          <DatasetSamples samples={dataset.samples} datasetId={datasetId} projectNumber={projectNumber} dataPaths={dataset.data_paths} />
 
           <div className="mt-6 pt-4 border-t">
             <h3 className="text-lg font-semibold mb-4">Runnable Applications</h3>

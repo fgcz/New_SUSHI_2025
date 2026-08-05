@@ -190,7 +190,7 @@ describe('RunApplicationPage', () => {
     });
     await user.click(screen.getByRole('button', { name: /Continue to Review/i }));
     expect(localStorageSpy).toHaveBeenCalledWith(
-      'sushi_job_submission_data',
+      'omics_job_submission_data',
       expect.any(String)
     );
     expect(mockPush).toHaveBeenCalledWith(

@@ -2,18 +2,32 @@ import { DynamicFormData } from "./app-form";
 
 export interface JobListResponse {
   jobs: JobMinimal[];
-  total_count: number;
-  page: number;
+  pagination: {
+    total_count: number;
+    page: number;
+    per: number;
+    total_pages: number;
+  };
+  filters: {
+    status: string | null;
+    user: string | null;
+    dataset_name?: string | null;
+    q?: string | null;
+  };
+  project_number?: number;
 }
 
 export interface JobFullResponse {
   id: number;
+  project_number: number | null;
   status: string;
   user: string;
   input_dataset_id: number;
   next_dataset_id: number;
   created_at: string;
-  script_path: string;
+  script_path: string | null;
+  stdout_path: string | null;
+  stderr_path: string | null;
   submit_job_id: number;
   start_time: string;
   end_time: string;
@@ -47,8 +61,24 @@ export interface JobSubmissionRequest {
 }
 
 export interface JobSubmissionResponse {
-  id: number;
+  job_id: number;
+  output_dataset_id: number;
+  slurm_job_id: string;
   status: "submitted" | "running" | "completed" | "failed";
-  created_at: string;
   message: string;
+}
+
+export interface DryRunResponse {
+  dry_run: true;
+  script_path: string;
+  stdout_path: string;
+  stderr_path: string;
+  result_dir: string;
+  input_dataset_tsv_path: string;
+  resources: {
+    cores: number;
+    ram: number;
+    scratch: number;
+    partition: string;
+  };
 }

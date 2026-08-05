@@ -12,22 +12,19 @@ interface UseProjectListReturn {
 }
 
 /**
- * Hook to get the list of user projects
- * 
- * @param 
- * @returns Object containing project list, loading state, error state, and utility functions
+ * Hook to get the list of user projects.
+ * User identity is determined from JWT token on the backend.
  */
 export function useProjectList(): UseProjectListReturn {
-  const { loading: authLoading } = useAuth();
-  
+  const { loading: authLoading, authStatus } = useAuth();
+
   const { data: userProjectsData, isLoading, error, refetch } = useQuery({
     queryKey: ['user-projects'],
     queryFn: () => projectApi.getUserProjects(),
-    enabled: !authLoading,
+    enabled: !authLoading && !!authStatus?.current_user,
     staleTime: 60_000,
   });
 
-  // Computed state: Determine if projects list is empty
   const isEmpty = !isLoading && !error && (!userProjectsData || userProjectsData.projects.length === 0);
 
   return {
@@ -37,6 +34,4 @@ export function useProjectList(): UseProjectListReturn {
     isEmpty,
     refetch
   };
-
-  
 }

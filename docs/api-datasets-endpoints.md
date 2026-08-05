@@ -86,7 +86,7 @@ Authorization: Bearer <jwt_token>
 - `applications`: Array of runnable application names in this category
 
 #### Runnable Application Determination
-An application is considered runnable when the dataset's headers satisfy the `required_columns` of the `SushiApplication`.
+An application is considered runnable when the dataset's headers satisfy the `required_columns` of the `MultiOmicsApplication`.
 
 #### Error Responses
 - `404 Not Found`: When the dataset is not found
@@ -296,7 +296,7 @@ bundle exec rspec spec/requests/api/v1/datasets_controller_spec.rb
 ### Related Models
 - `DataSet` - Dataset information
 - `Sample` - Sample information
-- `SushiApplication` - Application information
+- `MultiOmicsApplication` - Application information
 
 ---
 

@@ -33,14 +33,7 @@ export default function DatasetApps({runnableApps, datasetId, projectNumber }: D
   // }
 
   if (runnableApps.length == 0) {
-    return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <div className="text-gray-400 text-lg mb-2">⚙️</div>
-        <h4 className="text-lg font-medium text-gray-900 mb-2">No runnable applications found</h4>
-        <p className="text-gray-500 text-sm mb-4">There are no applications available to run on this dataset.</p>
-        <p className="text-gray-400 text-xs">Available applications will appear here based on the dataset type and configuration.</p>
-      </div>
-    );
+    return <p className="text-sm text-gray-400">No applications available for this dataset.</p>;
   }
 
   return (
@@ -54,11 +47,11 @@ export default function DatasetApps({runnableApps, datasetId, projectNumber }: D
             <div className="flex overflow-x-auto gap-1">
               {category.apps.map((app) => (
                 <Link
-                  key={app.class_name}
-                  href={`/projects/${projectNumber}/datasets/${datasetId}/run-application/${app.class_name}`}
+                  key={app.name}
+                  href={`/projects/${projectNumber}/datasets/${datasetId}/run-application/${app.name}`}
                   className="px-3 py-1.5 text-white rounded text-sm font-medium whitespace-nowrap bg-brand-600 hover:bg-brand-700 transition-colors"
                 >
-                  {app.class_name}
+                  {app.name}
                 </Link>
               ))}
             </div>

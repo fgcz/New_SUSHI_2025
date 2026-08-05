@@ -1,0 +1,35 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+pyrightconfig.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# uv
+uv.lock
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Database
+storage/

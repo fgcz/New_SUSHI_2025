@@ -1,8 +1,14 @@
 export interface DatasetListResponse {
   datasets: DatasetMinimal[];
-  total_count: number;
-  page: number;
-  per: number;
+  pagination: {
+    total_count: number;
+    page: number;
+    per: number;
+    total_pages: number;
+  }
+  filters: {
+    q: string;
+  }
   project_number: number;
 }
 
@@ -10,24 +16,25 @@ export interface DatasetFullResponse {
   id: number;
   name: string;
   created_at: string;
-  user_login?: string | null;
+  user?: string | null;
   project_number: number;
   samples_count?: number;
   completed_samples?: number;
   parent_id?: number | null;
   children_ids?: number[];
   bfabric_id?: number | null;
-  order_id?: number | null;
+  order_ids?: number[];
   comment?: string;
-  sushi_app_name?: string;
+  omics_app_name?: string;
   samples: DatasetSample[];
   applications: DatasetAppCategory[];
+  data_paths: string[];
 }
 
 interface DatasetMinimal {
   id: number;
   name: string;
-  sushi_app_name?: string;
+  omics_app_name?: string;
   completed_samples?: number;
   samples_count?: number;
   parent_id?: number | null;
@@ -35,7 +42,7 @@ interface DatasetMinimal {
   user_login?: string | null;
   created_at: string;
   bfabric_id?: number | null;
-  order_id?: number | null;
+  order_ids?: number[];
   project_number: number;
   comment?: string;
 }
@@ -54,20 +61,24 @@ export interface DatasetAppCategory {
   apps: DatasetApp[];
 }
 
-interface DatasetApp{
-  class_name: string;
+interface DatasetApp {
+  name: string;
   description: string;
 }
 
-// -------------------- TREE 
+// -------------------- TREE
 export interface DatasetTreeNode {
   id: number;
   name: string;
   comment?: string;
   parent: number | "#";
+  children_count: number;
 }
 
-export type DatasetTreeResponse = DatasetTreeNode[];
+export type DatasetTreeResponse = {
+  tree: DatasetTreeNode[];
+  project_number?: number;
+}
 
 // Legacy type aliases for backward compatibility
 export type ProjectDataset = DatasetFullResponse;

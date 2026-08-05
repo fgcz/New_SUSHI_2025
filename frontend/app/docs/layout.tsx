@@ -53,11 +53,27 @@ export default function DocsLayout({
                 <h2 className="font-semibold text-gray-900 mb-4">Documentation</h2>
                 <ul className="space-y-2">
                   <li>
-                    <Link 
-                      href="/docs" 
+                    <Link
+                      href="/docs"
                       className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                     >
                       Overview
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/docs/architecture"
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Architecture
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/docs/authentication"
+                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      Authentication
                     </Link>
                   </li>
                   <li>
@@ -94,18 +110,10 @@ export default function DocsLayout({
                   </li>
                   <li>
                     <Link 
-                      href="/docs/testing-logs" 
-                      className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
-                    >
-                      Testing Logs
-                    </Link>
-                  </li>
-                  <li>
-                    <Link 
                       href="/docs/loading-patterns" 
                       className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                     >
-                      Loading Patterns (Outdated)
+                      Loading Patterns 
                     </Link>
                   </li>
                   <li>

@@ -80,10 +80,10 @@ export default function RankingPage() {
                     <span className="text-sm text-gray-700">{user.username}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <span className="text-sm text-gray-700">{user.jobsThisMonth.toLocaleString()}</span>
+                    <span className="text-sm text-gray-700">{user.jobs_this_month.toLocaleString()}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <span className="text-sm text-gray-700">{user.totalSubmissions.toLocaleString()}</span>
+                    <span className="text-sm text-gray-700">{user.total_submissions.toLocaleString()}</span>
                   </td>
                 </tr>
               );

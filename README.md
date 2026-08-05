@@ -1,6 +1,6 @@
-# New SUSHI 2025
+# MultiOmicsStudio
 
-Rails v8 API and FastAPI (backend) + Next.js (frontend) implementation of the SUSHI bioinformatics system.
+Rails v8 API and FastAPI (backend) + Next.js (frontend) implementation of the MultiOmicsStudio bioinformatics platform.
 
 ## 1. Prerequisites
 
@@ -22,8 +22,8 @@ module load Dev/node/22.16.0
 ### 2. Clone Repository
 ```bash
 cd /misc/fgcz01/sushi/
-git clone git@github.com:fgcz/new_SUSHI_2025
-cd new_sushi_2025
+git clone git@github.com:fgcz/MultiOmicsStudio
+cd multiomics-studio
 ```
 
 ### 3. Backend Setup
@@ -50,8 +50,8 @@ npm install
 1. **Prepare Libraries on Compilation-Capable Machine**:
 ```bash
 # Clone repository
-git clone git@github.com:fgcz/new_SUSHI_2025
-cd new_sushi_2025
+git clone git@github.com:fgcz/MultiOmicsStudio
+cd multiomics-studio
 
 # Load required modules
 module load Dev/Ruby/3.3.7
@@ -60,14 +60,14 @@ module load Dev/node/22.16.0
 # Install backend dependencies
 cd backend
 bundle config set --local path 'vendor/bundle'
-cp -r /misc/fgcz01/sushi/new_SUSHI_2025/backend/vendor .
+cp -r /misc/fgcz01/sushi/MultiOmicsStudio/backend/vendor .
 
 # Run tests to verify setup
 bundle exec rspec
 
 # Install frontend dependencies
 cd ../frontend
-cp -r /misc/fgcz01/sushi/new_SUSHI_2025/frontend/node_modules .
+cp -r /misc/fgcz01/sushi/MultiOmicsStudio/frontend/node_modules .
 
 # Run tests to verify setup
 npm test
@@ -170,7 +170,7 @@ npm run test:ci                    # CI mode
 ## 6. Project Structure
 
 ```
-new_sushi_2025/
+multiomics-studio/
 ├── backend/          # Rails v8 API
 │   ├── app/
 │   ├── config/

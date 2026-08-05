@@ -21,7 +21,7 @@ The Application Configuration API provides access to SUSHI application metadata,
 
 **GET** `/api/v1/application_configs`
 
-Returns a list of all available SUSHI applications.
+Returns a list of all available MultiOmicsStudio applications.
 
 #### Response
 
@@ -251,7 +251,7 @@ Field types are automatically inferred from parameter values:
 To add a new application:
 
 1. Copy the `*App.rb` file to `backend/lib/apps/`
-2. Ensure it inherits from `SushiFabric::SushiApp`
+2. Ensure it inherits from `SushiFabric::MultiOmicsApp`
 3. The API will automatically discover and parse it
 
 No database migrations or YAML files required!

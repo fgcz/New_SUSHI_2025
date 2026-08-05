@@ -23,6 +23,9 @@ export default function ProjectDatasetsPage() {
 
   // Local selection state (no need for URL sync)
   const [selectedSet, setSelectedSet] = useState<Set<number>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
+  const exitSelectMode = () => { setSelectMode(false); setSelectedSet(new Set()); };
 
   const toggleSelect = (id: number) => {
     setSelectedSet(prev => {
@@ -40,11 +43,13 @@ export default function ProjectDatasetsPage() {
     staleTime: 60_000,
   });
 
-  // Tree data query (enabled only when tree view)
+  const isTreeView = viewMode === 'tree';
+
+  // Tree data query (shared across all three tree views)
   const { data: treeData, isLoading: isTreeLoading, error: treeError } = useQuery({
     queryKey: ['datasets-tree', projectNumber],
     queryFn: () => projectApi.getProjectDatasetsTree(projectNumber),
-    enabled: viewMode === 'tree',
+    enabled: isTreeView,
     staleTime: 60_000,
   });
 
@@ -69,8 +74,8 @@ export default function ProjectDatasetsPage() {
   );
 
   const datasets = data?.datasets ?? [];
-  const total = data?.total_count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / per));
+  const total = data?.pagination.total_count ?? 0;
+  const totalPages = data?.pagination.total_pages ?? 0;
   const allIds = datasets.map((d) => d.id);
   const allSelectedOnPage = allIds.length > 0 && allIds.every((id) => selectedSet.has(id));
   const startIndex = (page - 1) * per + Math.min(1, total);
@@ -84,42 +89,30 @@ export default function ProjectDatasetsPage() {
       <div className="flex items-center gap-3 mb-4">
         {/* View toggle group */}
         <div className="inline-flex rounded-md bg-gray-100 p-0.5">
-          <button
-            onClick={() => {
-              const sp = new URLSearchParams(searchParams.toString());
-              sp.delete('view');
-              router.push(`?${sp.toString()}`);
-              setSelectedSet(new Set());
-            }}
-            className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${
-              viewMode === 'table'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Table
-          </button>
-          <button
-            onClick={() => {
-              const sp = new URLSearchParams(searchParams.toString());
-              sp.set('view', 'tree');
-              router.push(`?${sp.toString()}`);
-              setSelectedSet(new Set());
-            }}
-            className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${
-              viewMode === 'tree'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Tree
-          </button>
+          {(['table', 'tree'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => {
+                const sp = new URLSearchParams(searchParams.toString());
+                if (mode === 'table') sp.delete('view'); else sp.set('view', mode);
+                router.push(`?${sp.toString()}`);
+                exitSelectMode();
+              }}
+              className={`px-3 py-1.5 text-sm font-medium rounded transition-all ${
+                viewMode === mode
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {mode === 'table' ? 'Table' : 'Tree'}
+            </button>
+          ))}
         </div>
 
         <div className="w-px h-6 bg-gray-300" />
 
         {/* Search input - different for table vs tree */}
-        {viewMode === 'tree' ? (
+        {isTreeView ? (
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
               <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,13 +154,40 @@ export default function ProjectDatasetsPage() {
         <div className="flex-1" />
 
         {/* Action buttons - right aligned */}
-        <button
-          className="px-3 py-1.5 bg-white text-red-600 border border-red-300 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-red-300 transition-colors"
-          disabled={selectedSet.size === 0}
-          onClick={() => deleteDatasets(Array.from(selectedSet))}
-        >
-          Delete ({selectedSet.size})
-        </button>
+        {isTreeView ? (
+          selectMode ? (
+            <>
+              <button
+                className="px-3 py-1.5 bg-white text-red-600 border border-red-300 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-red-300 transition-colors"
+                disabled={selectedSet.size === 0}
+                onClick={async () => { await deleteDatasets(Array.from(selectedSet)); exitSelectMode(); }}
+              >
+                Delete ({selectedSet.size})
+              </button>
+              <button
+                className="px-3 py-1.5 bg-white text-gray-600 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+                onClick={exitSelectMode}
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <button
+              className="px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+              onClick={() => setSelectMode(true)}
+            >
+              Select
+            </button>
+          )
+        ) : (
+          <button
+            className="px-3 py-1.5 bg-white text-red-600 border border-red-300 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-red-300 transition-colors"
+            disabled={selectedSet.size === 0}
+            onClick={() => deleteDatasets(Array.from(selectedSet))}
+          >
+            Delete ({selectedSet.size})
+          </button>
+        )}
         <button
           className="px-3 py-1.5 bg-brand-600 text-white rounded-md text-sm font-medium hover:bg-brand-700 transition-colors"
           onClick={() => downloadAllDatasets()}
@@ -176,17 +196,18 @@ export default function ProjectDatasetsPage() {
         </button>
       </div>
 
-      {viewMode === 'tree' ? (
+      {isTreeView ? (
         <div>
           {isTreeLoading && <div className="p-6 text-gray-500">Loading tree...</div>}
           {treeError && <div className="p-6 text-red-600">Failed to load tree</div>}
           {treeData && (
             <DatasetTreeRcTree
               treeNodes={treeData.tree}
-              selectedIds={selectedSet}
-              onSelectionChange={setSelectedSet}
+              selectedIds={selectMode ? selectedSet : undefined}
+              onSelectionChange={selectMode ? setSelectedSet : undefined}
               projectNumber={projectNumber}
               searchQuery={treeSearchQuery}
+              variant="geist"
             />
           )}
         </div>
@@ -217,7 +238,7 @@ export default function ProjectDatasetsPage() {
                   </th>
                   <th className="px-3 py-2 text-left font-semibold">ID</th>
                   <th className="px-3 py-2 text-left font-semibold">Name</th>
-                  <th className="px-3 py-2 text-left font-semibold">SushiApp</th>
+                  <th className="px-3 py-2 text-left font-semibold">App</th>
                   <th className="px-3 py-2 text-left font-semibold">Samples</th>
                   <th className="px-3 py-2 text-left font-semibold">ParentID</th>
                   <th className="px-3 py-2 text-left font-semibold">Children</th>
@@ -233,10 +254,12 @@ export default function ProjectDatasetsPage() {
                       <input type="checkbox" className="rounded border-gray-300" checked={selectedSet.has(ds.id)} onChange={() => toggleSelect(ds.id)} />
                     </td>
                     <td className="px-3 py-2 text-gray-600">{ds.id}</td>
+                    {/* <td className="px-3 py-2 max-w-[200px] truncate" title={ds.name}> */}
                     <td className="px-3 py-2">
                       <a href={`/projects/${projectNumber}/datasets/${ds.id}`} className="text-brand-700 hover:text-brand-900 hover:underline font-medium">{ds.name}</a>
                     </td>
-                    <td className="px-3 py-2 text-gray-600">{ds.sushi_app_name || ''}</td>
+                    {/* <td className="px-3 py-2 text-gray-600 max-w-[150px] truncate" title={ds.omics_app_name || ''}>{ds.omics_app_name || ''}</td> */}
+                    <td className="px-3 py-2">{ds.omics_app_name || ''}</td>
                     <td className="px-3 py-2 text-gray-600">{ds.completed_samples ?? 0} / {ds.samples_count ?? 0}</td>
                     <td className="px-3 py-2">
                       {ds.parent_id ? (
@@ -252,7 +275,7 @@ export default function ProjectDatasetsPage() {
                       )) : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-3 py-2 text-gray-600">{ds.user_login || ''}</td>
-                    <td className="px-3 py-2 text-gray-500">{new Date(ds.created_at).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-gray-500 max-w-[120px] truncate" title={new Date(ds.created_at).toLocaleString()}>{new Date(ds.created_at).toLocaleString()}</td>
                     <td className="px-3 py-2">
                       {ds.bfabric_id ? (
                         <a

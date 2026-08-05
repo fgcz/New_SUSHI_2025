@@ -1,6 +1,6 @@
-# Docker Setup for Sushi Application
+# Docker Setup for MultiOmicsStudio
 
-This document explains how to run the Sushi application using Docker Compose.
+This document explains how to run MultiOmicsStudio using Docker Compose.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ This document explains how to run the Sushi application using Docker Compose.
 
 1. Clone the repository and navigate to the project root:
    ```bash
-   cd new_sushi_2025
+   cd multiomics-studio
    ```
 
 2. Start the development environment:

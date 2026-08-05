@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/providers/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useProjectList } from '@/lib/hooks';
-import { projectApi } from '@/lib/api';
+import { useProjectList, useLastProjectNumber } from '@/lib/hooks';
 
 // Authentication status component
 const AuthStatus = () => {
@@ -62,28 +61,17 @@ export default function Header() {
   const params = useParams<{ projectNumber?: string }>();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [datasetSearchQuery, setDatasetSearchQuery] = useState('');
   const [showProjectsDropdown, setShowProjectsDropdown] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { userProjects, isLoading: projectsLoading } = useProjectList();
 
   const projectNumber = params?.projectNumber ? Number(params.projectNumber) : null;
+  const activeProject = useLastProjectNumber(projectNumber);
   const userName = authStatus?.current_user || "Guest";
 
-  // Prepopulate search with current project number
+  // Keep search bar in sync with active project
   useEffect(() => {
-    if (projectNumber) {
-      setSearchQuery(projectNumber.toString());
-    }
-  }, [projectNumber]);
-
-  // Auto-dismiss error message after 5 seconds
-  useEffect(() => {
-    if (errorMessage) {
-      const timer = setTimeout(() => setErrorMessage(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorMessage]);
+    if (activeProject) setSearchQuery(activeProject.toString());
+  }, [activeProject]);
 
   // Show loading screen while checking authentication
   if (loading) {
@@ -91,7 +79,7 @@ export default function Header() {
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-3 flex justify-between items-center">
           <div className="text-3xl font-bold" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>
-            <h1>Sushi</h1>
+            <h1>MultiOmicsStudio</h1>
           </div>
           <div className="flex items-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-600 mr-2"></div>
@@ -102,9 +90,9 @@ export default function Header() {
     );
   }
 
-  const handleLogout = (e: React.MouseEvent) => {
+  const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    logout();
+    await logout();
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -112,28 +100,6 @@ export default function Header() {
     const trimmedQuery = searchQuery.trim();
     if (trimmedQuery) {
       router.push(`/projects/${trimmedQuery}`);
-    }
-  };
-
-  const handleDatasetSearchSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedQuery = datasetSearchQuery.trim();
-    if (!trimmedQuery) return;
-
-    if (!/^\d+$/.test(trimmedQuery)) {
-      setErrorMessage('Dataset ID must be a number');
-      return;
-    }
-
-    const datasetId = Number(trimmedQuery);
-    try {
-      const { projectId } = await projectApi.validateDatasetId(userName, datasetId);
-      setErrorMessage(null);
-      router.push(`/projects/${projectId}/datasets/${datasetId}`);
-      setDatasetSearchQuery('');
-    } catch (error) {
-      setErrorMessage(`Dataset ${datasetId} not found`);
-      // Stay on current page - don't navigate
     }
   };
 
@@ -145,10 +111,10 @@ export default function Header() {
   return (
     <div className="sticky top-0 z-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+        <div className="container mx-auto py-2 flex justify-between items-center">
           <div className="flex items-center">
             <Link href="/" className="text-3xl font-bold hover:text-brand-600 transition-colors mr-4" style={{fontFamily: "Comic Sans MS, cursive, sans-serif"}}>
-              <h1>Sushi</h1>
+              <h1>MultiOmicsStudio</h1>
             </Link>
             
             {/* Projects dropdown */}
@@ -169,14 +135,14 @@ export default function Header() {
                   <div className="px-4 py-2 text-gray-500">Loading...</div>
                 ) : userProjects && userProjects.projects.length > 0 ? (
                   <>
-                    {userProjects.projects.map((project) => (
+                    {userProjects.projects.map((projectNumber) => (
                       <Link
-                        key={project.number}
-                        href={`/projects/${project.number}`}
+                        key={projectNumber}
+                        href={`/projects/${projectNumber}`}
                         className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                         onClick={() => setShowProjectsDropdown(false)}
                       >
-                        Project {project.number}
+                        Project {projectNumber}
                       </Link>
                     ))}
                   </>
@@ -197,74 +163,38 @@ export default function Header() {
                 className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm w-24"
               />
             </form>
-
-            {/* Dataset ID Search */}
-            <form onSubmit={handleDatasetSearchSubmit} className="flex items-center ml-2">
-              <input
-                type="text"
-                value={datasetSearchQuery}
-                onChange={(e) => setDatasetSearchQuery(e.target.value)}
-                placeholder="Dataset ID"
-                className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm w-24"
-              />
-            </form>
           </div>
           
           <nav className="flex items-center space-x-4">
-            {projectNumber && (
-              <Link href={`/projects/${projectNumber}/datasets`} className="text-gray-600 hover:text-brand-600">DataSets</Link>
+            {activeProject && (
+              <Link href={`/projects/${activeProject}/datasets`} className="text-gray-600 hover:text-brand-600">DataSets</Link>
             )}
-            <Link href={`/projects/${projectNumber}/datasets/import`} className="text-gray-600 hover:text-brand-600">Import</Link>
-            <Link href={`/projects/${projectNumber}/jobs`} className="text-gray-600 hover:text-brand-600">Jobs</Link>
-            <Link href={`/files/p${projectNumber}`} className="text-gray-600 hover:text-brand-600">gStore</Link>
+            <Link href={activeProject ? `/projects/${activeProject}/datasets/import` : '/projects'} className="text-gray-600 hover:text-brand-600">Import</Link>
+            <Link href={activeProject ? `/projects/${activeProject}/jobs` : '/jobs'} className="text-gray-600 hover:text-brand-600">Jobs</Link>
+            <Link href={activeProject ? `/files/p${activeProject}` : '/files'} className="text-gray-600 hover:text-brand-600">gStore</Link>
             <Link href="/docs" className="text-gray-600 hover:text-brand-600">Docs</Link>
+            <Link href="/dataset/list" className="text-gray-600 hover:text-brand-600">Find</Link>
             <Link href="/help" className="text-gray-600 hover:text-brand-600">Help</Link>
             <div className="border-l border-gray-300 h-6"></div>
-            {projectNumber && (
-              <span className="font-semibold">Project {projectNumber}</span>
-            )}
             <span className="text-gray-700">
-            Hi, {userName}
-            {/* Auth Skipped indicator commented out
-            {authStatus?.authentication_skipped ? (
-              <span className="text-green-600 ml-1">| Auth Skipped</span>
-            ) : (
-              <button
-                onClick={handleLogout}
-                className="text-brand-600 hover:underline ml-1 bg-transparent border-none cursor-pointer"
-              >
-                | Sign out
-              </button>
-            )}
-            */}
-          </span>
+              Hi, {userName}
+            </span>
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-red-600 ml-2 px-2 py-1 text-sm border border-gray-300 rounded hover:border-red-300 transition-colors"
+            >
+              Logout
+            </button>
         </nav>
       </div>
       </header>
       
       {/* Close dropdown when clicking outside */}
       {showProjectsDropdown && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <div
+          className="fixed inset-0 z-40"
           onClick={() => setShowProjectsDropdown(false)}
         />
-      )}
-      {/* Error message banner */}
-      {errorMessage && (
-        <div className="bg-red-50 border-b border-red-200">
-          <div className="container mx-auto px-6 py-2 flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="text-red-600 mr-2">⚠</span>
-              <span className="text-red-800 text-sm">{errorMessage}</span>
-            </div>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-red-600 hover:text-red-800 text-sm font-medium"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
       )}
 
       {/* Auth status commented out - header getting populated

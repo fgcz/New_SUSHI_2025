@@ -72,7 +72,7 @@ export default function RunApplicationPage() {
     handleKeyDown,
   } = useApplicationForm({
     appName,
-    datasetName: dataset?.name,
+    datasetId,
     paramGroups: formConfig?.param_groups,
     resubmitParams: resubmitData?.parameters,
     isResubmit,
@@ -103,14 +103,14 @@ export default function RunApplicationPage() {
     const newParams = new URLSearchParams(searchParams.toString());
     // stepIndex is 0-based from FormStepper, convert to 1-based for URL
     newParams.set("step", (stepIndex + 1).toString());
-    router.push(`${pathname}?${newParams.toString()}`);
+    router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
   }, [searchParams, pathname, router]);
 
   const goNext = useCallback(() => {
     if (currentStepNumber < paramGroups.length) {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.set("step", (currentStepNumber + 1).toString());
-      router.push(`${pathname}?${newParams.toString()}`);
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
   }, [currentStepNumber, paramGroups.length, searchParams, pathname, router]);
 
@@ -118,7 +118,7 @@ export default function RunApplicationPage() {
     if (currentStepNumber > 1) {
       const newParams = new URLSearchParams(searchParams.toString());
       newParams.set("step", (currentStepNumber - 1).toString());
-      router.push(`${pathname}?${newParams.toString()}`);
+      router.push(`${pathname}?${newParams.toString()}`, { scroll: false });
     }
   }, [currentStepNumber, searchParams, pathname, router]);
 
@@ -141,7 +141,7 @@ export default function RunApplicationPage() {
     };
 
     try {
-      localStorage.setItem("sushi_job_submission_data", JSON.stringify(jobData));
+      sessionStorage.setItem("omics_job_submission_data", JSON.stringify(jobData));
       router.push(
         `/projects/${projectNumber}/datasets/${datasetId}/run-application/${appName}/confirm`
       );
@@ -277,26 +277,23 @@ export default function RunApplicationPage() {
         </div>
       </div>
 
-      {/* Step Progress Indicator */}
-      {paramGroups.length > 0 && (
-        <FormStepper
-          steps={paramGroups}
-          currentStepIndex={currentStepIndex}
-          onStepClick={goToStep}
-        />
-      )}
-
       <div className="space-y-6">
         {/* Current Step Parameters */}
         {currentStep && (
           <div className="bg-white border rounded-lg overflow-hidden">
-            <div className="px-6 py-4">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">{currentStep.title}</h3>
-                {currentStep.description && (
-                  <p className="text-sm text-gray-500 mt-1">{currentStep.description}</p>
-                )}
+            {paramGroups.length > 0 && (
+              <div className="px-6 pt-4">
+                <FormStepper
+                  steps={paramGroups}
+                  currentStepIndex={currentStepIndex}
+                  onStepClick={goToStep}
+                />
               </div>
+            )}
+            <div className="px-6 py-4">
+              {currentStep.description && (
+                <p className="text-sm text-gray-500 mb-4">{currentStep.description}</p>
+              )}
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   {currentStep.fields.map((field) => (

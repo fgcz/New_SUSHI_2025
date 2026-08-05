@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DatasetSample } from '@/lib/types';
-import { datasetApi } from '@/lib/api';
 
 interface DatasetSamplesProps {
-  samples: DatasetSample[]
-  projectNumber: number,
-  datasetId: number,
+  samples: DatasetSample[];
+  projectNumber: number;
+  datasetId: number;
+  dataPaths: string[];
 }
 
-export default function DatasetSamples({ samples, projectNumber, datasetId}: DatasetSamplesProps) {
+export default function DatasetSamples({ samples, projectNumber, datasetId, dataPaths }: DatasetSamplesProps) {
   const router = useRouter();
 
   // Check if any column has [Factor] postfix
@@ -79,15 +79,31 @@ export default function DatasetSamples({ samples, projectNumber, datasetId}: Dat
               Edit Factors
             </Link>
           )}
-          <button
-            className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-            onClick={async () => {
-              const { path } = await datasetApi.getDatasetDataFolder(datasetId);
-              router.push(`/files/${path}`);
-            }}
-          >
-            Data Folder
-          </button>
+          {dataPaths.length === 1 ? (
+            <button
+              className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+              onClick={() => router.push(`/files/${dataPaths[0]}`)}
+            >
+              Data Folder
+            </button>
+          ) : dataPaths.length > 1 ? (
+            <div className="relative group">
+              <button className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+                Data Folders ({dataPaths.length})
+              </button>
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-48 hidden group-hover:block">
+                {dataPaths.map((path) => (
+                  <button
+                    key={path}
+                    onClick={() => router.push(`/files/${path}`)}
+                    className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    {path}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <Link
             href={`/projects/${projectNumber}/datasets/${datasetId}/samples/edit`}
             className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"

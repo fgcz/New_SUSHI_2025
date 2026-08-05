@@ -106,8 +106,8 @@ export default function ProjectJobsPage() {
 
   // Use backend pagination and filtering data directly
   const jobs = jobsData?.jobs || [];
-  const total = jobsData?.total_count || 0;
-  const totalPages = Math.max(1, Math.ceil(total / per));
+  const total = jobsData?.pagination.total_count || 0;
+  const totalPages = jobsData?.pagination.total_pages || 0;
   const startIndex = (page - 1) * per + Math.min(1, total);
   const endIndex = Math.min(page * per, total);
 
@@ -177,12 +177,20 @@ export default function ProjectJobsPage() {
 
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Project {projectNumber} - Jobs</h1>
-        <Link 
-          href={`/projects/${projectNumber}`} 
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-        >
-          ← Back to Project
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href="/jobs"
+            className="px-4 py-2 text-sm font-medium text-white bg-brand-600 border border-brand-600 rounded-md hover:bg-brand-700"
+          >
+            Show All Jobs
+          </Link>
+          <Link
+            href={`/projects/${projectNumber}`}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            ← Back to Project
+          </Link>
+        </div>
       </div>
 
       <form onSubmit={onSubmit} className="mb-3 space-y-3">
@@ -263,6 +271,7 @@ export default function ProjectJobsPage() {
       </form>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead className="bg-brand-300">
             <tr>
@@ -320,7 +329,7 @@ export default function ProjectJobsPage() {
                 <td className="px-3 py-1.5 text-sm border-r border-gray-200 text-center">
                   <Link
                     href={`/jobs/${job.id}/script`}
-                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors whitespace-nowrap"
                   >
                     Show Script
                   </Link>
@@ -328,7 +337,7 @@ export default function ProjectJobsPage() {
                 <td className="px-3 py-1.5 text-sm border-r border-gray-200 text-center">
                   <Link
                     href={`/jobs/${job.id}/logs`}
-                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+                    className="inline-flex items-center px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors whitespace-nowrap"
                   >
                     Show Logs
                   </Link>
@@ -343,6 +352,7 @@ export default function ProjectJobsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {jobs.length === 0 && (

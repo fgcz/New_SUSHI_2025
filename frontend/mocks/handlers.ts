@@ -149,19 +149,17 @@ export const handlers = [
     return HttpResponse.json(tree.length > 0 ? tree : mockDatasetTree)
   }),
 
-  // GET /api/v1/application_configs/:appName - Get application form schema
-  http.get('*/api/v1/application_configs/:appName', ({ params }) => {
+  // GET /api/v1/applications/:appName - Get application form schema
+  http.get('*/api/v1/applications/:appName', ({ params }) => {
     const appName = params.appName
 
     return HttpResponse.json({
       application: {
         name: appName,
-        class_name: appName,
         category: 'Analysis',
         description: `Mock application: ${appName}`,
         required_columns: ['Name'],
         required_params: ['cores'],
-        modules: ['Tools/Analysis'],
         param_groups: [
           {
             id: 'resources',

@@ -3,6 +3,19 @@ export default function DocsHomePage() {
     <div className="prose max-w-none">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 not-prose">
         <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+          <h3 className="text-lg font-semibold mb-2">Architecture</h3>
+          <p className="text-gray-600 mb-4">
+            Folder structure, technology stack, data flow patterns, and architectural decisions.
+          </p>
+          <a
+            href="/docs/architecture"
+            className="inline-flex items-center text-brand-600 hover:text-brand-800"
+          >
+            View Architecture →
+          </a>
+        </div>
+
+        <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
           <h3 className="text-lg font-semibold mb-2">Type System</h3>
           <p className="text-gray-600 mb-4">
             Comprehensive guide to all TypeScript types, their usage, and import patterns.

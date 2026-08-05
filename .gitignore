@@ -49,6 +49,14 @@ old_sushi/
 
 # cursor_log
 cursor_log/
+
+# Runtime logs
+backend_python/*.log
+frontend/*.log
+
+# PID files
+.backend-python.pid
+.frontend.pid
 log/
 
 # --- Local consolidation clones (separate git repos; never commit into this repo) ---

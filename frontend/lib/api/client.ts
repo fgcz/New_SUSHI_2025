@@ -1,8 +1,12 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://fgcz-h-083.fgcz-net.unizh.ch:4000';
 
+type UnauthorizedHandler = () => void;
+
 export class HttpClient {
   private baseUrl: string;
   private token: string | null = null;
+  private onUnauthorized: UnauthorizedHandler | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
   constructor(baseUrl: string = API_BASE_URL) {
     this.baseUrl = baseUrl;
@@ -11,7 +15,44 @@ export class HttpClient {
     }
   }
 
-  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  setUnauthorizedHandler(handler: UnauthorizedHandler): void {
+    this.onUnauthorized = handler;
+  }
+
+  private async tryRefreshToken(): Promise<boolean> {
+    // If refresh already in progress, wait for it
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        const response = await fetch(`${this.baseUrl}/auth/refresh`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+
+        const data = await response.json();
+        if (data.access_token) {
+          this.setToken(data.access_token);
+          return true;
+        }
+        return false;
+      } catch {
+        return false;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return this.refreshPromise;
+  }
+
+  async request<T>(endpoint: string, options: RequestInit = {}, isRetry = false): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -31,7 +72,25 @@ export class HttpClient {
     const response = await fetch(url, {
       ...options,
       headers,
+      credentials: 'include',
     });
+
+    if (response.status === 401) {
+      // Don't try refresh for auth endpoints (avoid loops)
+      if (!endpoint.startsWith('/auth/')) {
+        // Try to refresh token (only once per request)
+        if (!isRetry) {
+          const refreshed = await this.tryRefreshToken();
+          if (refreshed) {
+            // Retry original request with new token
+            return this.request<T>(endpoint, options, true);
+          }
+        }
+        // Refresh failed or already retried - trigger unauthorized handler
+        this.onUnauthorized?.();
+      }
+      throw new Error('Unauthorized');
+    }
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`);

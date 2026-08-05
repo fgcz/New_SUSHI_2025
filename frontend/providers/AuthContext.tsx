@@ -1,70 +1,70 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { authApi, datasetApi } from '@/lib/api';
-import { AuthenticationStatus } from '@/lib/types';
+import { authApi, httpClient } from '@/lib/api';
+import { AuthState } from '@/lib/types';
 
 interface AuthContextType {
-  authStatus: AuthenticationStatus | null;
+  authStatus: AuthState | null;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authStatus, setAuthStatus] = useState<AuthenticationStatus | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
+  const handleUnauthorized = useCallback(() => {
+    // Clear local state and redirect to login
+    authApi.logout();
+    setAuthStatus(null);
+    router.push('/login');
+  }, [router]);
+
   const fetchAuthStatus = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get authentication options from backend
-      const status = await authApi.getAuthenticationStatus();
-     
-      // If authentication is skipped, don't check JWT token
-      if (status.authentication_skipped) {
-        setAuthStatus(status);
-        setLoading(false);
-        return;
-      }
-      
-      // If JWT token exists, verify it and get user info
-      const token = typeof window !== 'undefined' ? localStorage.getItem('jwt_token') : null;
-      if (token) {
-        try {
-          const verifyResult = await authApi.verifyToken();
-          if (verifyResult.valid && verifyResult.user) {
-            status.current_user = verifyResult.user.login;
-          } else {
-            // Token is invalid, clear it
-            authApi.logout();
-          }
-        } catch (verifyError) {
-          // Token is invalid, clear it
-          authApi.logout();
+      const options = await authApi.getAuthenticationStatus();
+
+      // Try to get current user from /auth/me
+      // Backend returns dev_user when SKIP_AUTH=true, even without token
+      try {
+        const userInfo = await authApi.verifyToken();
+        setAuthStatus({
+          ...options,
+          current_user: userInfo.login,
+        });
+      } catch {
+        // No valid session
+        if (options.authentication_skipped) {
+          // This shouldn't happen - backend should return dev_user
+          console.error('SKIP_AUTH is true but /auth/me failed');
         }
-      }
-      
-      setAuthStatus(status);
-      
-      // Redirect to login page if authentication is required and not on login page
-      if (!status.authentication_skipped && !status.current_user && pathname !== '/login') {
-        router.push('/login');
+        setAuthStatus({
+          ...options,
+          current_user: null,
+        });
+
+        // Redirect to login if auth is required
+        if (!options.authentication_skipped && pathname !== '/login') {
+          router.push('/login');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch authentication status');
       console.error('Error fetching auth status:', err);
-      
-      // On error, redirect to login if not already there
+
       if (pathname !== '/login') {
         router.push('/login');
       }
@@ -73,20 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    // Clear JWT token
-    authApi.logout();
-    
-    // Clear authentication status
+  const logout = async () => {
+    await authApi.logout();
     setAuthStatus(null);
-    
-    // Redirect to login page
     router.push('/login');
   };
 
+  // Register 401 handler and fetch auth status once on mount
   useEffect(() => {
+    httpClient.setUnauthorizedHandler(handleUnauthorized);
     fetchAuthStatus();
-  }, [pathname]);
+  }, []);
 
   const value: AuthContextType = {
     authStatus,
