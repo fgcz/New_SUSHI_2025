@@ -227,6 +227,15 @@ module SushiFabric
       Rails.logger.info("Target gstore directory: #{@gstore_result_dir}")
     end
     
+    # Hook legacy apps override to finish setting themselves up once the input dataset,
+    # the result dir and the parameters are known but before anything is validated or
+    # generated (legacy SushiApp#preprocess, called from run -> test_run). Apps use it to
+    # seed @random_string for their Live Report link, to add 'Read2' to @required_columns
+    # for a paired run, and to append @required_params. Base implementation does nothing.
+    def preprocess
+      # this should be overwritten in a subclass
+    end
+
     # Get next dataset definition - should be overridden in subclasses
     def next_dataset
       { 'Name' => @next_dataset_name || "#{@name}_result" }

@@ -23,6 +23,14 @@ class JobSubmissionService
     # Configure app with parameters
     configure_sushi_app
 
+    # Legacy runs the app's own preprocess hook here — after the input dataset, result dir
+    # and parameters are settled, before validation and before any script is generated
+    # (SushiApp#run -> #test_run: set_input_dataset, set_dir_paths, preprocess, ...).
+    # It is where an app seeds @random_string for its Live Report link, adds 'Read2' to
+    # @required_columns for a paired run, and appends to @required_params — so it must run
+    # BEFORE resolve_and_validate_params, not after.
+    @sushi_app.preprocess
+
     # Resolve raw form-shaped defaults and enforce required params BEFORE anything with a
     # side effect (job scripts, gstore copy, DB rows). See the method comment.
     return false unless resolve_and_validate_params
@@ -287,6 +295,14 @@ class JobSubmissionService
 
   # Write one job script for the app's current @dataset and capture its next_dataset row.
   def build_unit(sample_name, index)
+    # Resolve the output row BEFORE writing the script, as legacy does (test_run calls
+    # set_output_files -> next_dataset ahead of script generation). Some apps assign
+    # parameters inside next_dataset — EdgeR and DESeq2 set @params['comparison'] and
+    # @params['name'] there — and the script's `param[[...]]` block is emitted from
+    # @params. Generating the script first left those parameters out of the R script
+    # entirely, even though they reached parameters.tsv. run_RApp calls next_dataset
+    # again for the `output` block, exactly as legacy also calls it twice.
+    next_dataset = @sushi_app.next_dataset
     script_content = @sushi_app.generate_job_script
 
     timestamp = Time.now.strftime('%Y%m%d%H%M%S%L')
@@ -299,7 +315,7 @@ class JobSubmissionService
     FileUtils.chmod(0755, script_path)
 
     Rails.logger.info("Generated job script: #{script_path}")
-    { script_path: script_path, next_dataset: @sushi_app.next_dataset }
+    { script_path: script_path, next_dataset: next_dataset }
   end
 
   # Strip column-name tags (e.g. "Read1 [File]" -> "Read1"), as legacy SUSHI does

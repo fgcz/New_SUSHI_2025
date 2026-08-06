@@ -66,6 +66,42 @@ RSpec.describe JobSubmissionService do
 
       expect(units.size).to eq(2)
     end
+
+    # Legacy resolves the output row before writing the script (test_run calls
+    # set_output_files -> next_dataset ahead of script generation). EdgeR and DESeq2 assign
+    # @params['comparison'] and @params['name'] inside next_dataset, and the script's
+    # param[[...]] block is emitted from @params — so generating the script first dropped
+    # those parameters from the R script entirely (found in the EdgeR Level-2 diff,
+    # 2026-08-06).
+    it 'calls next_dataset before generating the script, so params it sets reach the script' do
+      late_param_app = Class.new do
+        attr_accessor :dataset, :last_job
+        attr_reader :params, :dataset_hash, :job_script_dir
+
+        def initialize(dir)
+          @params = { 'process_mode' => 'DATASET' }
+          @dataset_hash = [{ 'Name' => 's1' }]
+          @dataset = @dataset_hash
+          @job_script_dir = dir
+        end
+
+        def next_dataset
+          @params['comparison'] = 'Treated--over--Control'
+          { 'Name' => @params['comparison'] }
+        end
+
+        # Stands in for run_RApp: the param block is rendered from @params at this moment.
+        def generate_job_script
+          @params.map { |k, v| "param[['#{k}']] = '#{v}'" }.join("\n")
+        end
+      end
+
+      units = service_for(late_param_app.new(tmpdir)).send(:build_job_units)
+      script = File.read(units.first[:script_path])
+
+      expect(script).to include("param[['comparison']] = 'Treated--over--Control'")
+      expect(units.first[:next_dataset]['Name']).to eq('Treated--over--Control')
+    end
   end
 
   describe '#clean_row' do
