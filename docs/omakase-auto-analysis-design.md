@@ -540,6 +540,15 @@ unread B-Fabric comment or a filtered digest mail makes the veto window ceremoni
 A bot is a good fit here precisely because it decides nothing. It reports state that the
 state machine already holds, and it relays actions into the same audited transitions.
 
+**An add-on interface, not a dependency.** The Slack bot and the Teams bot are a *fourth
+interface* onto state the system already exposes. They sit beside the three channels above,
+not underneath them: nothing in L0–L6 changes if they are never built, and withdrawing them
+later costs one webhook. The conversational tier is the **Hermes agent that already does
+failure triage** (§8.2), given a second entry point that happens to be human-initiated — no
+new agent runtime, no new knowledge base, no new authority. That is what makes this cheap to
+try and cheap to take back, and it is the reason to treat it as an add-on rather than as
+part of the gate.
+
 **What it does — the secretary functions**
 
 | When | What it posts |
