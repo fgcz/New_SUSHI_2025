@@ -165,13 +165,63 @@ RSpec.describe JobSubmissionService do
       expect(app.params['refBuild']).to eq('Homo_sapiens/GENCODE/GRCh38')
     end
 
-    it 'keeps a multi_selection param as a list instead of collapsing it' do
-      app = app_with({ 'kits' => %w[a b c] }, required: ['kits'])
+    # A multi_selection param is a multiple <select>; the legacy form joins the submitted
+    # options with "," so the app sees a String. Leaving it a Ruby Array serialized
+    # '["protein_coding", "rRNA", ...]' into the job script and the output dataset row and
+    # made ezRun filter the GTF to nothing (FeatureCounts Level-2, 2026-08-06).
+    it 'resolves a multi_selection param to its `selected` option, joined' do
+      app = app_with({ 'kits' => %w[a b c] })
       app.params['kits', 'multi_selection'] = true
+      app.params['kits', 'selected'] = 'a'
       ok, = gate(app)
 
       expect(ok).to be true
-      expect(app.params['kits']).to eq(%w[a b c])
+      expect(app.params['kits']).to eq('a')
+    end
+
+    it 'joins an Array `selected` with commas, as the form submits it' do
+      app = app_with({ 'kits' => %w[a b c] })
+      app.params['kits', 'multi_selection'] = true
+      app.params['kits', 'selected'] = %w[a c]
+      gate(app)
+
+      expect(app.params['kits']).to eq('a,c')
+    end
+
+    it 'treats a non-String/Array `selected` as an index into the option list' do
+      app = app_with({ 'kits' => %w[a b c] })
+      app.params['kits', 'multi_selection'] = true
+      app.params['kits', 'selected'] = 2
+      gate(app)
+
+      expect(app.params['kits']).to eq('c')
+    end
+
+    it 'selects the whole list when all_selected is set' do
+      app = app_with({ 'kits' => %w[a b c] })
+      app.params['kits', 'multi_selection'] = true
+      app.params['kits', 'all_selected'] = true
+      gate(app)
+
+      expect(app.params['kits']).to eq('a,b,c')
+    end
+
+    it 'yields an empty string when nothing is pre-selected, as an untouched form does' do
+      app = app_with({ 'kits' => %w[a b c] })
+      app.params['kits', 'multi_selection'] = true
+      gate(app)
+
+      expect(app.params['kits']).to eq('')
+    end
+
+    it 'never leaves a multi_selection param as a Ruby Array literal' do
+      app = app_with({ 'kits' => %w[a b c] })
+      app.params['kits', 'multi_selection'] = true
+      app.params['kits', 'selected'] = 'a'
+      gate(app)
+
+      expect(app.params['kits']).to be_a(String)
+      expect(app.params['kits'].to_s).not_to include('[')
     end
 
     it 'reports every unsatisfied required param, not just the first' do

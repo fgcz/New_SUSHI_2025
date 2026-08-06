@@ -178,10 +178,30 @@ class JobSubmissionService
 
     case value
     when Array
-      # A multi-selection param legitimately stays a list (the legacy control is a
-      # multiple <select>). None of the currently allow-listed apps sets this meta, so
-      # the branch is preserved rather than exercised.
-      return value if meta['multi_selection']
+      # A multi-selection param is a multiple <select> in the legacy form. Reproduce what
+      # that form submits for an untouched page (set_parameters.html.erb + the
+      # multi_selection branch of run_application_controller#set_parameters):
+      #   pre-selected = `selected` (an Integer indexes into the option list),
+      #                  else the WHOLE list when `all_selected` is set,
+      #                  else nothing;
+      # and the controller joins the submitted options with "," — so the app always sees a
+      # STRING, never a Ruby Array, and an empty multi-select arrives as ''.
+      #
+      # This branch used to return the Array untouched on the assumption that no allow-listed
+      # app set the meta. Seven of the sixteen do (DESeq2, EdgeR, CountQC, FeatureCounts,
+      # CellRangerMulti x2, Kallisto, ScSeurat x3), and the raw Array reached both the job
+      # script and the output dataset row as a Ruby literal
+      # ('["protein_coding", "rRNA", ...]'), which made ezRun filter the GTF to nothing:
+      # "ERROR: no features were loaded in format GTF".
+      if meta['multi_selection']
+        chosen = if !selected.nil?
+                   selected.is_a?(String) || selected.is_a?(Array) ? selected : value[selected]
+                 elsif meta['all_selected']
+                   value
+                 end
+        return Array(chosen).map { |v| v.to_s.strip }.reject(&:empty?).join(',')
+      end
+
       return value[selected] if selected.is_a?(Integer) && selected < value.length
       return selected unless selected.nil?
 
