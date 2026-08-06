@@ -138,11 +138,21 @@ module SushiFabric
       script << 'mkdir $SCRATCH_DIR || exit 1'
       script << 'cd $SCRATCH_DIR || exit 1'
       
-      # Load modules
-      if @modules && !@modules.empty?
-        script << "source /usr/local/ngseq/etc/lmod_profile"
-        module_versions = @modules.map { |m| find_module_version(m) }.join(' ')
-        script << "module add #{module_versions}"
+      # Load modules, pinned to the concrete versions lmod resolves right now
+      if @modules && !@modules.empty? && !module_source.to_s.empty?
+        script << "source #{module_source}"
+        resolved = resolve_module_versions
+        if resolved.length == @modules.length
+          script << "module add #{resolved.join(' ')}"
+        else
+          # Legacy emits NO module add line rather than a half-resolved one, so the
+          # failure is loud in the job log instead of silently loading the wrong tools.
+          Rails.logger.error('#' * 100)
+          Rails.logger.error('# Error in checking modules')
+          Rails.logger.error("# Please check if all modules are correctly installed, " \
+                             "searched #{@modules.join(',')} but only detected #{resolved.join(',')}")
+          Rails.logger.error('#' * 100)
+        end
       end
       script << ""
       
@@ -174,11 +184,43 @@ module SushiFabric
       script.join("\n")
     end
     
-    # Find module version (look for latest available)
-    def find_module_version(module_name)
-      # For now, just return the module name as-is
-      # In production, this would look up the actual available version
-      module_name
+    # lmod profile to source in job scripts and to query for module versions.
+    def module_source
+      @module_source ||= Rails.application.config.try(:module_source).to_s
+    end
+
+    # Resolve each requested module to the concrete version lmod currently defaults to,
+    # e.g. "Aligner/kallisto" -> "Aligner/kallisto/0.51.1". Port of legacy
+    # SushiApp#check_latest_modules_version: one `module whatis` for the whole list, keep
+    # the first whitespace-delimited field of each line, drop anything that is not one of
+    # the requested modules (the login profile prints unrelated banner lines).
+    #
+    # WHY this must not stay a stub: an unversioned `module add Aligner/kallisto` loads
+    # whatever the cluster currently defaults to, so the same job silently produces
+    # different numbers as the cluster moves. Measured 2026-08-06: a Kallisto run
+    # reproduced the legacy oracle's inputs and parameters exactly but returned different
+    # eff_length/tpm, because the oracle pinned 0.46.1 and the current default is 0.51.1.
+    # Recording the resolved version makes a run reproducible after the fact.
+    #
+    # Memoized: legacy re-runs the shell-out for every script of a SAMPLE fan-out; the
+    # module list cannot change between samples of one submission, so once is enough.
+    def resolve_module_versions
+      return @resolved_module_versions if @resolved_module_versions
+      return (@resolved_module_versions = []) if @modules.blank? || module_source.empty?
+
+      wanted = Regexp.union(@modules.map { |m| m.to_s.strip }.reject(&:empty?))
+
+      @resolved_module_versions =
+        module_whatis_output.to_s.split("\n").map(&:chomp).reject(&:empty?).select { |l| l =~ wanted }
+    rescue StandardError => e
+      Rails.logger.error("Module version resolution failed: #{e.message}")
+      @resolved_module_versions = []
+    end
+
+    # The lmod query itself, isolated so it can be stubbed and so the shell command lives
+    # in one place. Returns one candidate per line, already reduced to its first field.
+    def module_whatis_output
+      `bash -lc "source #{module_source}; module whatis #{@modules.join(' ')} 2>&1" | cut -f 1 -d " " | uniq`
     end
     
     # Prepare result directory paths (scratch and gstore)

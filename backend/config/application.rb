@@ -50,6 +50,10 @@ module Backend
     config.gstore_dir = ENV.fetch('GSTORE_DIR', '/srv/gstore')
     config.submit_job_script_dir = ENV.fetch('SUBMIT_JOB_SCRIPT_DIR', Rails.root.join('tmp', 'job_scripts').to_s)
     config.scratch_dir = ENV.fetch('SCRATCH_DIR', '/scratch')
+    # lmod profile sourced by generated job scripts, and used to resolve each requested
+    # module to its concrete default version (see SushiApp#resolve_module_versions).
+    # Empty disables both the `source` line and version resolution.
+    config.module_source = ENV.fetch('MODULE_SOURCE', '/usr/local/ngseq/etc/lmod_profile')
 
     # Generic legacy-app loader (see LegacyAppLoader): directory holding legacy SUSHI
     # *App.rb files (e.g. a legacy SUSHI checkout's master/lib). Empty = feature off
