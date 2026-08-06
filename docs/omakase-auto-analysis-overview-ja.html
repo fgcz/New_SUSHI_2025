@@ -342,7 +342,76 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
   <p>データ最小化が同意の問題を消すのは、<b>送信内容が許可リストの内側にとどまる限り</b>です。あとからログ本文や結果テーブルを渡したくなった時点で、問題は戻ってきます。</p>
   <p>したがって許可リストは<b>セキュリティ境界</b>です。コードで強制し、変更はレビュー対象にします。</p>
 </div>
-<h2><span class="n">図4</span>LLM チャネル ── オンプレの1本だけ</h2>
+<h2><span class="n">図4</span>決定論 ── LLM を安全に使えている理由</h2>
+<p>閉じるべき軸は2つあり、別々に閉じます。<b>データ</b>（AI に何を見せるか）は図3の許可リストで閉じました。
+残るのは<b>権限</b>（AI に何を決めさせるか）です。こちらは「拘束力のある決定を一切させない」で閉じます。</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 300" role="img" aria-label="2つの軸と、そこから得られる再現性">
+  <style>
+    .dbx{stroke-width:2;rx:9}
+    .dh{font:700 13px system-ui,sans-serif}
+    .di{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .dn{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .da{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <text class="dn" x="20" y="20">軸1 ── データ：AI が何を見てよいか</text>
+  <rect class="dbx" x="20" y="32" width="460" height="112" fill="#e9eef6" stroke="#33507a"/>
+  <text class="dh" x="42" y="60">L0 の許可リストで閉じる（図3）</text>
+  <text class="di" x="42" y="86">機密になり得る項目は、そもそも取得しない。</text>
+  <text class="di" x="42" y="108">raw data とログ本文は、どの経路でも渡さない。</text>
+  <text class="di" x="42" y="130">送信先はオンプレの vLLM だけ。</text>
+
+  <text class="dn" x="520" y="20">軸2 ── 権限：AI が何を決めてよいか</text>
+  <rect class="dbx" x="520" y="32" width="460" height="112" fill="#fff4e2" stroke="#c07600"/>
+  <text class="dh" x="542" y="60">拘束力のある決定はさせない</text>
+  <text class="di" x="542" y="86">走る解析もパラメータも recipe が決める。</text>
+  <text class="di" x="542" y="108">LLM は既存 recipe の中から選ぶだけ。</text>
+  <text class="di" x="542" y="130">QC 判定は計算する。LLM は下げられるのみ。</text>
+
+  <path class="da" d="M250,148 L250,172 L492,172 L492,190"/>
+  <path class="da" d="M750,148 L750,172 L508,172 L508,190"/>
+
+  <rect class="dbx" x="120" y="194" width="760" height="94" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="dh" x="142" y="222" fill="#1c4a29">再現性 ── 実行記録から、同じジョブをもう一度導ける</text>
+  <text class="di" x="142" y="250">記録の中身：recipe_id@version ＋ 解決済みパラメータ ＋ 入力 dataset id ＋ qc_spec の sha256</text>
+  <text class="di" x="142" y="276">ここに<tspan font-weight="700">モデル名・プロンプト・temperature・シードは1つも出てこない</tspan>。だから再現できる。</text>
+</svg>
+<figcaption>モデルが選んだ app とパラメータを再現するには、モデル版・プロンプト・デコード設定・シードをすべて固定する必要があります。提供側はモデルを引退させるので、これは長続きしません。</figcaption>
+</figure>
+
+<h3>再現性が買っているもの ── 4つの性質</h3>
+<div class="cards">
+  <div class="card"><h4>① 影響範囲が限定される</h4>
+    <p>LLM が間違えても、起きるのは<b>レビュー済み recipe の中での選び違え</b>（veto の窓で捕まる）か、下手な文章（人のリリース判断で捕まる）だけです。</p>
+    <p>未レビューのパイプラインは作れません。未解決のパラメータは REST API が投入前に弾きます。</p></div>
+  <div class="card"><h4>② モデルが臨界経路に乗らない</h4>
+    <p>オンプレ LLM が落ちていても、ルールエンジンは提案を出せます。LLM の可用性が、サービスの可用性になりません。</p></div>
+  <div class="card"><h4>③ 挙動の変更がレビューできる</h4>
+    <p>「何が走るか」を変えるのは、版管理された recipe の diff と、その作成者です。プロンプトの書き換えではありません。</p></div>
+  <div class="card"><h4>④ 事故を説明できる</h4>
+    <p>「なぜこの解析が走ったのか」に、<code>recipe_id@version</code> とその作成者で答えられます。「モデルが選びました」ではありません。</p></div>
+</div>
+
+<table>
+  <caption>何を誰が決めるか</caption>
+  <tr><th>決めること</th><th>決めるもの</th><th>LLM の役割</th></tr>
+  <tr><td>どの app 連鎖が走るか</td><td>recipe のマッチ条件</td><td class="no">なし</td></tr>
+  <tr><td>パラメータ（<code>refBuild</code>・cores・ram）</td><td>recipe ＋ 種→参照ゲノムの表</td><td class="no">なし</td></tr>
+  <tr><td>複数の recipe が該当／どれも該当しない</td><td>既存 recipe の中から選ぶ。確信度が閾値未満なら <code>HELD</code></td><td class="mid">選択肢を絞った選択</td></tr>
+  <tr><td>提案文・QC 所見文</td><td>テンプレート ＋ LLM</td><td class="mid">文章を書く</td></tr>
+  <tr><td>QC 判定</td><td>決定論的な階層（図7）</td><td class="no">なし（下げることのみ可）</td></tr>
+  <tr><td>失敗の原因調査</td><td>人が起動する AI エージェント</td><td class="ok">全面的に担当（図6）</td></tr>
+</table>
+
+<div class="callout k">
+  <div class="t">正直な限界</div>
+  <p>決定論は recipe が<b>正しい</b>ことを保証しません。レビューでき、テストでき、誰の判断か辿れる状態にするだけです。正しさは、担当 bioinformatician が recipe を書くことと、Tier 3 の履歴比較（図7）から来ます。</p>
+  <p>効き目の実例：未解決の <code>ref_selector</code> 値がそのまま SLURM に渡り、許可 16 app のうち 13 で出力行を汚した事例がありました（<code>required_params</code> ゲートで解消済み）。決定論的な経路では、この種の失敗は構造的に起きません。</p>
+</div>
+
+
+<h2><span class="n">図5</span>LLM チャネル ── オンプレの1本だけ</h2>
 <p><code>llm_client</code> の <code>local</code> provider（OpenAI 互換）を FGCZ の vLLM に向けます。
 使うのはこの1本だけです。型付き出力（<code>output_schema</code>）も既に対応しています。</p>
 
@@ -360,7 +429,64 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </div>
 
 
-<h2><span class="n">図5</span>QC ── loop_validation をそのまま適用する</h2>
+<h2><span class="n">図6</span>Skills ── 調べ方を調整する。走るものは変えない</h2>
+<p>ここでいう <b>Skill</b> は、エージェントが実行時に SUSHI-MCP-server から読み込む、版管理された手順と知識のまとまりです。
+「AI がどう調べ、どう書くか」を置く場所としては最適で、「何を走らせるか」を置く場所としては最悪です。</p>
+
+<div class="callout">
+  <div class="t">境界のルール</div>
+  <p><b>Skills は、AI の調べ方と書き方を調整する。どの解析が走るかは変えない。QC の閾値も変えない。</b></p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 400" role="img" aria-label="Skills が調整してよい範囲と、変えてはいけない範囲">
+  <style>
+    .kbx{stroke-width:2;rx:9}
+    .kh{font:700 13px system-ui,sans-serif}
+    .ki{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .kn{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .kd{stroke:#8a919c;stroke-width:2;stroke-dasharray:7 5}
+  </style>
+  <text class="kn" x="20"  y="20">Skill で調整してよい ── 調べ方と書き方</text>
+  <text class="kn" x="525" y="20">Skill では変えない ── 走るものと閾値</text>
+  <line class="kd" x1="503" y1="10" x2="503" y2="300"/>
+
+  <rect class="kbx" x="20" y="32" width="465" height="256" fill="#f2ecfb" stroke="#6b4bab"/>
+  <text class="kh" x="42" y="60" fill="#3d2a68">Skills が本当に効く5か所</text>
+  <text class="ki" x="42" y="92">・失敗の原因調査の手順（known errors・app ガイド・デバッグ手順）</text>
+  <text class="ki" x="42" y="122">・所見文と提案文の書き方（プロンプトテンプレート）</text>
+  <text class="ki" x="42" y="152">・検証規律そのもの（loop_validation：先に証拠仕様を宣言する）</text>
+  <text class="ki" x="42" y="182">・機関ガイドラインの substrate（AI 利用方針を全エージェントが継承）</text>
+  <text class="ki" x="42" y="212">・運用ツールの面（omakase_* 一式 ＝ UI なしでの操作方法）</text>
+  <text class="ki" x="42" y="248">再デプロイなしで改善できるのはこの範囲だけ。決定論的な中核は</text>
+  <text class="ki" x="42" y="268">触りません。だからこの種の改善は安全に回せます。</text>
+
+  <rect class="kbx" x="525" y="32" width="455" height="256" fill="#e9eef6" stroke="#33507a"/>
+  <text class="kh" x="547" y="60" fill="#1a2f4d">置き場所は最初から決まっている</text>
+  <text class="ki" x="547" y="92">どの解析が order に当たるか</text>
+  <text class="kh" x="547" y="114" fill="#1a2f4d">→ recipe YAML（レビューと承認あり）</text>
+  <text class="ki" x="547" y="150">QC の閾値とチェック内容</text>
+  <text class="kh" x="547" y="172" fill="#1a2f4d">→ qc_spec（recipe と一緒に版管理）</text>
+  <text class="ki" x="547" y="208">どのデータをどこへ送ってよいか</text>
+  <text class="kh" x="547" y="230" fill="#1a2f4d">→ L0 の許可リスト（コードで強制）</text>
+  <text class="ki" x="547" y="268">どれも Skill からは動かせません。</text>
+
+  <rect class="kbx" x="20" y="308" width="960" height="80" fill="#fdecec" stroke="#b5303a"/>
+  <text class="kh" x="42" y="336" fill="#7d1e25">やってはいけない使い方：「RNA-seq なら STAR → FeatureCounts」を Skill に書く</text>
+  <text class="ki" x="42" y="360" fill="#7d1e25">動いてしまいます。そして D2 が静かに崩れます。挙動が「どの版の Skill を読んだか」に依存するようになり、</text>
+  <text class="ki" x="42" y="380" fill="#7d1e25">実行記録が自分を説明できなくなります。解析の選択は recipe に置きます。版があり、レビューがあり、毎回引用されます。</text>
+</svg>
+<figcaption>Skills はエージェントの<b>作業のしかた</b>を運ぶ器です。<b>走る内容</b>は recipe と qc_spec が持ちます。この2つを混ぜないことが、決定論（図4）を保つ条件です。</figcaption>
+</figure>
+
+<div class="callout k">
+  <div class="t">正直な注意</div>
+  <p>Skill は<b>出所のついたプロンプト</b>です。一貫性は上がり、挙動の由来も辿れるようになりますが、それでエージェントの結論が証拠になるわけではありません。</p>
+  <p>だから triage の出力は助言どまりで、その下に <code>loop_validation</code> の機械的な判定（図7）が置いてあります。</p>
+</div>
+
+
+<h2><span class="n">図7</span>QC ── loop_validation をそのまま適用する</h2>
 <p>SUSHI-MCP-server の既存の検証規律 <code>loop_validation</code> に、必要なことがすでに書かれています。</p>
 <div class="callout">
   <p>「実行 LLM の自己申告は証拠にならない。判定は機械観測可能な結果のみを消費し、証拠の不在は決して pass に倒れない。」</p>
@@ -407,7 +533,7 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </figure>
 
 
-<h2><span class="n">図6</span>状態機械（前半）── 提案から開始まで</h2>
+<h2><span class="n">図8</span>状態機械（前半）── 提案から開始まで</h2>
 
 <figure class="fig">
 <svg viewBox="0 0 1000 350" role="img" aria-label="状態機械 前半">
@@ -456,7 +582,7 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </figure>
 
 
-<h2><span class="n">図7</span>状態機械（後半）── 実行からリリースまで</h2>
+<h2><span class="n">図9</span>状態機械（後半）── 実行からリリースまで</h2>
 
 <figure class="fig">
 <svg viewBox="0 0 1000 340" role="img" aria-label="状態機械 後半">
@@ -500,7 +626,7 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </figure>
 
 
-<h2><span class="n">図8</span>4時間タイマーの具体例 ── なぜ営業時間換算にするか</h2>
+<h2><span class="n">図10</span>4時間タイマーの具体例 ── なぜ営業時間換算にするか</h2>
 <p>金曜17:00 に order が完了した場合を、素の4時間と営業時間4時間で比べます。</p>
 
 <figure class="fig">
@@ -536,7 +662,74 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </figure>
 
 
-<h2><span class="n">図9</span>フェーズ計画と卒業条件</h2>
+<h2><span class="n">図11</span>チャット面 ── 「期限内に気づくか」を解く</h2>
+<p>B-Fabric コメント・メール・MCP ツールの3チャネルが解いているのは「人が操作できるか」です。
+チャット bot が解くのは別の問いです。<b>人が期限内に気づくか。</b>ゲート全体でここが一番弱い場所です。
+読まれないコメントや振り分けられたメールは、veto の窓を形だけのものにします。</p>
+<p>bot がこの役に向いているのは、<b>何も決めないから</b>です。状態機械がすでに持っている状態を報告し、
+人の操作を CLI と同じ監査経路に流すだけです。</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 380" role="img" aria-label="チャット面の2つの階層と、その境界">
+  <style>
+    .cbx{stroke-width:2;rx:9}
+    .ch{font:700 13px system-ui,sans-serif}
+    .ci{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .cn{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .cd{stroke:#8a919c;stroke-width:2;stroke-dasharray:7 5}
+  </style>
+  <text class="cn" x="20"  y="20">Tier A ── 予定投稿と通知</text>
+  <text class="cn" x="525" y="20">Tier B ── スレッド内の対話</text>
+  <line class="cd" x1="503" y1="10" x2="503" y2="232"/>
+  <text class="cn" x="330" y="252" fill="#6d4200">この境界は、そのままガバナンス上の境界になっている</text>
+
+  <rect class="cbx" x="20" y="32" width="465" height="196" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="ch" x="42" y="60" fill="#1c4a29">決定論的（LLM を使わない）</text>
+  <text class="ci" x="42" y="90">・毎朝のダイジェスト、新しい提案の通知</text>
+  <text class="ci" x="42" y="116">・期限1時間前のリマインド</text>
+  <text class="ci" x="42" y="142">・失敗と QC WARN / FAIL の通知</text>
+  <text class="ci" x="42" y="176">実装は素のコード：状態を引く → 整形する → 投稿する</text>
+  <text class="ch" x="42" y="206" fill="#1c4a29">無人で回してよい（実体は cron ジョブ）</text>
+
+  <rect class="cbx" x="525" y="32" width="455" height="196" fill="#f2ecfb" stroke="#6b4bab"/>
+  <text class="ch" x="547" y="60" fill="#3d2a68">エージェント（SUSHI-MCP-server ＋ Skills）</text>
+  <text class="ci" x="547" y="90">・「order X の状況は？」</text>
+  <text class="ci" x="547" y="116">・「job 581 はなぜ失敗した？」</text>
+  <text class="ci" x="547" y="142">・ログ・gStore・SLURM・known errors を読む</text>
+  <text class="ci" x="547" y="176">1メッセージ ＝ 1タスク。裏で回り続けません。</text>
+  <text class="ch" x="547" y="206" fill="#3d2a68">人が打った瞬間に動く ＝ 常に人が見ている</text>
+
+  <rect class="cbx" x="20" y="272" width="960" height="94" fill="#f2f6fc" stroke="#33507a"/>
+  <text class="ci" x="42" y="300">投稿してよいのは<tspan font-weight="700">識別子・状態・件数・期限</tspan>まで。サンプル名・顧客名・課題名・結果本文は出しません（L0 をそのまま継承）。</text>
+  <text class="ci" x="42" y="326">Slack と Teams は外部クラウドです。分類の問いは LLM と同じですが、対象は推論ではなく<tspan font-weight="700">通信経路</tspan>です。</text>
+  <text class="ci" x="42" y="352">機関テナントの Teams が既定として安全側、Slack は事前に方針確認が要ります。</text>
+</svg>
+<figcaption>無人で動く部分（Tier A）にエージェントは要りません。エージェントが要る部分（Tier B）は、人がメッセージを打った時点で必ず人が見ています。現行の運用ルールの下でエージェントを日常に入れる、いちばん素直な形です。</figcaption>
+</figure>
+
+<table>
+  <caption>いつ、何を投稿するか</caption>
+  <tr><th>いつ</th><th>何を投稿するか</th></tr>
+  <tr><td>毎朝</td><td>未応答の提案と期限までの残り時間／前日からの完了・失敗／レビュー待ちの QC <code>WARN</code>・<code>FAIL</code></td></tr>
+  <tr><td>新しい提案が出たとき</td><td>order・recipe・解決済みパラメータ・費用見積り・期限。veto と hold の操作を添えて</td></tr>
+  <tr><td>期限の1時間前</td><td>対応が期待されている人を名指しでリマインド</td></tr>
+  <tr><td>失敗・QC <code>FAIL</code> のとき</td><td>ジョブと状態。triage を回してあれば原因の見立ても</td></tr>
+  <tr><td>聞かれたとき</td><td>「order X の状況」「p35611 で止まっているもの」「job 581 はなぜ失敗したか」</td></tr>
+</table>
+
+<p>営業時間換算の期限は daemon がすでに計算しているので、bot は「今日の 18:00 までに2件、期限が来ます」と言えます。
+アラートは1件ずつスレッドになり、そのスレッドが作業の場になります。スレッドに書いた veto の理由が、そのまま遷移ログに残る理由です。</p>
+
+<div class="callout k">
+  <div class="t">制約と、作る順番</div>
+  <p><b>書き込みは権限の面です。</b>チャット ID を LDAP ログインに対応づけるまで、操作はさせません。Phase 1 の推奨は、read / veto / hold はチャットから、override と顧客へのリリースは CLI から（またはチャットから明示的な確認を挟んで）。結果を顧客に出すのは、ジョブを止めるより大きな一歩です。</p>
+  <p><b>bot は真実の源ではありません。</b>CLI と同じ API で状態を読み、操作は必ず <code>transitions</code> 表に LDAP の実行者で残ります。&#8220;slack-bot&#8221; では残しません。</p>
+  <p><b>失敗モードは通知疲れです。</b>1遷移につき1投稿、個別メールではなくダイジェスト、宛先の振り分け、再投稿なし。反応率が落ちればゲートはまた形だけになるので、反応率そのものを健全性の指標として見ます。</p>
+  <p><b>作る順番。</b>まず morning digest を webhook で投げるだけのもの（1日程度、受信面も認証面も持たない）。それで価値の大半は出ます。ボタン、次に対話。対話は ID 対応ができてからです。</p>
+</div>
+
+
+<h2><span class="n">図12</span>フェーズ計画と卒業条件</h2>
 
 <figure class="fig">
 <svg viewBox="0 0 1000 330" role="img" aria-label="フェーズ計画">
@@ -597,7 +790,7 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </figure>
 
 
-<h2><span class="n">図10</span>最初の一手 ── 3つ、どれも本番に触らない</h2>
+<h2><span class="n">図13</span>最初の一手 ── 3つ、どれも本番に触らない</h2>
 <p>過去の実績を「正解データ」に使うのは止めました。理由は図の下段です。</p>
 
 <figure class="fig">
@@ -648,7 +841,7 @@ Phase 1は必ず bioinformatician を経由）はそのまま採用していま�
 </figure>
 
 
-<h2><span class="n">図11</span>確認したい論点と担当</h2>
+<h2><span class="n">図14</span>確認したい論点と担当</h2>
 <div class="cards">
   <div class="card"><h4>B-Fabric — Falko</h4>
     <p>gStore に新しいデータが来たことを、B-Fabric の<b>何を見れば</b>知れるか。項目・値・遅延。<br>

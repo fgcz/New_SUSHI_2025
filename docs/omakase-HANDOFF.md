@@ -1,6 +1,6 @@
 # OMAKASE — session handoff
 
-Written 2026-08-03. Read this first when resuming in a new session.
+Written 2026-08-03, updated 2026-08-06. Read this first when resuming in a new session.
 L2 record: `omakase_auto_analysis_v04_handoff_20260803` (see also
 `omakase_auto_analysis_v03_docs_slides_pptx_20260803` and
 `omakase_auto_analysis_design_20260731`).
@@ -25,17 +25,17 @@ lets the AI write customer-facing comments.
 | Path | Size | Role |
 |------|------|------|
 | `docs/omakase-auto-analysis-design.md` | 50 KB | **Source of truth.** EN, v0.3, sections 0–17 |
-| `docs/omakase-auto-analysis-overview-ja.html` | 45 KB | Illustrated, JA, 11 figures + annex |
-| `docs/omakase-auto-analysis-overview-en.html` | 42 KB | Illustrated, EN, same 11 figures |
+| `docs/omakase-auto-analysis-overview-ja.html` | 58 KB | Illustrated, JA, 14 figures + annex |
+| `docs/omakase-auto-analysis-overview-en.html` | 54 KB | Illustrated, EN, same 14 figures |
 | `docs/presentations/omakase_auto_analysis_ja.html` | 45 KB | Deck, JA, 14 slides |
 | `docs/presentations/omakase_auto_analysis_en.html` | 43 KB | Deck, EN, 14 slides |
 | `docs/presentations/omakase_auto_analysis_{ja,en}.pptx` | ~67 KB | Editable PowerPoint, generated |
 | `docs/presentations/deck_to_pptx.py` | 31 KB | Deck HTML → pptx converter |
 | `docs/omakase-HANDOFF.md` | this file | |
 
-> **ALL OF THESE ARE UNTRACKED IN GIT.** This working tree is shared with other Claude
-> sessions; 12 untracked files were destroyed once before by a parallel session. Committing
-> was offered twice and not yet answered. **Ask again early.**
+> **Committed on 2026-08-06** (`97221ea`, local `main`, not pushed). They were untracked
+> until then, in a working tree shared with other Claude sessions — 12 untracked files were
+> destroyed once before by a parallel session. Keep new artifacts committed as they land.
 
 ---
 
@@ -82,9 +82,11 @@ Catchphrase: **Rules decide · AI assists · Humans release**
      → recipes authored by bioinformaticians → shadow mode on NEW orders.
   5. **Metadata quality is the real precondition** — Simon already asked for better
      B-Fabric order fields ("Custom/Other" for ready-made library sequencing is useless).
-* **Added later the same day** (in the doc and slides, *not* yet in the overview HTMLs):
-  §0.1 determinism → reproducibility → safe LLM use; §8.3 how Skills are used; §9.1 a
-  Slack / Teams chat surface.
+* **Added later the same day** (first in the doc and slides): §0.1 determinism →
+  reproducibility → safe LLM use; §8.3 how Skills are used; §9.1 a Slack / Teams chat
+  surface. **The overview HTMLs caught up on 2026-08-06**: three figures added (determinism
+  as Fig 4, Skills as Fig 6, the chat surface as Fig 11) and the rest renumbered, 11 → 14.
+  All four artifacts now carry the same content.
 
 Naming convention set by the user: `KairosChain` and `sushi-chain` are **always written
 `SUSHI-MCP-server`** in every artifact. Internal jargon (Hermes, INV-*, ATTENDED, guard
@@ -136,21 +138,23 @@ alert fatigue is the failure mode. Build order: post-only webhook digest first (
 * **Chat platform** — Teams or Slack? Is either approved for FGCZ `internal` content? Who
   maps chat identities to LDAP?
 
+**Answered on 2026-08-06**
+
+* *Commit the untracked files?* — yes, docs only. `97221ea` on local `main`; not pushed.
+* *Update the two overview HTMLs with the three new topics?* — yes. Done, 11 → 14 figures.
+
 **Questions the user has not answered yet**
 
-1. **Commit the untracked files?** (asked twice)
-2. Run `multi_llm_review` on the deck (the presentation format's Step 5 gate), or do a
+1. Run `multi_llm_review` on the deck (the presentation format's Step 5 gate), or do a
    slide-by-slide walkthrough instead?
-3. **Update the two overview HTMLs** with the three new topics (determinism/safety, Skills
-   boundary, chat surface)? That means 11 figures → 14 and a figure renumber. The md and the
-   slides already have them; the illustrated overviews do not. ← *this was the last question
-   asked, still unanswered*
-4. Third catchphrase placement (format wants three; currently cover + S9 only — S6 or S8 is
+2. Third catchphrase placement (format wants three; currently cover + S9 only — S6 or S8 is
    free).
-5. Confirm "sample count / layout" belongs on the L0 allow-list (the reviewer's list ended
+3. Confirm "sample count / layout" belongs on the L0 allow-list (the reviewer's list ended
    with "...").
-6. Should LLM-suggested resource parameters (cores/ram) be offered as a *non-binding
+4. Should LLM-suggested resource parameters (cores/ram) be offered as a *non-binding
    suggestion* in the proposal? Offered as a possible v0.4 addition, not yet decided.
+5. The overviews still say **v0.3 / 2026-07-31** in the header and footer, matching the md.
+   Bump all four artifacts to v0.4, or leave the version as it is?
 
 **To verify before citing to the team**
 
@@ -218,9 +222,11 @@ alert fatigue is the failure mode. Build order: post-only webhook digest first (
 
 ## 8. Suggested next actions
 
-1. Ask about the commit (item 6.1). This is the only item with a real deadline, because the
-   tree is shared.
-2. Answer item 6.3 — update the overview HTMLs, or declare the md + slides sufficient.
+1. Decide item 6.1 — `multi_llm_review` on the deck, or a slide-by-slide walkthrough.
+2. The new overview figures were verified mechanically only (every `<svg>` parses, no banned
+   wording, no estimated text overflow). **No browser rendering check was possible** — there
+   is no headless browser on these nodes. Open both files in a real browser before showing
+   them to anyone.
 3. If a message to the team is next: the last approved draft kept the user's four-paragraph
    structure, ended with the AI-assistance note, and framed components as swappable rather
    than as a preference.

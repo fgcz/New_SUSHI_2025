@@ -333,7 +333,77 @@ To decide which pipeline to run we only need non-sensitive order parameters.</p>
   <p>Data minimisation removes the consent question <b>only while the payload stays inside the allow-list</b>. The moment someone wants to send log text or result tables, the question comes back.</p>
   <p>So the allow-list is a <b>security boundary</b>: enforced in code, and reviewed when it changes.</p>
 </div>
-<h2><span class="n">Fig 4</span>LLM channel — one, on-premises</h2>
+<h2><span class="n">Fig 4</span>Determinism — why the LLM is safe to use here</h2>
+<p>There are two axes to close, and they close separately. <b>Data</b> — what the AI may see —
+was closed by the allow-list in Fig 3. What remains is <b>authority</b> — what the AI may
+decide. That one is closed by letting it decide nothing binding.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 300" role="img" aria-label="Two axes, and the reproducibility they buy">
+  <style>
+    .dbx{stroke-width:2;rx:9}
+    .dh{font:700 13px system-ui,sans-serif}
+    .di{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .dn{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .da{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <text class="dn" x="20" y="20">Axis 1 — data: what the AI may see</text>
+  <rect class="dbx" x="20" y="32" width="460" height="112" fill="#e9eef6" stroke="#33507a"/>
+  <text class="dh" x="42" y="60">closed by the L0 allow-list (Fig 3)</text>
+  <text class="di" x="42" y="86">Anything possibly sensitive is never fetched.</text>
+  <text class="di" x="42" y="108">Raw data and log text go nowhere near a model.</text>
+  <text class="di" x="42" y="130">The only destination is the on-prem vLLM.</text>
+
+  <text class="dn" x="520" y="20">Axis 2 — authority: what the AI may decide</text>
+  <rect class="dbx" x="520" y="32" width="460" height="112" fill="#fff4e2" stroke="#c07600"/>
+  <text class="dh" x="542" y="60">nothing binding</text>
+  <text class="di" x="542" y="86">The recipe decides the apps and the parameters.</text>
+  <text class="di" x="542" y="108">The LLM only picks among existing recipes.</text>
+  <text class="di" x="542" y="130">The QC verdict is computed; the LLM may lower it.</text>
+
+  <path class="da" d="M250,148 L250,172 L492,172 L492,190"/>
+  <path class="da" d="M750,148 L750,172 L508,172 L508,190"/>
+
+  <rect class="dbx" x="120" y="194" width="760" height="94" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="dh" x="142" y="222" fill="#1c4a29">Reproducibility — the same jobs can be re-derived from the record</text>
+  <text class="di" x="142" y="250">What the record holds: recipe_id@version + resolved parameters + input dataset id + qc_spec sha256</text>
+  <text class="di" x="142" y="276">No <tspan font-weight="700">model name, prompt, temperature or seed appears anywhere in it</tspan> — which is why it reproduces.</text>
+</svg>
+<figcaption>Reproducing a model-chosen app-and-parameter set would mean pinning the model version, the prompt, the decoding parameters and the seed. Providers retire models regardless, so that does not hold for long.</figcaption>
+</figure>
+
+<h3>What reproducibility buys — four properties</h3>
+<div class="cards">
+  <div class="card"><h4>1. Bounded blast radius</h4>
+    <p>The worst an LLM error can do is <b>pick the wrong recipe among reviewed recipes</b> (caught by the veto window) or write a poor sentence (caught by the human release gate).</p>
+    <p>It cannot invent an unreviewed pipeline, and the REST API refuses an unresolved parameter before submission.</p></div>
+  <div class="card"><h4>2. The model is not on the critical path</h4>
+    <p>If the on-prem model is down, the rule engine still proposes. The availability of an LLM never becomes the availability of the service.</p></div>
+  <div class="card"><h4>3. Behaviour change is reviewable</h4>
+    <p>Changing what runs is a diff in a versioned recipe, with an author. It is not an edited prompt.</p></div>
+  <div class="card"><h4>4. Incidents are answerable</h4>
+    <p>&#8220;Why was this analysis run?&#8221; is answered with <code>recipe_id@version</code> and its author — not with &#8220;the model chose it&#8221;.</p></div>
+</div>
+
+<table>
+  <caption>Who decides what</caption>
+  <tr><th>Task</th><th>Decided by</th><th>LLM role</th></tr>
+  <tr><td>Which app chain runs</td><td>the recipe match predicate</td><td class="no">none</td></tr>
+  <tr><td>Parameters (<code>refBuild</code>, cores, ram)</td><td>recipe + species→reference table</td><td class="no">none</td></tr>
+  <tr><td>Several recipes match, or none</td><td>pick among existing recipe ids; below the confidence threshold → <code>HELD</code></td><td class="mid">constrained choice</td></tr>
+  <tr><td>Proposal and QC narrative</td><td>template + LLM</td><td class="mid">writes the sentence</td></tr>
+  <tr><td>QC verdict</td><td>deterministic tiers (Fig 7)</td><td class="no">none — may only downgrade</td></tr>
+  <tr><td>Diagnosis of a failure</td><td>an AI agent, started by a human</td><td class="ok">full agentic work (Fig 6)</td></tr>
+</table>
+
+<div class="callout k">
+  <div class="t">The honest limit</div>
+  <p>Determinism does not make the recipes <b>correct</b>. It makes them reviewable, testable and attributable. Correctness comes from a bioinformatician authoring the recipe, and from the Tier-3 history comparison (Fig 7).</p>
+  <p>Concretely: unresolved <code>ref_selector</code> values once reached SLURM and polluted output rows across 13 of 16 allow-listed apps, until the <code>required_params</code> gate landed. A deterministic path does not produce that class of failure.</p>
+</div>
+
+
+<h2><span class="n">Fig 5</span>LLM channel — one, on-premises</h2>
 <p>Point the <code>local</code> provider of <code>llm_client</code> (OpenAI-compatible) at the
 FGCZ vLLM. That is the only channel used. Schema-constrained output
 (<code>output_schema</code>) is already supported.</p>
@@ -354,7 +424,65 @@ FGCZ vLLM. That is the only channel used. Schema-constrained output
 </div>
 
 
-<h2><span class="n">Fig 5</span>QC — reuse <code>loop_validation</code> as it is</h2>
+<h2><span class="n">Fig 6</span>Skills — they tune how the AI works, not what runs</h2>
+<p>A <b>Skill</b> here means a curated, versioned unit of instruction and knowledge that an agent
+loads at run time from SUSHI-MCP-server. It is the natural place to encode <i>how the AI should
+investigate and explain</i>, and the wrong place to encode <i>what gets run</i>.</p>
+
+<div class="callout">
+  <div class="t">The boundary rule</div>
+  <p><b>Skills tune how the AI investigates and words things. They never change which analysis runs, and they never change a QC threshold.</b></p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 400" role="img" aria-label="What a Skill may tune, and what it may never change">
+  <style>
+    .kbx{stroke-width:2;rx:9}
+    .kh{font:700 13px system-ui,sans-serif}
+    .ki{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .kn{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .kd{stroke:#8a919c;stroke-width:2;stroke-dasharray:7 5}
+  </style>
+  <text class="kn" x="20"  y="20">tuned by a Skill — how the work is done</text>
+  <text class="kn" x="525" y="20">never a Skill — what runs, and the thresholds</text>
+  <line class="kd" x1="503" y1="10" x2="503" y2="300"/>
+
+  <rect class="kbx" x="20" y="32" width="465" height="256" fill="#f2ecfb" stroke="#6b4bab"/>
+  <text class="kh" x="42" y="60" fill="#3d2a68">Five places where Skills earn their keep</text>
+  <text class="ki" x="42" y="92">· failure triage (known errors, app guides, debug procedures)</text>
+  <text class="ki" x="42" y="122">· how findings and proposals are worded (prompt templates)</text>
+  <text class="ki" x="42" y="152">· the verification discipline itself (loop_validation)</text>
+  <text class="ki" x="42" y="182">· institutional guardrails as substrate (the AI-usage policy)</text>
+  <text class="ki" x="42" y="212">· the operator surface (the omakase_* tools — phase 1 has no UI)</text>
+  <text class="ki" x="42" y="248">This is also the only part that improves without a redeployment.</text>
+  <text class="ki" x="42" y="268">The deterministic core is untouched, which is what makes it safe.</text>
+
+  <rect class="kbx" x="525" y="32" width="455" height="256" fill="#e9eef6" stroke="#33507a"/>
+  <text class="kh" x="547" y="60" fill="#1a2f4d">These already have a home</text>
+  <text class="ki" x="547" y="92">Which analysis an order receives</text>
+  <text class="kh" x="547" y="114" fill="#1a2f4d">→ recipe YAML (authored, reviewed, signed off)</text>
+  <text class="ki" x="547" y="150">QC thresholds and checks</text>
+  <text class="kh" x="547" y="172" fill="#1a2f4d">→ qc_spec (versioned with the recipe)</text>
+  <text class="ki" x="547" y="208">What data may be sent where</text>
+  <text class="kh" x="547" y="230" fill="#1a2f4d">→ the L0 allow-list (enforced in code)</text>
+  <text class="ki" x="547" y="268">A Skill can move none of them.</text>
+
+  <rect class="kbx" x="20" y="308" width="960" height="80" fill="#fdecec" stroke="#b5303a"/>
+  <text class="kh" x="42" y="336" fill="#7d1e25">The anti-pattern: putting &#8220;for RNA-seq use STAR then FeatureCounts&#8221; inside a Skill</text>
+  <text class="ki" x="42" y="360" fill="#7d1e25">It would work — and it would quietly undo D2. Behaviour would depend on which Skill version an agent happened to load,</text>
+  <text class="ki" x="42" y="380" fill="#7d1e25">and the run record would no longer explain itself. Analysis choices live in recipes: versioned, reviewed, cited on every run.</text>
+</svg>
+<figcaption>Skills carry <b>how the agent works</b>. Recipes and <code>qc_spec</code> carry <b>what runs</b>. Keeping those two apart is the condition for the determinism in Fig 4.</figcaption>
+</figure>
+
+<div class="callout k">
+  <div class="t">One honest caveat</div>
+  <p>A Skill is <b>a prompt with provenance</b>. It improves consistency and makes behaviour attributable; it does not turn the agent's conclusions into evidence.</p>
+  <p>That is why triage output is advisory, and why the mechanical verdict of <code>loop_validation</code> (Fig 7) sits underneath it.</p>
+</div>
+
+
+<h2><span class="n">Fig 7</span>QC — reuse <code>loop_validation</code> as it is</h2>
 <p>The existing verification discipline <code>loop_validation</code> in SUSHI-MCP-server already
 says what we need:</p>
 <div class="callout">
@@ -403,7 +531,7 @@ says what we need:</p>
 </figure>
 
 
-<h2><span class="n">Fig 6</span>State machine, part 1 — from proposal to start</h2>
+<h2><span class="n">Fig 8</span>State machine, part 1 — from proposal to start</h2>
 
 <figure class="fig">
 <svg viewBox="0 0 1000 350" role="img" aria-label="State machine part 1">
@@ -451,7 +579,7 @@ says what we need:</p>
 </figure>
 
 
-<h2><span class="n">Fig 7</span>State machine, part 2 — from run to release</h2>
+<h2><span class="n">Fig 9</span>State machine, part 2 — from run to release</h2>
 
 <figure class="fig">
 <svg viewBox="0 0 1000 340" role="img" aria-label="State machine part 2">
@@ -495,7 +623,7 @@ says what we need:</p>
 </figure>
 
 
-<h2><span class="n">Fig 8</span>The 4-hour timer, concretely — why business hours</h2>
+<h2><span class="n">Fig 10</span>The 4-hour timer, concretely — why business hours</h2>
 <p>An order that finishes at 17:00 on a Friday, under plain 4 hours versus 4 business hours.</p>
 
 <figure class="fig">
@@ -531,7 +659,77 @@ says what we need:</p>
 </figure>
 
 
-<h2><span class="n">Fig 9</span>Phases and exit criteria</h2>
+<h2><span class="n">Fig 11</span>A chat surface — solving &#8220;will anyone notice in time?&#8221;</h2>
+<p>The three channels — B-Fabric comment, email digest, MCP tools — answer &#8220;can a human act at
+all?&#8221;. A chat bot answers a different question: <b>will a human notice in time?</b> That is the
+weakest point of the whole gate. An unread comment or a filtered digest mail makes the veto
+window ceremonial.</p>
+<p>A bot fits here precisely because it <b>decides nothing</b>. It reports state the state machine
+already holds, and relays actions into the same audited transitions the CLI uses.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 400" role="img" aria-label="The two tiers of the chat surface and the boundary between them">
+  <style>
+    .cbx{stroke-width:2;rx:9}
+    .ch{font:700 13px system-ui,sans-serif}
+    .ci{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .cn{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .cd{stroke:#8a919c;stroke-width:2;stroke-dasharray:7 5}
+  </style>
+  <text class="cn" x="20"  y="20">Tier A — proactive posts and alerts</text>
+  <text class="cn" x="525" y="20">Tier B — conversation in a thread</text>
+  <line class="cd" x1="503" y1="10" x2="503" y2="232"/>
+  <text class="cn" x="300" y="252" fill="#6d4200">this boundary is exactly the governance boundary</text>
+
+  <rect class="cbx" x="20" y="32" width="465" height="196" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="ch" x="42" y="60" fill="#1c4a29">deterministic — no LLM involved</text>
+  <text class="ci" x="42" y="90">· the morning digest, and each new proposal</text>
+  <text class="ci" x="42" y="116">· a reminder one hour before a deadline</text>
+  <text class="ci" x="42" y="142">· failures and QC WARN / FAIL</text>
+  <text class="ci" x="42" y="176">Plain code: query the state → format it → post it.</text>
+  <text class="ch" x="42" y="206" fill="#1c4a29">safe to run unattended (it is a cron job)</text>
+
+  <rect class="cbx" x="525" y="32" width="455" height="196" fill="#f2ecfb" stroke="#6b4bab"/>
+  <text class="ch" x="547" y="60" fill="#3d2a68">an agent (SUSHI-MCP-server + Skills)</text>
+  <text class="ci" x="547" y="90">· &#8220;what is the status of order X?&#8221;</text>
+  <text class="ci" x="547" y="116">· &#8220;why did job 581 fail?&#8221;</text>
+  <text class="ci" x="547" y="142">· reads logs, gStore, SLURM, known errors</text>
+  <text class="ci" x="547" y="176">One message = one task. Nothing keeps running.</text>
+  <text class="ch" x="547" y="206" fill="#3d2a68">a human typed it, so a human is watching</text>
+
+  <rect class="cbx" x="20" y="272" width="960" height="114" fill="#f2f6fc" stroke="#33507a"/>
+  <text class="ci" x="42" y="298">The bot posts <tspan font-weight="700">identifiers, states, counts and deadlines</tspan> — never sample names, customer names,</text>
+  <text class="ci" x="42" y="320">project titles or result content. It inherits L0, and a link carries the detail.</text>
+  <text class="ci" x="42" y="350">Slack and Teams are external cloud services: the same classification question as the LLM channel,</text>
+  <text class="ci" x="42" y="372">but about <tspan font-weight="700">transport</tspan>. Teams under the institutional tenancy is the safer default; Slack needs a policy check.</text>
+</svg>
+<figcaption>The part that genuinely runs unattended (Tier A) needs no agent at all. The part that needs an agent (Tier B) is watched by a human by construction — which makes a chat surface the cheapest legitimate way to put an agent into daily use under the current rules.</figcaption>
+</figure>
+
+<table>
+  <caption>When the bot posts, and what</caption>
+  <tr><th>When</th><th>What it posts</th></tr>
+  <tr><td>Every morning</td><td>Proposals awaiting a response with their deadline countdown; jobs finished or failed since yesterday; QC <code>WARN</code> / <code>FAIL</code> waiting for review</td></tr>
+  <tr><td>On a new proposal</td><td>Order, recipe, resolved parameters, cost estimate, deadline — with <i>veto</i> and <i>hold</i> affordances</td></tr>
+  <tr><td>One hour before a deadline</td><td>A reminder naming the person expected to act</td></tr>
+  <tr><td>On failure or QC <code>FAIL</code></td><td>The job and its state, plus the diagnosis if triage has run</td></tr>
+  <tr><td>On demand</td><td>&#8220;status of order X&#8221;, &#8220;what is pending for p35611&#8221;, &#8220;why did job 581 fail&#8221;</td></tr>
+</table>
+
+<p>Business-hours deadlines are already computed by the daemon, so the bot can say
+<i>&#8220;two proposals expire before 18:00 today&#8221;</i>. Each alert becomes a thread, and the thread is
+the working context: a veto reason typed in the thread is the reason recorded in the transition log.</p>
+
+<div class="callout k">
+  <div class="t">Constraints, and the order to build in</div>
+  <p><b>Write actions are an authorisation surface.</b> A chat identity must map to an LDAP login before it can act. Recommended split for phase 1: <i>read</i>, <i>veto</i> and <i>hold</i> from chat; <i>override</i> and <i>release to the customer</i> from the CLI, or from chat only behind an explicit confirmation. Releasing a result to a customer is a bigger step than stopping a job.</p>
+  <p><b>The bot is never the source of truth.</b> It reads state through the same API the CLI uses, and every action it relays lands in the <code>transitions</code> table with the resolved LDAP actor — not &#8220;slack-bot&#8221;.</p>
+  <p><b>Alert fatigue is the failure mode.</b> One post per state transition, digests instead of per-event mail, per-person routing, no re-posting. If the response rate drops, the gate is theatre again — so response rate is worth tracking as a health metric.</p>
+  <p><b>Build order.</b> An outgoing webhook that posts the morning digest is roughly a day of work, has no inbound surface and no auth surface, and already delivers most of the value. Interactive buttons come next, the conversational tier after that — and only once the identity mapping exists.</p>
+</div>
+
+
+<h2><span class="n">Fig 12</span>Phases and exit criteria</h2>
 
 <figure class="fig">
 <svg viewBox="0 0 1000 330" role="img" aria-label="Phase plan">
@@ -593,7 +791,7 @@ says what we need:</p>
 </figure>
 
 
-<h2><span class="n">Fig 10</span>The first step — three things, none touching production</h2>
+<h2><span class="n">Fig 13</span>The first step — three things, none touching production</h2>
 <p>Using historic jobs as ground truth is dropped. The reason is in the lower panel.</p>
 
 <figure class="fig">
@@ -644,7 +842,7 @@ says what we need:</p>
 </figure>
 
 
-<h2><span class="n">Fig 11</span>Questions, with owners</h2>
+<h2><span class="n">Fig 14</span>Questions, with owners</h2>
 <div class="cards">
   <div class="card"><h4>B-Fabric — Falko</h4>
     <p><b>What can we read in B-Fabric</b> to learn that new data has become available in gStore? Which field, which values, what latency?<br>
