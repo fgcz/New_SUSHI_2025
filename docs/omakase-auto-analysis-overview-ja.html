@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMAKASE — 自動一次解析ワークフロー 全体構成（図解）</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#5b6472; --line:#d4d9e0; --bg:#ffffff; --panel:#f7f9fc;
+    --exist-bg:#e9eef6; --exist-br:#33507a; --exist-ink:#1a2f4d;
+    --new-bg:#fff4e2;  --new-br:#c07600;  --new-ink:#6d4200;
+    --llm-bg:#f2ecfb;  --llm-br:#6b4bab;  --llm-ink:#3d2a68;
+    --human-bg:#e7f6ec;--human-br:#2f7a45;--human-ink:#1c4a29;
+    --bad-bg:#fdecec;  --bad-br:#b5303a;  --bad-ink:#7d1e25;
+    --skip-bg:#f0f1f4; --skip-br:#8a919c; --skip-ink:#4a5058;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+    line-height:1.75; font-size:15px;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:44px 24px 96px}
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:34px}
+  h1{font-size:27px;margin:0 0 6px;letter-spacing:.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  h2{font-size:20px;margin:52px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+  h2 .n{color:var(--muted);font-weight:400;margin-right:10px;font-variant-numeric:tabular-nums}
+  h3{font-size:16px;margin:30px 0 10px}
+  p{margin:10px 0}
+  .lead{font-size:15.5px;color:#2b3340;margin:6px 0 20px}
+  figure{margin:22px 0 8px;padding:0}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  svg{max-width:100%;height:auto;display:block}
+  .fig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+
+  /* legend */
+  .legend{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:12.5px;margin:14px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:15px;height:15px;border-radius:4px;border:2px solid}
+  .sw.e{background:var(--exist-bg);border-color:var(--exist-br)}
+  .sw.n{background:var(--new-bg);border-color:var(--new-br)}
+  .sw.l{background:var(--llm-bg);border-color:var(--llm-br)}
+  .sw.h{background:var(--human-bg);border-color:var(--human-br)}
+  .sw.b{background:var(--bad-bg);border-color:var(--bad-br)}
+
+  /* layer stack */
+  .stack{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .layer{display:grid;grid-template-columns:64px 1fr 1fr;gap:0;border-bottom:1px solid var(--line);align-items:stretch}
+  .layer:last-child{border-bottom:0}
+  .layer .id{background:#eef1f6;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;color:#3a4a63;border-right:1px solid var(--line)}
+  .layer .q{padding:11px 14px;font-size:14px}
+  .layer .who{padding:11px 14px;font-size:13px;color:var(--muted);border-left:1px dashed var(--line)}
+  .layer.isnew .id{background:var(--new-bg);color:var(--new-ink)}
+  .layer.isnew .q{background:#fffaf2}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:8px;vertical-align:2px}
+  .badge.new{background:var(--new-bg);color:var(--new-ink);border:1px solid var(--new-br)}
+  .badge.re{background:var(--exist-bg);color:var(--exist-ink);border:1px solid var(--exist-br)}
+
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#eef1f6;font-weight:600}
+  td.ok{background:#f2fbf4;color:#1c4a29;font-weight:600;text-align:center}
+  td.no{background:#fdf0f0;color:#7d1e25;font-weight:600;text-align:center}
+  td.mid{background:#fff8ec;color:#6d4200;font-weight:600;text-align:center}
+  caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);padding-bottom:6px}
+
+  .callout{border-left:4px solid var(--exist-br);background:#f2f6fc;padding:13px 16px;border-radius:0 8px 8px 0;margin:18px 0}
+  .callout.k{border-color:var(--new-br);background:#fff8ee}
+  .callout.g{border-color:var(--human-br);background:#f1faf3}
+  /* full shorthand: SVG <style> blocks are document-wide, so a bare .t rule there
+     would otherwise leak font-family/line-height into these callout titles */
+  .callout .t{font:700 13.5px/1.6 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+              margin-bottom:3px;color:var(--ink)}
+  .callout p{margin:4px 0}
+
+  ul{margin:10px 0;padding-left:22px}
+  li{margin:5px 0}
+  code{background:#eef1f5;padding:1px 6px;border-radius:4px;font-size:12.5px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px;margin:18px 0}
+  .card{border:1px solid var(--line);border-radius:10px;padding:15px 17px;background:#fff}
+  .card h4{margin:0 0 7px;font-size:14.5px}
+  .card.n{border-color:var(--new-br);background:#fffaf2}
+  .card.l{border-color:var(--llm-br);background:#faf7fe}
+  .card.b{border-color:var(--bad-br);background:#fdf6f6}
+  .card p{font-size:13.5px;margin:5px 0;color:#39404c}
+  .num{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.08em}
+  footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  @media print{
+    body{font-size:11pt} .wrap{padding:0} h2{page-break-after:avoid}
+    figure,.fig,table,.stack{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared arrowheads for every diagram below. Kept in one 0x0 svg (NOT display:none,
+     which can break marker resolution) so the ids are unique document-wide and every
+     later <svg> can reference url(#ah) / url(#ahr). -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b5303a"/>
+    </marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>OMAKASE — 受注シーケンスの自動一次解析</h1>
+  <p class="sub">全体構成の図解（チーム検討用）／ コード名 OMAKASE ＝「お任せ」：顧客が注文しなくても施設側が解析を提案する</p>
+  <div class="meta">
+    <span><b>版</b> v0.3 図解版</span>
+    <span><b>日付</b> 2026-07-31（レビュー反映）</span>
+    <span><b>状態</b> 構成案のみ・実装設計は未着手</span>
+    <span><b>本文</b> docs/omakase-auto-analysis-design.md</span>
+  </div>
+</header>
+
+<p class="lead">
+元のアイデア（提案 → 通知 → 4時間無応答で自動開始 → 完了後にAIが整合性確認 → 人が顧客へ転送、
+Phase 1は必ず bioinformatician を経由）はそのまま採用しています。<br>
+この文書は「どの層を誰が持つか」を図で確定させるためのものです。
+</p>
+
+<div class="legend">
+  <span><i class="sw e"></i>既存コンポーネント（そのまま再利用）</span>
+  <span><i class="sw n"></i>新規（★ 作るのはこれだけ）</span>
+  <span><i class="sw l"></i>LLM</span>
+  <span><i class="sw h"></i>人間の判断</span>
+  <span><i class="sw b"></i>失敗・禁止</span>
+</div>
+
+
+<h2><span class="n">図1</span>全体像 ── 7つの層</h2>
+<p>各層に「持ち主」と「仕事」を1つだけ持たせます。層をまたぐ責任を作らないのが狙いです。</p>
+
+<div class="stack">
+  <div class="layer isnew">
+    <div class="id">L0</div>
+    <div class="q"><b>データ最小化</b><br>「AI に何を見せるのか？」<span class="badge new">新規</span></div>
+    <div class="who">コード内の項目許可リスト<br>→ 機密性のないオーダー項目のみ・オンプレ vLLM のみ・顧客には説明</div>
+  </div>
+  <div class="layer">
+    <div class="id">L1</div>
+    <div class="q"><b>トリガー</b><br>「order X のシーケンスが終わった」</div>
+    <div class="who">omakase-core の watcher<br><b>B-Fabric DB</b> をポーリング</div>
+  </div>
+  <div class="layer">
+    <div class="id">L2</div>
+    <div class="q"><b>決定</b><br>「どの解析を、どのパラメータで？」</div>
+    <div class="who">recipe カタログ（YAML・版管理）<br>LLM は曖昧ケースの tie-break のみ</div>
+  </div>
+  <div class="layer">
+    <div class="id">L3</div>
+    <div class="q"><b>ゲート</b><br>「人が止める時間を置いて、開始」</div>
+    <div class="who">状態機械 ＋ 営業時間タイマー</div>
+  </div>
+  <div class="layer">
+    <div class="id">L4</div>
+    <div class="q"><b>実行</b><br>「走らせる」</div>
+    <div class="who">SUSHI backend REST API → job_manager → SLURM → gStore<span class="badge re">既存</span></div>
+  </div>
+  <div class="layer">
+    <div class="id">L5</div>
+    <div class="q"><b>QC</b><br>「結果は正気か？」</div>
+    <div class="who">決定論的チェック（loop_validation）<br>LLM は所見文のみ</div>
+  </div>
+  <div class="layer">
+    <div class="id">L6</div>
+    <div class="q"><b>リリース</b><br>「顧客に伝える」</div>
+    <div class="who">Phase 1: bioinformatician ／ Phase 2: recipe 単位で OMAKASE</div>
+  </div>
+</div>
+
+
+<h2><span class="n">図2</span>コンポーネント配置 ── 新規は1つだけ</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 620" role="img" aria-label="コンポーネント配置図">
+  <style>
+    .bx{stroke-width:2;rx:9}
+    .e{fill:#e9eef6;stroke:#33507a}
+    .nw{fill:#fff4e2;stroke:#c07600}
+    .lm{fill:#f2ecfb;stroke:#6b4bab}
+    .hm{fill:#e7f6ec;stroke:#2f7a45}
+    .gs{fill:#eef3ee;stroke:#5b7a5f}
+    .t{font:600 13px system-ui,sans-serif;fill:#1c1f26}
+    .t2{font:400 11.5px system-ui,sans-serif;fill:#4a5568}
+    .lb{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .fl{stroke:#4a5568;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+    .star{font:700 13px system-ui,sans-serif;fill:#c07600}
+  </style>
+
+  <!-- B-Fabric -->
+  <rect class="bx e" x="250" y="14" width="500" height="86"/>
+  <text class="t" x="270" y="38">B-FABRIC（SOAP / bfabricPy）</text>
+  <text class="t2" x="270" y="58">order · sample · run · workunit · comment</text>
+  <text class="t2" x="270" y="80">← トリガーのためにポーリングする（L1）</text>
+  <text class="lb" x="20" y="40">gStore に新データ</text>
+  <path class="fl" d="M20,58 L246,58"/>
+  <text class="lb" x="762" y="52">コメント＝通知</text>
+  <text class="lb" x="762" y="70">チャネル</text>
+
+  <!-- omakase-core -->
+  <rect class="bx nw" x="60" y="140" width="880" height="132"/>
+  <text class="star" x="80" y="166">★ omakase-core</text>
+  <text class="t2" x="196" y="166">— 唯一の新規コンポーネント（Python デーモン／素のコード・LLMなし）</text>
+  <text class="t" x="80" y="200">watcher → 同意確認 → recipe エンジン → タイマー → 投入</text>
+  <text class="t" x="80" y="226">QC ゲート ← 結果収集 ← ジョブ状態</text>
+  <text class="t2" x="80" y="254">自前の状態DB（SQLite → Postgres）。SUSHI スキーマに DDL は一切かけない。</text>
+  <path class="fl" d="M500,104 L500,136"/>
+  <text class="lb" x="510" y="126">bfabricPy / btools</text>
+
+  <!-- three consumers -->
+  <rect class="bx e"  x="60"  y="330" width="230" height="96"/>
+  <text class="t"  x="78" y="356">SUSHI backend</text>
+  <text class="t2" x="78" y="376">REST API  POST /jobs</text>
+  <text class="t2" x="78" y="396">project-scope トークン</text>
+  <text class="t2" x="78" y="414">required_params ゲート</text>
+
+  <rect class="bx lm" x="320" y="330" width="290" height="96"/>
+  <text class="t"  x="338" y="356">SUSHI-MCP-server llm_client</text>
+  <text class="t2" x="338" y="376">└ local → FGCZ vLLM（オンプレ）</text>
+  <text class="t2" x="338" y="396">　 これが唯一のチャネル</text>
+  <text class="t2" x="338" y="414">output_schema で型付き応答</text>
+
+  <rect class="bx hm" x="640" y="330" width="300" height="96"/>
+  <text class="t"  x="658" y="356">SUSHI-MCP-server（MCP）</text>
+  <text class="t2" x="658" y="376">omakase_* ツール群</text>
+  <text class="t2" x="658" y="396">veto / override / release</text>
+  <text class="t2" x="658" y="414">skill 参照 と provenance</text>
+
+  <path class="fl" d="M170,276 L170,326"/><text class="lb" x="178" y="304">REST+token</text>
+  <path class="fl" d="M465,276 L465,326"/><text class="lb" x="473" y="304">型付きLLM呼び出し</text>
+  <path class="fl" d="M790,276 L790,326"/><text class="lb" x="798" y="304">MCP</text>
+
+  <!-- execution chain -->
+  <rect class="bx e" x="60" y="470" width="150" height="52"/>
+  <text class="t" x="78" y="494">job_manager</text><text class="t2" x="78" y="512">（既存）</text>
+  <rect class="bx e" x="240" y="470" width="110" height="52"/>
+  <text class="t" x="262" y="500">SLURM</text>
+  <rect class="bx gs" x="60" y="556" width="290" height="48"/>
+  <text class="t" x="78" y="586">gStore  /srv/gstore/projects/…</text>
+
+  <path class="fl" d="M135,430 L135,466"/><text class="lb" x="143" y="452">Job 行（CREATED）</text>
+  <path class="fl" d="M214,496 L236,496"/>
+  <path class="fl" d="M295,526 L295,552"/>
+  <path class="fl" d="M354,580 L940,580 L940,278"/>
+  <text class="lb" x="600" y="574">結果とログを読む</text>
+
+  <!-- hermes -->
+  <rect class="bx lm" x="430" y="470" width="330" height="86" stroke-dasharray="6 4"/>
+  <text class="t"  x="448" y="496">AI triage エージェント</text>
+  <text class="t2" x="448" y="516">失敗した解析の原因調査のみ</text>
+  <text class="t2" x="448" y="536">Phase 1 は人が起動（自動実行しない）</text>
+  <path class="fl" d="M354,496 L426,496" stroke="#b5303a" marker-end="url(#ahr)"/>
+  <text class="lb" x="356" y="486" fill="#b5303a">失敗時のみ</text>
+</svg>
+<figcaption>★ が新規。それ以外はすべて既存のものを無改造で再利用します。SUSHI 側にこの企画のために作ったものはありません。</figcaption>
+</figure>
+
+<div class="callout k">
+  <div class="t">作るものは1つだけ</div>
+  <p>omakase-core（Python デーモン）。同意ダイアログを外したので、v0.2 で必要だった B-Fabric 側の新規フィールドも不要になりました。</p>
+  <p>ジョブ投入は必ず SUSHI backend の REST 経由にします。これで project スコープ強制・<code>required_params</code> ゲート・SAMPLE 分岐・legacy 互換の出力カラムが自動的に付いてきて、共有本番DBを壊す経路が存在しなくなります。</p>
+</div>
+
+
+<h2><span class="n">図3</span>データ最小化 ── 同意ダイアログを置かない</h2>
+<p>センシティブなデータの利用許可を求めるのではなく、<b>そもそも読み込まない</b>という設計です。<br>
+どのパイプラインを選ぶかを決めるのに必要なのは、機密性のないオーダー項目だけです。</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 430" role="img" aria-label="許可リストによるデータ最小化">
+  <style>
+    .bx3{stroke-width:2;rx:9}
+    .hd3{font:700 13px system-ui,sans-serif}
+    .it3{font:400 12.5px system-ui,sans-serif;fill:#39404c}
+    .ng3{font:400 12.5px system-ui,sans-serif;fill:#7d1e25}
+    .cl3{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .fl3{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <text class="cl3" x="20"  y="36">B-Fabric のオーダー情報</text>
+  <text class="cl3" x="320" y="36">許可リスト（コードで固定）</text>
+  <text class="cl3" x="650" y="36">送信先</text>
+
+  <rect class="bx3" x="20" y="70" width="240" height="152" fill="#e9eef6" stroke="#33507a"/>
+  <text class="hd3" x="40" y="96">order レコード</text>
+  <text class="it3" x="40" y="120">多数の項目を持つ</text>
+  <text class="ng3" x="40" y="146">顧客名・連絡先・課題名・</text>
+  <text class="ng3" x="40" y="166">サンプル名・フリーテキスト</text>
+  <text class="ng3" x="40" y="186">コメント なども含まれる</text>
+  <text class="ng3" x="40" y="210">→ これらは読み込まない</text>
+
+  <rect class="bx3" x="320" y="48" width="270" height="214" fill="#fff4e2" stroke="#c07600"/>
+  <text class="hd3" x="340" y="74" fill="#6d4200">この項目だけを読む</text>
+  <text class="it3" x="340" y="100">✓ Service Type</text>
+  <text class="it3" x="340" y="122">✓ Sequencing Application</text>
+  <text class="it3" x="340" y="144">✓ Species</text>
+  <text class="it3" x="340" y="166">✓ Instrument</text>
+  <text class="it3" x="340" y="188">✓ Library Protocol</text>
+  <text class="it3" x="340" y="210">✓ サンプル数・レイアウト</text>
+  <text class="ng3" x="340" y="242">マスクではなく「非取得」</text>
+
+  <rect class="bx3" x="650" y="90" width="310" height="120" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="hd3" x="670" y="118" fill="#1c4a29">FGCZ ローカル vLLM</text>
+  <text class="it3" x="670" y="142">オンプレミス</text>
+  <text class="it3" x="670" y="166">推論は FGCZ 網内で完結</text>
+  <text class="it3" x="670" y="190">外部クラウドは一切使わない</text>
+
+  <path class="fl3" d="M264,155 L316,155"/>
+  <path class="fl3" d="M594,150 L646,150"/>
+
+  <rect class="bx3" x="20" y="300" width="940" height="52" fill="#fdecec" stroke="#b5303a"/>
+  <text class="it3" x="40" y="324" fill="#7d1e25">raw data（FASTQ / BAM / VCF）とフリーテキストのログは、どの経路でも LLM に渡さない。</text>
+  <text class="it3" x="40" y="344" fill="#7d1e25">QC が渡すのは数値メトリクスのみ。ログにはパスやサンプル名が入るため除外する。</text>
+
+  <rect class="bx3" x="20" y="366" width="940" height="52" fill="#f2f6fc" stroke="#33507a"/>
+  <text class="it3" x="40" y="390">顧客への説明（同意ダイアログは置かない）：</text>
+  <text class="hd3" x="40" y="410">&#8220;Experiment parameters will be processed by a local AI model.&#8221;</text>
+</svg>
+<figcaption>同意プロセスの整備が Phase 0 / Phase 1 のブロッカーになりません。許可リストとオンプレ限定で、許可を求める対象そのものが無くなります。</figcaption>
+</figure>
+
+<h3>3つのルール</h3>
+<ul>
+  <li><b>マスクではなく許可リスト。</b>リストにある項目しか取得しません。取得しなければ、スクラバのバグで漏れることもありません。</li>
+  <li><b>ローカル vLLM のみ。</b>機関クラウドもホスト API も使いません。「どのツールがどの分類まで許されるか」という表が設計から消えます。</li>
+  <li><b>raw data とフリーテキストのログは渡さない。</b>QC が渡すのは数値メトリクスだけです。決定論的なチェックはもともと数値で動きます。</li>
+</ul>
+
+<div class="callout k">
+  <div class="t">残る注意点</div>
+  <p>データ最小化が同意の問題を消すのは、<b>送信内容が許可リストの内側にとどまる限り</b>です。あとからログ本文や結果テーブルを渡したくなった時点で、問題は戻ってきます。</p>
+  <p>したがって許可リストは<b>セキュリティ境界</b>です。コードで強制し、変更はレビュー対象にします。</p>
+</div>
+<h2><span class="n">図4</span>LLM チャネル ── オンプレの1本だけ</h2>
+<p><code>llm_client</code> の <code>local</code> provider（OpenAI 互換）を FGCZ の vLLM に向けます。
+使うのはこの1本だけです。型付き出力（<code>output_schema</code>）も既に対応しています。</p>
+
+<table>
+  <caption>チャネルと、この設計で使うかどうか</caption>
+  <tr><th>チャネル</th><th>llm_client provider</th><th>ここで使うか</th></tr>
+  <tr><td><b>FGCZ vLLM</b>（オンプレ・無料）</td><td><code>local</code>（OpenAI 互換 base_url）</td><td class="ok">使う（唯一）</td></tr>
+  <tr><td>UZH Copilot CLI（機関契約）</td><td><code>copilot</code></td><td class="no">使わない</td></tr>
+  <tr><td>Anthropic ホスト API</td><td><code>anthropic</code></td><td class="no">使わない</td></tr>
+</table>
+
+<div class="callout">
+  <div class="t">ガードが小さくなる</div>
+  <p>チャネルが固定で、送信内容が許可リストに限られるため、<code>llm_client</code> の前に置く確認は2つだけです。<b>全項目が許可リストにあるか。宛先がローカルのエンドポイントか。</b>違えば拒否してログに残します。</p>
+</div>
+
+
+<h2><span class="n">図5</span>QC ── loop_validation をそのまま適用する</h2>
+<p>SUSHI-MCP-server の既存の検証規律 <code>loop_validation</code> に、必要なことがすでに書かれています。</p>
+<div class="callout">
+  <p>「実行 LLM の自己申告は証拠にならない。判定は機械観測可能な結果のみを消費し、証拠の不在は決して pass に倒れない。」</p>
+</div>
+<p>つまり QC ゲートは loop_validation のインスタンスです。<b>新しい QC フレームワークは作りません。</b></p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 400" role="img" aria-label="QCの3階層と判定">
+  <style>
+    .tt{font:700 12.5px system-ui,sans-serif;fill:#1c1f26}
+    .ii{font:400 12.5px system-ui,sans-serif;fill:#39404c}
+  </style>
+  <rect x="240" y="14" width="520" height="46" rx="9" fill="#fff4e2" stroke="#c07600" stroke-width="2"/>
+  <text class="tt" x="262" y="34">recipe の qc_spec　＝ evidence spec</text>
+  <text class="ii" x="262" y="52">実行の「前」に宣言し、sha256 で pin する（どの基準で判定したかも監査対象）</text>
+  <path d="M500,62 L500,86" stroke="#4a5568" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+
+  <rect x="60" y="92" width="880" height="150" rx="9" fill="#e9eef6" stroke="#33507a" stroke-width="2"/>
+  <text class="tt" x="82" y="118">Tier 1　構造チェック</text>
+  <text class="ii" x="230" y="118">exit code ／ 期待した出力ファイルが存在し空でない ／ dataset.tsv が parse できる ／</text>
+  <text class="ii" x="230" y="136">行数＝サンプル数 ／ OOM・Traceback なし ／ 実行時間が中央値の k 倍以内</text>
+  <text class="tt" x="82" y="166">Tier 2　ドメイン指標</text>
+  <text class="ii" x="230" y="166">%uniquely mapped ／ %rRNA ／ library size 分布 ／ 検出遺伝子数 ／</text>
+  <text class="ii" x="230" y="184">duplication rate ／ 10x barcode knee（閾値は recipe と一緒に版管理）</text>
+  <text class="tt" x="82" y="214">Tier 3　履歴比較</text>
+  <text class="ii" x="230" y="214">同一 recipe の直近 N 実行の分布に対する z-score</text>
+  <text class="ii" x="230" y="232" fill="#7d1e25">「パイプラインは成功したがデータが変」を捕まえるのはここ</text>
+  <path d="M500,246 L500,272" stroke="#4a5568" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+  <text class="ii" x="512" y="266">機械的・fail-closed</text>
+
+  <rect x="200" y="278" width="200" height="46" rx="9" fill="#e7f6ec" stroke="#2f7a45" stroke-width="2"/>
+  <text class="tt" x="272" y="306" fill="#1c4a29">PASS</text>
+  <rect x="410" y="278" width="180" height="46" rx="9" fill="#fff8ec" stroke="#c07600" stroke-width="2"/>
+  <text class="tt" x="484" y="306" fill="#6d4200">WARN</text>
+  <rect x="600" y="278" width="180" height="46" rx="9" fill="#fdecec" stroke="#b5303a" stroke-width="2"/>
+  <text class="tt" x="678" y="306" fill="#7d1e25">FAIL</text>
+  <text class="ii" x="800" y="300">→ attestation に記録</text>
+  <text class="ii" x="800" y="318">（判定 ＋ spec_sha256）</text>
+
+  <rect x="200" y="344" width="580" height="42" rx="9" fill="#f2ecfb" stroke="#6b4bab" stroke-width="2"/>
+  <text class="ii" x="222" y="370">LLM が所見文を書く。判定を <tspan font-weight="700">下げる</tspan> ことはできるが、FAIL を PASS に <tspan font-weight="700">上げることはできない</tspan>。</text>
+</svg>
+<figcaption>recipe の <code>qc_spec</code> ＝ evidence spec、QC 判定 ＝ 機械的 fail-closed verdict、記録 ＝ attestation。1つの機構を2つの用途に使います。</figcaption>
+</figure>
+
+
+<h2><span class="n">図6</span>状態機械（前半）── 提案から開始まで</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 350" role="img" aria-label="状態機械 前半">
+  <style>
+    .st{stroke-width:2;rx:8}
+    .sn{fill:#e9eef6;stroke:#33507a}
+    .sg{fill:#e7f6ec;stroke:#2f7a45}
+    .sk{fill:#f0f1f4;stroke:#8a919c}
+    .sa{fill:#fff8ec;stroke:#c07600}
+    .sb{fill:#fdecec;stroke:#b5303a}
+    .sl{font:700 12.5px system-ui,sans-serif;fill:#1c1f26}
+    .el{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .ar{stroke:#4a5568;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="st sn" x="20"  y="40" width="140" height="46"/><text class="sl" x="46"  y="69">DETECTED</text>
+  <rect class="st sn" x="205" y="40" width="150" height="46"/><text class="sl" x="222" y="69">METADATA_OK</text>
+  <rect class="st sn" x="400" y="40" width="150" height="46"/><text class="sl" x="435" y="69">PROPOSED</text>
+  <rect class="st sg" x="650" y="40" width="140" height="46"/><text class="sl" x="683" y="69">APPROVED</text>
+  <rect class="st sn" x="835" y="40" width="140" height="46"/><text class="sl" x="862" y="69">SUBMITTED</text>
+
+  <path class="ar" d="M164,63 L201,63"/>
+  <text class="el" x="166" y="30">同意確認(L0)</text><text class="el" x="166" y="44" opacity="0">.</text>
+  <path class="ar" d="M359,63 L396,63"/>
+  <text class="el" x="358" y="30">recipe エンジン</text>
+  <path class="ar" d="M554,63 L646,63"/>
+  <text class="el" x="556" y="30">営業時間4h 無応答</text>
+  <text class="el" x="556" y="100">通知を read-back 検証してから計時開始</text>
+  <path class="ar" d="M794,63 L831,63"/>
+
+  <rect class="st sk" x="205" y="130" width="150" height="42"/><text class="sl" x="248" y="157">SKIPPED</text>
+  <path class="ar" d="M280,90 L280,126"/><text class="el" x="288" y="112">対象外・情報不足</text>
+
+  <rect class="st sk" x="400" y="130" width="150" height="42"/><text class="sl" x="428" y="157">CANCELLED</text>
+  <path class="ar" d="M455,90 L455,126"/><text class="el" x="463" y="112">veto</text>
+
+  <rect class="st sn" x="400" y="200" width="150" height="42"/><text class="sl" x="418" y="227">OVERRIDDEN</text>
+  <path class="ar" d="M475,90 L475,196"/><text class="el" x="483" y="188">別の解析を指定</text>
+  <path class="ar" d="M554,221 L600,221 L600,58 L646,58"/>
+
+  <rect class="st sa" x="400" y="270" width="150" height="42"/><text class="sl" x="452" y="297" fill="#6d4200">HELD</text>
+  <path class="ar" d="M495,90 L495,266"/>
+  <text class="el" x="503" y="258">確信度が低い／未許可 recipe／予算超過</text>
+  <path class="ar" d="M554,291 L720,291 L720,90"/><text class="el" x="562" y="284">人が GO を出したら</text>
+</svg>
+<figcaption><b>この系全体で、時間によって進む遷移は「PROPOSED → APPROVED」の1本だけ</b>です。他はすべてイベントか人の操作で動きます。</figcaption>
+</figure>
+
+
+<h2><span class="n">図7</span>状態機械（後半）── 実行からリリースまで</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 340" role="img" aria-label="状態機械 後半">
+  <style>
+    .st{stroke-width:2;rx:8}
+    .sn{fill:#e9eef6;stroke:#33507a}
+    .sg{fill:#e7f6ec;stroke:#2f7a45}
+    .sa{fill:#fff8ec;stroke:#c07600}
+    .sb{fill:#fdecec;stroke:#b5303a}
+    .sl{font:700 12.5px system-ui,sans-serif;fill:#1c1f26}
+    .el{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .ar{stroke:#4a5568;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="st sn" x="20"  y="40" width="130" height="46"/><text class="sl" x="46"  y="69">RUNNING</text>
+  <rect class="st sn" x="220" y="40" width="130" height="46"/><text class="sl" x="252" y="69">QC_RUN</text>
+  <path class="ar" d="M154,63 L216,63"/><text class="el" x="156" y="32">全ジョブ COMPLETED</text>
+
+  <rect class="st sb" x="220" y="160" width="130" height="46"/><text class="sl" x="256" y="189" fill="#7d1e25">FAILED</text>
+  <path class="ar" d="M85,90 L85,183 L216,183"/><text class="el" x="95" y="150">いずれか FAILED_*</text>
+
+  <rect class="st sg" x="430" y="16" width="190" height="44"/><text class="sl" x="446" y="43" fill="#1c4a29">RELEASE_PENDING</text>
+  <rect class="st sa" x="430" y="82" width="190" height="44"/><text class="sl" x="466" y="109" fill="#6d4200">REVIEW_REQ</text>
+  <rect class="st sb" x="430" y="148" width="190" height="44"/><text class="sl" x="474" y="175" fill="#7d1e25">QC_FAILED</text>
+  <path class="ar" d="M354,56 L400,56 L400,38 L426,38"/><text class="el" x="358" y="50">PASS</text>
+  <path class="ar" d="M354,70 L400,70 L400,104 L426,104"/><text class="el" x="358" y="90">WARN</text>
+  <path class="ar" d="M354,80 L390,80 L390,170 L426,170"/><text class="el" x="358" y="130">FAIL</text>
+
+  <rect class="st sg" x="720" y="46" width="160" height="50"/><text class="sl" x="768" y="77" fill="#1c4a29">RELEASED</text>
+  <path class="ar" d="M624,38 L680,38 L680,66 L716,66"/><text class="el" x="628" y="32">人が文面を承認</text>
+  <path class="ar" d="M624,104 L680,104 L680,80 L716,80"/><text class="el" x="628" y="122">人が判断</text>
+
+  <rect class="st" x="430" y="240" width="450" height="70" fill="#f2ecfb" stroke="#6b4bab" stroke-width="2" stroke-dasharray="6 4"/>
+  <text class="sl" x="450" y="266" fill="#3d2a68">omakase_triage &lt;id&gt;　→　AI triage（人が起動）</text>
+  <text class="el" x="450" y="288">ログ・gStore・known errors を調べて原因と修正案を出す。自動再実行はしない。</text>
+  <path class="ar" d="M285,210 L285,275 L426,275"/>
+
+  <text class="el" x="720" y="120">Phase 1：人が顧客向けコメントを承認</text>
+  <text class="el" x="720" y="138">Phase 2：recipe 単位で OMAKASE が直接投稿</text>
+</svg>
+<figcaption>失敗しても自動再実行はしません。人に通知します。黙って再試行すると計算資源を焼き、本当の問題が隠れます。</figcaption>
+</figure>
+
+
+<h2><span class="n">図8</span>4時間タイマーの具体例 ── なぜ営業時間換算にするか</h2>
+<p>金曜17:00 に order が完了した場合を、素の4時間と営業時間4時間で比べます。</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 260" role="img" aria-label="タイマーの比較">
+  <style>
+    .ax{stroke:#8a919c;stroke-width:1.4}
+    .tk{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .lbl{font:700 12.5px system-ui,sans-serif}
+    .bad{fill:#fdecec;stroke:#b5303a;stroke-width:2}
+    .good{fill:#e7f6ec;stroke:#2f7a45;stroke-width:2}
+    .nt{font:400 12px system-ui,sans-serif;fill:#39404c}
+  </style>
+  <!-- axis -->
+  <line class="ax" x1="120" y1="70" x2="960" y2="70"/>
+  <line class="ax" x1="120" y1="66" x2="120" y2="74"/><text class="tk" x="98" y="92">金 17:00</text>
+  <line class="ax" x1="290" y1="66" x2="290" y2="74"/><text class="tk" x="268" y="92">金 21:00</text>
+  <line class="ax" x1="520" y1="66" x2="520" y2="74"/><text class="tk" x="500" y="92">土・日</text>
+  <line class="ax" x1="800" y1="66" x2="800" y2="74"/><text class="tk" x="772" y="92">月 10:00</text>
+
+  <circle cx="120" cy="70" r="6" fill="#c07600"/><text class="lbl" x="112" y="52" fill="#6d4200">order 完了・提案を通知</text>
+
+  <rect class="bad" x="140" y="120" width="820" height="46" rx="8"/>
+  <text class="lbl" x="160" y="141" fill="#7d1e25">素の4時間 → 金 21:00 に自動開始</text>
+  <text class="nt"  x="160" y="159">誰も見ていない。veto できる人がいない。失敗しても月曜まで放置。</text>
+  <line x1="290" y1="76" x2="290" y2="116" stroke="#b5303a" stroke-width="1.6" stroke-dasharray="4 3"/>
+
+  <rect class="good" x="140" y="184" width="820" height="46" rx="8"/>
+  <text class="lbl" x="160" y="205" fill="#1c4a29">営業時間4時間（08:00–18:00 平日）＋ 下限＝翌営業日 10:00 → 月 10:00 に自動開始</text>
+  <text class="nt"  x="160" y="223">通知から実際の猶予は 2 営業日以上。担当者が出勤時に veto / override できる。</text>
+  <line x1="800" y1="76" x2="800" y2="180" stroke="#2f7a45" stroke-width="1.6" stroke-dasharray="4 3"/>
+</svg>
+<figcaption>あわせて「通知を投稿し、読み戻して確認できてから計時を開始する」ことも必須にします。届いていない提案で自動開始してはいけません。</figcaption>
+</figure>
+
+
+<h2><span class="n">図9</span>フェーズ計画と卒業条件</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 330" role="img" aria-label="フェーズ計画">
+  <style>
+    .ph{stroke-width:2;rx:10}
+    .p0{fill:#f0f1f4;stroke:#8a919c}
+    .p1{fill:#e7f6ec;stroke:#2f7a45}
+    .p2{fill:#f2ecfb;stroke:#6b4bab}
+    .pt{font:700 14px system-ui,sans-serif}
+    .pi{font:400 12.5px system-ui,sans-serif;fill:#39404c}
+    .px{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .ar{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="ph p0" x="20" y="20" width="300" height="270"/>
+  <text class="pt" x="40" y="48" fill="#4a5058">PHASE 0 — 影行（すぐ開始可）</text>
+  <text class="pi" x="40" y="74">検知 → 提案 → QC。</text>
+  <text class="pi" x="40" y="94"><tspan font-weight="700">どこにも何も書かない。</tspan></text>
+  <text class="pi" x="40" y="114">出力は自前DBと日次メールのみ。</text>
+  <text class="pi" x="40" y="134">並行してメタ情報の充足度調査。</text>
+  <text class="px" x="40" y="170">卒業条件</text>
+  <text class="pi" x="40" y="192">・サービス種別ごとの充足度を計測</text>
+  <text class="pi" x="40" y="212">・上位オーダー種の recipe を担当者が承認</text>
+  <text class="pi" x="40" y="232">・新規 order での提案が実運用と一致</text>
+  <text class="pi" x="40" y="252">・vLLM 経路が通ることを確認</text>
+  <text class="px" x="40" y="280" fill="#2f7a45">リスクゼロで始められる</text>
+
+  <path class="ar" d="M326,150 L356,150"/>
+
+  <rect class="ph p1" x="362" y="20" width="300" height="270"/>
+  <text class="pt" x="382" y="48" fill="#1c4a29">PHASE 1 — 人間ゲート</text>
+  <text class="pi" x="382" y="74">内部通知のみ。営業時間の期限で</text>
+  <text class="pi" x="382" y="94">自動開始（許可した project×recipe</text>
+  <text class="pi" x="382" y="114">の組だけ）。顧客への公開は必ず人。</text>
+  <text class="pi" x="382" y="134"><tspan font-weight="700">AI は顧客向けに何も書かない。</tspan></text>
+  <text class="px" x="382" y="170">卒業条件（recipe ごと）</text>
+  <text class="pi" x="382" y="192">・自動開始 50件以上</text>
+  <text class="pi" x="382" y="212">・app もパラメータも変更なしで</text>
+  <text class="pi" x="382" y="230">　95%以上が公開された</text>
+  <text class="pi" x="382" y="250">・参照ゲノム／種／実験計画の誤り</text>
+  <text class="pi" x="382" y="268">　が顧客に届いた件数ゼロ</text>
+  <text class="pi" x="382" y="286">・担当者の処理時間が計測上短縮</text>
+
+  <path class="ar" d="M668,150 L698,150"/>
+
+  <rect class="ph p2" x="704" y="20" width="276" height="270"/>
+  <text class="pt" x="724" y="48" fill="#3d2a68">PHASE 2 — AI が顧客へ</text>
+  <text class="pi" x="724" y="74">Phase 1 の条件を満たした</text>
+  <text class="pi" x="724" y="94">recipe だけ、承認を得て解禁。</text>
+  <text class="pi" x="724" y="120">コメントは AI 起草＋AI支援の明示。</text>
+  <text class="pi" x="724" y="146">WARN / FAIL / HELD は</text>
+  <text class="pi" x="724" y="164">引き続き必ず人へ。</text>
+  <text class="pi" x="724" y="190">kill switch と opt-out は恒久。</text>
+  <text class="px" x="724" y="226">昇格の根拠</text>
+  <text class="pi" x="724" y="248">「信頼できそう」ではなく</text>
+  <text class="pi" x="724" y="266">その recipe 自身のカウンタが</text>
+  <text class="pi" x="724" y="284">条件を満たしたから昇格する。</text>
+</svg>
+</figure>
+
+
+<h2><span class="n">図10</span>最初の一手 ── 3つ、どれも本番に触らない</h2>
+<p>過去の実績を「正解データ」に使うのは止めました。理由は図の下段です。</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 330" role="img" aria-label="最初の3ステップ">
+  <style>
+    .sb1{stroke-width:2;rx:9}
+    .num1{font:700 12px system-ui,sans-serif;fill:#5b6472}
+    .tx1{font:600 13px system-ui,sans-serif;fill:#1c1f26}
+    .ty1{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .ar1{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="sb1" x="20" y="20" width="300" height="160" fill="#e9eef6" stroke="#33507a"/>
+  <text class="num1" x="40" y="44">STEP 1</text>
+  <text class="tx1"  x="40" y="66">メタ情報の充足度調査</text>
+  <text class="ty1"  x="40" y="92">B-Fabric のオーダーを読み取り専用で</text>
+  <text class="ty1"  x="40" y="112">集計する。Service Type / Sequencing</text>
+  <text class="ty1"  x="40" y="132">Application / Species / Instrument /</text>
+  <text class="ty1"  x="40" y="152">Library Protocol は使える値か。</text>
+  <text class="ty1"  x="40" y="172">&#8220;Custom/Other&#8221; と空欄の割合を出す。</text>
+
+  <rect class="sb1" x="350" y="20" width="300" height="160" fill="#fff4e2" stroke="#c07600"/>
+  <text class="num1" x="370" y="44">STEP 2</text>
+  <text class="tx1"  x="370" y="66">上位オーダー種の recipe を書く</text>
+  <text class="ty1"  x="370" y="92">担当 bioinformatician が「現在の</text>
+  <text class="ty1"  x="370" y="112">ベストプラクティス」として記述する。</text>
+  <text class="ty1"  x="370" y="132">過去のジョブから機械的に導出しない。</text>
+  <text class="ty1"  x="370" y="158">まず件数の多い種別から。</text>
+
+  <rect class="sb1" x="680" y="20" width="300" height="160" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="num1" x="700" y="44">STEP 3</text>
+  <text class="tx1"  x="700" y="66">新規 order で影行（shadow）</text>
+  <text class="ty1"  x="700" y="92">提案するが、どこにも書かない。</text>
+  <text class="ty1"  x="700" y="112">担当者が「提案」と「実際に回した</text>
+  <text class="ty1"  x="700" y="132">もの」を比べる。</text>
+  <text class="ty1"  x="700" y="158">これが本当の検証。前向きなので、</text>
+  <text class="ty1"  x="700" y="176">古い実績に汚染されない。</text>
+
+  <path class="ar1" d="M324,95 L346,95"/>
+  <path class="ar1" d="M654,95 L676,95"/>
+
+  <rect class="sb1" x="20" y="204" width="960" height="104" fill="#fdecec" stroke="#b5303a"/>
+  <text class="tx1" x="40" y="230" fill="#7d1e25">過去12か月の突き合わせを「正解」に使うのを止めた理由</text>
+  <text class="ty1" x="40" y="256">① 現在の SUSHI データセットには、判定に必要なメタ情報が欠けていることが多い。</text>
+  <text class="ty1" x="40" y="278">② 古い解析は、今では非推奨のワークフローで走っている。もう一度走らせたくないものとの</text>
+  <text class="ty1" x="40" y="296">　 一致率を測ることになってしまう。</text>
+</svg>
+<figcaption>STEP 1 は「今どれだけのオーダーが対象になり得るか」を示します。あわせて、B-Fabric のメタ情報改善（Simon へ依頼済み）の根拠データにもなります。</figcaption>
+</figure>
+
+
+<h2><span class="n">図11</span>確認したい論点と担当</h2>
+<div class="cards">
+  <div class="card"><h4>B-Fabric — Falko</h4>
+    <p>gStore に新しいデータが来たことを、B-Fabric の<b>何を見れば</b>知れるか。項目・値・遅延。<br>
+       <span style="color:#7d1e25">トリガー層の形がこれで決まります</span></p>
+    <p>スタッフのみに見えるコメントは可能か。どのエンティティか。</p>
+    <p>読み取りとコメント投稿に使えるサービスアカウントはあるか。</p></div>
+  <div class="card n"><h4>B-Fabric メタ情報 — Simon（依頼済み）</h4>
+    <p>Service Type / Sequencing Application / Species / Instrument / Library Protocol の精度向上。</p>
+    <p>Ready-made library sequencing が Sequencing Application &#8220;Custom/Other&#8221; になっていると、判定には使えません。</p>
+    <p>どの項目を必須化できるか。いつから。</p></div>
+  <div class="card"><h4>顧客への説明</h4>
+    <p>&#8220;Experiment parameters will be processed by a local AI model.&#8221; の文面と掲載場所。誰が承認するか。</p>
+    <p>Phase 2 の顧客向けコメントに、AI 起草である旨の明示は必要か（UZH/ETH の透明性規定的にはほぼ必須と読みました）。</p></div>
+  <div class="card"><h4>運用</h4>
+    <p>「4時間」＝営業時間換算で確定してよいか（週末・祝日を含む）。</p>
+    <p>パイロット範囲。どのオーダー種から。参加 project。</p>
+    <p>一次解析の計算費用・月次上限・低優先 QoS の可否。</p>
+    <p>「結果を顧客へ転送」の具体形。</p></div>
+  <div class="card n"><h4>構成</h4>
+    <p>常時起動する層は素のコードでよいか。LLM と harness はイベントごとの呼び出し。</p>
+    <p>AI triage エージェントは Phase 1 では「人が起動する」限定でよいか。</p>
+    <p>同意ダイアログを置かず、許可リスト＋オンプレ＋説明文で始めてよいか。</p>
+    <p>ezRun / SAKE / OMAKASE で <b>LLM サービスを1つに統一</b>してよいか。</p></div>
+</div>
+
+<div class="callout k">
+  <div class="t">LLM を呼ぶ場所が増えている</div>
+  <p>ezRun の M&amp;M モジュール、SAKE の method description、そして OMAKASE で3つ目です。各モジュールが自分用の呼び出しを持つと、増えるたびに保守コストが上がります。</p>
+  <p>ここで共有ライブラリは作れません。ezRun は R、SUSHI-MCP-server は Ruby、omakase-core は Python です。<b>共有できるのはサービスだけ</b>です。3つ目が生まれる前に1つ決めるのが安いはずです。</p>
+</div>
+
+<h2><span class="n">付</span>前提条件（依存関係）</h2>
+<table>
+  <tr><th>#</th><th>前提</th><th>現状</th><th>これが無いと止まるもの</th></tr>
+  <tr><td>P1</td><td><b>B-Fabric のオーダーメタ情報の精度</b>。判定には使える Service Type / Sequencing Application / Species / Instrument / Library Protocol が必要</td><td>Simon へ依頼済み</td><td>該当オーダー種の recipe 判定</td></tr>
+  <tr><td>P2</td><td><b>gStore にデータが来たことを示す B-Fabric 側のシグナル</b>（Falko）</td><td>未確認</td><td>トリガー層</td></tr>
+  <tr><td>P3</td><td>顧客への説明文（&#8220;processed by a local AI model&#8221;）の文面と承認</td><td>未確認</td><td>Phase 1</td></tr>
+  <tr><td>P4</td><td>本番ノード 082 での SUSHI backend 書き込み経路</td><td>082 は read-only、pickup 検証は 083 のみ</td><td>実 order での Phase 1</td></tr>
+  <tr><td>P5</td><td><code>llm_client</code> の FGCZ vLLM 配線</td><td>adapter はある。この用途の配線は未</td><td>すべての LLM ステップ</td></tr>
+  <tr><td>P6</td><td>B-Fabric サービスアカウント＋コメント可視性</td><td>未確認</td><td>通知チャネル①</td></tr>
+  <tr><td>P7</td><td>recipe が使える app の拡大（10x / ONT / PacBio は headless 未検証）</td><td>16 apps ＋ Fastqc</td><td>カタログの幅</td></tr>
+  <tr><td>P8</td><td>systemd が使えるサービスホスト（082 は 15GB・swap なしの submit node なので不可、083 は cron なし）</td><td>要手配</td><td>Phase 1</td></tr>
+  <tr><td>P9</td><td>種→参照ゲノムの機械可読ポリシー</td><td>ref_selector に暗黙</td><td>パラメータ解決</td></tr>
+  <tr><td>P10</td><td>（triage のみ）AI triage を人を介さず動かすための実行基盤と安全機構</td><td>未整備</td><td>triage の完全自動化のみ。<b>Phase 1 には不要</b></td></tr>
+</table>
+
+<footer>
+  OMAKASE 全体構成 図解版 v0.3 ／ 2026-07-31 ／ 本文・詳細表・出典一覧は
+  <code>docs/omakase-auto-analysis-design.md</code>（英語）。<br>
+  この図解に出てくる事実（llm_client の provider、loop_validation の規律、
+  required_params ゲート、082/083 の状態）はすべてリポジトリと本ホスト上で確認済みです。
+</footer>
+
+</div>
+</body>
+</html>

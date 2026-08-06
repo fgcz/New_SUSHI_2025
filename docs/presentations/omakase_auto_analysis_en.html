@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OMAKASE — Automated First-Pass Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand-primary:#003c68;
+  --brand-accent:#0099cc;
+  --brand-dark:#001428;
+  --brand-light:#4dc9f6;
+  --semantic:#ea6b13;
+  --pain-bg:#fef2f2; --pain-border:#ef4444;
+  --proof-bg:#ecfdf5; --proof-border:#10b981;
+  --solution-bg:#eff6ff;
+  --insight-bg:#f5f3ff;
+  --text-primary:#000;
+  --text-secondary:#545e69;
+  --border:#e0e0e0;
+  --bg-light:#f5f7fa;
+  --bg-subtle:#f9fafb;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; background:#222; font-family:'Open Sans', Arial, sans-serif; color:var(--text-primary); }
+.presentation-container { width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.slide { width:1280px; height:720px; background:white; display:none; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.4); position:relative; }
+.slide.active { display:flex; }
+.header-accent { height:8px; flex-shrink:0; background:linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-accent) 60%, var(--brand-light) 100%); }
+.slide-content { flex:1; padding:36px 60px; display:flex; flex-direction:column; overflow:hidden; }
+.slide-footer { height:40px; padding:0 60px; display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--text-secondary); border-top:1px solid var(--border); }
+.slide-footer .fgcz-id { font-weight:600; color:var(--brand-primary); letter-spacing:1px; }
+.slide-title { font-family:Montserrat, sans-serif; font-size:36px; font-weight:700; color:var(--brand-primary); margin-bottom:6px; }
+.section-title { font-size:15px; font-weight:600; color:var(--brand-accent); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+
+.title-slide { background:linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 100%); color:white; align-items:center; justify-content:center; padding:60px; }
+.title-slide .cover-title { font-family:Montserrat, sans-serif; font-size:64px; font-weight:700; line-height:1.1; max-width:1100px; text-align:center; }
+.title-slide .cover-sub { font-size:20px; margin-top:20px; opacity:.85; max-width:900px; text-align:center; }
+.title-slide .cover-catch { font-size:22px; margin-top:30px; font-style:italic; color:var(--brand-light); letter-spacing:2px; }
+.title-slide .cover-meta { position:absolute; bottom:60px; left:60px; font-size:13px; opacity:.7; letter-spacing:1px; }
+.dot-grid { position:absolute; bottom:40px; right:60px; display:grid; grid-template-columns:repeat(6, 8px); gap:6px; }
+.dot-grid span { width:8px; height:8px; background:var(--brand-light); border-radius:50%; opacity:.7; }
+
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:12px; }
+.col-card { background:var(--bg-subtle); border:1px solid var(--border); border-radius:6px; padding:16px 20px; }
+.col-card h3 { font-family:Montserrat, sans-serif; font-size:17px; color:var(--brand-primary); margin-bottom:8px; }
+.bullet-list { list-style:none; padding:0; }
+.bullet-list li { padding:4px 0 4px 18px; font-size:14.5px; line-height:1.5; color:var(--text-primary); position:relative; }
+.bullet-list li::before { content:"–"; position:absolute; left:2px; color:var(--brand-accent); font-weight:bold; }
+
+.highlight-box { background:var(--solution-bg); border-left:4px solid var(--brand-accent); padding:12px 16px; border-radius:4px; margin:10px 0; font-size:14.5px; line-height:1.5; color:var(--text-primary); }
+.highlight-box.orange { background:#fff7ed; border-left-color:var(--semantic); }
+.highlight-box.pain { background:var(--pain-bg); border-left-color:var(--pain-border); }
+.highlight-box.proof { background:var(--proof-bg); border-left-color:var(--proof-border); }
+.highlight-box b { color:var(--brand-primary); }
+
+.key-point { background:var(--brand-dark); color:white; padding:18px 24px; border-radius:6px; margin-top:12px; font-size:20px; line-height:1.5; text-align:center; }
+.key-point .catch { color:var(--semantic); font-style:italic; font-size:1.4em; font-weight:700; }
+
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-top:12px; flex:1; }
+.three-col .col { padding:14px 16px; border-radius:6px; display:flex; flex-direction:column; }
+.three-col .col.detect  { background:#fff7ed; border-top:4px solid var(--semantic); }
+.three-col .col.declare { background:var(--proof-bg); border-top:4px solid var(--proof-border); }
+.three-col .col.defend  { background:var(--solution-bg); border-top:4px solid var(--brand-accent); }
+.three-col .col.insight { background:var(--insight-bg); border-top:4px solid #8b5cf6; }
+.three-col .col h3 { font-family:Montserrat, sans-serif; font-size:17px; color:var(--brand-primary); margin-bottom:2px; letter-spacing:1px; }
+.three-col .col .sub { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+.three-col .col ul { list-style:none; padding:0; }
+.three-col .col li { padding:4px 0 4px 16px; font-size:13px; line-height:1.45; position:relative; color:var(--text-primary); }
+.three-col .col li::before { content:"\2022"; position:absolute; left:2px; color:var(--brand-primary); font-weight:bold; }
+.three-col .col .status { margin-top:auto; padding-top:8px; font-size:11px; color:var(--text-secondary); font-style:italic; letter-spacing:1px; text-transform:uppercase; }
+
+.four-col { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-top:12px; flex:1; }
+.four-col .col { padding:13px 14px; border-radius:6px; background:var(--bg-subtle); border-top:4px solid var(--brand-accent); display:flex; flex-direction:column; }
+.four-col .col.own { border-top-color:var(--semantic); background:#fff7ed; }
+.four-col .col h3 { font-family:Montserrat, sans-serif; font-size:15px; color:var(--brand-primary); margin-bottom:6px; }
+.four-col .col ul { list-style:none; padding:0; }
+.four-col .col li { padding:4px 0 4px 14px; font-size:12.5px; line-height:1.45; position:relative; }
+.four-col .col li::before { content:"\2022"; position:absolute; left:2px; color:var(--brand-accent); font-weight:bold; }
+
+/* --- layer stack primitive --- */
+.stackrows { border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-top:10px; }
+.srow { display:grid; grid-template-columns:64px 1.1fr 1fr; border-bottom:1px solid var(--border); }
+.srow:last-child { border-bottom:0; }
+.srow-id { background:#eef1f6; color:var(--brand-primary); font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
+.srow-q { padding:7px 12px; font-size:13.5px; line-height:1.4; }
+.srow-who { padding:7px 12px; font-size:12.5px; color:var(--text-secondary); line-height:1.4; border-left:1px dashed var(--border); }
+.srow.new .srow-id { background:#fff4e2; color:var(--semantic); }
+.srow.new .srow-q { background:#fffaf2; }
+
+/* --- horizontal flow primitive --- */
+.flowrow { display:flex; align-items:stretch; gap:8px; margin-top:12px; }
+.fbox { flex:1; background:var(--bg-subtle); border:2px solid var(--brand-primary); border-radius:10px; padding:11px 13px; }
+.fbox b { display:block; font-family:Montserrat, sans-serif; font-size:14px; color:var(--brand-primary); margin-bottom:3px; }
+.fbox span { display:block; font-size:12px; color:var(--text-secondary); line-height:1.42; }
+.fbox.new { border-color:var(--semantic); background:#fff7ed; }
+.fbox.no  { border-color:var(--pain-border); background:var(--pain-bg); }
+.fbox.ok  { border-color:var(--proof-border); background:var(--proof-bg); }
+.arrow { align-self:center; color:var(--semantic); font-size:22px; font-weight:700; flex:0 0 auto; }
+
+.stat-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:10px; }
+.stat-card { background:white; border:1px solid var(--border); border-radius:6px; padding:14px 18px; }
+.stat-card.before { border-left:4px solid var(--pain-border); }
+.stat-card.after  { border-left:4px solid var(--proof-border); }
+.stat-card h4 { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:2px; margin-bottom:6px; }
+.stat-card .stat-line { font-size:14px; padding:3px 0; color:var(--text-primary); line-height:1.45; }
+.stat-card .stat-num { font-family:Montserrat, sans-serif; font-weight:700; font-size:17px; }
+.stat-card.before .stat-num { color:var(--pain-border); }
+.stat-card.after  .stat-num { color:var(--proof-border); }
+
+table.spec { width:100%; border-collapse:collapse; margin-top:10px; font-size:12.5px; }
+table.spec th { background:#eef1f6; color:var(--brand-primary); text-align:left; padding:6px 10px; border-bottom:2px solid var(--brand-primary); font-size:12px; letter-spacing:1px; text-transform:uppercase; }
+table.spec td { padding:5px 10px; border-bottom:1px solid var(--border); vertical-align:top; line-height:1.4; }
+
+code { font-family:'JetBrains Mono', Consolas, monospace; font-size:12.5px; background:var(--bg-subtle); padding:1px 5px; border-radius:3px; }
+
+.nav { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:10px; background:rgba(0,0,0,.6); padding:8px 14px; border-radius:30px; z-index:100; }
+.nav button { background:transparent; border:1px solid #888; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:18px; line-height:1; }
+.nav button:hover { background:rgba(255,255,255,.15); }
+.nav .indicator { color:white; font-size:13px; letter-spacing:1px; min-width:56px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="presentation-container">
+
+<!-- S1 Cover -->
+<div class="slide title-slide active" data-slide="1">
+  <div style="text-align:center;">
+    <div class="cover-title">OMAKASE</div>
+    <div class="cover-sub">Automated first-pass analysis of finished sequencing orders — a configuration proposal</div>
+    <div class="cover-catch">&mdash; Rules decide &middot; AI assists &middot; Humans release &mdash;</div>
+  </div>
+  <div class="cover-meta">FGCZ Genomics &middot; 2026 &middot; Masaomi Hatakeyama &middot; v0.3 (configuration sketch, no code yet)</div>
+  <div class="dot-grid">
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- S2 Context -->
+<div class="slide" data-slide="2">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Context &middot; Goal</div>
+    <div class="slide-title">Every finished order gets a proposed analysis</div>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>The idea</h3>
+        <ul class="bullet-list">
+          <li>Sequencing finishes &rarr; an agent reads the order parameters</li>
+          <li>It <b>proposes</b> an analysis and notifies the bioinformatician</li>
+          <li>No reply within the grace period &rarr; the analysis <b>starts</b></li>
+          <li>After the run, consistency is <b>checked</b>, then a human forwards the result</li>
+          <li>Phase 1: everything gated through a bioinformatician</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>What this deck settles</h3>
+        <ul class="bullet-list">
+          <li><b>Which layer does what, and who owns it</b></li>
+          <li>Which existing components are reused, and what is genuinely new</li>
+          <li>What the AI may see, and where inference happens</li>
+          <li>How we validate before anything runs on real orders</li>
+          <li>Not settled here: implementation. No code has been written.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box orange" style="margin-top:14px;">
+      <b>Design premise:</b> the value is not "an AI that chooses analyses". It is a first-pass analysis for <i>every</i> order, produced early enough to be useful, with a human always able to stop it.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>2 / 9</span></div>
+</div>
+
+<!-- S3 Decisions -->
+<div class="slide" data-slide="3">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Design &middot; Decisions</div>
+    <div class="slide-title">Five decisions that shape everything else</div>
+    <div class="stackrows">
+      <div class="srow new">
+        <div class="srow-id">D1</div>
+        <div class="srow-q"><b>No consent dialog. Data minimisation instead.</b></div>
+        <div class="srow-who">Only non-sensitive order parameters are read; only the on-prem model is used; the customer is informed, not asked.</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D2</div>
+        <div class="srow-q"><b>A versioned recipe catalog decides. The LLM only assists.</b></div>
+        <div class="srow-who">A rule can be reviewed and signed off by a bioinformatician. A prompt cannot.</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D3</div>
+        <div class="srow-q"><b>QC is deterministic first. The LLM writes the wording.</b></div>
+        <div class="srow-who">The acting model's self-report is never evidence. Verdict comes from measurements.</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D4</div>
+        <div class="srow-q"><b>The always-on part is plain code, not an LLM.</b></div>
+        <div class="srow-who">Watcher, timer and state machine are ordinary software. The model is called per event.</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D5</div>
+        <div class="srow-q"><b>The grace period counts business hours.</b></div>
+        <div class="srow-who">And the clock starts only after the notice is confirmed as delivered.</div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <b>One consequence worth stating:</b> because the decision layer is a rule engine, the service still works when the model is unavailable, or when an order type is deliberately excluded from AI processing.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>3 / 9</span></div>
+</div>
+
+<!-- S3.5 Determinism -->
+<div class="slide" data-slide="3.5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Reproducibility &middot; Safety</div>
+    <div class="slide-title">Determinism is what makes the LLM safe</div>
+    <div class="highlight-box orange">
+      <b>Two axes, closed separately.</b> &nbsp;<b>Data</b> &mdash; what may the AI <i>see</i>? Closed by the field allow-list. &nbsp;&nbsp;<b>Authority</b> &mdash; what may the AI <i>decide</i>? Closed by the recipe catalog. Sending less data does not help if the model still decides what runs.
+    </div>
+    <table class="spec">
+      <tr><th style="width:330px;">Task</th><th style="width:420px;">Decided by</th><th>LLM role</th></tr>
+      <tr><td>Which app chain runs</td><td>recipe match predicate</td><td><b>none</b></td></tr>
+      <tr><td>Parameters (reference, cores, ram)</td><td>recipe + species &rarr; reference table</td><td><b>none</b></td></tr>
+      <tr><td>Several recipes match, or none</td><td>LLM picks <b>among existing recipe ids</b>; low confidence &rarr; held for a human</td><td>constrained choice</td></tr>
+      <tr><td>Proposal and QC wording</td><td>template + LLM</td><td>writes the sentence</td></tr>
+      <tr><td>QC verdict</td><td>deterministic tiers, declared before the run</td><td>may only <b>downgrade</b></td></tr>
+      <tr><td>Diagnosis of a failure</td><td>LLM agent, started by a human</td><td>full agentic work</td></tr>
+    </table>
+    <ul class="bullet-list">
+      <li><b>Reproducible from the record</b> &mdash; recipe id and version, resolved parameters, input dataset, QC spec hash. No model, prompt, temperature or seed is involved</li>
+      <li><b>Bounded blast radius</b> &mdash; the worst an LLM error can do is pick a wrong <i>reviewed</i> recipe, or write a poor sentence. It cannot invent an unreviewed pipeline</li>
+      <li><b>Never on the critical path</b> &mdash; if the model is unavailable, the rules still propose</li>
+      <li><b>Incidents are answerable</b> &mdash; "why was this run?" cites a recipe version and its author, not "the model chose it"</li>
+    </ul>
+    <div class="highlight-box pain">
+      <b>The honest limit:</b> determinism does not make the recipes <i>correct</i>. It makes them reviewable, testable and attributable. Correctness comes from the bioinformatician who authors them, and from Tier-3 QC comparing each run against the history of the same recipe.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Safety</span></div>
+</div>
+
+<!-- S3.6 Skills -->
+<div class="slide" data-slide="3.6">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Skills &middot; Where they apply</div>
+    <div class="slide-title">Skills tune how the AI works, not what runs</div>
+    <div class="highlight-box orange">
+      A <b>Skill</b> is a curated, versioned unit of instruction and knowledge that the agent loads at run time. It is the right container for <i>how to investigate and how to word things</i> &mdash; and the wrong container for <i>which analysis to run</i>.
+    </div>
+    <table class="spec">
+      <tr><th style="width:380px;">What is being tuned</th><th style="width:420px;">Tuned by</th><th>Not by</th></tr>
+      <tr><td>Which analysis an order receives</td><td>recipe YAML &mdash; authored, reviewed, signed off</td><td>a Skill</td></tr>
+      <tr><td>QC thresholds and checks</td><td>QC spec, versioned with the recipe</td><td>a Skill</td></tr>
+      <tr><td>How a failure is diagnosed</td><td><b>Skills</b> &mdash; known errors, app guides, debug procedures</td><td>&mdash;</td></tr>
+      <tr><td>How findings are worded</td><td>prompt templates</td><td>&mdash;</td></tr>
+      <tr><td>What data may be sent where</td><td>the allow-list in code, with the AI-usage policy as substrate</td><td>a Skill alone</td></tr>
+    </table>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>Where Skills earn their place</h3>
+        <ul class="bullet-list">
+          <li><b>Failure triage</b> &mdash; load the known-error catalog, the app's developer guide and the debug procedure, then read logs, check gStore, query SLURM. Output is a proposal to a human, never an action</li>
+          <li><b>The verification discipline itself</b> &mdash; declare the evidence spec first, compute a fail-closed verdict, record it with the spec hash. Our QC gate is an instance of it</li>
+          <li><b>Institutional guardrails as substrate</b> &mdash; the AI-usage policy loads as a Skill, so every agent inherits it</li>
+          <li><b>Tuning without redeployment</b> &mdash; improving triage means editing a Skill, not changing the daemon</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>The anti-pattern, and one caveat</h3>
+        <ul class="bullet-list">
+          <li>Putting an analysis choice in a Skill &mdash; "for RNA-seq use STAR then FeatureCounts". It would work, and it would quietly undo the whole design</li>
+          <li>Behaviour would then depend on which Skill version an agent happened to load, and the run record would no longer explain itself</li>
+          <li><b>A Skill is a prompt with provenance.</b> It improves consistency and makes behaviour attributable. It does not turn the agent's conclusions into evidence</li>
+          <li>That is why triage output is advisory, and why a mechanical verdict sits underneath it</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Skills</span></div>
+</div>
+
+<!-- S4 Layers -->
+<div class="slide" data-slide="4">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Architecture &middot; Layers</div>
+    <div class="slide-title">Seven layers, one owner each</div>
+    <div class="stackrows">
+      <div class="srow new">
+        <div class="srow-id">L0</div>
+        <div class="srow-q">Data minimisation &mdash; <i>what may the AI see at all?</i></div>
+        <div class="srow-who">field allow-list in code &middot; on-prem model only &middot; customer informed</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L1</div>
+        <div class="srow-q">Trigger &mdash; <i>sequencing for order X has finished</i></div>
+        <div class="srow-who">omakase-core watcher polls the <b>B-Fabric DB</b></div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L2</div>
+        <div class="srow-q">Decision &mdash; <i>which analysis, with which parameters?</i></div>
+        <div class="srow-who">recipe catalog (versioned) &middot; LLM breaks ties only</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L3</div>
+        <div class="srow-q">Gate &mdash; <i>leave time for a human, then start</i></div>
+        <div class="srow-who">state machine + business-hours timer</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L4</div>
+        <div class="srow-q">Execution &mdash; <i>run it</i></div>
+        <div class="srow-who">SUSHI backend REST API &rarr; job_manager &rarr; SLURM &rarr; gStore &nbsp;<b>(existing)</b></div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L5</div>
+        <div class="srow-q">QC &mdash; <i>is the result sane?</i></div>
+        <div class="srow-who">deterministic checks &middot; LLM writes the narrative</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L6</div>
+        <div class="srow-q">Release &mdash; <i>tell the customer</i></div>
+        <div class="srow-who">phase 1: bioinformatician &middot; phase 2: automated per recipe</div>
+      </div>
+    </div>
+    <div class="highlight-box proof" style="margin-top:12px;">
+      <b>Only one new component is built:</b> <code>omakase-core</code>, a small daemon. Everything under L4 already exists and is reused unmodified &mdash; nothing on the SUSHI side was invented for this.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>4 / 9</span></div>
+</div>
+
+<!-- S5 Data minimisation -->
+<div class="slide" data-slide="5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Layer 0 &middot; Data minimisation</div>
+    <div class="slide-title">Do not ask permission for data we never read</div>
+    <div class="flowrow">
+      <div class="fbox">
+        <b>B-Fabric order record</b>
+        <span>Has many fields &mdash; customer name, contacts, project title, sample names, free-text comments.</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox new">
+        <b>Field allow-list (fixed in code)</b>
+        <span>Service Type &middot; Sequencing Application &middot; Species &middot; Instrument &middot; Library Protocol &middot; sample count / layout</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox ok">
+        <b>FGCZ local model</b>
+        <span>On-premises inference. Nothing leaves the FGCZ network. No external cloud at all.</span>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card">
+        <h3>Three rules</h3>
+        <ul class="bullet-list">
+          <li><b>Allow-list, not redaction</b> &mdash; unlisted fields are never fetched, so a scrubber bug cannot leak them</li>
+          <li><b>On-prem model only</b> &mdash; the "which tool for which data class" matrix disappears</li>
+          <li><b>No raw data, no free-text logs</b> &mdash; QC sends numeric metrics; log text can carry paths and sample names</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>What the customer is told</h3>
+        <ul class="bullet-list">
+          <li>No dialog. No checkbox. A plain statement:</li>
+          <li><b>"Experiment parameters will be processed by a local AI model."</b></li>
+          <li>Wording and placement still to be confirmed with the owner of customer-facing text</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box pain" style="margin-top:12px;">
+      <b>The caveat to keep:</b> this works only while the payload stays inside the allow-list. The allow-list is a security boundary &mdash; enforced in code, reviewed when it changes.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>5 / 9</span></div>
+</div>
+
+<!-- S6 Pipeline -->
+<div class="slide" data-slide="6">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Pipeline &middot; Reuse</div>
+    <div class="slide-title">From B-Fabric to SLURM, through what already exists</div>
+    <div class="flowrow">
+      <div class="fbox">
+        <b>B-Fabric DB</b>
+        <span>polled every few minutes &mdash; "new data is available in gStore for order X"</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox new">
+        <b>omakase-core</b>
+        <span>allow-list &rarr; recipe engine &rarr; proposal &rarr; timer. Own state DB. No DDL on the SUSHI schema.</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox">
+        <b>SUSHI backend REST API</b>
+        <span>POST a job with a project-scoped token</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox">
+        <b>job_manager &rarr; SLURM &rarr; gStore</b>
+        <span>unchanged, existing path</span>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card">
+        <h3>What the REST route buys us, for free</h3>
+        <ul class="bullet-list">
+          <li>Project-scope enforcement from the token</li>
+          <li>The <code>required_params</code> gate &mdash; unresolved reference parameters can no longer reach SLURM</li>
+          <li>Per-sample fan-out and legacy-parity output columns</li>
+          <li><b>No code path by which the orchestrator can corrupt the shared production database</b></li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>A recipe, in one line</h3>
+        <ul class="bullet-list">
+          <li>Match predicate over allow-listed parameters</li>
+          <li>Ordered app chain with fully resolved parameters</li>
+          <li>QC spec, compute budget, autostart flag</li>
+          <li>Authored by a bioinformatician, versioned in git, <code>recipe_id@version</code> recorded on every run</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>6 / 9</span></div>
+</div>
+
+<!-- S7 The gate -->
+<div class="slide" data-slide="7">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Layer 3 &middot; The gate</div>
+    <div class="slide-title">The only thing that happens on a timer</div>
+    <div class="stat-row">
+      <div class="stat-card before">
+        <h4>Plain 4 hours</h4>
+        <div class="stat-line">An order finishing Friday 17:00 auto-starts at <span class="stat-num">Fri 21:00</span></div>
+        <div class="stat-line">Nobody is watching. Nobody can veto.</div>
+        <div class="stat-line">A failure sits untouched until Monday.</div>
+      </div>
+      <div class="stat-card after">
+        <h4>4 business hours, with a floor</h4>
+        <div class="stat-line">08:00&ndash;18:00 Mon&ndash;Fri, never before the next working day 10:00 &rarr; <span class="stat-num">Mon 10:00</span></div>
+        <div class="stat-line">The real grace period is more than two working days.</div>
+        <div class="stat-line">The owner can veto or override on arrival.</div>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card">
+        <h3>Rules around the clock</h3>
+        <ul class="bullet-list">
+          <li>Post the notice, <b>read it back</b>, and only then start counting</li>
+          <li>Low confidence, non-whitelisted recipe, or over budget &rarr; <b>held</b>, a human must release it</li>
+          <li>A failure never auto-retries. It notifies a human.</li>
+          <li>Global pause switch; opt-out per project, per customer, per recipe</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>Human actions, available on day one</h3>
+        <ul class="bullet-list">
+          <li>List pending proposals with their deadline</li>
+          <li><b>Veto</b>, <b>override</b> with a different analysis, or <b>hold</b> the clock</li>
+          <li>Read the QC report, then <b>release</b> the result to the customer</li>
+          <li>Works from the command line &mdash; no user interface needed for phase 1</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box orange" style="margin-top:12px;">
+      Every other transition needs an event or a human. <b>Exactly one transition in the whole system is driven by time.</b>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>7 / 9</span></div>
+</div>
+
+<!-- S7.5 Chat surface -->
+<div class="slide" data-slide="7.5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Chat surface &middot; Slack / Teams</div>
+    <div class="slide-title">A secretary for the veto window</div>
+    <div class="highlight-box orange">
+      The three channels so far answer "can a human act?". A bot answers a different question: <b>will a human notice in time?</b> That is the weakest point of the whole gate &mdash; an unread comment makes the veto window ceremonial.
+    </div>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>What it posts</h3>
+        <ul class="bullet-list">
+          <li><b>Every morning</b> &mdash; proposals awaiting a response with their deadline countdown; jobs finished or failed since yesterday; QC warnings waiting for review</li>
+          <li><b>On a new proposal</b> &mdash; order, recipe, resolved parameters, cost estimate, deadline, with veto and hold affordances</li>
+          <li><b>One hour before a deadline</b> &mdash; a reminder naming the person expected to act</li>
+          <li><b>On demand</b> &mdash; "status of order X", "what is pending for this project", "why did job 581 fail"</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>Two tiers &mdash; and the boundary is the governance boundary</h3>
+        <ul class="bullet-list">
+          <li><b>Tier A, proactive</b> &mdash; digests, alerts, deadline reminders. Plain code: query state, format, post. No LLM. Runs unattended because it is just a scheduled job</li>
+          <li><b>Tier B, reactive</b> &mdash; free-text questions in a thread, answered by the agent with Skills, one task per message</li>
+          <li><b>A chat message is a human-initiated invocation</b> &mdash; someone typed it and is watching the thread. So the conversational tier is <b>attended by construction</b>, which is what has blocked agentic use elsewhere</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box pain">
+      <b>Constraints.</b> Slack and Teams are external cloud services &mdash; the same classification question as the model, but about transport. Teams under the institutional tenancy is the safer default; Slack needs a policy check. The bot inherits the allow-list: post identifiers, states and deadlines, <b>never</b> sample names or result content. Chat identity must map to an LDAP login before it can act &mdash; phase 1: read, veto and hold from chat; override and release from the CLI.
+    </div>
+    <div class="highlight-box proof">
+      <b>Build order:</b> an outgoing webhook posting the morning digest is about a day of work, has no inbound and no auth surface, and already delivers most of the value. Interactive buttons and the conversational tier come after the identity mapping exists.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Chat surface</span></div>
+</div>
+
+<!-- S8 QC -->
+<div class="slide" data-slide="8">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Layer 5 &middot; Quality control</div>
+    <div class="slide-title">The verdict comes from measurements, not from the model</div>
+    <div class="three-col">
+      <div class="col detect">
+        <h3>Tier 1</h3>
+        <div class="sub">Structural</div>
+        <ul>
+          <li>Exit code</li>
+          <li>Expected outputs exist and are non-empty</li>
+          <li>Manifest parses; row count = sample count</li>
+          <li>No out-of-memory, no traceback</li>
+          <li>Runtime within a sane multiple of the median</li>
+        </ul>
+        <div class="status">absolute &middot; cheap</div>
+      </div>
+      <div class="col declare">
+        <h3>Tier 2</h3>
+        <div class="sub">Domain metrics</div>
+        <ul>
+          <li>% uniquely mapped, % rRNA</li>
+          <li>Library-size distribution, duplication rate</li>
+          <li>Genes detected; barcode-rank knee for single cell</li>
+          <li>Species and design sanity checks</li>
+          <li>Thresholds versioned together with the recipe</li>
+        </ul>
+        <div class="status">per recipe</div>
+      </div>
+      <div class="col defend">
+        <h3>Tier 3</h3>
+        <div class="sub">Historical comparison</div>
+        <ul>
+          <li>Each metric compared against the last N runs of the <b>same</b> recipe</li>
+          <li>Outliers flagged even when every file is present and the job succeeded</li>
+          <li>This is what catches <b>"the pipeline ran fine but the data is wrong"</b></li>
+        </ul>
+        <div class="status">the interesting one</div>
+      </div>
+    </div>
+    <div class="key-point" style="margin-top:14px;">
+      The criteria are declared <b>before</b> the run and recorded with the result.<br>
+      The model may <b>downgrade</b> a verdict. It may never upgrade a failure.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>8 / 9</span></div>
+</div>
+
+<!-- S9 Plan -->
+<div class="slide" data-slide="9">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Plan &middot; Phases</div>
+    <div class="slide-title">Nothing reaches a customer until the counters allow it</div>
+    <div class="three-col">
+      <div class="col insight">
+        <h3>Phase 0 &mdash; Shadow</h3>
+        <div class="sub">can start now &middot; zero risk</div>
+        <ul>
+          <li>Detect, propose, run QC &mdash; <b>write nothing anywhere</b></li>
+          <li>Audit how usable the order metadata actually is, per service type</li>
+          <li>Bioinformaticians author recipes for the top order types</li>
+          <li>Compare proposals against what is actually run, on <b>new</b> orders</li>
+        </ul>
+        <div class="status">exit: recipes signed off</div>
+      </div>
+      <div class="col declare">
+        <h3>Phase 1 &mdash; Human-gated</h3>
+        <div class="sub">the original phase 1</div>
+        <ul>
+          <li>Internal notification only</li>
+          <li>Auto-start after the business-hours deadline, for whitelisted project &times; recipe pairs</li>
+          <li><b>Release to the customer always needs a human</b></li>
+          <li>The AI writes nothing customer-facing</li>
+        </ul>
+        <div class="status">exit: per-recipe counters</div>
+      </div>
+      <div class="col defend">
+        <h3>Phase 2 &mdash; AI to customer</h3>
+        <div class="sub">per recipe, with sign-off</div>
+        <ul>
+          <li>Only for recipes that passed the phase-1 criteria</li>
+          <li>Comment is AI-drafted and labelled as such</li>
+          <li>Warnings, failures and held proposals still go to a human</li>
+          <li>Pause switch and opt-out stay permanently</li>
+        </ul>
+        <div class="status">promotion is earned, not assumed</div>
+      </div>
+    </div>
+    <div class="key-point" style="margin-top:14px;">
+      <span class="catch">Rules decide &middot; AI assists &middot; Humans release</span>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>9 / 9</span></div>
+</div>
+
+<!-- S9.5 Questions -->
+<div class="slide" data-slide="9.5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Next &middot; What we need from whom</div>
+    <div class="slide-title">Four questions block the design; the rest is detail</div>
+    <div class="four-col">
+      <div class="col own">
+        <h3>B-Fabric &mdash; Falko</h3>
+        <ul>
+          <li><b>What can we read in B-Fabric to learn that new data is in gStore?</b> Which field, which values, what latency?</li>
+          <li>Can a comment be visible to staff only, and on which entity?</li>
+          <li>Is there a service account for reading and for posting comments?</li>
+        </ul>
+        <div class="status" style="margin-top:auto;padding-top:8px;font-size:11px;color:var(--text-secondary);font-style:italic;">decides the trigger layer</div>
+      </div>
+      <div class="col own">
+        <h3>Metadata &mdash; Simon</h3>
+        <ul>
+          <li>Already asked: more accurate Service Type, Sequencing Application, Species, Instrument, Library Protocol</li>
+          <li>Ready-made library sequencing filed as "Custom/Other" cannot drive any decision</li>
+          <li>Which fields can become mandatory, and from when?</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Customer text</h3>
+        <ul>
+          <li>Wording and placement of the local-AI-model notice; who signs it off</li>
+          <li>Must a phase-2 customer-facing comment state that it is AI-drafted? Our reading of the UZH / ETH transparency rules: yes</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>Operations</h3>
+        <ul>
+          <li>Confirm the grace period counts business hours</li>
+          <li>Pilot scope: which order types, which projects</li>
+          <li>Compute budget, monthly cap, and a low-priority queue so first-pass jobs never delay ordered work</li>
+          <li>What "forward the result" means concretely</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box orange" style="margin-top:12px;">
+      <b>One architectural decision to make now:</b> LLM calls already exist in more than one place (the M&amp;M module in ezRun, method-description generation in SAKE). A shared library is impossible across R, Ruby and Python &mdash; only a shared <b>service</b> is. Agreeing on one before the third caller exists is the cheap moment.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Questions</span></div>
+</div>
+
+<!-- S10 Appendix -->
+<div class="slide" data-slide="10">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Appendix</div>
+    <div class="slide-title">Prerequisites and dependencies</div>
+    <table class="spec">
+      <tr><th style="width:40px;">#</th><th>Prerequisite</th><th style="width:210px;">Status</th><th style="width:250px;">What it blocks</th></tr>
+      <tr><td>P1</td><td>Accuracy of B-Fabric order metadata &mdash; the decision needs usable Service Type, Sequencing Application, Species, Instrument, Library Protocol</td><td>Simon already asked</td><td>recipe matching for the affected order types</td></tr>
+      <tr><td>P2</td><td>The B-Fabric signal that new data is in gStore</td><td>open &mdash; Falko</td><td>the trigger layer</td></tr>
+      <tr><td>P3</td><td>Customer-facing notice: wording and sign-off</td><td>open</td><td>phase 1</td></tr>
+      <tr><td>P4</td><td>Write path for the SUSHI backend on the production submit node</td><td>read-only today; job pickup verified on the test node only</td><td>phase 1 on real orders</td></tr>
+      <tr><td>P5</td><td>Local-model wiring for the shared LLM client</td><td>adapter exists; not wired for this use</td><td>every LLM step</td></tr>
+      <tr><td>P6</td><td>B-Fabric service account and comment visibility</td><td>open</td><td>the internal notification channel</td></tr>
+      <tr><td>P7</td><td>Wider app coverage for recipes &mdash; 10x, ONT and PacBio are not yet validated head-lessly</td><td>16 apps validated</td><td>catalog breadth</td></tr>
+      <tr><td>P8</td><td>A service host with a supervisor for the daemon</td><td>to be arranged</td><td>phase 1</td></tr>
+      <tr><td>P9</td><td>Machine-readable species &rarr; reference-genome policy</td><td>implicit in the current selector</td><td>parameter resolution</td></tr>
+      <tr><td>P10</td><td>Runtime and safety machinery to run the failure-diagnosis agent without a human</td><td>not in place</td><td>fully automatic diagnosis only &mdash; not needed for phase 1</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:10px;">
+      Full text, diagrams and sources: <code>docs/omakase-auto-analysis-design.md</code> and <code>docs/omakase-auto-analysis-overview-en.html</code>.
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Appendix</span></div>
+</div>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="previous">&lsaquo;</button>
+  <span class="indicator" id="ind">1 / 14</span>
+  <button id="next" aria-label="next">&rsaquo;</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+function show(i) {
+  slides[cur].classList.remove('active');
+  cur = (i + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('ind').textContent = (cur + 1) + ' / ' + slides.length;
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') show(cur + 1);
+  if (e.key === 'ArrowLeft') show(cur - 1);
+});
+</script>
+</body>
+</html>

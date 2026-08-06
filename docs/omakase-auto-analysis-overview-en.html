@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMAKASE — Automated First-Pass Analysis: system configuration (illustrated)</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#5b6472; --line:#d4d9e0; --bg:#ffffff; --panel:#f7f9fc;
+    --exist-bg:#e9eef6; --exist-br:#33507a; --exist-ink:#1a2f4d;
+    --new-bg:#fff4e2;  --new-br:#c07600;  --new-ink:#6d4200;
+    --llm-bg:#f2ecfb;  --llm-br:#6b4bab;  --llm-ink:#3d2a68;
+    --human-bg:#e7f6ec;--human-br:#2f7a45;--human-ink:#1c4a29;
+    --bad-bg:#fdecec;  --bad-br:#b5303a;  --bad-ink:#7d1e25;
+    --skip-bg:#f0f1f4; --skip-br:#8a919c; --skip-ink:#4a5058;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.7; font-size:15px;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:44px 24px 96px}
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:34px}
+  h1{font-size:27px;margin:0 0 6px;letter-spacing:.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  h2{font-size:20px;margin:52px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+  h2 .n{color:var(--muted);font-weight:400;margin-right:10px;font-variant-numeric:tabular-nums}
+  h3{font-size:16px;margin:30px 0 10px}
+  p{margin:10px 0}
+  .lead{font-size:15.5px;color:#2b3340;margin:6px 0 20px}
+  figure{margin:22px 0 8px;padding:0}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  svg{max-width:100%;height:auto;display:block}
+  .fig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px}
+
+  .legend{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:12.5px;margin:14px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:15px;height:15px;border-radius:4px;border:2px solid}
+  .sw.e{background:var(--exist-bg);border-color:var(--exist-br)}
+  .sw.n{background:var(--new-bg);border-color:var(--new-br)}
+  .sw.l{background:var(--llm-bg);border-color:var(--llm-br)}
+  .sw.h{background:var(--human-bg);border-color:var(--human-br)}
+  .sw.b{background:var(--bad-bg);border-color:var(--bad-br)}
+
+  .stack{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .layer{display:grid;grid-template-columns:64px 1fr 1fr;gap:0;border-bottom:1px solid var(--line);align-items:stretch}
+  .layer:last-child{border-bottom:0}
+  .layer .id{background:#eef1f6;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;color:#3a4a63;border-right:1px solid var(--line)}
+  .layer .q{padding:11px 14px;font-size:14px}
+  .layer .who{padding:11px 14px;font-size:13px;color:var(--muted);border-left:1px dashed var(--line)}
+  .layer.isnew .id{background:var(--new-bg);color:var(--new-ink)}
+  .layer.isnew .q{background:#fffaf2}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:8px;vertical-align:2px}
+  .badge.new{background:var(--new-bg);color:var(--new-ink);border:1px solid var(--new-br)}
+  .badge.re{background:var(--exist-bg);color:var(--exist-ink);border:1px solid var(--exist-br)}
+
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#eef1f6;font-weight:600}
+  td.ok{background:#f2fbf4;color:#1c4a29;font-weight:600;text-align:center}
+  td.no{background:#fdf0f0;color:#7d1e25;font-weight:600;text-align:center}
+  td.mid{background:#fff8ec;color:#6d4200;font-weight:600;text-align:center}
+  caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);padding-bottom:6px}
+
+  .callout{border-left:4px solid var(--exist-br);background:#f2f6fc;padding:13px 16px;border-radius:0 8px 8px 0;margin:18px 0}
+  .callout.k{border-color:var(--new-br);background:#fff8ee}
+  .callout.g{border-color:var(--human-br);background:#f1faf3}
+  .callout .t{font:700 13.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+              margin-bottom:3px;color:var(--ink)}
+  .callout p{margin:4px 0}
+
+  ul{margin:10px 0;padding-left:22px}
+  li{margin:5px 0}
+  code{background:#eef1f5;padding:1px 6px;border-radius:4px;font-size:12.5px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:14px;margin:18px 0}
+  .card{border:1px solid var(--line);border-radius:10px;padding:15px 17px;background:#fff}
+  .card h4{margin:0 0 7px;font-size:14.5px}
+  .card.n{border-color:var(--new-br);background:#fffaf2}
+  .card p{font-size:13.5px;margin:5px 0;color:#39404c}
+  footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  @media print{
+    body{font-size:11pt} .wrap{padding:0} h2{page-break-after:avoid}
+    figure,.fig,table,.stack{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared arrowheads for every diagram below. Kept in one 0x0 svg (NOT display:none,
+     which can break marker resolution) so the ids are unique document-wide. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b5303a"/>
+    </marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>OMAKASE — automated first-pass analysis of finished sequencing orders</h1>
+  <p class="sub">System configuration, illustrated — for team discussion. Codename OMAKASE ("chef's choice": the facility proposes the analysis; the customer does not have to order it).</p>
+  <div class="meta">
+    <span><b>Version</b> v0.3 (illustrated)</span>
+    <span><b>Date</b> 2026-07-31 (review incorporated)</span>
+    <span><b>Status</b> configuration sketch — no implementation design yet</span>
+    <span><b>Full text</b> docs/omakase-auto-analysis-design.md</span>
+  </div>
+</header>
+
+<p class="lead">
+The original idea is kept as it stands: propose → notify → auto-start if there is no reply
+→ an AI checks the result → a human forwards it to the customer, with everything gated
+through a bioinformatician in phase 1.<br>
+This document exists to settle one question first: <b>which layer does what, and who owns it.</b>
+</p>
+
+<div class="legend">
+  <span><i class="sw e"></i>existing component (reused unchanged)</span>
+  <span><i class="sw n"></i>new (★ only these are built)</span>
+  <span><i class="sw l"></i>LLM</span>
+  <span><i class="sw h"></i>human decision</span>
+  <span><i class="sw b"></i>failure / forbidden</span>
+</div>
+
+
+<h2><span class="n">Fig 1</span>The whole picture — seven layers</h2>
+<p>Each layer has exactly one owner and one job. No responsibility spans two layers.</p>
+
+<div class="stack">
+  <div class="layer isnew">
+    <div class="id">L0</div>
+    <div class="q"><b>Data minimisation</b><br>"What may the AI see at all?"<span class="badge new">new</span></div>
+    <div class="who">field allow-list in code<br>→ non-sensitive parameters only, on-prem vLLM only, customer informed</div>
+  </div>
+  <div class="layer">
+    <div class="id">L1</div>
+    <div class="q"><b>Trigger</b><br>"Sequencing for order X has finished"</div>
+    <div class="who">omakase-core watcher<br>polls the <b>B-Fabric DB</b></div>
+  </div>
+  <div class="layer">
+    <div class="id">L2</div>
+    <div class="q"><b>Decision</b><br>"Which analysis, with which parameters?"</div>
+    <div class="who">recipe catalog (YAML, versioned)<br>the LLM only breaks ties on ambiguous orders</div>
+  </div>
+  <div class="layer">
+    <div class="id">L3</div>
+    <div class="q"><b>Gate</b><br>"Leave time for a human to stop it, then start"</div>
+    <div class="who">state machine + business-hours timer</div>
+  </div>
+  <div class="layer">
+    <div class="id">L4</div>
+    <div class="q"><b>Execution</b><br>"Run it"</div>
+    <div class="who">SUSHI backend REST API → job_manager → SLURM → gStore<span class="badge re">existing</span></div>
+  </div>
+  <div class="layer">
+    <div class="id">L5</div>
+    <div class="q"><b>QC</b><br>"Is the result sane?"</div>
+    <div class="who">deterministic checks (<code>loop_validation</code>)<br>the LLM only writes the narrative</div>
+  </div>
+  <div class="layer">
+    <div class="id">L6</div>
+    <div class="q"><b>Release</b><br>"Tell the customer"</div>
+    <div class="who">phase 1: bioinformatician / phase 2: OMAKASE, per recipe</div>
+  </div>
+</div>
+
+
+<h2><span class="n">Fig 2</span>Component map — only one thing is new</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 620" role="img" aria-label="Component map">
+  <style>
+    .bx{stroke-width:2;rx:9}
+    .e{fill:#e9eef6;stroke:#33507a}
+    .nw{fill:#fff4e2;stroke:#c07600}
+    .lm{fill:#f2ecfb;stroke:#6b4bab}
+    .hm{fill:#e7f6ec;stroke:#2f7a45}
+    .gs{fill:#eef3ee;stroke:#5b7a5f}
+    .tl{font:600 13px system-ui,sans-serif;fill:#1c1f26}
+    .t2{font:400 11.5px system-ui,sans-serif;fill:#4a5568}
+    .lb{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .fl{stroke:#4a5568;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+    .star{font:700 13px system-ui,sans-serif;fill:#c07600}
+  </style>
+
+  <rect class="bx e" x="250" y="14" width="500" height="86"/>
+  <text class="tl" x="270" y="38">B-FABRIC (SOAP / bfabricPy)</text>
+  <text class="t2" x="270" y="58">order · sample · run · workunit · comment</text>
+  <text class="t2" x="270" y="80">← polled for the trigger (Layer 1)</text>
+  <text class="lb" x="20" y="40">new data in gStore</text>
+  <path class="fl" d="M20,58 L246,58"/>
+  <text class="lb" x="762" y="52">comment =</text>
+  <text class="lb" x="762" y="70">notification channel</text>
+
+  <rect class="bx nw" x="60" y="140" width="880" height="132"/>
+  <text class="star" x="80" y="166">★ omakase-core</text>
+  <text class="t2" x="196" y="166">— the only new component (Python daemon, plain code, no LLM)</text>
+  <text class="tl" x="80" y="200">watcher → consent check → recipe engine → timer → submitter</text>
+  <text class="tl" x="80" y="226">QC gate ← result collector ← job status</text>
+  <text class="t2" x="80" y="254">Own state DB (SQLite → Postgres). No DDL on the SUSHI schema, ever.</text>
+  <path class="fl" d="M500,104 L500,136"/>
+  <text class="lb" x="510" y="126">bfabricPy / btools</text>
+
+  <rect class="bx e"  x="60"  y="330" width="230" height="96"/>
+  <text class="tl" x="78" y="356">SUSHI backend</text>
+  <text class="t2" x="78" y="376">REST API  POST /jobs</text>
+  <text class="t2" x="78" y="396">project-scoped token</text>
+  <text class="t2" x="78" y="414">required_params gate</text>
+
+  <rect class="bx lm" x="320" y="330" width="290" height="96"/>
+  <text class="tl" x="338" y="356">SUSHI-MCP-server llm_client</text>
+  <text class="t2" x="338" y="376">└ local → FGCZ vLLM (on-prem)</text>
+  <text class="t2" x="338" y="396">   the only channel used</text>
+  <text class="t2" x="338" y="414">typed replies via output_schema</text>
+
+  <rect class="bx hm" x="640" y="330" width="300" height="96"/>
+  <text class="tl" x="658" y="356">SUSHI-MCP-server (MCP)</text>
+  <text class="t2" x="658" y="376">omakase_* tools</text>
+  <text class="t2" x="658" y="396">veto / override / release</text>
+  <text class="t2" x="658" y="414">skill lookup and provenance</text>
+
+  <path class="fl" d="M170,276 L170,326"/><text class="lb" x="178" y="304">REST + token</text>
+  <path class="fl" d="M465,276 L465,326"/><text class="lb" x="473" y="304">typed LLM call</text>
+  <path class="fl" d="M790,276 L790,326"/><text class="lb" x="798" y="304">MCP</text>
+
+  <rect class="bx e" x="60" y="470" width="150" height="52"/>
+  <text class="tl" x="78" y="494">job_manager</text><text class="t2" x="78" y="512">(existing)</text>
+  <rect class="bx e" x="240" y="470" width="110" height="52"/>
+  <text class="tl" x="262" y="500">SLURM</text>
+  <rect class="bx gs" x="60" y="556" width="290" height="48"/>
+  <text class="tl" x="78" y="586">gStore  /srv/gstore/projects/…</text>
+
+  <path class="fl" d="M135,430 L135,466"/><text class="lb" x="143" y="452">Job rows (CREATED)</text>
+  <path class="fl" d="M214,496 L236,496"/>
+  <path class="fl" d="M295,526 L295,552"/>
+  <path class="fl" d="M354,580 L940,580 L940,278"/>
+  <text class="lb" x="600" y="574">read results and logs</text>
+
+  <rect class="bx lm" x="430" y="470" width="330" height="86" stroke-dasharray="6 4"/>
+  <text class="tl" x="448" y="496">AI triage agent</text>
+  <text class="t2" x="448" y="516">failure diagnosis only</text>
+  <text class="t2" x="448" y="536">phase 1: started by a human</text>
+  <path class="fl" d="M354,496 L426,496" stroke="#b5303a" marker-end="url(#ahr)"/>
+  <text class="lb" x="356" y="486" fill="#b5303a">on failure only</text>
+</svg>
+<figcaption>★ marks what is new. Everything else already exists and is reused without modification. Nothing on the SUSHI side was invented for this.</figcaption>
+</figure>
+
+<div class="callout k">
+  <div class="t">Only one thing is built</div>
+  <p>The omakase-core daemon. Dropping the consent dialog also removed the second new item v0.2 needed — a consent field in B-Fabric.</p>
+  <p>Jobs are always submitted through the SUSHI backend REST API. That gives us project-scope enforcement, the <code>required_params</code> gate, SAMPLE-mode fan-out and legacy-parity output columns for free — and it means no code path exists by which the orchestrator could corrupt the shared production database.</p>
+</div>
+
+
+<h2><span class="n">Fig 3</span>Data minimisation — no consent dialog</h2>
+<p>Rather than asking permission to process sensitive data, <b>we never read it</b>.<br>
+To decide which pipeline to run we only need non-sensitive order parameters.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 430" role="img" aria-label="Data minimisation by field allow-list">
+  <style>
+    .bx3{stroke-width:2;rx:9}
+    .hd3{font:700 13px system-ui,sans-serif}
+    .it3{font:400 12.5px system-ui,sans-serif;fill:#39404c}
+    .ng3{font:400 12.5px system-ui,sans-serif;fill:#7d1e25}
+    .cl3{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .fl3{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <text class="cl3" x="20"  y="36">B-Fabric order information</text>
+  <text class="cl3" x="320" y="36">field allow-list (fixed in code)</text>
+  <text class="cl3" x="650" y="36">destination</text>
+
+  <rect class="bx3" x="20" y="70" width="240" height="152" fill="#e9eef6" stroke="#33507a"/>
+  <text class="hd3" x="40" y="96">order record</text>
+  <text class="it3" x="40" y="120">has many fields</text>
+  <text class="ng3" x="40" y="146">customer name, contacts,</text>
+  <text class="ng3" x="40" y="166">project title, sample names,</text>
+  <text class="ng3" x="40" y="186">free-text comments …</text>
+  <text class="ng3" x="40" y="210">→ these are never read</text>
+
+  <rect class="bx3" x="320" y="48" width="270" height="214" fill="#fff4e2" stroke="#c07600"/>
+  <text class="hd3" x="340" y="74" fill="#6d4200">only these are read</text>
+  <text class="it3" x="340" y="100">✓ Service Type</text>
+  <text class="it3" x="340" y="122">✓ Sequencing Application</text>
+  <text class="it3" x="340" y="144">✓ Species</text>
+  <text class="it3" x="340" y="166">✓ Instrument</text>
+  <text class="it3" x="340" y="188">✓ Library Protocol</text>
+  <text class="it3" x="340" y="210">✓ sample count / layout</text>
+  <text class="ng3" x="340" y="242">not redaction — never fetched</text>
+
+  <rect class="bx3" x="650" y="90" width="310" height="120" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="hd3" x="670" y="118" fill="#1c4a29">FGCZ local vLLM</text>
+  <text class="it3" x="670" y="142">on-premises</text>
+  <text class="it3" x="670" y="166">inference stays in our network</text>
+  <text class="it3" x="670" y="190">no external cloud at all</text>
+
+  <path class="fl3" d="M264,155 L316,155"/>
+  <path class="fl3" d="M594,150 L646,150"/>
+
+  <rect class="bx3" x="20" y="300" width="940" height="52" fill="#fdecec" stroke="#b5303a"/>
+  <text class="it3" x="40" y="324" fill="#7d1e25">Raw data (FASTQ / BAM / VCF) and free-text logs never reach the LLM, by any route.</text>
+  <text class="it3" x="40" y="344" fill="#7d1e25">QC sends numeric metrics only — log text can carry paths and sample names.</text>
+
+  <rect class="bx3" x="20" y="366" width="940" height="52" fill="#f2f6fc" stroke="#33507a"/>
+  <text class="it3" x="40" y="390">What the customer is told (no dialog, no checkbox):</text>
+  <text class="hd3" x="40" y="410">&#8220;Experiment parameters will be processed by a local AI model.&#8221;</text>
+</svg>
+<figcaption>Setting up a consent process is therefore not a blocker for phase 0 or phase 1. With an allow-list and an on-prem model, there is nothing left to ask permission for.</figcaption>
+</figure>
+
+<h3>Three rules</h3>
+<ul>
+  <li><b>Allow-list, not redaction.</b> Only listed fields are fetched. What is never fetched
+      cannot leak through a bug in a scrubber.</li>
+  <li><b>Local vLLM only.</b> No institutional cloud, no hosted API. The whole
+      "which tool is approved for which classification" matrix disappears from the design.</li>
+  <li><b>No raw data and no free-text logs.</b> QC sends numbers, which is what the
+      deterministic checks work on anyway.</li>
+</ul>
+
+<div class="callout k">
+  <div class="t">The one caveat to keep in view</div>
+  <p>Data minimisation removes the consent question <b>only while the payload stays inside the allow-list</b>. The moment someone wants to send log text or result tables, the question comes back.</p>
+  <p>So the allow-list is a <b>security boundary</b>: enforced in code, and reviewed when it changes.</p>
+</div>
+<h2><span class="n">Fig 4</span>LLM channel — one, on-premises</h2>
+<p>Point the <code>local</code> provider of <code>llm_client</code> (OpenAI-compatible) at the
+FGCZ vLLM. That is the only channel used. Schema-constrained output
+(<code>output_schema</code>) is already supported.</p>
+
+<table>
+  <caption>Channels, and whether this design uses them</caption>
+  <tr><th>Channel</th><th>llm_client provider</th><th>Used here?</th></tr>
+  <tr><td><b>FGCZ vLLM</b> (on-prem, free)</td><td><code>local</code> (OpenAI-compatible base_url)</td><td class="ok">yes — the only one</td></tr>
+  <tr><td>UZH Copilot CLI (institutional)</td><td><code>copilot</code></td><td class="no">no</td></tr>
+  <tr><td>Anthropic hosted API</td><td><code>anthropic</code></td><td class="no">no</td></tr>
+</table>
+
+<div class="callout">
+  <div class="t">The guard becomes small</div>
+  <p>Because the channel is fixed and the payload is allow-listed, the check in front of
+  <code>llm_client</code> is just two questions. <b>Is every field on the allow-list? Is the
+  endpoint the local one?</b> Otherwise refuse, and log it.</p>
+</div>
+
+
+<h2><span class="n">Fig 5</span>QC — reuse <code>loop_validation</code> as it is</h2>
+<p>The existing verification discipline <code>loop_validation</code> in SUSHI-MCP-server already
+says what we need:</p>
+<div class="callout">
+  <p>"The acting LLM's self-report is never evidence. A verdict consumes only mechanically
+  observable results, and absence of evidence never defaults to a pass."</p>
+</div>
+<p>So the QC gate <i>is</i> an instance of it. <b>We do not build a new QC framework.</b></p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 400" role="img" aria-label="Three QC tiers and the verdict">
+  <style>
+    .tt{font:700 12.5px system-ui,sans-serif;fill:#1c1f26}
+    .ii{font:400 12.5px system-ui,sans-serif;fill:#39404c}
+  </style>
+  <rect x="240" y="14" width="520" height="46" rx="9" fill="#fff4e2" stroke="#c07600" stroke-width="2"/>
+  <text class="tt" x="262" y="34">the recipe's qc_spec  =  the evidence spec</text>
+  <text class="ii" x="262" y="52">declared BEFORE the run, pinned by sha256 — the criteria are auditable too</text>
+  <path d="M500,62 L500,86" stroke="#4a5568" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+
+  <rect x="60" y="92" width="880" height="150" rx="9" fill="#e9eef6" stroke="#33507a" stroke-width="2"/>
+  <text class="tt" x="82" y="118">Tier 1　structural</text>
+  <text class="ii" x="230" y="118">exit code / expected outputs exist and are non-empty / dataset.tsv parses /</text>
+  <text class="ii" x="230" y="136">row count = sample count / no OOM or traceback / runtime within k× median</text>
+  <text class="tt" x="82" y="166">Tier 2　domain metrics</text>
+  <text class="ii" x="230" y="166">% uniquely mapped / % rRNA / library-size distribution / genes detected /</text>
+  <text class="ii" x="230" y="184">duplication rate / 10x barcode knee — thresholds versioned with the recipe</text>
+  <text class="tt" x="82" y="214">Tier 3　historical</text>
+  <text class="ii" x="230" y="214">z-score against the last N runs of the SAME recipe</text>
+  <text class="ii" x="230" y="232" fill="#7d1e25">This is what catches "the pipeline succeeded but the data is wrong"</text>
+  <path d="M500,246 L500,272" stroke="#4a5568" stroke-width="1.6" fill="none" marker-end="url(#ah)"/>
+  <text class="ii" x="512" y="266">mechanical, fail-closed</text>
+
+  <rect x="200" y="278" width="200" height="46" rx="9" fill="#e7f6ec" stroke="#2f7a45" stroke-width="2"/>
+  <text class="tt" x="272" y="306" fill="#1c4a29">PASS</text>
+  <rect x="410" y="278" width="180" height="46" rx="9" fill="#fff8ec" stroke="#c07600" stroke-width="2"/>
+  <text class="tt" x="484" y="306" fill="#6d4200">WARN</text>
+  <rect x="600" y="278" width="180" height="46" rx="9" fill="#fdecec" stroke="#b5303a" stroke-width="2"/>
+  <text class="tt" x="678" y="306" fill="#7d1e25">FAIL</text>
+  <text class="ii" x="800" y="300">→ recorded as an</text>
+  <text class="ii" x="800" y="318">attestation (+ spec hash)</text>
+
+  <rect x="200" y="344" width="580" height="42" rx="9" fill="#f2ecfb" stroke="#6b4bab" stroke-width="2"/>
+  <text class="ii" x="222" y="370">The LLM writes the narrative. It may <tspan font-weight="700">downgrade</tspan> a verdict, never upgrade a FAIL.</text>
+</svg>
+<figcaption>The recipe's <code>qc_spec</code> is the evidence spec, the QC verdict is a mechanical fail-closed verdict, and the record is an attestation. One mechanism, two uses.</figcaption>
+</figure>
+
+
+<h2><span class="n">Fig 6</span>State machine, part 1 — from proposal to start</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 350" role="img" aria-label="State machine part 1">
+  <style>
+    .st{stroke-width:2;rx:8}
+    .sn{fill:#e9eef6;stroke:#33507a}
+    .sg{fill:#e7f6ec;stroke:#2f7a45}
+    .sk{fill:#f0f1f4;stroke:#8a919c}
+    .sa{fill:#fff8ec;stroke:#c07600}
+    .sl{font:700 12.5px system-ui,sans-serif;fill:#1c1f26}
+    .el{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .ar{stroke:#4a5568;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="st sn" x="20"  y="40" width="140" height="46"/><text class="sl" x="46"  y="69">DETECTED</text>
+  <rect class="st sn" x="205" y="40" width="150" height="46"/><text class="sl" x="222" y="69">METADATA_OK</text>
+  <rect class="st sn" x="400" y="40" width="150" height="46"/><text class="sl" x="435" y="69">PROPOSED</text>
+  <rect class="st sg" x="650" y="40" width="140" height="46"/><text class="sl" x="683" y="69">APPROVED</text>
+  <rect class="st sn" x="835" y="40" width="140" height="46"/><text class="sl" x="862" y="69">SUBMITTED</text>
+
+  <path class="ar" d="M164,63 L201,63"/>
+  <text class="el" x="164" y="30">consent check (L0)</text>
+  <path class="ar" d="M359,63 L396,63"/>
+  <text class="el" x="358" y="30">recipe engine</text>
+  <path class="ar" d="M554,63 L646,63"/>
+  <text class="el" x="546" y="30">4 business hours, no reply</text>
+  <text class="el" x="556" y="100">the clock starts only after the notice is read back</text>
+  <path class="ar" d="M794,63 L831,63"/>
+
+  <rect class="st sk" x="205" y="130" width="150" height="42"/><text class="sl" x="248" y="157">SKIPPED</text>
+  <path class="ar" d="M280,90 L280,126"/><text class="el" x="288" y="112">out of scope / no metadata</text>
+
+  <rect class="st sk" x="400" y="130" width="150" height="42"/><text class="sl" x="428" y="157">CANCELLED</text>
+  <path class="ar" d="M455,90 L455,126"/><text class="el" x="463" y="112">veto</text>
+
+  <rect class="st sn" x="400" y="200" width="150" height="42"/><text class="sl" x="418" y="227">OVERRIDDEN</text>
+  <path class="ar" d="M475,90 L475,196"/><text class="el" x="483" y="188">a different analysis is given</text>
+  <path class="ar" d="M554,221 L600,221 L600,58 L646,58"/>
+
+  <rect class="st sa" x="400" y="270" width="150" height="42"/><text class="sl" x="452" y="297" fill="#6d4200">HELD</text>
+  <path class="ar" d="M495,90 L495,266"/>
+  <text class="el" x="503" y="258">low confidence / recipe not whitelisted / over budget</text>
+  <path class="ar" d="M554,291 L720,291 L720,90"/><text class="el" x="562" y="284">once a human presses GO</text>
+</svg>
+<figcaption><b>PROPOSED → APPROVED is the only time-based transition in the entire system.</b> Every other transition needs an event or a human.</figcaption>
+</figure>
+
+
+<h2><span class="n">Fig 7</span>State machine, part 2 — from run to release</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 340" role="img" aria-label="State machine part 2">
+  <style>
+    .st{stroke-width:2;rx:8}
+    .sn{fill:#e9eef6;stroke:#33507a}
+    .sg{fill:#e7f6ec;stroke:#2f7a45}
+    .sa{fill:#fff8ec;stroke:#c07600}
+    .sb{fill:#fdecec;stroke:#b5303a}
+    .sl{font:700 12.5px system-ui,sans-serif;fill:#1c1f26}
+    .el{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .ar{stroke:#4a5568;stroke-width:1.6;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="st sn" x="20"  y="40" width="130" height="46"/><text class="sl" x="46"  y="69">RUNNING</text>
+  <rect class="st sn" x="220" y="40" width="130" height="46"/><text class="sl" x="252" y="69">QC_RUN</text>
+  <path class="ar" d="M154,63 L216,63"/><text class="el" x="152" y="32">all jobs COMPLETED</text>
+
+  <rect class="st sb" x="220" y="160" width="130" height="46"/><text class="sl" x="256" y="189" fill="#7d1e25">FAILED</text>
+  <path class="ar" d="M85,90 L85,183 L216,183"/><text class="el" x="95" y="150">any job FAILED_*</text>
+
+  <rect class="st sg" x="430" y="16" width="190" height="44"/><text class="sl" x="446" y="43" fill="#1c4a29">RELEASE_PENDING</text>
+  <rect class="st sa" x="430" y="82" width="190" height="44"/><text class="sl" x="466" y="109" fill="#6d4200">REVIEW_REQ</text>
+  <rect class="st sb" x="430" y="148" width="190" height="44"/><text class="sl" x="474" y="175" fill="#7d1e25">QC_FAILED</text>
+  <path class="ar" d="M354,56 L400,56 L400,38 L426,38"/><text class="el" x="358" y="50">PASS</text>
+  <path class="ar" d="M354,70 L400,70 L400,104 L426,104"/><text class="el" x="358" y="90">WARN</text>
+  <path class="ar" d="M354,80 L390,80 L390,170 L426,170"/><text class="el" x="358" y="130">FAIL</text>
+
+  <rect class="st sg" x="720" y="46" width="160" height="50"/><text class="sl" x="768" y="77" fill="#1c4a29">RELEASED</text>
+  <path class="ar" d="M624,38 L680,38 L680,66 L716,66"/><text class="el" x="626" y="32">human approves text</text>
+  <path class="ar" d="M624,104 L680,104 L680,80 L716,80"/><text class="el" x="626" y="122">human decides</text>
+
+  <rect class="st" x="430" y="240" width="450" height="70" fill="#f2ecfb" stroke="#6b4bab" stroke-width="2" stroke-dasharray="6 4"/>
+  <text class="sl" x="450" y="266" fill="#3d2a68">omakase_triage &lt;id&gt;　→　AI triage (started by a human)</text>
+  <text class="el" x="450" y="288">Reads logs, gStore, known errors → cause + proposed fix. No auto-rerun.</text>
+  <path class="ar" d="M285,210 L285,275 L426,275"/>
+
+  <text class="el" x="720" y="120">phase 1: a human approves the comment</text>
+  <text class="el" x="720" y="138">phase 2: OMAKASE posts it, per recipe</text>
+</svg>
+<figcaption>A failure is never retried automatically — it notifies a human. Silent retries burn cluster time and hide the real problem.</figcaption>
+</figure>
+
+
+<h2><span class="n">Fig 8</span>The 4-hour timer, concretely — why business hours</h2>
+<p>An order that finishes at 17:00 on a Friday, under plain 4 hours versus 4 business hours.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 260" role="img" aria-label="Timer comparison">
+  <style>
+    .ax{stroke:#8a919c;stroke-width:1.4}
+    .tk{font:400 11px system-ui,sans-serif;fill:#5b6472}
+    .lbl{font:700 12.5px system-ui,sans-serif}
+    .bad{fill:#fdecec;stroke:#b5303a;stroke-width:2}
+    .good{fill:#e7f6ec;stroke:#2f7a45;stroke-width:2}
+    .nt{font:400 12px system-ui,sans-serif;fill:#39404c}
+  </style>
+  <line class="ax" x1="120" y1="70" x2="960" y2="70"/>
+  <line class="ax" x1="120" y1="66" x2="120" y2="74"/><text class="tk" x="98" y="92">Fri 17:00</text>
+  <line class="ax" x1="290" y1="66" x2="290" y2="74"/><text class="tk" x="268" y="92">Fri 21:00</text>
+  <line class="ax" x1="520" y1="66" x2="520" y2="74"/><text class="tk" x="498" y="92">Sat–Sun</text>
+  <line class="ax" x1="800" y1="66" x2="800" y2="74"/><text class="tk" x="774" y="92">Mon 10:00</text>
+
+  <circle cx="120" cy="70" r="6" fill="#c07600"/>
+  <text class="lbl" x="112" y="52" fill="#6d4200">order finished — proposal posted</text>
+
+  <rect class="bad" x="140" y="120" width="820" height="46" rx="8"/>
+  <text class="lbl" x="160" y="141" fill="#7d1e25">Plain 4 hours → auto-start on Friday 21:00</text>
+  <text class="nt"  x="160" y="159">Nobody is watching. Nobody can veto. A failure sits untouched until Monday.</text>
+  <line x1="290" y1="76" x2="290" y2="116" stroke="#b5303a" stroke-width="1.6" stroke-dasharray="4 3"/>
+
+  <rect class="good" x="140" y="184" width="820" height="46" rx="8"/>
+  <text class="lbl" x="160" y="205" fill="#1c4a29">4 business hours (08:00–18:00 Mon–Fri), floor = next working day 10:00 → Monday 10:00</text>
+  <text class="nt"  x="160" y="223">The real grace period is 2+ working days. The owner can veto or override on arrival.</text>
+  <line x1="800" y1="76" x2="800" y2="180" stroke="#2f7a45" stroke-width="1.6" stroke-dasharray="4 3"/>
+</svg>
+<figcaption>In addition: post the notice, read it back, and only then start the clock. An analysis must never auto-start on a proposal that was never delivered.</figcaption>
+</figure>
+
+
+<h2><span class="n">Fig 9</span>Phases and exit criteria</h2>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 330" role="img" aria-label="Phase plan">
+  <style>
+    .ph{stroke-width:2;rx:10}
+    .p0{fill:#f0f1f4;stroke:#8a919c}
+    .p1{fill:#e7f6ec;stroke:#2f7a45}
+    .p2{fill:#f2ecfb;stroke:#6b4bab}
+    .pt{font:700 14px system-ui,sans-serif}
+    .pi{font:400 12.5px system-ui,sans-serif;fill:#39404c}
+    .px{font:700 11.5px system-ui,sans-serif;fill:#5b6472}
+    .ar{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="ph p0" x="20" y="20" width="300" height="270"/>
+  <text class="pt" x="40" y="48" fill="#4a5058">PHASE 0 — SHADOW (start now)</text>
+  <text class="pi" x="40" y="74">Detect → propose → QC.</text>
+  <text class="pi" x="40" y="94"><tspan font-weight="700">Write nothing, anywhere.</tspan></text>
+  <text class="pi" x="40" y="114">Output: own DB + daily digest mail.</text>
+  <text class="pi" x="40" y="134">In parallel: metadata audit.</text>
+  <text class="px" x="40" y="170">EXIT CRITERIA</text>
+  <text class="pi" x="40" y="192">· metadata sufficiency per service type</text>
+  <text class="pi" x="40" y="212">· recipes signed off for top order types</text>
+  <text class="pi" x="40" y="232">· proposals on NEW orders match</text>
+  <text class="pi" x="40" y="250">  what was actually run</text>
+  <text class="pi" x="40" y="270">· vLLM path verified end to end</text>
+  <text class="px" x="40" y="286" fill="#2f7a45">can start today, zero risk</text>
+
+  <path class="ar" d="M326,150 L356,150"/>
+
+  <rect class="ph p1" x="362" y="20" width="300" height="270"/>
+  <text class="pt" x="382" y="48" fill="#1c4a29">PHASE 1 — HUMAN-GATED</text>
+  <text class="pi" x="382" y="74">Internal notice only. Auto-start at</text>
+  <text class="pi" x="382" y="94">the business-hours deadline, for</text>
+  <text class="pi" x="382" y="114">whitelisted project × recipe pairs.</text>
+  <text class="pi" x="382" y="134"><tspan font-weight="700">The AI writes nothing to customers.</tspan></text>
+  <text class="px" x="382" y="170">EXIT CRITERIA (per recipe)</text>
+  <text class="pi" x="382" y="192">· ≥ 50 auto-started runs</text>
+  <text class="pi" x="382" y="212">· ≥ 95 % released with no change</text>
+  <text class="pi" x="382" y="230">  of app or parameters</text>
+  <text class="pi" x="382" y="250">· zero wrong reference / species /</text>
+  <text class="pi" x="382" y="268">  design reaching a customer</text>
+  <text class="pi" x="382" y="286">· measured handling-time reduction</text>
+
+  <path class="ar" d="M668,150 L698,150"/>
+
+  <rect class="ph p2" x="704" y="20" width="276" height="270"/>
+  <text class="pt" x="724" y="48" fill="#3d2a68">PHASE 2 — AI TO CUSTOMER</text>
+  <text class="pi" x="724" y="74">Per recipe, only after the phase-1</text>
+  <text class="pi" x="724" y="94">criteria, with sign-off.</text>
+  <text class="pi" x="724" y="120">The comment is AI-drafted and</text>
+  <text class="pi" x="724" y="138">labelled as AI-assisted.</text>
+  <text class="pi" x="724" y="164">WARN / FAIL / HELD still always</text>
+  <text class="pi" x="724" y="182">go to a human.</text>
+  <text class="pi" x="724" y="208">Kill switch and opt-out stay.</text>
+  <text class="px" x="724" y="244">BASIS FOR PROMOTION</text>
+  <text class="pi" x="724" y="266">Not "it feels reliable" — the</text>
+  <text class="pi" x="724" y="284">recipe's own counters say so.</text>
+</svg>
+</figure>
+
+
+<h2><span class="n">Fig 10</span>The first step — three things, none touching production</h2>
+<p>Using historic jobs as ground truth is dropped. The reason is in the lower panel.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 1000 330" role="img" aria-label="The first three steps">
+  <style>
+    .sb1{stroke-width:2;rx:9}
+    .num1{font:700 12px system-ui,sans-serif;fill:#5b6472}
+    .tx1{font:600 13px system-ui,sans-serif;fill:#1c1f26}
+    .ty1{font:400 12px system-ui,sans-serif;fill:#39404c}
+    .ar1{stroke:#4a5568;stroke-width:1.8;fill:none;marker-end:url(#ah)}
+  </style>
+  <rect class="sb1" x="20" y="20" width="300" height="160" fill="#e9eef6" stroke="#33507a"/>
+  <text class="num1" x="40" y="44">STEP 1</text>
+  <text class="tx1"  x="40" y="66">Metadata-readiness audit</text>
+  <text class="ty1"  x="40" y="92">Read B-Fabric orders, read-only.</text>
+  <text class="ty1"  x="40" y="112">Are Service Type / Sequencing</text>
+  <text class="ty1"  x="40" y="132">Application / Species / Instrument /</text>
+  <text class="ty1"  x="40" y="152">Library Protocol usable?</text>
+  <text class="ty1"  x="40" y="172">How often is it &#8220;Custom/Other&#8221; or empty?</text>
+
+  <rect class="sb1" x="350" y="20" width="300" height="160" fill="#fff4e2" stroke="#c07600"/>
+  <text class="num1" x="370" y="44">STEP 2</text>
+  <text class="tx1"  x="370" y="66">Recipes for the top order types</text>
+  <text class="ty1"  x="370" y="92">Written by bioinformaticians as</text>
+  <text class="ty1"  x="370" y="112">current best practice.</text>
+  <text class="ty1"  x="370" y="132">Not derived from historic jobs.</text>
+  <text class="ty1"  x="370" y="158">Start with the highest-volume type.</text>
+
+  <rect class="sb1" x="680" y="20" width="300" height="160" fill="#e7f6ec" stroke="#2f7a45"/>
+  <text class="num1" x="700" y="44">STEP 3</text>
+  <text class="tx1"  x="700" y="66">Shadow mode on NEW orders</text>
+  <text class="ty1"  x="700" y="92">Propose, write nothing anywhere.</text>
+  <text class="ty1"  x="700" y="112">Bioinformaticians compare the</text>
+  <text class="ty1"  x="700" y="132">proposal with what they ran.</text>
+  <text class="ty1"  x="700" y="158">This is the real test. Forward</text>
+  <text class="ty1"  x="700" y="176">looking, so outdated history</text>
+  <text class="ty1"  x="700" y="194">cannot poison it.</text>
+
+  <path class="ar1" d="M324,95 L346,95"/>
+  <path class="ar1" d="M654,95 L676,95"/>
+
+  <rect class="sb1" x="20" y="212" width="960" height="98" fill="#fdecec" stroke="#b5303a"/>
+  <text class="tx1" x="40" y="238" fill="#7d1e25">Why a 12-month back-test was dropped as the oracle</text>
+  <text class="ty1" x="40" y="264">① Current SUSHI datasets often lack the metadata the decision needs.</text>
+  <text class="ty1" x="40" y="288">② Older analyses used workflows now considered outdated — we would be measuring agreement with something we do not want to run again.</text>
+</svg>
+<figcaption>Step 1 shows how much of the order flow is addressable today. It is also the evidence for the metadata request already made to Simon.</figcaption>
+</figure>
+
+
+<h2><span class="n">Fig 11</span>Questions, with owners</h2>
+<div class="cards">
+  <div class="card"><h4>B-Fabric — Falko</h4>
+    <p><b>What can we read in B-Fabric</b> to learn that new data has become available in gStore? Which field, which values, what latency?<br>
+       <span style="color:#7d1e25">This decides the shape of the trigger layer.</span></p>
+    <p>Can a comment be visible to staff only, and on which entity?</p>
+    <p>Is there a service account we may use for reading and for posting comments?</p></div>
+  <div class="card n"><h4>B-Fabric metadata — Simon (already asked)</h4>
+    <p>More accurate Service Type / Sequencing Application / Species / Instrument / Library Protocol.</p>
+    <p>Ready-made library sequencing filed as Sequencing Application &#8220;Custom/Other&#8221; cannot drive any decision.</p>
+    <p>Which fields can become mandatory, and from when?</p></div>
+  <div class="card"><h4>Customer communication</h4>
+    <p>Wording and placement of &#8220;Experiment parameters will be processed by a local AI model.&#8221; Who signs it off?</p>
+    <p>Must a phase-2 customer-facing comment state that it is AI-drafted? (My reading of the UZH/ETH transparency rules: yes.)</p></div>
+  <div class="card"><h4>Operations</h4>
+    <p>Confirm "4 hours" means business hours, including weekends and holidays.</p>
+    <p>Pilot scope: which order types first? Which projects volunteer?</p>
+    <p>Who pays for first-pass compute; monthly cap; low-priority QoS available?</p>
+    <p>What does "forward the result to the user" mean concretely?</p></div>
+  <div class="card n"><h4>Architecture</h4>
+    <p>Agreed that the always-on layer is plain code, with the LLM and the harness invoked per event?</p>
+    <p>Agreed that the AI triage agent is started by a human only in phase 1?</p>
+    <p>Agreed to start without a consent dialog — allow-listed parameters, on-prem model, plain notice?</p>
+    <p>Agreed to standardise on <b>one</b> LLM service for ezRun / SAKE / OMAKASE?</p></div>
+</div>
+
+<div class="callout k">
+  <div class="t">The number of places that call an LLM is growing</div>
+  <p>The M&amp;M module in ezRun, method-description generation in SAKE, and OMAKASE would be a third. If every module keeps its own caller, maintenance cost grows with each one.</p>
+  <p>A shared library is not possible here: ezRun is R, SUSHI-MCP-server is Ruby, omakase-core would be Python. <b>Only a service can be shared.</b> Deciding on one before the third exists is the cheap moment.</p>
+</div>
+
+
+<h2><span class="n">Annex</span>Prerequisites and dependencies</h2>
+<table>
+  <tr><th>#</th><th>Prerequisite</th><th>Status</th><th>What it blocks</th></tr>
+  <tr><td>P1</td><td><b>Accuracy of B-Fabric order metadata</b> — the decision needs usable Service Type / Sequencing Application / Species / Instrument / Library Protocol</td><td>Simon already asked</td><td>recipe matching for the affected order types</td></tr>
+  <tr><td>P2</td><td><b>The B-Fabric signal that new data is in gStore</b> (Falko)</td><td>open</td><td>the trigger layer</td></tr>
+  <tr><td>P3</td><td>Customer-facing notice ("processed by a local AI model") — wording and sign-off</td><td>open</td><td>phase 1</td></tr>
+  <tr><td>P4</td><td>SUSHI backend write path on the production node 082</td><td>082 read-only; job pickup verified on 083 only</td><td>phase 1 on real orders</td></tr>
+  <tr><td>P5</td><td>FGCZ vLLM wiring for <code>llm_client</code></td><td>adapter exists; not wired for this use</td><td>every LLM step</td></tr>
+  <tr><td>P6</td><td>B-Fabric service account + comment visibility</td><td>open</td><td>notification channel 1</td></tr>
+  <tr><td>P7</td><td>Wider app coverage for recipes (10x / ONT / PacBio not yet head-lessly validated)</td><td>16 apps + Fastqc</td><td>catalog breadth</td></tr>
+  <tr><td>P8</td><td>A service host with systemd (not 082 — 15 GB, no swap, submit node; 083 has no cron)</td><td>to be arranged</td><td>phase 1</td></tr>
+  <tr><td>P9</td><td>Machine-readable species → reference-genome policy</td><td>implicit in <code>ref_selector</code></td><td>parameter resolution</td></tr>
+  <tr><td>P10</td><td>Runtime and safety machinery to run the AI triage agent <b>without a human</b></td><td>not in place</td><td>fully automatic triage only — <b>not needed for phase 1</b></td></tr>
+</table>
+
+<footer>
+  OMAKASE system configuration, illustrated — v0.3 / 2026-07-31.
+  Full text, detailed tables and sources: <code>docs/omakase-auto-analysis-design.md</code>.
+  Japanese edition: <code>docs/omakase-auto-analysis-overview-ja.html</code>.<br>
+  Every fact used here (the <code>llm_client</code> providers, the <code>loop_validation</code>
+  discipline, the <code>required_params</code> gate, the state of nodes 082 / 083) was verified
+  in the repository and on this host.
+</footer>
+
+</div>
+</body>
+</html>

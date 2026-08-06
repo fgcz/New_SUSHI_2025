@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>OMAKASE — 受注シーケンスの自動一次解析</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand-primary:#003c68;
+  --brand-accent:#0099cc;
+  --brand-dark:#001428;
+  --brand-light:#4dc9f6;
+  --semantic:#ea6b13;
+  --pain-bg:#fef2f2; --pain-border:#ef4444;
+  --proof-bg:#ecfdf5; --proof-border:#10b981;
+  --solution-bg:#eff6ff;
+  --insight-bg:#f5f3ff;
+  --text-primary:#000;
+  --text-secondary:#545e69;
+  --border:#e0e0e0;
+  --bg-light:#f5f7fa;
+  --bg-subtle:#f9fafb;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html, body { height:100%; background:#222; font-family:'Noto Sans JP', 'Open Sans', Arial, sans-serif; color:var(--text-primary); }
+.presentation-container { width:100vw; height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+.slide { width:1280px; height:720px; background:white; display:none; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.4); position:relative; }
+.slide.active { display:flex; }
+.header-accent { height:8px; flex-shrink:0; background:linear-gradient(90deg, var(--brand-primary) 0%, var(--brand-accent) 60%, var(--brand-light) 100%); }
+.slide-content { flex:1; padding:36px 60px; display:flex; flex-direction:column; overflow:hidden; }
+.slide-footer { height:40px; padding:0 60px; display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--text-secondary); border-top:1px solid var(--border); }
+.slide-footer .fgcz-id { font-weight:600; color:var(--brand-primary); letter-spacing:1px; }
+.slide-title { font-family:Montserrat, 'Noto Sans JP', sans-serif; font-size:34px; font-weight:700; color:var(--brand-primary); margin-bottom:6px; }
+.section-title { font-size:15px; font-weight:600; color:var(--brand-accent); letter-spacing:2px; margin-bottom:12px; }
+
+.title-slide { background:linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-primary) 100%); color:white; align-items:center; justify-content:center; padding:60px; }
+.title-slide .cover-title { font-family:Montserrat, sans-serif; font-size:64px; font-weight:700; line-height:1.1; max-width:1100px; text-align:center; }
+.title-slide .cover-sub { font-size:20px; margin-top:20px; opacity:.85; max-width:900px; text-align:center; }
+.title-slide .cover-catch { font-size:22px; margin-top:30px; font-style:italic; color:var(--brand-light); letter-spacing:2px; }
+.title-slide .cover-meta { position:absolute; bottom:60px; left:60px; font-size:13px; opacity:.7; letter-spacing:1px; }
+.dot-grid { position:absolute; bottom:40px; right:60px; display:grid; grid-template-columns:repeat(6, 8px); gap:6px; }
+.dot-grid span { width:8px; height:8px; background:var(--brand-light); border-radius:50%; opacity:.7; }
+
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:12px; }
+.col-card { background:var(--bg-subtle); border:1px solid var(--border); border-radius:6px; padding:16px 20px; }
+.col-card h3 { font-family:Montserrat, 'Noto Sans JP', sans-serif; font-size:17px; color:var(--brand-primary); margin-bottom:8px; }
+.bullet-list { list-style:none; padding:0; }
+.bullet-list li { padding:4px 0 4px 18px; font-size:14px; line-height:1.6; color:var(--text-primary); position:relative; }
+.bullet-list li::before { content:"–"; position:absolute; left:2px; color:var(--brand-accent); font-weight:bold; }
+
+.highlight-box { background:var(--solution-bg); border-left:4px solid var(--brand-accent); padding:12px 16px; border-radius:4px; margin:10px 0; font-size:14px; line-height:1.6; color:var(--text-primary); }
+.highlight-box.orange { background:#fff7ed; border-left-color:var(--semantic); }
+.highlight-box.pain { background:var(--pain-bg); border-left-color:var(--pain-border); }
+.highlight-box.proof { background:var(--proof-bg); border-left-color:var(--proof-border); }
+.highlight-box b { color:var(--brand-primary); }
+
+.key-point { background:var(--brand-dark); color:white; padding:18px 24px; border-radius:6px; margin-top:12px; font-size:19px; line-height:1.6; text-align:center; }
+.key-point .catch { color:var(--semantic); font-style:italic; font-size:1.4em; font-weight:700; }
+
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-top:12px; flex:1; }
+.three-col .col { padding:14px 16px; border-radius:6px; display:flex; flex-direction:column; }
+.three-col .col.detect  { background:#fff7ed; border-top:4px solid var(--semantic); }
+.three-col .col.declare { background:var(--proof-bg); border-top:4px solid var(--proof-border); }
+.three-col .col.defend  { background:var(--solution-bg); border-top:4px solid var(--brand-accent); }
+.three-col .col.insight { background:var(--insight-bg); border-top:4px solid #8b5cf6; }
+.three-col .col h3 { font-family:Montserrat, 'Noto Sans JP', sans-serif; font-size:17px; color:var(--brand-primary); margin-bottom:2px; letter-spacing:1px; }
+.three-col .col .sub { font-size:11px; color:var(--text-secondary); letter-spacing:2px; margin-bottom:8px; }
+.three-col .col ul { list-style:none; padding:0; }
+.three-col .col li { padding:4px 0 4px 16px; font-size:12.5px; line-height:1.55; position:relative; color:var(--text-primary); }
+.three-col .col li::before { content:"\2022"; position:absolute; left:2px; color:var(--brand-primary); font-weight:bold; }
+.three-col .col .status { margin-top:auto; padding-top:8px; font-size:11px; color:var(--text-secondary); font-style:italic; letter-spacing:1px; }
+
+.four-col { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-top:12px; flex:1; }
+.four-col .col { padding:13px 14px; border-radius:6px; background:var(--bg-subtle); border-top:4px solid var(--brand-accent); display:flex; flex-direction:column; }
+.four-col .col.own { border-top-color:var(--semantic); background:#fff7ed; }
+.four-col .col h3 { font-family:Montserrat, 'Noto Sans JP', sans-serif; font-size:15px; color:var(--brand-primary); margin-bottom:6px; }
+.four-col .col ul { list-style:none; padding:0; }
+.four-col .col li { padding:4px 0 4px 14px; font-size:12px; line-height:1.55; position:relative; }
+.four-col .col li::before { content:"\2022"; position:absolute; left:2px; color:var(--brand-accent); font-weight:bold; }
+
+/* --- layer stack primitive --- */
+.stackrows { border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-top:10px; }
+.srow { display:grid; grid-template-columns:64px 1.1fr 1fr; border-bottom:1px solid var(--border); }
+.srow:last-child { border-bottom:0; }
+.srow-id { background:#eef1f6; color:var(--brand-primary); font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
+.srow-q { padding:7px 12px; font-size:13px; line-height:1.5; }
+.srow-who { padding:7px 12px; font-size:12px; color:var(--text-secondary); line-height:1.5; border-left:1px dashed var(--border); }
+.srow.new .srow-id { background:#fff4e2; color:var(--semantic); }
+.srow.new .srow-q { background:#fffaf2; }
+
+/* --- horizontal flow primitive --- */
+.flowrow { display:flex; align-items:stretch; gap:8px; margin-top:12px; }
+.fbox { flex:1; background:var(--bg-subtle); border:2px solid var(--brand-primary); border-radius:10px; padding:11px 13px; }
+.fbox b { display:block; font-family:Montserrat, 'Noto Sans JP', sans-serif; font-size:14px; color:var(--brand-primary); margin-bottom:3px; }
+.fbox span { display:block; font-size:11.5px; color:var(--text-secondary); line-height:1.55; }
+.fbox.new { border-color:var(--semantic); background:#fff7ed; }
+.fbox.no  { border-color:var(--pain-border); background:var(--pain-bg); }
+.fbox.ok  { border-color:var(--proof-border); background:var(--proof-bg); }
+.arrow { align-self:center; color:var(--semantic); font-size:22px; font-weight:700; flex:0 0 auto; }
+
+.stat-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:10px; }
+.stat-card { background:white; border:1px solid var(--border); border-radius:6px; padding:14px 18px; }
+.stat-card.before { border-left:4px solid var(--pain-border); }
+.stat-card.after  { border-left:4px solid var(--proof-border); }
+.stat-card h4 { font-size:11px; color:var(--text-secondary); letter-spacing:2px; margin-bottom:6px; }
+.stat-card .stat-line { font-size:13.5px; padding:3px 0; color:var(--text-primary); line-height:1.55; }
+.stat-card .stat-num { font-family:Montserrat, sans-serif; font-weight:700; font-size:17px; }
+.stat-card.before .stat-num { color:var(--pain-border); }
+.stat-card.after  .stat-num { color:var(--proof-border); }
+
+table.spec { width:100%; border-collapse:collapse; margin-top:10px; font-size:12px; }
+table.spec th { background:#eef1f6; color:var(--brand-primary); text-align:left; padding:6px 10px; border-bottom:2px solid var(--brand-primary); font-size:11.5px; letter-spacing:1px; }
+table.spec td { padding:5px 10px; border-bottom:1px solid var(--border); vertical-align:top; line-height:1.5; }
+
+code { font-family:'JetBrains Mono', Consolas, monospace; font-size:12px; background:var(--bg-subtle); padding:1px 5px; border-radius:3px; }
+
+.nav { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:10px; background:rgba(0,0,0,.6); padding:8px 14px; border-radius:30px; z-index:100; }
+.nav button { background:transparent; border:1px solid #888; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:18px; line-height:1; }
+.nav button:hover { background:rgba(255,255,255,.15); }
+.nav .indicator { color:white; font-size:13px; letter-spacing:1px; min-width:56px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="presentation-container">
+
+<!-- S1 Cover -->
+<div class="slide title-slide active" data-slide="1">
+  <div style="text-align:center;">
+    <div class="cover-title">OMAKASE</div>
+    <div class="cover-sub">受注シーケンスの自動一次解析 — システム構成案</div>
+    <div class="cover-catch">&mdash; Rules decide &middot; AI assists &middot; Humans release &mdash;</div>
+  </div>
+  <div class="cover-meta">FGCZ Genomics &middot; 2026 &middot; Masaomi Hatakeyama &middot; v0.3（構成案・実装は未着手）</div>
+  <div class="dot-grid">
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- S2 Context -->
+<div class="slide" data-slide="2">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">背景 &middot; 目的</div>
+    <div class="slide-title">すべての完了オーダーに一次解析を提案する</div>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>元のアイデア</h3>
+        <ul class="bullet-list">
+          <li>シーケンス完了 &rarr; エージェントがオーダー情報を読む</li>
+          <li>解析を<b>提案</b>し、担当 bioinformatician に通知する</li>
+          <li>猶予時間内に応答がなければ、その解析を<b>開始</b>する</li>
+          <li>完了後に整合性を<b>確認</b>し、人が結果を顧客へ渡す</li>
+          <li>Phase 1 では、すべて bioinformatician を経由する</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>この資料で決めること</h3>
+        <ul class="bullet-list">
+          <li><b>どの層が何を担い、誰が持つか</b></li>
+          <li>既存の何を再利用し、本当に新規なのは何か</li>
+          <li>AI に何を見せるか。推論をどこで行うか</li>
+          <li>実オーダーで動かす前に、どう検証するか</li>
+          <li>決めないこと：実装。コードはまだ1行も書いていません</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box orange" style="margin-top:14px;">
+      <b>設計の前提：</b>価値は「AI が解析を選ぶこと」ではありません。<i>すべての</i>オーダーに、役に立つ早さで一次解析が付き、かつ人がいつでも止められること、です。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>2 / 9</span></div>
+</div>
+
+<!-- S3 Decisions -->
+<div class="slide" data-slide="3">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">設計 &middot; 5つの決定</div>
+    <div class="slide-title">これ以外はすべてこの5つから決まる</div>
+    <div class="stackrows">
+      <div class="srow new">
+        <div class="srow-id">D1</div>
+        <div class="srow-q"><b>同意ダイアログを置かない。データ最小化で対応する。</b></div>
+        <div class="srow-who">機密性のないオーダー項目だけを読み、オンプレのモデルだけを使う。顧客には許可を求めるのではなく説明する。</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D2</div>
+        <div class="srow-q"><b>版管理された recipe カタログが決める。LLM は補助のみ。</b></div>
+        <div class="srow-who">ルールは bioinformatician がレビューし承認できる。プロンプトはできない。</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D3</div>
+        <div class="srow-q"><b>QC はまず決定論的に。LLM は文章を書くだけ。</b></div>
+        <div class="srow-who">実行したモデルの自己申告は証拠にしない。判定は測定値から出す。</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D4</div>
+        <div class="srow-q"><b>常時起動する部分は素のコード。LLM ではない。</b></div>
+        <div class="srow-who">監視・タイマー・状態機械はふつうのソフトウェア。モデルはイベントごとに呼ぶ。</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">D5</div>
+        <div class="srow-q"><b>猶予時間は営業時間で数える。</b></div>
+        <div class="srow-who">しかも、通知が届いたことを確認してから計時を始める。</div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:14px;">
+      <b>副産物：</b>決定層がルールエンジンなので、モデルが使えない時も、AI 処理から意図的に除外したオーダー種でも、サービスは動き続けます。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>3 / 9</span></div>
+</div>
+
+<!-- S3.5 Determinism -->
+<div class="slide" data-slide="3.5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">再現性 &middot; 安全性</div>
+    <div class="slide-title">決定論的にすることが、LLM を安全にする</div>
+    <div class="highlight-box orange">
+      <b>2つの軸を別々に閉じる。</b>&nbsp;<b>データ</b> &mdash; AI に何を<i>見せる</i>か。項目許可リストで閉じる。&nbsp;&nbsp;<b>権限</b> &mdash; AI に何を<i>決めさせる</i>か。recipe カタログで閉じる。渡すデータを絞っても、決定をモデルに委ねれば再現できません。
+    </div>
+    <table class="spec">
+      <tr><th style="width:320px;">仕事</th><th style="width:430px;">決めるのは</th><th>LLM の役割</th></tr>
+      <tr><td>どの app 連鎖を回すか</td><td>recipe の判定条件</td><td><b>なし</b></td></tr>
+      <tr><td>パラメータ（参照ゲノム・cores・ram）</td><td>recipe ＋ 種 &rarr; 参照ゲノム表</td><td><b>なし</b></td></tr>
+      <tr><td>複数 recipe が該当／該当なし</td><td>LLM が<b>既存の recipe id から</b>選ぶ。確信度が低ければ人に保留</td><td>制約付きの選択</td></tr>
+      <tr><td>提案文・QC 所見文</td><td>テンプレート ＋ LLM</td><td>文章を書く</td></tr>
+      <tr><td>QC の合否</td><td>実行前に宣言した決定論的な3階層</td><td><b>下げる</b>ことだけ可</td></tr>
+      <tr><td>失敗の原因調査</td><td>LLM エージェント（人が起動）</td><td>本格的なエージェント作業</td></tr>
+    </table>
+    <ul class="bullet-list">
+      <li><b>記録から再現できる</b> &mdash; recipe id と版、解決済みパラメータ、入力 dataset、QC 仕様のハッシュ。モデルもプロンプトも温度も seed も関与しません</li>
+      <li><b>影響範囲が閉じる</b> &mdash; LLM の誤りで起きる最悪は「レビュー済み recipe の中から誤ったものを選ぶ」か「文章が下手」。未レビューのパイプラインは作れません</li>
+      <li><b>クリティカルパスに乗らない</b> &mdash; モデルが使えなくても、ルールが提案します</li>
+      <li><b>事故のときに答えられる</b> &mdash;「なぜこれを回したか」に recipe の版と作成者で答えられます</li>
+    </ul>
+    <div class="highlight-box pain">
+      <b>正直な限界：</b>決定論的にしても recipe が<i>正しくなる</i>わけではありません。レビュー可能・テスト可能・帰属可能になるだけです。正しさは recipe を書く bioinformatician と、同じ recipe の履歴と比較する Tier 3 QC から来ます。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Safety</span></div>
+</div>
+
+<!-- S3.6 Skills -->
+<div class="slide" data-slide="3.6">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">Skill &middot; どこに効かせるか</div>
+    <div class="slide-title">Skill が調整するのは、AI の働き方。回す内容ではない</div>
+    <div class="highlight-box orange">
+      <b>Skill</b> とは、エージェントが実行時に読み込む、版管理された指示と知識の単位です。<i>どう調べるか・どう書くか</i>を入れる場所としては正しく、<i>どの解析を回すか</i>を入れる場所としては誤りです。
+    </div>
+    <table class="spec">
+      <tr><th style="width:340px;">何を調整するか</th><th style="width:440px;">調整するのは</th><th>使わないもの</th></tr>
+      <tr><td>どの解析を回すか</td><td>recipe YAML &mdash; 作成・レビュー・承認を経る</td><td>Skill</td></tr>
+      <tr><td>QC の閾値とチェック内容</td><td>QC 仕様（recipe と同時に版管理）</td><td>Skill</td></tr>
+      <tr><td>失敗をどう診断するか</td><td><b>Skill</b> &mdash; known errors、app ガイド、デバッグ手順</td><td>&mdash;</td></tr>
+      <tr><td>所見をどう書くか</td><td>プロンプトテンプレート</td><td>&mdash;</td></tr>
+      <tr><td>どのデータをどこへ送れるか</td><td>コード内の許可リスト。AI 利用ポリシーを基層として併用</td><td>Skill 単独</td></tr>
+    </table>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>Skill が本当に効く場所</h3>
+        <ul class="bullet-list">
+          <li><b>失敗の triage</b> &mdash; known errors・app 開発ガイド・デバッグ手順を読み込み、ログ・gStore・SLURM を調べる。出力は人への提案で、実行ではありません</li>
+          <li><b>検証の規律そのもの</b> &mdash; 実行前に evidence spec を宣言し、fail-closed で判定し、仕様のハッシュと共に記録する。QC ゲートはその一実装です</li>
+          <li><b>組織のガードレールを基層として</b> &mdash; AI 利用ポリシーを Skill として読み込み、全エージェントが継承します</li>
+          <li><b>再デプロイなしの調整</b> &mdash; triage の質を上げるのは Skill の編集で、デーモンの変更ではありません</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>やってはいけない形と、1つの注意</h3>
+        <ul class="bullet-list">
+          <li>Skill の中に解析の選択を書くこと &mdash;「RNA-seq なら STAR → FeatureCounts」。動いてしまいますが、設計全体を静かに無効化します</li>
+          <li>挙動が「どの Skill 版を読んだか」に依存し、記録が自己説明できなくなります</li>
+          <li><b>Skill は出自付きのプロンプトです。</b>一貫性を上げ、挙動を帰属可能にします。エージェントの結論を証拠に変えるものではありません</li>
+          <li>だから triage の出力は助言に留め、その下に機械的な判定を置きます</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Skills</span></div>
+</div>
+
+<!-- S4 Layers -->
+<div class="slide" data-slide="4">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">構成 &middot; 7つの層</div>
+    <div class="slide-title">各層に持ち主を1つだけ置く</div>
+    <div class="stackrows">
+      <div class="srow new">
+        <div class="srow-id">L0</div>
+        <div class="srow-q">データ最小化 &mdash; <i>AI に何を見せるのか</i></div>
+        <div class="srow-who">コード内の項目許可リスト &middot; オンプレのモデルのみ &middot; 顧客には説明</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L1</div>
+        <div class="srow-q">トリガー &mdash; <i>order X のシーケンスが終わった</i></div>
+        <div class="srow-who">omakase-core の watcher が <b>B-Fabric DB</b> をポーリング</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L2</div>
+        <div class="srow-q">決定 &mdash; <i>どの解析を、どのパラメータで</i></div>
+        <div class="srow-who">recipe カタログ（版管理）&middot; LLM は曖昧ケースの tie-break のみ</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L3</div>
+        <div class="srow-q">ゲート &mdash; <i>人が止める時間を置いて、開始</i></div>
+        <div class="srow-who">状態機械 ＋ 営業時間タイマー</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L4</div>
+        <div class="srow-q">実行 &mdash; <i>走らせる</i></div>
+        <div class="srow-who">SUSHI backend REST API &rarr; job_manager &rarr; SLURM &rarr; gStore &nbsp;<b>（既存）</b></div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L5</div>
+        <div class="srow-q">QC &mdash; <i>結果は正気か</i></div>
+        <div class="srow-who">決定論的チェック &middot; LLM は所見文のみ</div>
+      </div>
+      <div class="srow">
+        <div class="srow-id">L6</div>
+        <div class="srow-q">リリース &mdash; <i>顧客に伝える</i></div>
+        <div class="srow-who">Phase 1: bioinformatician &middot; Phase 2: recipe 単位で自動</div>
+      </div>
+    </div>
+    <div class="highlight-box proof" style="margin-top:12px;">
+      <b>新規に作るものは1つだけ：</b><code>omakase-core</code> という小さなデーモン。L4 以下はすべて既存のものを無改造で使います。<b>SUSHI 側にこの企画のために作ったものはありません。</b>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>4 / 9</span></div>
+</div>
+
+<!-- S5 Data minimisation -->
+<div class="slide" data-slide="5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">L0 &middot; データ最小化</div>
+    <div class="slide-title">読まないデータの許可は、求めなくてよい</div>
+    <div class="flowrow">
+      <div class="fbox">
+        <b>B-Fabric の order レコード</b>
+        <span>多数の項目を持つ。顧客名・連絡先・課題名・サンプル名・フリーテキストのコメントなど。</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox new">
+        <b>項目許可リスト（コードで固定）</b>
+        <span>Service Type &middot; Sequencing Application &middot; Species &middot; Instrument &middot; Library Protocol &middot; サンプル数・レイアウト</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox ok">
+        <b>FGCZ ローカルモデル</b>
+        <span>オンプレで推論。FGCZ 網から出ない。外部クラウドは一切使わない。</span>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card">
+        <h3>3つのルール</h3>
+        <ul class="bullet-list">
+          <li><b>マスクではなく許可リスト</b> &mdash; リスト外は取得しない。取得しなければスクラバのバグでも漏れない</li>
+          <li><b>オンプレのモデルのみ</b> &mdash;「どのツールがどの分類まで許されるか」の表が消える</li>
+          <li><b>raw data とログ本文は渡さない</b> &mdash; QC は数値メトリクスのみ。ログにはパスやサンプル名が入る</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>顧客への説明</h3>
+        <ul class="bullet-list">
+          <li>ダイアログもチェックボックスも置かない。1文で伝える：</li>
+          <li><b>&#8220;Experiment parameters will be processed by a local AI model.&#8221;</b></li>
+          <li>文面と掲載場所は、顧客向け文書の担当と要確認</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box pain" style="margin-top:12px;">
+      <b>残る注意点：</b>これが成り立つのは、送信内容が許可リストの内側にとどまる限りです。許可リストは<b>セキュリティ境界</b>として扱い、コードで強制し、変更はレビュー対象にします。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>5 / 9</span></div>
+</div>
+
+<!-- S6 Pipeline -->
+<div class="slide" data-slide="6">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">経路 &middot; 既存の再利用</div>
+    <div class="slide-title">B-Fabric から SLURM まで、既にあるものを通す</div>
+    <div class="flowrow">
+      <div class="fbox">
+        <b>B-Fabric DB</b>
+        <span>数分ごとにポーリング &mdash;「order X の新データが gStore に来た」</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox new">
+        <b>omakase-core</b>
+        <span>許可リスト &rarr; recipe エンジン &rarr; 提案 &rarr; タイマー。状態は自前DB。SUSHI スキーマに DDL はかけない。</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox">
+        <b>SUSHI backend REST API</b>
+        <span>project スコープ付きトークンでジョブを POST する</span>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="fbox">
+        <b>job_manager &rarr; SLURM &rarr; gStore</b>
+        <span>既存経路、無改造</span>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card">
+        <h3>REST 経由にすると自動的に付いてくるもの</h3>
+        <ul class="bullet-list">
+          <li>トークンによる project スコープの強制</li>
+          <li><code>required_params</code> ゲート &mdash; 未解決の参照パラメータが SLURM に届かない</li>
+          <li>サンプル単位の展開と、legacy 互換の出力カラム</li>
+          <li><b>共有本番DBを壊せる経路が存在しない</b></li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>recipe とは（1行で）</h3>
+        <ul class="bullet-list">
+          <li>許可リスト項目に対する判定条件</li>
+          <li>解決済みパラメータ付きの app 連鎖</li>
+          <li>QC 仕様・計算予算・自動開始フラグ</li>
+          <li>bioinformatician が書き、git で版管理し、実行ごとに <code>recipe_id@version</code> を記録</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>6 / 9</span></div>
+</div>
+
+<!-- S7 The gate -->
+<div class="slide" data-slide="7">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">L3 &middot; ゲート</div>
+    <div class="slide-title">時間で動くのは、この1か所だけ</div>
+    <div class="stat-row">
+      <div class="stat-card before">
+        <h4>素の4時間</h4>
+        <div class="stat-line">金曜17:00 に完了したオーダーは <span class="stat-num">金 21:00</span> に自動開始</div>
+        <div class="stat-line">誰も見ていない。veto できる人がいない。</div>
+        <div class="stat-line">失敗しても月曜まで放置される。</div>
+      </div>
+      <div class="stat-card after">
+        <h4>営業時間4時間 ＋ 下限</h4>
+        <div class="stat-line">平日 08:00&ndash;18:00、翌営業日 10:00 より前には発火しない &rarr; <span class="stat-num">月 10:00</span></div>
+        <div class="stat-line">実際の猶予は2営業日以上になる。</div>
+        <div class="stat-line">担当者が出勤時に veto / override できる。</div>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:16px;">
+      <div class="col-card">
+        <h3>タイマー周りのルール</h3>
+        <ul class="bullet-list">
+          <li>通知を投稿し、<b>読み戻して確認</b>してから計時を始める</li>
+          <li>確信度が低い・未許可 recipe・予算超過 &rarr; <b>保留</b>。人が解除しないと動かない</li>
+          <li>失敗しても自動再実行はしない。人に通知する</li>
+          <li>全体停止スイッチ。project 単位・顧客単位・recipe 単位の opt-out</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>初日から使える人間側の操作</h3>
+        <ul class="bullet-list">
+          <li>期限付きで、応答待ちの提案を一覧する</li>
+          <li><b>veto</b>、別の解析での <b>override</b>、計時の <b>停止</b></li>
+          <li>QC レポートを読んでから、結果を顧客へ <b>release</b></li>
+          <li>コマンドラインで動く &mdash; Phase 1 に UI は不要</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box orange" style="margin-top:12px;">
+      他の遷移はすべてイベントか人の操作で動きます。<b>この系全体で、時間によって進む遷移は1本だけ。</b>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>7 / 9</span></div>
+</div>
+
+<!-- S7.5 Chat surface -->
+<div class="slide" data-slide="7.5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">チャット窓口 &middot; Slack / Teams</div>
+    <div class="slide-title">veto の時間を守る「秘書」</div>
+    <div class="highlight-box orange">
+      ここまでの3チャネルは「人が操作できるか」に答えるものです。bot が答えるのは別の問いです。<b>人は間に合うタイミングで気づくか。</b>ゲート全体で最も弱いのがここで、読まれないコメントは veto の時間を形式だけのものにします。
+    </div>
+    <div class="two-col">
+      <div class="col-card">
+        <h3>投稿する内容</h3>
+        <ul class="bullet-list">
+          <li><b>毎朝</b> &mdash; 応答待ちの提案と期限のカウントダウン。前日以降に完了・失敗したジョブ。レビュー待ちの QC 警告</li>
+          <li><b>新しい提案時</b> &mdash; order・recipe・解決済みパラメータ・費用見積・期限。veto と保留の操作を付ける</li>
+          <li><b>期限1時間前</b> &mdash; 対応すべき担当者名を添えたリマインド</li>
+          <li><b>随時の問い合わせ</b> &mdash;「order X の状況」「この project の未処理」「job 581 はなぜ失敗したか」</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <h3>2層構造 &mdash; その境界が統治の境界</h3>
+        <ul class="bullet-list">
+          <li><b>Tier A・能動</b> &mdash; ダイジェスト、アラート、期限リマインド。素のコードで「状態を引く→整形→投稿」。LLM なし。ただのスケジュール実行なので無人で回せる</li>
+          <li><b>Tier B・受動</b> &mdash; スレッド内の自由記述の質問に、Skill を参照するエージェントが1メッセージ＝1タスクで答える</li>
+          <li><b>チャットのメッセージは、人が起動した呼び出しです</b> &mdash; 誰かが打ち込み、スレッドで答えを待っています。つまり会話層は<b>構造的に attended</b> であり、他の場面でエージェント利用を止めていた条件をここでは満たします</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box pain">
+      <b>制約。</b>Slack と Teams は外部クラウドです。モデルと同じ分類の問題が、今度は<b>転送経路</b>について発生します。機関テナントの Teams が安全側の既定で、Slack はポリシー確認が必要です。bot も許可リストを継承します。識別子・状態・期限は投稿してよく、<b>サンプル名や結果の内容は投稿しません</b>。操作を許す前にチャット ID と LDAP ログインの対応付けが必要です。Phase 1 は、閲覧・veto・保留までをチャットから、override と release は CLI から。
+    </div>
+    <div class="highlight-box proof">
+      <b>作る順番：</b>朝のダイジェストを投げる outgoing webhook は1日程度の作業で、受信口も認証面も持たず、価値の大半を出します。ボタン操作と会話層は、ID 対応付けができてからです。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Chat surface</span></div>
+</div>
+
+<!-- S8 QC -->
+<div class="slide" data-slide="8">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">L5 &middot; 品質チェック</div>
+    <div class="slide-title">判定は測定値から出す。モデルからは出さない</div>
+    <div class="three-col">
+      <div class="col detect">
+        <h3>Tier 1</h3>
+        <div class="sub">構造</div>
+        <ul>
+          <li>exit code</li>
+          <li>期待した出力が存在し、空でない</li>
+          <li>マニフェストが parse でき、行数＝サンプル数</li>
+          <li>OOM も traceback もない</li>
+          <li>実行時間が中央値の妥当な倍率内</li>
+        </ul>
+        <div class="status">絶対的・安価</div>
+      </div>
+      <div class="col declare">
+        <h3>Tier 2</h3>
+        <div class="sub">ドメイン指標</div>
+        <ul>
+          <li>%uniquely mapped、%rRNA</li>
+          <li>library size 分布、duplication rate</li>
+          <li>検出遺伝子数、single cell の barcode knee</li>
+          <li>種と実験計画の妥当性チェック</li>
+          <li>閾値は recipe と一緒に版管理する</li>
+        </ul>
+        <div class="status">recipe ごと</div>
+      </div>
+      <div class="col defend">
+        <h3>Tier 3</h3>
+        <div class="sub">履歴比較</div>
+        <ul>
+          <li>各指標を<b>同じ</b> recipe の直近 N 実行と比較する</li>
+          <li>ファイルが揃い、ジョブが成功していても外れ値を検出する</li>
+          <li><b>「パイプラインは成功したがデータが変」</b>を捕まえるのはここ</li>
+        </ul>
+        <div class="status">本質はここ</div>
+      </div>
+    </div>
+    <div class="key-point" style="margin-top:14px;">
+      判定基準は実行の<b>前</b>に宣言し、結果と一緒に記録する。<br>
+      モデルは判定を<b>下げる</b>ことはできるが、失敗を成功に上げることはできない。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>8 / 9</span></div>
+</div>
+
+<!-- S9 Plan -->
+<div class="slide" data-slide="9">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">計画 &middot; フェーズ</div>
+    <div class="slide-title">カウンタが許すまで、顧客には何も届かない</div>
+    <div class="three-col">
+      <div class="col insight">
+        <h3>Phase 0 &mdash; 影行</h3>
+        <div class="sub">すぐ開始可・リスクゼロ</div>
+        <ul>
+          <li>検知・提案・QC を回し、<b>どこにも何も書かない</b></li>
+          <li>オーダーのメタ情報が実際どれだけ使えるか、サービス種別ごとに調査する</li>
+          <li>上位オーダー種の recipe を bioinformatician が書く</li>
+          <li><b>新規</b>オーダーで、提案と実際に回したものを比べる</li>
+        </ul>
+        <div class="status">卒業条件：recipe の承認</div>
+      </div>
+      <div class="col declare">
+        <h3>Phase 1 &mdash; 人間ゲート</h3>
+        <div class="sub">元アイデアの Phase 1</div>
+        <ul>
+          <li>通知は内部のみ</li>
+          <li>許可した project × recipe の組だけ、営業時間の期限で自動開始</li>
+          <li><b>顧客へのリリースには必ず人が入る</b></li>
+          <li>AI は顧客向けに何も書かない</li>
+        </ul>
+        <div class="status">卒業条件：recipe ごとの実績</div>
+      </div>
+      <div class="col defend">
+        <h3>Phase 2 &mdash; AI が顧客へ</h3>
+        <div class="sub">recipe 単位・承認を得て</div>
+        <ul>
+          <li>Phase 1 の条件を満たした recipe だけ</li>
+          <li>コメントは AI 起草で、その旨を明示する</li>
+          <li>警告・失敗・保留は引き続き人へ回す</li>
+          <li>停止スイッチと opt-out は恒久的に残す</li>
+        </ul>
+        <div class="status">昇格は実績で得るもの</div>
+      </div>
+    </div>
+    <div class="key-point" style="margin-top:14px;">
+      <span class="catch">Rules decide &middot; AI assists &middot; Humans release</span>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>9 / 9</span></div>
+</div>
+
+<!-- S9.5 Questions -->
+<div class="slide" data-slide="9.5">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">次に必要なこと &middot; 誰に何を</div>
+    <div class="slide-title">設計を止めている問いは4つ。あとは詳細</div>
+    <div class="four-col">
+      <div class="col own">
+        <h3>B-Fabric &mdash; Falko</h3>
+        <ul>
+          <li><b>gStore に新データが来たことを、B-Fabric の何を見れば知れるか。</b>項目・値・遅延</li>
+          <li>スタッフのみに見えるコメントは可能か。どのエンティティか</li>
+          <li>読み取りとコメント投稿に使えるサービスアカウントはあるか</li>
+        </ul>
+        <div class="status" style="margin-top:auto;padding-top:8px;font-size:11px;color:var(--text-secondary);font-style:italic;">トリガー層がこれで決まる</div>
+      </div>
+      <div class="col own">
+        <h3>メタ情報 &mdash; Simon</h3>
+        <ul>
+          <li>依頼済み：Service Type / Sequencing Application / Species / Instrument / Library Protocol の精度向上</li>
+          <li>Ready-made library sequencing が &#8220;Custom/Other&#8221; では判定に使えない</li>
+          <li>どの項目を必須化できるか。いつから</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>顧客向け文書</h3>
+        <ul>
+          <li>ローカルモデル利用の説明文、文面と掲載場所。承認者は誰か</li>
+          <li>Phase 2 の顧客向けコメントに AI 起草の明示は必要か。UZH / ETH の透明性規定を読む限り、必要</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>運用</h3>
+        <ul>
+          <li>猶予時間を営業時間換算で確定してよいか</li>
+          <li>パイロット範囲。どのオーダー種、どの project</li>
+          <li>計算予算・月次上限・低優先キュー（受注ジョブを遅らせないため）</li>
+          <li>「結果を顧客へ渡す」の具体形</li>
+        </ul>
+      </div>
+    </div>
+    <div class="highlight-box orange" style="margin-top:12px;">
+      <b>今決めておきたい構成上の1点：</b>LLM を呼ぶ場所は既に複数あります（ezRun の M&amp;M モジュール、SAKE の method description）。R / Ruby / Python にまたがるため<b>共有ライブラリは作れず、共有できるのはサービスだけ</b>です。3つ目が生まれる前に1つ決めるのが安いはずです。
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Questions</span></div>
+</div>
+
+<!-- S10 Appendix -->
+<div class="slide" data-slide="10">
+  <div class="header-accent"></div>
+  <div class="slide-content">
+    <div class="section-title">付録</div>
+    <div class="slide-title">前提条件と依存関係</div>
+    <table class="spec">
+      <tr><th style="width:40px;">#</th><th>前提</th><th style="width:200px;">現状</th><th style="width:240px;">これが無いと止まるもの</th></tr>
+      <tr><td>P1</td><td>B-Fabric のオーダーメタ情報の精度。判定には使える Service Type / Sequencing Application / Species / Instrument / Library Protocol が必要</td><td>Simon へ依頼済み</td><td>該当オーダー種の recipe 判定</td></tr>
+      <tr><td>P2</td><td>gStore にデータが来たことを示す B-Fabric 側のシグナル</td><td>未確認 &mdash; Falko</td><td>トリガー層</td></tr>
+      <tr><td>P3</td><td>顧客への説明文の文面と承認</td><td>未確認</td><td>Phase 1</td></tr>
+      <tr><td>P4</td><td>本番 submit ノードでの SUSHI backend 書き込み経路</td><td>現在 read-only。ジョブ取得はテストノードでのみ検証済み</td><td>実オーダーでの Phase 1</td></tr>
+      <tr><td>P5</td><td>共有 LLM クライアントのローカルモデル配線</td><td>adapter はある。この用途の配線は未</td><td>すべての LLM ステップ</td></tr>
+      <tr><td>P6</td><td>B-Fabric のサービスアカウントとコメント可視性</td><td>未確認</td><td>内部通知チャネル</td></tr>
+      <tr><td>P7</td><td>recipe が使える app の拡大。10x / ONT / PacBio は headless 未検証</td><td>16 apps 検証済み</td><td>カタログの幅</td></tr>
+      <tr><td>P8</td><td>デーモンを常駐させるサービスホスト</td><td>要手配</td><td>Phase 1</td></tr>
+      <tr><td>P9</td><td>種 &rarr; 参照ゲノムの機械可読ポリシー</td><td>現行セレクタに暗黙</td><td>パラメータ解決</td></tr>
+      <tr><td>P10</td><td>失敗診断エージェントを人を介さず動かすための実行基盤と安全機構</td><td>未整備</td><td>診断の完全自動化のみ。Phase 1 には不要</td></tr>
+    </table>
+    <div class="highlight-box" style="margin-top:10px;">
+      本文・図解・出典：<code>docs/omakase-auto-analysis-design.md</code> と <code>docs/omakase-auto-analysis-overview-ja.html</code>
+    </div>
+  </div>
+  <div class="slide-footer"><span class="fgcz-id">FGCZ &middot; GENOMICS</span><span>Appendix</span></div>
+</div>
+
+</div>
+
+<div class="nav">
+  <button id="prev" aria-label="previous">&lsaquo;</button>
+  <span class="indicator" id="ind">1 / 14</span>
+  <button id="next" aria-label="next">&rsaquo;</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let cur = 0;
+function show(i) {
+  slides[cur].classList.remove('active');
+  cur = (i + slides.length) % slides.length;
+  slides[cur].classList.add('active');
+  document.getElementById('ind').textContent = (cur + 1) + ' / ' + slides.length;
+}
+document.getElementById('prev').onclick = () => show(cur - 1);
+document.getElementById('next').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') show(cur + 1);
+  if (e.key === 'ArrowLeft') show(cur - 1);
+});
+</script>
+</body>
+</html>
