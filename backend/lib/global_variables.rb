@@ -316,7 +316,7 @@ module GlobalVariables
     command = ''
     if conda_env
       command << ". '/usr/local/ngseq/miniforge3/etc/profile.d/conda.sh'\n"
-      command << "conda activate #{conda_env}\n"
+      command << "set +e; conda activate #{conda_env}; set -e\n"
     end
     command << "R --vanilla --slave<<  EOT\n"
     command << "EZ_GLOBAL_VARIABLES <<- '#{EZ_GLOBAL_VARIABLES}'\n"
@@ -335,7 +335,9 @@ module GlobalVariables
     end
     command << "param[['dataRoot']] = '#{@gstore_dir}'\n"
     command << "param[['resultDir']] = '#{@result_dir}'\n"
-    command << "param[['isLastJob']] = #{(@last_job || true).to_s.upcase}\n"
+    # `@last_job || true` collapsed a legitimate false to true, so EVERY script of a
+    # SAMPLE fan-out claimed to be the last one. Legacy emits @last_job verbatim.
+    command << "param[['isLastJob']] = #{@last_job.to_s.upcase}\n"
     command << "output = list()\n"
     output = next_dataset
     output.keys.each do |key|
@@ -381,7 +383,7 @@ module GlobalVariables
     command = ''
     if conda_env
       command << ". '/usr/local/ngseq/miniforge3/etc/profile.d/conda.sh'\n"
-      command << "conda activate #{conda_env}\n"
+      command << "set +e; conda activate #{conda_env}; set -e\n"
     end
     command << "python3 << EOT\n"
         
@@ -394,7 +396,7 @@ module GlobalVariables
     end
     command << "param['dataRoot'] = '#{@gstore_dir}'\n"
     command << "param['resultDir'] = '#{@result_dir}'\n"
-    command << "param['isLastJob'] = #{(@last_job || true).to_s.capitalize}\n"
+    command << "param['isLastJob'] = #{@last_job.to_s.capitalize}\n"
     command << "output = {}\n"
     output = next_dataset
     output.keys.each do |key|

@@ -36,6 +36,11 @@ class JobSubmissionService
     # Shared parameters.tsv for the job_manager (@params are identical across samples)
     create_parameters_tsv
 
+    # dataset.tsv describing the output the run will produce, alongside input_dataset.tsv
+    # and parameters.tsv — legacy writes all three into the result directory and users
+    # and downstream tooling read it from there.
+    create_next_dataset_tsv(@job_units.map { |u| u[:next_dataset] })
+
     # Copy scratch files to gstore (input_dataset.tsv, parameters.tsv, scripts)
     # This must happen BEFORE job execution so the job can access these files
     return false unless copy_scratch_to_gstore
@@ -349,6 +354,28 @@ class JobSubmissionService
   rescue StandardError => e
     Rails.logger.error("Failed to create parameters.tsv: #{e.message}")
     # Don't fail the job submission if parameters.tsv creation fails
+  end
+
+  # Mirror of legacy SushiApp#save_next_dataset_as_tsv: headers are the union of every
+  # row's keys in first-seen order, and an empty value is written as an empty field.
+  def create_next_dataset_tsv(next_datasets)
+    rows = Array(next_datasets).compact
+    return if rows.empty?
+
+    dataset_file = File.join(@sushi_app.scratch_result_dir, 'dataset.tsv')
+    headers = rows.flat_map(&:keys).uniq
+
+    CSV.open(dataset_file, 'w', col_sep: "\t") do |out|
+      out << headers
+      rows.each do |row|
+        out << headers.map { |header| row[header].to_s.empty? ? nil : row[header] }
+      end
+    end
+
+    Rails.logger.info("Created dataset.tsv: #{dataset_file}")
+  rescue StandardError => e
+    Rails.logger.error("Failed to create dataset.tsv: #{e.message}")
+    # Don't fail the job submission if dataset.tsv creation fails
   end
 
   def create_output_dataset(next_datasets)

@@ -200,16 +200,23 @@ module SushiFabric
       @scratch_result_dir = File.join(SushiConfigHelper.scratch_dir, @result_dir_base)
       @scratch_script_dir = File.join(@scratch_result_dir, 'scripts')
       @job_script_dir = @scratch_script_dir  # Scripts are created in scratch
-      
-      # GStore directories (shared storage)
-      if dataset && dataset.project
-        @gstore_project_dir = File.join(@gstore_dir, "p#{dataset.project.number}")
-        @result_dir = File.join(@gstore_project_dir, @result_dir_base)
-      else
-        @gstore_project_dir = File.join(@gstore_dir, 'results')
-        @result_dir = File.join(@gstore_project_dir, @result_dir_base)
-      end
-      @gstore_result_dir = @result_dir
+
+      # Project directory name ("p35611"), or "results" for a dataset with no project.
+      @project = dataset&.project ? "p#{dataset.project.number}" : 'results'
+
+      # LEGACY CONTRACT (sushiApp.rb#set_dir_paths): @result_dir and @gstore_result_dir
+      # are two DIFFERENT things and must not be collapsed.
+      #   @result_dir        = "p35611/<run>"                     PROJECT-RELATIVE
+      #   @gstore_result_dir = "/srv/gstore/projects/p35611/<run>" ABSOLUTE
+      # Apps embed @result_dir in their output dataset [File]/[Link] values and it is
+      # emitted as param[['resultDir']]; the gStore web layer builds URLs as
+      # "https://fgcz-gstore.uzh.ch/projects/" + that value. Making it absolute produced
+      # ".../projects//srv/gstore/projects/..." links and dataset rows that downstream
+      # apps could not resolve against dataRoot. Only @gstore_* are filesystem paths.
+      @result_dir = File.join(@project, @result_dir_base)
+
+      @gstore_project_dir = File.join(@gstore_dir, @project)
+      @gstore_result_dir = File.join(@gstore_dir, @result_dir)
       @gstore_script_dir = File.join(@gstore_result_dir, 'scripts')
       
       # Create scratch directory (local, writable)
