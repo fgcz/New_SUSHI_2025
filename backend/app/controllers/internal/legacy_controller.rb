@@ -47,7 +47,11 @@ module Internal
     ].freeze
 
     # GET /internal/legacy/jobs?status=CREATED,WAITING_FOR_DEPENDENCY
-    # job_manager polls this each daemon iteration to find jobs to submit/update.
+    # Parity port of the deployed daemon's own poll query
+    # (masa_job_manager/src/db_manager.py:69-71, scheduler.py:81-85).
+    # NOT called by the deployed job_manager: it reaches the same rows over
+    # direct MySQL, because New SUSHI and the daemon share one `sushi` DB.
+    # Kept so an HTTP-based daemon can be pointed here by base-URL swap.
     def jobs
       statuses = params[:status].to_s.split(',').map(&:strip).reject(&:empty?)
       if statuses.empty?
@@ -59,8 +63,18 @@ module Internal
     end
 
     # GET /internal/legacy/datasets/:dataset_id/jobs
-    # Jobs that produce a given dataset (next_dataset_id = dataset_id), used by
-    # job_manager to build the SLURM --dependency chain. Empty list if none.
+    # Jobs that produce a given dataset (next_dataset_id = dataset_id). Empty
+    # list if none.
+    #
+    # Parity port of the query the deployed job_manager uses to build the SLURM
+    # --dependency chain (masa_job_manager/src/db_manager.py:76, called from
+    # scheduler.py:50) — but the daemon runs that SQL directly and has NO HTTP
+    # caller for this route (verified 2026-08-07: `grep -rn internal/legacy` over
+    # the daemon source returns nothing, and a live chained submit produced zero
+    # requests here). What actually orders New SUSHI jobs is that the daemon
+    # reads OUR jobs.input_dataset_id / next_dataset_id out of the shared DB;
+    # see spec/services/job_submission_service_spec.rb for the guard on those
+    # two columns. Do not describe this endpoint as the live mechanism.
     def dataset_jobs
       rows = Job.where(next_dataset_id: params[:dataset_id]).order(:id)
       render json: rows.map { |j| parent_job_json(j) }, status: :ok

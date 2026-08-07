@@ -274,4 +274,56 @@ RSpec.describe JobSubmissionService do
       expect(ok).to be true
     end
   end
+
+  # The SLURM ordering contract. New SUSHI writes NO "#SBATCH --dependency" line
+  # into its job scripts (legacy writes exactly one, sushiApp.rb:554). What orders
+  # a New SUSHI chain instead is the deployed job_manager daemon, which at sbatch
+  # time runs
+  #   SELECT submit_job_id, status FROM jobs WHERE next_dataset_id = <child's input_dataset_id>
+  # (masa_job_manager/src/db_manager.py:76 via scheduler.py:50) over the shared
+  # `sushi` DB and prepends --dependency=afterany:<ids> to the sbatch command.
+  # So these two columns ARE the mechanism. Verified live on fgcz-h-083 2026-08-07:
+  # STAR jobs 742/743 -> ds 804, FeatureCounts 744/745 on ds 804 held as
+  # "Reason=Dependency afterany:319613,319616" and started 1 s after the last STAR
+  # ended. Dropping or renaming either column un-chains every future job silently —
+  # the jobs still run, they just read half-written input. Nothing else covers this.
+  describe '#create_job_records (SLURM dependency-chain contract)' do
+    # One owner for both datasets: the :user factory does not set `login`, so two
+    # users would collide on its UNIQUE index.
+    let(:owner) { create(:user, login: 'chain_spec_owner') }
+    let(:input_dataset) { create(:data_set, user: owner) }
+    let(:output_dataset) { create(:data_set, user: owner) }
+
+    def records_for(units)
+      svc = described_class.new(dataset_id: input_dataset.id, app_name: 'X', parameters: {}, user: 'u')
+      svc.instance_variable_set(:@sushi_app, double(gstore_script_dir: '/gstore/scripts', user: 'u'))
+      svc.instance_variable_set(:@input_dataset, input_dataset)
+      svc.instance_variable_set(:@output_dataset_id, output_dataset.id)
+      expect(svc.send(:create_job_records, units)).to be true
+      svc.jobs
+    end
+
+    it 'stamps every job row with the consumed and the produced dataset id' do
+      jobs = records_for([{ script_path: '/tmp/a.sh' }, { script_path: '/tmp/b.sh' }])
+
+      expect(jobs.size).to eq(2)
+      expect(jobs.map(&:input_dataset_id).uniq).to eq([input_dataset.id])
+      expect(jobs.map(&:next_dataset_id).uniq).to eq([output_dataset.id])
+    end
+
+    it "is discoverable by the daemon's parent query, which keys on next_dataset_id" do
+      records_for([{ script_path: '/tmp/a.sh' }, { script_path: '/tmp/b.sh' }])
+
+      # Exactly what db_manager.py:76 asks for the child whose input is our output.
+      parents = Job.where(next_dataset_id: output_dataset.id).order(:id)
+      expect(parents.count).to eq(2)
+      expect(parents.map(&:status).uniq).to eq(['CREATED'])
+    end
+
+    it 'leaves submit_job_id NULL so the daemon defers instead of chaining to a stale id' do
+      # scheduler.py:60-62 returns 'WAIT' while any active parent has no SLURM id,
+      # which is only safe because we never invent one.
+      expect(records_for([{ script_path: '/tmp/a.sh' }]).map(&:submit_job_id)).to eq([nil])
+    end
+  end
 end
