@@ -170,20 +170,97 @@ module SushiFabric
       # Copy results to gstore and cleanup
       script << ""
       script << "#### JOB IS DONE WE PUT THINGS IN PLACE AND CLEAN UP"
-      # Copy all result files to gstore (directory already exists from pre-submission copy)
-      # Use individual file/subdir copy to avoid "destination exists" error
-      script << "for f in *; do"
-      script << "  if [ -e \"$f\" ]; then"
-      script << "    #{SushiConfigHelper.copy_command('\"$f\"', @gstore_result_dir)}"
-      script << "  fi"
-      script << "done"
+      script.concat(gstore_copy_lines)
       script << "cd #{@scratch_dir}"
       script << "rm -rf #{temp_dir_name} || exit 1"
       script << ""
       
       script.join("\n")
     end
-    
+
+    # The gStore copy footer. Port of legacy SushiApp#job_footer
+    # (sushi_fabric/sushiApp.rb:600-648): copy the app's DECLARED outputs, nothing else.
+    #
+    # This replaced `for f in *; do ... done`, which published the entire scratch temp
+    # dir. Measured on real runs: 93% of a STAR result dir was undeclared payload
+    # (trimmed FASTQs, fastp.html/json, adapters.fa, Log.out, SJ.out.tab), FeatureCounts
+    # re-published a name-sorted copy of its own input BAM, and every SAMPLE-mode job
+    # raced the others writing identically-named intermediates to the same destination.
+    # Legacy has never copied any of it — the undeclared files die with the `rm -rf`.
+    #
+    # Three deliberate choices, each of which the glob got wrong:
+    #
+    # * NO `[ -e ]` guard, matching legacy. With a declared list, skipping a missing file
+    #   would mean a job that silently reports COMPLETED without its output and then
+    #   destroys the scratch evidence. ezRun codes to the unguarded contract on purpose
+    #   (app-mapping.R: "the copy of the finished workunit crashes on the first missing
+    #   file"; renameOrCreate exists to create empty placeholders for exactly this).
+    # * BATCHED into one g-req when every output shares a destination, matching legacy
+    #   (dest_dirs.uniq.length == 1 and greq). gtools' _transfer loops over sources and
+    #   does not abort on one failure, so batching is no less safe — and the per-file
+    #   `g-req -w` loop cost 9m20s of serial waits on an 11-file job.
+    # * BARE, UNQUOTED basenames, matching legacy. Client-side quoting cannot survive
+    #   /usr/local/ngseq/bin/g-req, whose last line passes UNQUOTED `$@` to gstore-request;
+    #   the old `\"$f\"` therefore shipped literal quote characters all the way into the
+    #   transfer daemon's argv. Filenames containing whitespace are broken by g-req itself,
+    #   not by us, and no quoting here can fix that.
+    def gstore_copy_lines
+      copies = declared_output_copies
+      if copies.empty?
+        Rails.logger.error(
+          "#{@name}: no [File]-tagged headers in next_dataset, so nothing will be copied " \
+          'to gStore. Legacy warns about the same condition (sushiApp.rb:1334-1338).'
+        )
+        return ['# no declared output files - nothing to copy']
+      end
+
+      dest_dirs = copies.map(&:last).uniq
+      # Legacy batches only when the configured server speaks g-req (its `greq` probe).
+      if dest_dirs.size == 1 && SushiConfigHelper.copy_method == 'g-req'
+        [SushiConfigHelper.copy_command(copies.map(&:first).join(' '), dest_dirs.first)]
+      else
+        copies.map { |src, dest| SushiConfigHelper.copy_command(src, dest) }
+      end
+    end
+
+    # [[source_basename, destination_dir], ...] for every next_dataset header tagged
+    # [File], in declaration order. Legacy derives this set the same way in
+    # set_output_files (sushiApp.rb:322-333) — no app declares it by hand; a grep for
+    # `output_files` over all 17 allow-listed legacy apps returns zero hits.
+    #
+    # The project-relative -> scratch bridge is legacy's exactly (sushiApp.rb:614-615):
+    # the source is File.basename(value) because the job's cwd IS the scratch temp dir,
+    # and the destination is File.dirname(gstore_dir + value).
+    #
+    # Legacy computes the HEADER set once with @dataset blanked to {} in SAMPLE mode and
+    # the VALUES again per row. We use one per-row next_dataset for both: it yields the
+    # same headers for every allow-listed app, and it avoids legacy's blanking hazard
+    # (an app that indexes @dataset inside next_dataset raises on the blanked call).
+    def declared_output_copies
+      row = next_dataset
+      return [] unless row.respond_to?(:keys)
+
+      row.keys.filter_map do |header|
+        next unless header.to_s.tag?('File')
+
+        value = row[header].to_s
+        next if value.empty?
+
+        dest_dir = File.dirname(File.join(@gstore_dir, value))
+        unless dest_dir == @gstore_result_dir
+          # Either an absolute value (the pre-9663a8c result_dir bug) or an output
+          # declared inside a subdirectory, for which legacy's basename/dirname pair
+          # disagree. Neither occurs in the allow-listed apps; say so loudly if it starts.
+          Rails.logger.warn(
+            "#{@name}: declared output #{header.inspect} => #{value.inspect} resolves to " \
+            "#{dest_dir}, not the result dir #{@gstore_result_dir}. The source is looked " \
+            'up by basename in the scratch root, so this copy may not do what the app means.'
+          )
+        end
+        [File.basename(value), dest_dir]
+      end
+    end
+
     # lmod profile to source in job scripts and to query for module versions.
     def module_source
       @module_source ||= Rails.application.config.try(:module_source).to_s
