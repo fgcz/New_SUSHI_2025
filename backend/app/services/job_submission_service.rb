@@ -106,6 +106,12 @@ class JobSubmissionService
     @sushi_app.user = @user.login rescue @user.to_s
     @sushi_app.current_user = @user
     @sushi_app.project = "p#{@input_dataset.project.number}"
+    # Before the name is used: prepare_result_dir applies legacy's @name.gsub!(/\s/,'_')
+    # (sushiApp.rb:507), but the default output-dataset name is derived HERE, one line
+    # earlier, and it becomes the gStore result directory. Without this, an API submission
+    # that omits next_dataset_name would name the result dir "samtools mpileup_810_<ts>" —
+    # a path with a space, which g-req cannot transfer.
+    @sushi_app.normalize_name!
     @sushi_app.next_dataset_name = @next_dataset_name || "#{@sushi_app.name}_#{@dataset_id}"
     @sushi_app.next_dataset_comment = @next_dataset_comment
 

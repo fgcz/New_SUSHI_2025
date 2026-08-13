@@ -116,6 +116,43 @@ module SushiFabric
       @dataset_hash.first.keys.any? { |key| key.gsub(/\[.+\]/, '').strip == column_name }
     end
     
+    # LEGACY CONTRACT (sushiApp.rb:507): set_dir_paths runs @name.gsub!(/\s/,'_') BEFORE it
+    # derives any path from the app name, because those paths are emitted into the job script
+    # unquoted. Three of the 17 allow-listed legacy apps carry a space in @name —
+    # 'RNA BamStats', 'DNA BamStats', 'samtools mpileup' — and without this rule every one of
+    # them died on line 8 of its own script: `SCRATCH_DIR=/scratch/rna bamstats_..._temp$$`
+    # is not an assignment, it is the assignment `SCRATCH_DIR=/scratch/rna` prefixed to the
+    # command `bamstats_..._temp$$` (observed on fgcz-h-083, job 760:
+    # "line 8: bamstats_2026-08-13--09-05-03_temp582741: command not found"). The same space
+    # also splits the footer's `rm -rf` into TWO arguments relative to /scratch.
+    #
+    # The name reaches paths by three routes, which is why the rule belongs here and not at
+    # one call site: the scratch temp dir, @result_dir_base when no next_dataset_name was
+    # given (so the gStore result dir, param[['resultDir']] and every output [File] value
+    # would contain a space — g-req cannot transfer those at all), and the default output
+    # row name. Idempotent, so both the shim and JobSubmissionService can call it.
+    def normalize_name!
+      @name = @name.to_s.gsub(/\s/, '_')
+    end
+
+    # LEGACY CONTRACT (sushiApp.rb:548-552): the scratch temp dir is the run's OWN
+    # @result_dir_base with '_temp$$' appended, plus the row's Name in SAMPLE mode — not a
+    # separately invented name. The shim built "#{@name.downcase}_#{Time.now}_temp$$", which
+    # (a) re-derived from the raw app name after prepare_result_dir had sanitized it,
+    # (b) took a SECOND Time.now, so the temp dir carried a different timestamp than the
+    # result dir it belongs to, and (c) lost the sample, leaving a fan-out's leftover scratch
+    # dirs on the node unattributable to a run or a sample when a job died before cleanup.
+    # A Hash @dataset IS legacy's SAMPLE unit (JobSubmissionService assigns the cleaned row
+    # per sample); in DATASET mode @dataset is the full array, where a 'Name' lookup would
+    # raise. The @result_dir_base fallback covers callers that generate a script without
+    # prepare_result_dir (specs do).
+    def scratch_temp_dir_name
+      base = @result_dir_base ||
+             "#{@name}_#{@dataset_sushi_id}_#{Time.now.strftime('%Y-%m-%d--%H-%M-%S')}"
+      sample = @dataset['Name'] if @dataset.is_a?(Hash)
+      [base, sample, 'temp$$'].compact.reject { |part| part.to_s.empty? }.join('_')
+    end
+
     # Generate job script content
     def generate_job_script
       script = []
@@ -128,15 +165,17 @@ module SushiFabric
       
       # Stage setup
       script << "#### SET THE STAGE"
-      temp_dir_name = "#{@name.downcase}_#{Time.now.strftime('%Y-%m-%d--%H-%M-%S')}_temp$$"
-      script << "SCRATCH_DIR=#{@scratch_dir}/#{temp_dir_name}"
+      script << "SCRATCH_DIR=#{File.join(@scratch_dir, scratch_temp_dir_name)}"
       script << "GSTORE_DIR=#{@gstore_dir}"
       script << "INPUT_DATASET=#{@input_dataset_tsv_path}"
       script << "LAST_JOB=#{@last_job.to_s.upcase}"
       script << 'echo "Job runs on `hostname`"'
       script << 'echo "at $SCRATCH_DIR"'
-      script << 'mkdir $SCRATCH_DIR || exit 1'
-      script << 'cd $SCRATCH_DIR || exit 1'
+      # Quoted, where legacy (sushiApp.rb:593-594) is bare. The value is the same; this is
+      # the one deliberate deviation, and it exists because the expansion is the only place
+      # a dataset-supplied string (the SAMPLE row's Name) reaches a `rm -rf` argument list.
+      script << 'mkdir "$SCRATCH_DIR" || exit 1'
+      script << 'cd "$SCRATCH_DIR" || exit 1'
       
       # Load modules, pinned to the concrete versions lmod resolves right now
       if @modules && !@modules.empty? && !module_source.to_s.empty?
@@ -172,7 +211,7 @@ module SushiFabric
       script << "#### JOB IS DONE WE PUT THINGS IN PLACE AND CLEAN UP"
       script.concat(gstore_copy_lines)
       script << "cd #{@scratch_dir}"
-      script << "rm -rf #{temp_dir_name} || exit 1"
+      script << 'rm -rf "$SCRATCH_DIR" || exit 1'
       script << ""
       
       script.join("\n")
@@ -302,8 +341,11 @@ module SushiFabric
     
     # Prepare result directory paths (scratch and gstore)
     def prepare_result_dir
+      # Legacy's set_dir_paths sanitizes @name here, before deriving anything from it.
+      normalize_name!
+
       return if @result_dir
-      
+
       dataset = DataSet.find_by_id(@dataset_sushi_id) if @dataset_sushi_id
       next_dataset_name = @next_dataset_name || "#{@name}_result"
       timestamp = Time.now.strftime('%Y-%m-%d--%H-%M-%S')
