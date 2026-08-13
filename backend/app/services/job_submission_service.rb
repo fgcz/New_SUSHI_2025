@@ -502,7 +502,11 @@ class JobSubmissionService
       rows: rows,
       user: @user,
       child: false,
-      sushi_app_name: @app_name
+      # Legacy writes the app's CLASS name here (sushiApp.rb:1039 `self.class.name`), not the
+      # short name the REST API and LegacyAppLoader accept. Legacy's dataset filter matches
+      # this by regex and B-Fabric registration passes it as --sushi-app, so the short form
+      # would hide New SUSHI's datasets from the legacy UI and misreport the app to B-Fabric.
+      sushi_app_name: @sushi_app.class.name
     )
 
     @output_dataset = DataSet.find(@output_dataset_id)
@@ -556,7 +560,7 @@ class JobSubmissionService
       rows: rows.map { |row| headers.map { |header| row[header] } },
       user: @user,
       child: @sushi_app.grandchild ? true : !!@sushi_app.child,
-      sushi_app_name: @app_name
+      sushi_app_name: @sushi_app.class.name # same class name as the output dataset (see above)
     )
     Rails.logger.info("Created grandchild dataset: #{@grandchild_dataset_id} " \
                       "(#{rows.length} row(s), parent #{@output_dataset_id})")
