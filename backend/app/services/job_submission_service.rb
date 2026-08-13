@@ -31,6 +31,11 @@ class JobSubmissionService
     # BEFORE resolve_and_validate_params, not after.
     @sushi_app.preprocess
 
+    # Legacy's other pre-flight gate, and it must run AFTER preprocess for the same reason
+    # the params gate does: preprocess is where an app appends to @required_columns (FastqcApp
+    # adds 'Read2' for a paired run).
+    return false unless validate_required_columns
+
     # Resolve raw form-shaped defaults and enforce required params BEFORE anything with a
     # side effect (job scripts, gstore copy, DB rows). See the method comment.
     return false unless resolve_and_validate_params
@@ -49,12 +54,21 @@ class JobSubmissionService
     # and downstream tooling read it from there.
     create_next_dataset_tsv(@job_units.map { |u| u[:next_dataset] })
 
+    # grandchild_dataset.tsv, written next to the other three so it is picked up by the same
+    # copy below. Must come after build_job_units: the app derives its grandchild rows from the
+    # samples it actually processed.
+    @grandchild_tsv = @sushi_app.write_grandchild_dataset_tsv
+
     # Copy scratch files to gstore (input_dataset.tsv, parameters.tsv, scripts)
     # This must happen BEFORE job execution so the job can access these files
     return false unless copy_scratch_to_gstore
 
     # Create ONE output dataset holding every unit's next_dataset row
     return false unless create_output_dataset(@job_units.map { |u| u[:next_dataset] })
+
+    # And the grandchild dataset, if the app declared one — a child of the output dataset, so
+    # it needs the output dataset's id.
+    create_grandchild_datasets
 
     # Save one job record per unit (all pointing at the shared output dataset)
     return false unless create_job_records(@job_units)
@@ -137,6 +151,37 @@ class JobSubmissionService
     normalized_params.each do |key, value|
       @sushi_app.params[key] = value
     end
+  end
+
+  # The dataset-shape gate. Legacy enforces the app's @required_columns twice — in
+  # SushiApp#test_run before a script is written, and in the UI, where an app whose required
+  # columns the dataset does not satisfy is not offered at all
+  # (SushiApplication#required_columns_satisfied_by?). The API had NEITHER, so a mismatched
+  # dataset was accepted, written to the DB, sbatched, and only failed inside ezRun. Measured
+  # 2026-08-13: Fastqc10x and FastqScreen10x need RawDataDir to be a `.tar` and died 16 s into
+  # the job with `all(grepl("\\.tar$", sampleDirs)) is not TRUE`, having already created an
+  # output dataset row and a gStore result directory that nothing will ever fill.
+  #
+  # The column check cannot express "must be a tar", so it would not have caught that exact
+  # case — but the class of error is the same one, and a submitter reading "your dataset has no
+  # RawDataDir column" gets an answer in a second instead of after a cluster round-trip.
+  def validate_required_columns
+    report = @sushi_app.required_columns_report
+    return true if report[:satisfied]
+
+    present = report[:present].reject(&:empty?)
+    detail =
+      if report[:mode] == :alternatives
+        sets = report[:options].map { |option| "[#{option.join(', ')}]" }.join(' or ')
+        "#{@app_name} needs one of these column sets: #{sets}"
+      else
+        "#{@app_name} needs column(s) #{report[:missing].join(', ')}"
+      end
+
+    @errors << "#{detail}. Input dataset #{@dataset_id} has: #{present.join(', ')}."
+    Rails.logger.warn("Rejected #{@app_name} submission on dataset #{@dataset_id}: " \
+                      "required columns not satisfied (#{report[:mode]})")
+    false
   end
 
   # Legacy-parity gate for the API submit path.
@@ -309,6 +354,11 @@ class JobSubmissionService
     # entirely, even though they reached parameters.tsv. run_RApp calls next_dataset
     # again for the `output` block, exactly as legacy also calls it twice.
     next_dataset = @sushi_app.next_dataset
+    # Legacy's sample_mode/dataset_mode/batch_mode each append the unit's row here
+    # (sushiApp.rb:890, :914, :925). It is not bookkeeping: grandchild_datasets reads
+    # @result_dataset to learn which samples were actually processed, and falls back to the
+    # single @dataset row — which, after a fan-out loop, is only the LAST sample.
+    @sushi_app.result_dataset << next_dataset
     script_content = @sushi_app.generate_job_script
 
     timestamp = Time.now.strftime('%Y%m%d%H%M%S%L')
@@ -466,6 +516,54 @@ class JobSubmissionService
   rescue StandardError => e
     @errors << "Failed to create output dataset: #{e.message}"
     Rails.logger.error("Output dataset creation error: #{e.message}\n#{e.backtrace.join("\n")}")
+    false
+  end
+
+  # Port of legacy save_grandchild_datasets_to_database (sushiApp.rb:935-985).
+  #
+  # A grandchild is an EXTRA dataset the run produces, hanging one level below the output
+  # dataset: ParentID is the output dataset, not the input. Legacy makes it ONE dataset holding
+  # every grandchild row (its tsv loop appends a single path), names it from
+  # params['grandchildName'], else the first row's Name, else "<app>_grandchild_1", and forces
+  # the child flag when @grandchild is set — which it is by default.
+  #
+  # New SUSHI simply never did this, so any app declaring grandchild_datasets silently lost
+  # them: the rows were neither persisted nor copied to gStore, which is also why the footer
+  # had nothing to copy (noted as a deliberate gap when task #6 landed). Closing it matters for
+  # downstream chaining — a grandchild is what a next app consumes. Of the allow-listed apps
+  # only a MULTIPLEXED CellRangerMulti run produces one today.
+  #
+  # Never fails the submission: the jobs and the output dataset are already committed by this
+  # point, so a grandchild problem is reported and logged, not raised.
+  def create_grandchild_datasets
+    return true if @grandchild_tsv.nil?
+
+    rows = @grandchild_tsv[:rows]
+    headers = @grandchild_tsv[:headers]
+    name = [@sushi_app.params['grandchildName'], rows.first['Name'],
+            "#{@sushi_app.name}_grandchild_1"].find { |candidate| candidate.to_s.strip.present? }
+
+    data_set_arr = [
+      'DataSetName', name.to_s.strip,
+      'ProjectNumber', @input_dataset.project.number.to_s,
+      'ParentID', @output_dataset_id.to_s,
+      'Comment', 'autogenerated grandchild'
+    ]
+
+    @grandchild_dataset_id = DataSet.save_dataset_to_database(
+      data_set_arr: data_set_arr,
+      headers: headers,
+      rows: rows.map { |row| headers.map { |header| row[header] } },
+      user: @user,
+      child: @sushi_app.grandchild ? true : !!@sushi_app.child,
+      sushi_app_name: @app_name
+    )
+    Rails.logger.info("Created grandchild dataset: #{@grandchild_dataset_id} " \
+                      "(#{rows.length} row(s), parent #{@output_dataset_id})")
+    true
+  rescue StandardError => e
+    @errors << "Output dataset was created but the grandchild dataset failed: #{e.message}"
+    Rails.logger.error("Grandchild dataset creation error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
     false
   end
 

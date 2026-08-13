@@ -9,13 +9,16 @@ RSpec.describe JobSubmissionService do
   let(:fake_app_class) do
     Class.new do
       attr_accessor :dataset, :last_job
-      attr_reader :params, :dataset_hash, :job_script_dir
+      # result_dataset is part of that surface: build_job_units appends each unit's row to it,
+      # as legacy's sample_mode/dataset_mode do, because grandchild_datasets reads it.
+      attr_reader :params, :dataset_hash, :job_script_dir, :result_dataset
 
       def initialize(mode:, rows:, dir:)
         @params = { 'process_mode' => mode }
         @dataset_hash = rows
         @job_script_dir = dir
         @dataset = rows # set_input_dataset leaves @dataset as the full array
+        @result_dataset = []
       end
 
       def generate_job_script
@@ -76,13 +79,14 @@ RSpec.describe JobSubmissionService do
     it 'calls next_dataset before generating the script, so params it sets reach the script' do
       late_param_app = Class.new do
         attr_accessor :dataset, :last_job
-        attr_reader :params, :dataset_hash, :job_script_dir
+        attr_reader :params, :dataset_hash, :job_script_dir, :result_dataset
 
         def initialize(dir)
           @params = { 'process_mode' => 'DATASET' }
           @dataset_hash = [{ 'Name' => 's1' }]
           @dataset = @dataset_hash
           @job_script_dir = dir
+          @result_dataset = []
         end
 
         def next_dataset

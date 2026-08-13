@@ -2,6 +2,7 @@
 # Provides classes and methods to load and run SUSHI App classes
 # Compatible with old SUSHI system
 
+require 'csv' # grandchild_dataset.tsv, as legacy writes it
 require_relative 'global_variables'
 
 module SushiFabric
@@ -23,7 +24,10 @@ module SushiFabric
                   :dataset_tsv_file, :parameterset_tsv_file,
                   :scratch_result_dir, :scratch_script_dir,
                   :gstore_result_dir, :gstore_script_dir, :gstore_project_dir,
-                  :result_dir_base
+                  :result_dir_base,
+                  # Legacy sushiApp.rb:215/237: @grandchild forces the child flag on a
+                  # grandchild dataset, @child carries it for a normal one.
+                  :grandchild, :child
     attr_reader :params
     
     def initialize
@@ -56,6 +60,8 @@ module SushiFabric
       @last_job = true
       @input_dataset_tsv_path = nil
       @result_dataset = []
+      @grandchild = true # legacy default (sushiApp.rb:237)
+      @child = nil
     end
     
     # Set input dataset from database
@@ -114,6 +120,60 @@ module SushiFabric
     def dataset_has_column?(column_name)
       return false unless @dataset_hash && @dataset_hash.any?
       @dataset_hash.first.keys.any? { |key| key.gsub(/\[.+\]/, '').strip == column_name }
+    end
+
+    # Port of legacy SushiApp#check_required_columns (sushiApp.rb:334-350), which the API path
+    # had no equivalent of at all. Legacy enforces this twice: in #test_run before a job is
+    # written, and in the UI, where SushiApplication#required_columns_satisfied_by? decides
+    # whether the app is even offered for a dataset. Without it a submission whose dataset
+    # lacks a required column is accepted, reaches SLURM, and dies inside ezRun — measured
+    # 2026-08-13 on Fastqc10x and FastqScreen10x, which need a .tar RawDataDir and failed 16 s
+    # into the job with `all(grepl("\\.tar$", sampleDirs)) is not TRUE`.
+    #
+    # Returns a report rather than legacy's bare boolean, because the caller has to tell the
+    # submitter WHICH column is missing — legacy can be terse, it has the whole form in front
+    # of the user.
+    #
+    # Two shapes, as legacy: a flat list is AND (every column required), a list of lists is
+    # ALTERNATIVES (CellRangerMultiApp is the only allow-listed app using it:
+    # [['Name','RawDataDir','Species'], ['Name','Read1','Read2','Species']]).
+    #
+    # DELIBERATE DEVIATION, the only one: legacy counts satisfied alternatives and demands
+    # `satisfied_options == 1`, so a dataset carrying BOTH alternatives is rejected. We accept
+    # it (>= 1). Reason, measured: ds 819 declares RawDataDir *and* Read1/Read2 and its
+    # CellRangerMulti run completed correctly, because ezRun resolves the ambiguity itself and
+    # deterministically prefers Read1 (app-cellRangerMulti.R:201-208). Legacy's `== 1` reads as
+    # a typo for "at least one"; rejecting a superset serves no purpose this gate exists for —
+    # it catches MISSING columns, and a superset is not a missing column. Flip the comparison
+    # in satisfied_options if strict legacy parity is ever wanted.
+    def required_columns_report
+      present = Array(@dataset_hash).flat_map { |row| row.respond_to?(:keys) ? row.keys : [] }
+                                    .uniq.map { |col| normalize_column_name(col) }
+      required = Array(@required_columns)
+      return { satisfied: true, mode: :none, present: present } if required.empty?
+
+      if required.all? { |entry| entry.is_a?(Array) }
+        options = required.map { |option| Array(option).map { |req| normalize_column_name(req) } }
+        satisfied = options.select { |option| (option - present).empty? }
+        { satisfied: satisfied.any?, mode: :alternatives, options: options,
+          satisfied_options: satisfied, present: present }
+      else
+        missing = required.map { |req| normalize_column_name(req) } - present
+        { satisfied: missing.empty?, mode: :all, missing: missing, present: present }
+      end
+    end
+
+    # Legacy's boolean, kept under legacy's name for anything that only needs the verdict.
+    def check_required_columns
+      required_columns_report[:satisfied]
+    end
+
+    # Legacy strips the tag from the dataset side in both branches and from the required side
+    # only in the alternatives branch (sushiApp.rb:344 vs :348). Apps author required_columns
+    # untagged, so normalizing both sides changes nothing for any allow-listed app and removes
+    # the inconsistency.
+    def normalize_column_name(name)
+      name.to_s.gsub(/\[.+\]/, '').strip
     end
     
     # LEGACY CONTRACT (sushiApp.rb:507): set_dir_paths runs @name.gsub!(/\s/,'_') BEFORE it
@@ -210,6 +270,7 @@ module SushiFabric
       script << ""
       script << "#### JOB IS DONE WE PUT THINGS IN PLACE AND CLEAN UP"
       script.concat(gstore_copy_lines)
+      script.concat(grandchild_copy_lines)
       script << "cd #{@scratch_dir}"
       script << 'rm -rf "$SCRATCH_DIR" || exit 1'
       script << ""
@@ -260,6 +321,58 @@ module SushiFabric
       else
         copies.map { |src, dest| SushiConfigHelper.copy_command(src, dest) }
       end
+    end
+
+    # Legacy's grandchild hook (sushiApp.rb:656-660): apps override it to declare an EXTRA
+    # dataset the job will produce alongside next_dataset, one level deeper in the tree.
+    # Default empty, as legacy.
+    #
+    # It is predicted at SUBMIT time from the app's own Ruby, exactly like next_dataset — it is
+    # NOT read back from the job's output. Of the 17 allow-listed apps only CellRangerMultiApp
+    # defines it, and only when TenXLibrary includes 'Multiplexing' and the order's
+    # o<id>_metaData directory exists, so a plain GEX run legitimately produces none.
+    def grandchild_datasets
+      []
+    end
+
+    # Legacy job_footer's grandchild half (sushiApp.rb:632-641). Every [File]-tagged value in
+    # every grandchild row gets its OWN copy command — legacy does not batch these even when
+    # the destinations coincide, and this is the un-batched loop it uses. Kept un-batched so a
+    # grandchild whose files land in per-sample subdirectories still copies correctly.
+    def grandchild_copy_lines
+      Array(grandchild_datasets).flat_map do |row|
+        next [] unless row.respond_to?(:keys)
+
+        row.keys.filter_map do |header|
+          next unless header.to_s.tag?('File')
+
+          value = row[header].to_s
+          next if value.empty?
+
+          SushiConfigHelper.copy_command(File.basename(value),
+                                         File.dirname(File.join(@gstore_dir, value)))
+        end
+      end
+    end
+
+    # Legacy save_grandchild_datasets_as_tsv (sushiApp.rb:759-793): ONE grandchild_dataset.tsv
+    # in the result dir holding every grandchild row, with the union of all rows' keys as the
+    # header and blanks written as nil. Lands in gStore because the whole scratch result dir is
+    # copied there at submit. Returns the rows it wrote (nil when there are none) so the caller
+    # does not have to call the app's hook twice.
+    def write_grandchild_dataset_tsv
+      rows = Array(grandchild_datasets).select { |row| row.respond_to?(:keys) }
+      return nil if rows.empty? || @scratch_result_dir.nil?
+
+      headers = rows.flat_map(&:keys).uniq
+      path = File.join(@scratch_result_dir, 'grandchild_dataset.tsv')
+      CSV.open(path, 'w', col_sep: "\t") do |out|
+        out << headers
+        rows.each do |row|
+          out << headers.map { |header| row[header].to_s.empty? ? nil : row[header] }
+        end
+      end
+      { path: path, headers: headers, rows: rows }
     end
 
     # [[source_basename, destination_dir], ...] for every next_dataset header tagged
