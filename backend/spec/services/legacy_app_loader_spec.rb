@@ -45,6 +45,29 @@ RSpec.describe LegacyAppLoader do
     end
   end
 
+  # The legacy dir holds families of same-prefix apps: CellRangerApp.rb sits next to
+  # CellRangerARCApp.rb, CellRangerATACApp.rb and CellRangerAggrApp.rb. Allow-listing
+  # 'CellRanger' must expose exactly one of them. FooBarApp / FooBarExtraApp reproduce
+  # that shape, so a regression to prefix/substring matching fails here instead of
+  # silently exposing unverified apps through the API.
+  describe 'allow-list matching is exact, not by prefix' do
+    it 'does not expose a longer app name that starts with an allow-listed entry' do
+      # allow-list is ['FooBar']; FooBarExtraApp.rb exists in the same fixture dir.
+      expect(File.exist?(File.join(fixture_dir, 'FooBarExtraApp.rb'))).to be(true)
+      expect(described_class.available?('FooBarExtra')).to be(false)
+      expect(described_class.load('FooBarExtra')).to be_nil
+      expect(described_class.list_apps).not_to include('FooBarExtra')
+    end
+
+    it 'does not expose a shorter app name that an allow-listed entry starts with' do
+      Rails.application.config.legacy_apps_allowlist = ['FooBarExtra']
+      expect(described_class.available?('FooBarExtra')).to be(true)
+      expect(described_class.available?('FooBar')).to be(false)
+      expect(described_class.load('FooBar')).to be_nil
+      expect(described_class.list_apps).not_to include('FooBar')
+    end
+  end
+
   describe '.load' do
     it 'loads an allow-listed legacy app onto the backend shim' do
       klass = described_class.load('FooBar')

@@ -64,11 +64,18 @@ module Backend
     # Verified to load & generate job scripts headless on the backend shim (Level-1).
     # DATASET: FastqScreen, DESeq2, EdgeR, CountQC, Fastqc10x, FastqScreen10x,
     #          RnaBamStats, Mpileup. SAMPLE fan-out: STAR, FeatureCounts, CellRangerMulti,
-    #          Kallisto, Bowtie2, BWA, ScSeurat, DnaBamStats.
+    #          Kallisto, Bowtie2, BWA, ScSeurat, DnaBamStats, CellRanger.
+    #
+    # CellRanger (class CellRangerApp, @name 'CellRangerCount') is the single most-used
+    # legacy app not yet exposed -- 1468 production datasets all-time, 255 in 2025+2026,
+    # rank 1 of the uncovered apps (082 prod DB, measured 2026-08-13). It is also legacy's
+    # CountMatrix producer for the non-multiplexed 10x path, i.e. ScSeurat's plain-GEX
+    # input, which until now had to be hand-registered.
     config.legacy_apps_allowlist =
       ENV.fetch('LEGACY_APPS_ALLOWLIST',
                 'FastqScreen,DESeq2,EdgeR,CountQC,Fastqc10x,FastqScreen10x,RnaBamStats,Mpileup,' \
-                'STAR,FeatureCounts,CellRangerMulti,Kallisto,Bowtie2,BWA,ScSeurat,DnaBamStats')
+                'STAR,FeatureCounts,CellRangerMulti,Kallisto,Bowtie2,BWA,ScSeurat,DnaBamStats,' \
+                'CellRanger')
          .split(',').map(&:strip).reject(&:empty?)
   end
 end
