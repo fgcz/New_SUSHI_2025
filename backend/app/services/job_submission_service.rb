@@ -511,8 +511,9 @@ class JobSubmissionService
 
     @output_dataset = DataSet.find(@output_dataset_id)
     
-    # Save parameters in the output dataset (normalize and skip validation)
-    @output_dataset.job_parameters = normalize_parameters(@parameters)
+    # Save parameters in the output dataset (normalize and skip validation).
+    # legacy_output_params, not @parameters: the record must say what the run USED.
+    @output_dataset.job_parameters = normalize_parameters(legacy_output_params)
     @output_dataset.save(validate: false)
 
     Rails.logger.info("Created output dataset: #{@output_dataset_id}")
@@ -569,6 +570,28 @@ class JobSubmissionService
     @errors << "Output dataset was created but the grandchild dataset failed: #{e.message}"
     Rails.logger.error("Grandchild dataset creation error: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
     false
+  end
+
+  # Legacy's @output_params (sushiApp.rb:354-356): the app's fully-resolved parameter set
+  # plus the app class name under 'sushi_app'. Legacy persists exactly this on the output
+  # dataset (sushiApp.rb:931), so a dataset records what the run actually used — defaults
+  # included — rather than only the arguments the caller happened to pass.
+  #
+  # By this point resolve_and_validate_params has already written the resolved values back
+  # into @sushi_app.params, so these are scalars; the Array guard is a belt-and-braces
+  # fallback matching create_parameters_tsv.
+  #
+  # Deliberately NOT the same content as parameters.tsv: that file additionally carries
+  # dataRoot and resultDir for the job_manager, and legacy writes neither of them into
+  # job_parameters.
+  def legacy_output_params
+    # .to_h first: the shim's params object exposes #each/#keys but does not include
+    # Enumerable, so #each_with_object is not available on it.
+    resolved = @sushi_app.params.to_h.each_with_object({}) do |(key, value), acc|
+      acc[key] = value.is_a?(Array) ? value.first : value
+    end
+    resolved['sushi_app'] = @sushi_app.class.name
+    resolved
   end
 
   # Recursively convert ActionController::Parameters/HashWithIndifferentAccess
