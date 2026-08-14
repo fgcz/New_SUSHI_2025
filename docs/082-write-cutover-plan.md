@@ -95,20 +95,39 @@ plainly that write authority "cannot be granted to it through configuration".
   cannot be reversed cleanly once legacy has been restarted against the altered table.
 - **(B) A reviewed code change letting the ENV credential carry write authority** — e.g.
   `SUSHI_ENV_TOKEN_CAPABILITIES=read,write`, defaulting to read, with the same fail-closed
-  parsing as the existing three variables. **Recommended.** It keeps `api_tokens`
-  byte-for-byte untouched, keeps the credential out of the production DB entirely, is
-  reversible by restarting without the variable, and it is exactly the escape hatch the
-  code anticipates ("it would take a deliberate, reviewed code change" —
-  `env_api_token.rb:32`). It must ship with specs and a multi-LLM review, like every other
-  authority change in this backend.
+  parsing as the existing three variables. It keeps `api_tokens` byte-for-byte untouched,
+  keeps the credential out of the production DB entirely, is reversible by restarting
+  without the variable, and it is exactly the escape hatch the code anticipates ("it would
+  take a deliberate, reviewed code change" — `env_api_token.rb:32`).
+  **Superseded by (B') — do not implement this shape.** Reading the code showed the flaw:
+  the credential it would promote is the one MCP `prod-082` presents, i.e. the credential
+  an AI agent reads production with. For as long as the cutover window stayed open,
+  routine agent traffic could create production rows, and a human's deliberate cutover run
+  would be indistinguishable from it afterwards.
+- **(B') CHOSEN AND IMPLEMENTED 2026-08-14 — a SEPARATE ENV-provisioned write
+  credential.** `SUSHI_ENV_TOKEN_WRITE_{SHA256,SCOPE,NAME}` alongside the existing read
+  ones. The read credential is **unchanged and still read-only by construction**; the
+  write credential is a different bearer value, with its own project scope and its own
+  name, present in the environment only during a deliberate cutover window. Write
+  authority travels on a non-database channel (`ApiToken#grant_env_write!`) because
+  `capabilities` cannot be assigned where the column does not exist. The two credentials
+  must differ in BOTH digest and name — sharing either is a hard boot-time configuration
+  error, checked on the RAW environment values so a partly-invalid configuration cannot
+  slip past it. Provision with `rake api_token:env_token WRITE=1 NAME= SCOPE=`.
+  This makes "the MCP key cannot write production" permanently true, and gives production
+  rows a distinct `apitoken:<name>` attribution — which is the only audit trail a
+  credential with no database row can have.
 - **(C) The `machine` principal** — `can_write?` returns true for it unconditionally
   (`api_token.rb:213`). **Not a path**: `machine` is infra-only; `/v1` rejects it and it is
   scoped to nothing, so it cannot submit a user job. Listing it here only so it is not
   rediscovered as a shortcut.
 
-Option (B) has a consequence worth stating out loud: it decouples "may write" from the
-production DB, so the audit trail for who was allowed to write lives in the launch script
-and this document, not in a table. That is a deliberate trade for not touching `api_tokens`.
+The (B)/(B') family has a consequence worth stating out loud: it decouples "may write" from
+the production DB, so the record of who was *allowed* to write lives in the launch script and
+this document, not in a table. That is a deliberate trade for not touching `api_tokens`.
+(B') narrows it — because the write credential has its own name, the rows it creates are
+still attributable to it, so *what was written by whom* remains answerable from the data even
+though *who was permitted* is not.
 
 ## 4. Reversibility — authority vs effects
 
@@ -129,7 +148,7 @@ around being able to undo it.
 | P1 | Confirm the revision actually deployed on 082 | not done (read declined) |
 | P2 | rsync `main` (≥ `0c29fd1`) to 082 — **mandatory**, see §2 | not done |
 | P3 | Confirm `backend/.secret_key_base_082` is pinned AND wired into the 082 launch script | fixed 2026-08-04; re-verify |
-| P4 | Decide and implement the write-authority route — **(B) recommended** | **decision needed** |
+| P4 | Decide and implement the write-authority route | **DONE 2026-08-14** — route **(B')** chosen by the user and implemented; see §6 Phase 2 |
 | P5 | Confirm the PRODUCTION job_manager daemon processes a New-SUSHI-created `jobs` row identically to a legacy one | **not verifiable on 083** — 083's daemon is doubled and is masaomi's, 082's is trxcopy's. Needs the daemon owner. |
 | P6 | Choose the project scope for the first write | **decision needed** — p35611 is the natural candidate: the ENV credential is already scoped to it and it holds 18 real datasets on 082 |
 | P7 | Choose the first app and input dataset | **decision needed** — recommend the cheapest allow-listed app on a small input |
@@ -158,15 +177,32 @@ Each phase ends in an explicit go/no-go. Phases 0-3 write **nothing**.
 
 *Go/no-go: reads are correct on the new code and nothing was written.*
 
-### Phase 2 — write authority, implemented and reviewed on 083 (no 082 change)
-8. Implement route (B) on a branch: `SUSHI_ENV_TOKEN_CAPABILITIES`, fail-closed, defaulting
-   to read-only; red-first specs including the negative (absent variable ⇒ still read-only);
-   mutation-check each enforcement site separately.
-9. Multi-LLM review of the diff — this is an authority change.
-10. Verify on 083 that the variable alone flips nothing without `SUSHI_WRITE_POLICY`, and
-    vice versa: **both** gates must be open before a write succeeds.
+### Phase 2 — write authority, implemented and reviewed on 083 (no 082 change) — **DONE 2026-08-14**
+8. ~~Implement the route~~ **DONE** — (B'), a separate write credential. Red-first specs,
+   fail-closed on every partial/malformed/colliding configuration, each enforcement site
+   mutation-checked on its own (13 mutations across two rounds, all detected).
+9. ~~Multi-LLM review~~ **DONE, two rounds.** Round 1 = **REVISE**, and it earned its keep:
+   two reviewers independently found a **P1** — the read/write collision checks ran only
+   when BOTH credentials parsed, so an operator who typo'd the read scope while reusing the
+   read digest as the write digest would have turned the credential an agent already holds
+   into a writer. One typo in a launch script from exactly what (B') exists to prevent.
+   Reproduced red, then fixed by comparing the RAW environment values unconditionally.
+   Also fixed: a scope list silently dropped a zero or an empty field (`0,1` → `[1]`,
+   `1,,2` → `[1,2]`) instead of being refused — pre-existing, in the credential parser
+   deployed on 082 today; and the write grant now refuses a **persisted** record, so a row
+   from `api_tokens` cannot be promoted in-process by any caller. Round 2 = **APPROVE**
+   (2/3), all round-1 P1/P2 confirmed resolved.
+10. ~~Verify both gates~~ **DONE.** Request specs prove the two gates are independent and
+    attribute each denial to its own gate; gate passage is asserted positively (a 422 from
+    downstream of both) rather than as "not a denial", which any other 403 would satisfy.
+    Also verified on the REAL boot path via `rails runner` (not only RSpec): read token
+    `can_write=false`, write token `can_write=true` **while its `effective_capabilities`
+    are still `["read"]`** — precisely the property needed where the column is absent — and
+    the typo scenario disables both credentials and denies the read bearer outright.
 
-*Go/no-go: review clean, suite green, both-gates behaviour proven on 083.*
+Suite 532 → **577 / 0**. Nothing was deployed anywhere; 082 untouched.
+
+*Go/no-go: MET.*
 
 ### Phase 3 — dry run on 082 (no DB write)
 11. Deploy the reviewed code to 082, still `SUSHI_READ_ONLY=1`, still no write capability.
@@ -212,16 +248,20 @@ Stop immediately, restart 082 read-only, and report if any of these appear:
 - Memory pressure on 082 — it is a 15 GB no-swap submit node with no swap and no sudo, so
   an OOM cannot be diagnosed by us.
 
-## 8. Decisions needed before Phase 2 starts
+## 8. Decisions still needed
 
-1. **Write-authority route** — (A) production schema change, or **(B) ENV capability**
-   (recommended), or something else.
+1. ~~**Write-authority route**~~ — **ANSWERED 2026-08-14: (B')**, a separate write
+   credential. Implemented and reviewed; see §6 Phase 2.
 2. **Project scope** for the first write — p35611, or another.
 3. **First app + input dataset**, chosen for cheapness rather than for interest.
 4. **Who is told beforehand** — at minimum the job_manager/gStore owners, since the first
    New SUSHI rows will appear in a system they operate.
 5. Whether Phase 4 happens at all this month, or whether Phases 0-3 are the deliverable and
    the irreversible step waits.
+
+None of 2-5 blocks Phase 3, which writes nothing. The next step that touches 082 at all is
+Phase 0/1 (read its deployed revision, then rsync current code), and that needs a go-ahead
+because it enters production.
 
 ## 9. Out of scope
 

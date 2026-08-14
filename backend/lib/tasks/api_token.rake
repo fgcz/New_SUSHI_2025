@@ -92,7 +92,7 @@ namespace :api_token do
   #
   # The raw token is printed once and stored nowhere; only its digest goes into
   # the node's launch script.
-  desc "Generate an ENV-provisioned API token credential (NAME=, SCOPE=comma,projects) — no DB access"
+  desc "Generate an ENV-provisioned API token credential (NAME=, SCOPE=comma,projects, WRITE=1 for the separate write credential) — no DB access"
   task :env_token do
     require "digest"
     require "securerandom"
@@ -112,17 +112,36 @@ namespace :api_token do
       abort("SCOPE must contain only positive integers")
     end
 
+    # WRITE=1 provisions the SEPARATE write credential instead of the read one.
+    # Two credentials rather than one flag: see the header of lib/env_api_token.rb.
+    write = %w[1 true yes].include?(ENV["WRITE"].to_s.strip.downcase)
+
     raw = SecureRandom.urlsafe_base64(32)
 
     puts "RAW TOKEN (shown once, stored nowhere — this is the bearer value clients send):"
     puts raw
     puts
     puts "Add to the node's launch script. The server keeps only the DIGEST:"
-    puts "export SUSHI_ENV_TOKEN_SHA256=#{EnvApiToken.digest_of(raw)}"
-    puts "export SUSHI_ENV_TOKEN_SCOPE=#{scope.join(',')}"
-    puts "export SUSHI_ENV_TOKEN_NAME=#{name}"
-    puts
-    puts "The credential is READ-ONLY by construction (static principal, no capabilities),"
-    puts "and is rejected by the /internal machine bridge."
+    if write
+      puts "export #{EnvApiToken::WRITE_DIGEST_VAR}=#{EnvApiToken.digest_of(raw)}"
+      puts "export #{EnvApiToken::WRITE_SCOPE_VAR}=#{scope.join(',')}"
+      puts "export #{EnvApiToken::WRITE_NAME_VAR}=#{name}"
+      puts
+      puts "This is the WRITE credential. It may CREATE rows (job submit, dataset import)."
+      puts "It must differ from the read credential in BOTH digest and NAME, or the server"
+      puts "refuses it at boot. Two further facts worth keeping in mind:"
+      puts "  - the Rack write policy is a SEPARATE gate: SUSHI_WRITE_POLICY must also"
+      puts "    permit the route, so this alone does not make the node writable;"
+      puts "  - the name is the only audit trail — production rows will be attributed to"
+      puts "    apitoken:#{name}."
+    else
+      puts "export #{EnvApiToken::DIGEST_VAR}=#{EnvApiToken.digest_of(raw)}"
+      puts "export #{EnvApiToken::SCOPE_VAR}=#{scope.join(',')}"
+      puts "export #{EnvApiToken::NAME_VAR}=#{name}"
+      puts
+      puts "The credential is READ-ONLY by construction (static principal, no capabilities),"
+      puts "and is rejected by the /internal machine bridge. For a credential that may"
+      puts "write, provision a separate one with WRITE=1 — never reuse this bearer value."
+    end
   end
 end

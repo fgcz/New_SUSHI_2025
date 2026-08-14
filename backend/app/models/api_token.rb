@@ -37,6 +37,45 @@ class ApiToken < ActiveRecord::Base
   CAPABILITIES = %w[read write].freeze
   DEFAULT_CAPABILITIES = %w[read].freeze
 
+  # Write authority for an ENV-provisioned credential, which has NO row to record
+  # capabilities in — and, on the production node, no `capabilities` column either
+  # (assigning it there raises ActiveModel::UnknownAttributeError, and
+  # #effective_capabilities fail-closes to read-only regardless). So the WRITE
+  # credential's authority travels on this non-database channel instead.
+  #
+  # Granted ONLY by EnvApiToken#build, for the separate write credential
+  # (SUSHI_ENV_TOKEN_WRITE_*).
+  #
+  # Deliberately a no-argument bang method rather than an `attr_writer` (multi-LLM
+  # review round 1, P3): there is no value to get wrong, so a truthy-but-not-true
+  # assignment cannot promote a token, and — because it is not a writer and not a
+  # database attribute — an attributes hash carrying `env_write_granted: true`
+  # RAISES ActiveModel::UnknownAttributeError instead of quietly doing nothing.
+  # Fail-closed default: unset ⇒ read-only.
+  #
+  # REFUSES a persisted record (review round 2, P3, cited by two reviewers). The
+  # method has to stay public for EnvApiToken to call it, so "only EnvApiToken
+  # grants this" was a claim about call sites rather than about the code. Blocking
+  # persisted records makes the dangerous half of that claim structural instead:
+  # a row loaded from `api_tokens` — where authority belongs to `capabilities`
+  # alone — can never be promoted through this channel by any in-process caller.
+  # Private + `send` was the alternative and would only have added obscurity while
+  # leaving the DB case reachable.
+  def grant_env_write!
+    if persisted?
+      raise ArgumentError,
+            "env write authority is only for the ENV-provisioned credential, which " \
+            "is never saved; a persisted ApiToken's write authority comes from its " \
+            "capabilities column"
+    end
+
+    @env_write_granted = true
+  end
+
+  def env_write_granted?
+    @env_write_granted == true
+  end
+
   # Raised when the live project-membership resolver cannot answer (transport
   # failure). The controller maps this to 503, distinct from an authorization
   # denial (403). Fail-closed: the request never proceeds.
@@ -211,6 +250,10 @@ class ApiToken < ActiveRecord::Base
   # exempts, and it has no project scope to gate on.
   def can_write?
     return true if machine?
+    # The ENV-provisioned WRITE credential: no row, and on the production node no
+    # `capabilities` column to read, so its authority cannot come from
+    # #effective_capabilities. See EnvApiToken.
+    return true if env_write_granted?
 
     effective_capabilities.include?("write")
   end
@@ -222,14 +265,19 @@ class ApiToken < ActiveRecord::Base
   # holder at `grant_write ID=` would send them looking for a record that does not
   # exist — on the production node, where nothing may be written to `api_tokens`
   # anyway. Say what is actually true instead.
+  #
+  # Only the READ credential can reach this branch: the write credential's
+  # #can_write? is true, so it is never denied here.
   def write_denied_message
     if persisted?
       "This token is read-only. Grant write authority explicitly " \
       "(rake api_token:grant_write ID=#{id}) or use a token that has it."
     else
-      "This token is read-only. It is provisioned from the environment " \
-      "(#{EnvApiToken::NAME_VAR}) and is read-only by construction; write " \
-      "authority cannot be granted to it through configuration."
+      "This token is read-only. It is the ENV-provisioned READ credential " \
+      "(#{EnvApiToken::NAME_VAR}) and is read-only by construction. Write " \
+      "authority belongs to a SEPARATE credential " \
+      "(#{EnvApiToken::WRITE_DIGEST_VAR}), which is a different bearer value — " \
+      "this one cannot be promoted."
     end
   end
 

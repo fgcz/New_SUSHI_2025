@@ -64,6 +64,19 @@ RSpec.describe EnvApiToken do
       end
     end
 
+    # The scope parser is shared with the write credential, but the READ credential
+    # is the one actually deployed on the production node, so its strictness is
+    # pinned here too rather than by proxy (multi-LLM review round 2, P3).
+    # A list is parsed strictly or refused: no field is silently dropped, whether
+    # it is a zero or empty.
+    it 'refuses a scope with a zero or an empty field instead of dropping it' do
+      ['0,1', '1,0', '1,,2', ',1', '35611,'].each do |bad|
+        configure(scope: bad)
+        expect(described_class.config).to be_nil
+        expect(described_class.errors.join).to include(described_class::SCOPE_VAR)
+      end
+    end
+
     it 'rejects a blank name' do
       configure(name: '  ')
       expect(described_class.config).to be_nil
