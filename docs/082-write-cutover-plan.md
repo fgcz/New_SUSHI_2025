@@ -1,10 +1,13 @@
 # fgcz-h-082 write cutover — plan
 
-**Status: Phases 0, 1 and 2 are DONE. Still no write of any kind to the 082 production
-database, and no job has ever been submitted through New SUSHI on 082.**
-Written 2026-08-14 against `main = 0c29fd1`; updated 2026-08-18 against `main = 55a9ec0`
-after Phases 0 and 1 were executed on production with an explicit go-ahead. What remains is
-Phase 3 — which had to be **reworked**, see §6 — and Phase 4, the irreversible one.
+**Status: Phases 0, 1 and 2 are DONE, and Phase 3 is done except for one blocked step.
+Still no write of any kind to the 082 production database, and no job has ever been
+submitted through New SUSHI on 082.**
+Written 2026-08-14 against `main = 0c29fd1`; updated 2026-08-18 after Phases 0, 1 and 3 were
+executed on production, each with its own explicit go-ahead. 082 now runs the
+write-credential branch **read-only, with no authority granted** — verified by 24/24 checks
+on the real boot path. What remains is Phase 3 step 13 (blocked: the harness denies POSTs to
+production) and Phase 4, the irreversible one.
 
 ---
 
@@ -39,9 +42,13 @@ Verified on 083 / in the repo on 2026-08-14 unless marked otherwise. Lines marke
 
 - **[2026-08-18] `main = 55a9ec0`**; `masaomi/main == origin/main == c673358`, so
   **`55a9ec0` is unpushed** — the harness denies `git push`, the user runs them.
-- **[2026-08-18] 082 ran `45a7f79` and now runs `c673358`.** Phase 0 confirmed the recorded
-  revision; Phase 1 fast-forwarded it the same day. The paragraph below is kept because it
-  is *why* the deploy was mandatory rather than merely convenient.
+- **[2026-08-18] 082 ran `45a7f79`, then `c673358`, and now runs the write-credential
+  branch `feat/082-env-write-credential` @ `3df6fbc`** (Phase 3 step 11 — read-only, no
+  authority granted). Phase 0 confirmed the recorded revision; Phase 1 fast-forwarded it;
+  Phase 3 switched it to the branch. **Note 082 is on a branch, not `main`** — that is
+  deliberate and visible in `git rev-parse --abbrev-ref HEAD`, which is the audit trail.
+  The paragraph below is kept because it is *why* the Phase 1 deploy was mandatory rather
+  than merely convenient.
   `45a7f79..0c29fd1` is **15 commits, 11 of them touching `backend/`**, and nine of those
   eleven are legacy-parity fixes each of which would produce visibly wrong output in
   production:
@@ -257,7 +264,7 @@ Suite 532 → **577 / 0**. Nothing was deployed anywhere; 082 untouched.
 
 *Go/no-go: MET.*
 
-### Phase 3 — dry run on 082 (no DB write) — **REWORKED 2026-08-18, not yet run**
+### Phase 3 — dry run on 082 (no DB write) — **REWORKED 2026-08-18; steps 11-12 DONE, step 13 blocked**
 
 The original three steps do not survive contact with the harness, and step 11 hid a
 decision:
@@ -273,14 +280,33 @@ decision:
 
 Reworked, in the order the value falls out:
 
-11. **Decide** whether to deploy `feat/082-env-write-credential` to 082 now (read-only) or
-    to defer it to Phase 4. Deploying early separates "did the deploy work" from "did we
-    grant authority", which is the safer sequencing; deferring keeps production free of
-    write-capable code until the day it is used.
-12. If deployed: verify on the REAL boot path with **`rails runner`**, which needs no HTTP
-    and leaves no orphan process — assert that the read credential reports
-    `can_write? == false`, that **no** write credential is configured, and that the Rack
-    policy resolves to `read_only`. This is the same technique that verified Phase 2 on 083.
+11. ~~**Decide** whether to deploy `feat/082-env-write-credential` to 082 now (read-only) or
+    to defer it to Phase 4.~~ **DONE 2026-08-18 — deployed now, read-only.** The user chose
+    to separate "did the deploy work" from "did we grant authority", so that the Phase 4
+    restart changes only environment variables and a failure there has one possible cause.
+    082 is therefore on the **branch**, `3df6fbc`, not on `main`.
+    The one real risk was checked first rather than assumed: the branch also tightens the
+    **read** credential's scope parser (a list that silently dropped a zero or an empty field
+    is now refused), so a quirk in 082's configured scope would have taken the read path down
+    on restart. `SUSHI_ENV_TOKEN_SCOPE=35611` — a single positive integer, which parses
+    identically under both. Rollback is `git checkout main` + restart.
+12. ~~Verify on the REAL boot path with `rails runner`.~~ **DONE — 24/24 checks pass.**
+    `scripts/…` is not needed; the check sources the launch script's environment up to its
+    `exec`, so it cannot drift from what the server actually boots with. It asserts, in this
+    order: the new code IS loaded (`grant_env_write!` exists — without this every "cannot
+    write" result below would pass vacuously); the read credential is healthy
+    (`enabled?`, no errors, scope `[35611]`, name `chain-082`); **no** write credential is
+    configured (`write_enabled? == false`, all three `SUSHI_ENV_TOKEN_WRITE_*` empty); the
+    read credential cannot write (`can_write? == false`, `effective_capabilities == ["read"]`,
+    unsaved); gate 3 intact (`capabilities` absent, 10 columns); gate 1 `read_only`; and —
+    the part that makes the rest non-vacuous — that an in-memory throwaway token granted
+    `grant_env_write!` **does** report `can_write? == true` while its
+    `effective_capabilities` stay `["read"]`, and that the grant refuses a persisted record
+    with `ArgumentError`.
+    Alongside it, every Phase 0 read check reproduced (tokenless 401, bad token 401,
+    credential 200 with p35611's 18 datasets, out-of-scope 403, `/internal` 403, 18 apps),
+    `api_tokens` was unchanged at 28 / 28 / 10 / no `capabilities`, and the log carried
+    **zero** error lines.
 13. `POST /v1/datasets/validate` (dry-run, writes nothing) and `POST /api/v1/jobs`
     (must be 403, and the body must name **which** gate refused —
     `{"error":"read_only"}` from the Rack layer vs
