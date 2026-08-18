@@ -1,13 +1,12 @@
 # fgcz-h-082 write cutover — plan
 
-**Status: Phases 0, 1 and 2 are DONE, and Phase 3 is done except for one blocked step.
-Still no write of any kind to the 082 production database, and no job has ever been
-submitted through New SUSHI on 082.**
+**Status: Phases 0 through 3 are DONE. Still no write of any kind to the 082 production
+database, and no job has ever been submitted through New SUSHI on 082.**
 Written 2026-08-14 against `main = 0c29fd1`; updated 2026-08-18 after Phases 0, 1 and 3 were
 executed on production, each with its own explicit go-ahead. 082 now runs the
-write-credential branch **read-only, with no authority granted** — verified by 24/24 checks
-on the real boot path. What remains is Phase 3 step 13 (blocked: the harness denies POSTs to
-production) and Phase 4, the irreversible one.
+write-credential branch **read-only, with no authority granted** — verified 19/19 on the real
+boot path and by five HTTP probes that each name the gate that refused them. **Only Phase 4
+remains, and it is the irreversible one.**
 
 ---
 
@@ -264,7 +263,7 @@ Suite 532 → **577 / 0**. Nothing was deployed anywhere; 082 untouched.
 
 *Go/no-go: MET.*
 
-### Phase 3 — dry run on 082 (no DB write) — **REWORKED 2026-08-18; steps 11-12 DONE, step 13 blocked**
+### Phase 3 — dry run on 082 (no DB write) — **REWORKED AND COMPLETED 2026-08-18**
 
 The original three steps do not survive contact with the harness, and step 11 hid a
 decision:
@@ -307,14 +306,32 @@ Reworked, in the order the value falls out:
     credential 200 with p35611's 18 datasets, out-of-scope 403, `/internal` 403, 18 apps),
     `api_tokens` was unchanged at 28 / 28 / 10 / no `capabilities`, and the log carried
     **zero** error lines.
-13. `POST /v1/datasets/validate` (dry-run, writes nothing) and `POST /api/v1/jobs`
-    (must be 403, and the body must name **which** gate refused —
-    `{"error":"read_only"}` from the Rack layer vs
-    `{"error":"action not permitted for this token"}` from the token layer).
-    **Blocked**: needs either an explicit Bash permission rule for POSTs to
-    `fgcz-h-082...:3010`, or the user running the two `curl`s. Note the gates were already
-    pinned as independent, with positive gate-passage assertions, by request specs on 083 in
-    Phase 2 — so this step confirms the production *environment*, not the logic.
+13. ~~`POST /v1/datasets/validate` and `POST /api/v1/jobs`, and note WHICH gate denies.~~
+    **DONE 2026-08-18** — the user permitted POSTs to `fgcz-h-082…:3010`.
+    The expectations were written down **before** running, because "it returned 403" is not
+    a result; all three matched exactly:
+
+    | probe | gate that answered | body |
+    |---|---|---|
+    | `POST /api/v1/jobs` (empty body) | **1 — Rack** | `{"error":"read_only", …"POST /api/v1/jobs is not permitted."}` |
+    | `DELETE /v1/datasets/999999999` | **1 — Rack** | `{"error":"read_only", …}` |
+    | `POST /v1/datasets/validate` | **2 — token** | `{"error":"action not permitted for this token", "message":"…the ENV-provisioned READ credential … Write authority belongs to a SEPARATE credential … this one cannot be promoted."}` |
+
+    The third is the one that matters: `/v1/datasets/validate` is on the Rack layer's
+    dry-run allowlist, so it **passes gate 1** and the denial can only have come from gate
+    2. Two POSTs, two different gates, each naming itself — the gates are observably
+    independent on production, not merely believed to be. The message also confirms the
+    branch's own `write_denied_message` is what is serving, i.e. the new code is live.
+
+    Every probe was inert by construction, so a wrongly-open gate still could not have
+    created anything: `validate` performs no write by design, the job POST carried an empty
+    body, and the DELETE targeted a nonexistent id. Proven rather than argued —
+    `api_tokens`, `data_sets` and `jobs` counts **and max(id)s** were identical before and
+    after (28/28, 82737/114385, 476893/483885), with zero error lines.
+
+    Tooled as `scripts/082_gate_check/probe_http.sh` for Phase 4 step 15.
+
+*Go/no-go: MET — the denial came from the expected gate, with the expected message.*
 
 *Go/no-go: the denial comes from the expected gate, with the expected message.*
 
