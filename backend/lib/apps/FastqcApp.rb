@@ -31,7 +31,7 @@ EOS
     @params['specialOptions'] = ''
     @params['cmdOptions'] = ""
     @params['mail'] = ""
-    @modules = ["QC/FastQC", "Dev/R", "Tools/Picard", "Tools/samtools", "Dev/Python",  "QC/fastp"]
+    @modules = ["QC/FastQC", "Dev/R", "Tools/Picard", "Tools/samtools", "Dev/Python",  "QC/fastp", "QC/MultiQC"]
     @inherit_columns = ["Order Id"]
   end
  def set_default_parameters
