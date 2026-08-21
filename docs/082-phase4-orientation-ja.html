@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 符牒に見えるが公開語彙・実在の名前である語の宣言 -->
+<meta name="orientation-allowed-tokens" content="">
+<title>新システムが本番の台帳に初めて書き込む段 — 現状レポート</title>
+<style>
+  :root {
+    --ink: #23262b;
+    --muted: #5f6672;
+    --line: #d5d9e0;
+    --panel: #f7f8fa;
+    --accent: #b3402f;
+  }
+  body {
+    font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", ui-sans-serif, sans-serif;
+    color: var(--ink);
+    background: #fff;
+    line-height: 1.9;
+    font-size: 16.5px;
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.2rem 5rem;
+  }
+  h1 { font-size: 1.5rem; line-height: 1.5; margin: 0 0 .4rem; }
+  h2 {
+    font-size: 1.13rem;
+    margin: 3rem 0 .9rem;
+    padding-bottom: .35rem;
+    border-bottom: 2px solid var(--line);
+  }
+  p { margin: .9rem 0; }
+  .stamp {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: .8rem 1rem;
+    font-size: .87rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .stamp b { color: var(--ink); font-weight: 600; }
+  table { border-collapse: collapse; width: 100%; margin: 1.2rem 0; font-size: .93rem; }
+  th, td { border: 1px solid var(--line); padding: .5rem .7rem; text-align: left; vertical-align: top; }
+  th { background: var(--panel); font-weight: 600; }
+  figure { margin: 1.4rem 0; }
+  figcaption { font-size: .85rem; color: var(--muted); margin-top: .5rem; }
+  svg { display: block; margin: 0 auto; }
+  .mark { color: var(--accent); font-weight: 600; }
+  details {
+    margin-top: 3rem;
+    border-top: 1px solid var(--line);
+    padding-top: 1rem;
+  }
+  summary { cursor: pointer; font-weight: 600; }
+  @media print {
+    body { max-width: none; font-size: 11pt; }
+    details { page-break-before: always; }
+    details[open] summary { list-style: none; }
+  }
+</style>
+</head>
+<body>
+
+<h1 data-visual="none">新システムが本番の台帳に初めて書き込む段 — 現状レポート</h1>
+<p>本番の作業台帳へ新システムが初めて書き込む段の話。権限は与えられ、認証も三つの関門も通ったが、投入はファイル保管庫へのコピーで止まり、台帳には1行も書かれていない。対象は2026年8月20日と21日の2日間だけ。</p>
+<div class="stamp">
+  <b>生成</b> 2026-08-21 ／
+  <b>git</b> 51f30f8（枝 main）／
+  <b>chain の高さ</b> 159<br>
+  <b>読んだ入力</b> 22 件（記録2件、設計文書、コミットと差分、実装3件、保管庫の道具3件、運用手順4件、実行結果4件、ログと稼働状態5件）。一覧は付録 C
+</div>
+
+<h2>登場人物</h2>
+<p>この段に入る前に要る前提だけを置く。新システムは作業者本人の利用者名で動く。ファイル保管庫に書けるのは「転送役」という専用の利用者だけで、レガシーの本番システムはその転送役として動いている。順番待ち役は保管庫に置かれたスクリプトを拾い、計算機群へ出す。</p>
+<p>台帳はレガシーと共有の1つで、作った行を消す手段はない。だから書き込みは三つの関門で止めてあり、この段はそれを台帳に一切触れずに開ける仕掛けだった。開けても許すのは作成だけで、更新と削除は拒み続ける。<b>与えた権限は再起動1回で戻せるが、作られた行・ファイル・計算ジョブは戻せない。</b>だから最初の1本をできるだけ小さくする、という組み立てになっている。</p>
+<figure>
+<svg viewBox="0 0 760 240" style="width:100%;max-width:760px;height:auto" role="img">
+  <title>投入の要求が新システムを通って保管庫と計算機群へ流れ、台帳の行はコピーの後に書かれる</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5f6672"/>
+    </marker>
+  </defs>
+  <rect x="6" y="40" width="168" height="70" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text font-size="13" text-anchor="middle"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">
+    <tspan x="90" y="72">投入の要求</tspan>
+    <tspan x="90" y="94">（機械向けの窓口）</tspan>
+  </text>
+  <rect x="204" y="40" width="168" height="70" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text font-size="13" text-anchor="middle"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">
+    <tspan x="288" y="72">新システム</tspan>
+    <tspan x="288" y="94">作業者の名前で動く</tspan>
+  </text>
+  <rect x="402" y="40" width="168" height="70" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text font-size="13" text-anchor="middle"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">
+    <tspan x="486" y="72">ファイル保管庫</tspan>
+    <tspan x="486" y="94">転送役だけが書ける</tspan>
+  </text>
+  <rect x="600" y="40" width="155" height="70" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text font-size="13" text-anchor="middle"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">
+    <tspan x="677" y="72">計算機群</tspan>
+    <tspan x="677" y="94">順番待ち役が出す</tspan>
+  </text>
+  <line x1="174" y1="75" x2="202" y2="75" stroke="#5f6672" marker-end="url(#arrow)"/>
+  <line x1="372" y1="75" x2="400" y2="75" stroke="#5f6672" marker-end="url(#arrow)"/>
+  <line x1="570" y1="75" x2="598" y2="75" stroke="#5f6672" marker-end="url(#arrow)"/>
+  <text x="189" y="32" text-anchor="middle" font-size="11"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#5f6672">投入</text>
+  <text x="387" y="32" text-anchor="middle" font-size="11"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#5f6672">スクリプト一式</text>
+  <text x="585" y="32" text-anchor="middle" font-size="11"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#5f6672">取り出し</text>
+  <rect x="204" y="155" width="356" height="64" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text font-size="13" text-anchor="middle"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">
+    <tspan x="382" y="182">本番の作業台帳（レガシーと同じ一つ）</tspan>
+    <tspan x="382" y="204">データ集合の行と仕事の行が増える</tspan>
+  </text>
+  <line x1="288" y1="112" x2="288" y2="153" stroke="#5f6672" marker-end="url(#arrow)"/>
+  <text x="300" y="138" font-size="11"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#5f6672">コピーが済んでから</text>
+</svg>
+<figcaption>投入は「作業領域 → 保管庫 → 順番待ち役」の順に流れ、台帳の行はコピーが済んだ後に書かれる。</figcaption>
+</figure>
+
+<h2>何が壊れていたか</h2>
+<p>本番へ1本だけ投入した。認証も三つの関門も通り、スクリプトと三つの表が作業領域に生成された。そこから先が進まなかった。</p>
+<table>
+  <tr><th>入力（実際に与えた値）</th><th>出た結果（実際に返った値）</th></tr>
+  <tr>
+    <td>品質チェックのアプリを1本、計算コア1・作業領域10で本番へ投入（8月21日14時49分）</td>
+    <td>スクリプトと三つの表が作業領域に生成された。次のコピーが約30分止まり、ログには1行も残らなかった</td>
+  </tr>
+  <tr>
+    <td>問い合わせ側は120秒で待つのをやめた</td>
+    <td>返り値は000、つまり「こちらが断念した」の意味。サーバはさらに28分動き続けていた</td>
+  </tr>
+  <tr>
+    <td>投入の前と後に台帳を数え直した</td>
+    <td>データ集合 82831行（最大値114498）、仕事 477389行（最大値484381）。前後で完全に同一で、増えた行はない</td>
+  </tr>
+</table>
+
+<h2>直そうとして何が起きたか</h2>
+<p>追う例は「品質チェックのアプリの投入1本」。同じ1本が、各時点でどこまで進んだかを並べる。</p>
+<table>
+  <tr><th>時点</th><th>書き込み権限</th><th>コピーの命令</th><th>投入1本の到達点</th><th>本番の台帳</th></tr>
+  <tr><td>8月20日まで</td><td>読み取り専用</td><td>即時（誰も疑っていない）</td><td>未投入。事前の点検は起動経路19件全通、通信経路5件全通</td><td>0行</td></tr>
+  <tr><td>21日13時台<br>権限付与</td><td>追加のみ許す姿勢＋書き込み用の資格情報</td><td>同じ</td><td>点検は起動経路17件全通、通信経路4件全通。姿勢が変わると項目数も変わる</td><td>0行</td></tr>
+  <tr><td>21日14時49分<br>投入</td><td>書き込み用の資格情報で認証、三つの関門を通過</td><td><span class="mark">即時 → 転送役あての SSH</span></td><td>生成物4点まで到達。コピーで約30分停止</td><td>0行</td></tr>
+  <tr><td>21日15時台<br>差し戻し</td><td>権限を外して読み取り専用へ。固まった処理を停止</td><td>—</td><td>生成物は作業領域に残置（証跡）</td><td>0行</td></tr>
+  <tr><td>21日16時20分<br>修正</td><td>変更なし</td><td>既定をキュー経由へ。上限900秒と出力の記録を追加</td><td>本番へは未配備</td><td>0行</td></tr>
+  <tr><td>21日16時48分<br>検証ノードで同じ投入</td><td>検証ノードの台帳は隔離されている</td><td>キュー経由</td><td>コピー完了 → 計算5分28秒 → 結果一式。レガシーの正解と一致</td><td>0行（検証側に1行）</td></tr>
+</table>
+
+<h2>どう閉じたか</h2>
+<p>とった手は、投入時のコピーを即時から「キュー経由」に替えることだった。理由は一言で済む。キュー経由なら順番待ちに登録するだけで、保管庫に書くのは転送役の常駐がやるので、こちら側に SSH も鍵も要らない。</p>
+<figure>
+<svg viewBox="0 0 720 250" style="width:100%;max-width:720px;height:auto" role="img">
+  <title>同じ投入1本が、修正前は保管庫へのコピーで固まり、修正後は最後まで通った</title>
+  <rect x="10" y="14" width="340" height="222" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text x="28" y="44" font-size="13"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">修正前 — 本番での投入</text>
+  <text x="28" y="76" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">コピー命令は即時</text>
+  <text x="28" y="104" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">相手は転送役あての SSH</text>
+  <text x="28" y="132" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">鍵は代理人ごしにしか出せない</text>
+  <text x="28" y="160" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#b3402f">約30分固まり記録は空</text>
+  <text x="28" y="188" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">台帳の行はゼロ</text>
+  <text x="28" y="216" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">生成物は作業領域に残った</text>
+  <rect x="370" y="14" width="340" height="222" rx="6" fill="#f7f8fa" stroke="#5f6672"/>
+  <text x="388" y="44" font-size="13"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">修正後 — 検証ノードで同じ投入</text>
+  <text x="388" y="76" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">コピー命令はキュー経由</text>
+  <text x="388" y="104" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">順番待ちに登録して待つ</text>
+  <text x="388" y="132" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">SSH も鍵も要らない</text>
+  <text x="388" y="160" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">コピー完了、結果一式が着いた</text>
+  <text x="388" y="188" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">計算は5分28秒で完了</text>
+  <text x="388" y="216" font-size="12"
+        font-family="Hiragino Sans, Noto Sans JP, sans-serif" fill="#23262b">正解との照合は6項目一致</text>
+</svg>
+<figcaption>壊れていたのは投入側の一手だけだった。同じ投入が作るスクリプトの末尾は、以前からキュー経由を使っている。</figcaption>
+</figure>
+
+<h2>今どこ</h2>
+<table>
+  <tr><th>項目</th><th>状態</th></tr>
+  <tr><td>本番への書き込み権限</td><td>与えて同日に外した。いまは読み取り専用に戻り、起動経路19件全通・通信経路5件全通</td></tr>
+  <tr><td>本番の台帳への書き込み</td><td>0行。資格情報・データ集合・仕事の三つの表すべてで、投入前後の行数と最大値が一致</td></tr>
+  <tr><td>修正の状態</td><td>手元の枝 main に入り、試験一式543件で失敗0。この経路に初めて付いた試験が11件</td></tr>
+  <tr><td>本番ノードへの配備</td><td>未配備。本番ノードは前日の版のまま。取り込むには手元の枝を本番の枝へ合流させる必要がある</td></tr>
+  <tr><td>検証ノードでの確認</td><td>キュー経由で最後まで通り、正解との照合は6項目一致（読み取られる4つの割り当て値、モジュール行、集計ツール1.35、出力の5列、生成物の一覧）</td></tr>
+  <tr><td>止まっているところ</td><td>本番での再投入。権限の再付与は1コマンドで済むが、この環境では代理できず作業者本人が実行する</td></tr>
+</table>
+
+<h2 data-visual="none">決まっていないこと</h2>
+<ul>
+  <li>権限をいつ再び与えるか。再付与の手順は1コマンドとして用意されているが、時期は書かれていない</li>
+  <li>定常状態の姿勢（追加のみ許すまま置くか、読み取り専用に戻すか）は設計文書の最終段として未決</li>
+  <li>事前に誰へ知らせるかは設計文書では未決のまま。今回は「知らせず進める」と決めて実行された</li>
+  <li>割り当て以外の項目差（レガシーだけが持つ3項目、こちらだけが持つ2項目）は「直さない」と決めて残置</li>
+  <li>フロントエンドからは投入できない（入力欄の形が合わない）。範囲外として残っている</li>
+  <li>依存性の警告9件（うち重大2件）は別の作業として残っている</li>
+  <li>本番の作業領域の未完ディレクトリと、権限付き起動スクリプトの控えは、証跡として意図的に残置</li>
+  <li>今日の修正は共有先へ送っていない。送るのは作業者本人</li>
+</ul>
+
+<h2>記録の食い違い</h2>
+<table>
+  <tr><th>記録が言っていること</th><th>確かめた結果</th></tr>
+  <tr>
+    <td>今日の記録は「次にやるのは検証ノードでキュー経由を確かめること」と書く</td>
+    <td>その確認は同日16時47分の再起動と16時48分の投入で実施済み。記録は16時21分に保存されて以降更新されていない</td>
+  </tr>
+  <tr>
+    <td>今日の記録は「修正はどこにも配備していない」と書く</td>
+    <td>検証ノードは新しい版で動いており、16時48分の投入はキュー経由の命令で走った。未配備なのは本番ノードだけ</td>
+  </tr>
+  <tr>
+    <td>前日の記録は「準備は全て完了、あとは権限付与だけ」と書く</td>
+    <td>権限を与えると、コピー経路が転送役でしか動かないという未記録の依存で止まった。前日の記録はコピー経路に一度も触れていない</td>
+  </tr>
+  <tr>
+    <td>前日の記録は「こちらの出力は注文番号の列を欠く」と書く</td>
+    <td>本番で生成された表は確かに4列で注文番号を欠いていた。一方、検証ノードの同じアプリの出力は5列で注文番号を持ち、正解と一致する。欠けるのは本番で選ばれた入力に限った話</td>
+  </tr>
+  <tr>
+    <td>設計文書は「第3段まで完了、残るのは第4段だけ」と書いたまま</td>
+    <td>第4段は実行され同日に差し戻された。文書は8月18日の更新のままで、失敗したコピーの段はその手順のどこにも現れない</td>
+  </tr>
+  <tr>
+    <td>今日の日付を名前に持つ記録が2件ある</td>
+    <td>一方は今日の正本。もう一方は8月14日に書かれた古い記録で「本番ノードには一度も触れていない」と書いている。名前の日付だけで正本を選ぶと逆の状態を読む</td>
+  </tr>
+  <tr>
+    <td>今日の記録は「並行する別作業のコミットが2件、手元の枝 main に載っている」と書く</td>
+    <td>いまは4件。表紙に固定した版もこの作業の版ではなく、別作業の最新版である</td>
+  </tr>
+</table>
+
+<details>
+<summary>付録 A — 符牒の対応表</summary>
+<table>
+  <tr><th>元の記録の符牒</th><th>本体での呼び名</th></tr>
+  <tr><td><code>fgcz-h-082</code></td><td>本番ノード（本番の作業台帳を持つ submit ノード。レガシー本番システムが同じ台帳を使う）</td></tr>
+  <tr><td><code>fgcz-h-083</code></td><td>検証ノード（台帳だけが隔離された試験環境。結果は実物の保管庫に書かれる）</td></tr>
+  <tr><td><code>p35611</code></td><td>対象プロジェクト（第4段で選ばれた1件）</td></tr>
+  <tr><td><code>data_sets</code> 113260</td><td>本番で選ばれた入力データ集合（注文番号の列を持たない小さな入力）</td></tr>
+  <tr><td><code>data_sets</code> 9（検証ノード）</td><td>検証ノードの同じ入力（同じ2組の配列ファイルを指す）</td></tr>
+  <tr><td><code>data_sets</code> 113255 ／ <code>o35755_Fastqc_2026-07-03--14-30-06</code></td><td>レガシーの正解（7月3日の実行結果。照合の基準）</td></tr>
+  <tr><td><code>Fastqc</code> ／ <code>FastqcApp</code></td><td>品質チェックのアプリ（本番ノードでは移植版が優先され、レガシー版には届かない）</td></tr>
+  <tr><td><code>copynow</code>（<code>g-req copynow</code>）</td><td>即時コピー。保管庫の受付コマンドが転送役あてに SSH して直接運ぶ</td></tr>
+  <tr><td><code>g-req -w copy</code></td><td>キュー経由コピー。順番待ちに登録し、転送役の常駐が運ぶのを待つ</td></tr>
+  <tr><td><code>g-req</code> ／ <code>gstore-request</code></td><td>保管庫の受付コマンド（3行のラッパと、その実体）</td></tr>
+  <tr><td><code>trxcopy</code></td><td>転送役。保管庫に書ける専用の利用者で、レガシー本番システムはこの利用者で動く</td></tr>
+  <tr><td><code>masaomi</code></td><td>作業者本人の利用者名。新システムはこの名前で動く</td></tr>
+  <tr><td><code>ssh-agent</code> ／ <code>SSH_AUTH_SOCK</code></td><td>鍵の代理人。合言葉付きの鍵はこれ越しでなければ提示されない</td></tr>
+  <tr><td><code>SUSHI_WRITE_POLICY=additive</code></td><td>追加のみ許す姿勢（作成は通し、更新と削除は拒む）</td></tr>
+  <tr><td><code>SUSHI_ENV_TOKEN_WRITE_*</code> ／ <code>chain-082-write</code></td><td>書き込み用の資格情報（台帳に行を持たず、環境変数だけで存在する）</td></tr>
+  <tr><td><code>SUSHI_SUBMIT_COPY_NOW</code></td><td>即時コピーに戻す切り替え（既定は無効）</td></tr>
+  <tr><td><code>SUSHI_GSTORE_COPY_TIMEOUT</code></td><td>コピーの上限時間（既定900秒）</td></tr>
+  <tr><td><code>api_tokens</code> ／ <code>data_sets</code> ／ <code>jobs</code></td><td>資格情報の表 ／ データ集合の表 ／ 仕事の表</td></tr>
+  <tr><td><code>d818b7d</code></td><td>今日の修正コミット（コミット文に測定結果が入っている）</td></tr>
+  <tr><td><code>f087d05</code>（枝 <code>feat/082-env-write-credential</code>）</td><td>本番ノードに置かれている版。表紙の <code>51f30f8</code> は別作業の最新版</td></tr>
+  <tr><td><code>scripts/082_gate_check/run.sh</code> ／ <code>probe_http.sh</code></td><td>関門点検（起動経路）／ 関門点検（通信経路）</td></tr>
+  <tr><td><code>sacct</code></td><td>計算機群の実行記録（判定はこれと結果ディレクトリで行う。仕事の表の状態欄では判定しない）</td></tr>
+  <tr><td>三つの関門</td><td>1 通信層の書き込み方針、2 資格情報の書き込み能力、3 本番の資格情報の表に能力欄が存在しないこと</td></tr>
+</table>
+</details>
+
+<details>
+<summary>付録 B — 網羅の記録</summary>
+<p><b>今日の修正コミットが触ったファイル（3件、+188/-9）</b></p>
+<ul>
+  <li><code>backend/app/services/job_submission_service.rb</code> — <code>copy_scratch_to_gstore</code> の命令選択を <code>now: true</code> 固定から <code>SushiConfigHelper.submit_copy_now?</code> へ。<code>run_bounded_copy</code> を新設し <code>timeout -k 30 &lt;上限&gt;</code> で包んで <code>Open3.capture2e</code> で出力を捕まえる。上限超過は終了コード124で判別し、失敗時は命令と出力の両方をログへ。</li>
+  <li><code>backend/app/helpers/sushi_config_helper.rb</code> — <code>submit_copy_now?</code>（既定 false、<code>1/true/yes</code> のみ有効）と <code>gstore_copy_timeout</code>（既定900）を追加。<code>copy_command</code> 自体は既存のまま（<code>options[:now]</code> のときだけ <code>copynow</code>）。</li>
+  <li><code>backend/spec/services/gstore_submit_copy_spec.rb</code> — 新規123行。</li>
+</ul>
+<p><b>新しい試験11件の内訳</b>（一式 532 → 543、失敗0）</p>
+<ul>
+  <li>命令の選択 4件: 既定でキュー経由になること／<code>copynow</code> を含まないこと／<code>-w copy</code> を含むこと（待つことが要件）／切り替えを立てたときだけ <code>copynow</code> になること。</li>
+  <li>失敗の扱い 3件: 上限で打ち切られること（実際に <code>sleep 30</code> を上限1秒で走らせて20秒未満で戻る）／失敗した命令と出力を捨てないこと／成功時は真を返すこと。</li>
+  <li>切り替えの解釈 4件: 既定は無効／<code>1 true TRUE yes</code> を受ける／<code>0 false no copynow</code> 空文字を無視する／上限の既定値が900であること。</li>
+  <li>変異検査: <code>copynow</code> を強制すると3件が落ち、上限を外すと1件が落ちる。</li>
+</ul>
+<p><b>なぜ即時コピーは転送役でしか動かないか（一次資料）</b></p>
+<ul>
+  <li><code>/usr/local/ngseq/opt/gtools/gtools/gstore-request</code> は <code>SSH_USER = "trxcopy"</code>、<code>SSH_KEY = "/home/trxcopy/.ssh/trxcopy@fgcz.ethz.ch"</code>、<code>FILE_SERVER = "fgcz-r-036"</code> を定数で持ち、<code>copynow</code> にだけ渡す。</li>
+  <li><code>commands.py</code> の <code>copynow</code> は <code>ssh trxcopy@fgcz-r-036 "mkdir -p …"</code> と <code>ssh trxcopy@… "rsync -qa -e 'ssh -i &lt;転送役の鍵&gt; …'"</code> を組み立てる。<code>copy</code> は <code>transfer()</code> で <code>gstore.DB()</code> に要求行を登録するだけで SSH を使わない。<code>-w</code> は <code>wait()</code> を呼び、その中身は <code>while True</code> で上限が無い。</li>
+  <li>本番ノードの新システムは作業者の名前で動くため、転送役あての SSH は公開鍵に失敗し、合言葉の入力へ落ちる。その出力は捨てられていたので、30分のあいだログに何も出なかった。</li>
+  <li>検証ノードでは同じ命令が動いていた。そのプロセスが鍵の代理人（<code>SSH_AUTH_SOCK=/tmp/ssh-Q8n01gbq5g3u/agent.729433</code>）を引き継いでいたためで、これは誰も記録していなかった依存である。</li>
+</ul>
+<p><b>検証ノードでの今日の実行（16時47分に新しい版で再起動、<code>LEGACY_APPS_DIR=/srv/sushi/prod_apps_082_snapshot_20260818/lib</code>）</b></p>
+<ul>
+  <li>投入時のコピーの実行行（開発ログ）: <code>Copying scratch to gstore: g-req -w copy /scratch/Fastqc_9_9_2026-08-21--16-48-00 /srv/gstore/projects/p35611</code> → <code>Script file found in gstore after 0.0s</code> → <code>Successfully copied scratch to gstore</code>。</li>
+  <li>出力データ集合 842 を作成（検証ノードの隔離された台帳）。仕事の番号は788。</li>
+  <li>計算機群の記録: 346675 は FAILED、346676 は COMPLETED（16:48:26 開始、5分28秒と5分37秒）。検証ノードは常駐が二重に走るため毎回2本投げられる既知の性質で、結果ディレクトリは1つ。<b>この二重投入と片方の失敗は、どちらの記録にも書かれていない。</b></li>
+  <li>末尾のコピー（計算機群の中から）: <code>g-req -w copy multi_FastQC FastQC …</code> → <code>Request submitted as # 082116534253S.3480272.310</code> → <code>OK</code>。</li>
+</ul>
+<p><b>正解との照合（今日の検証ノードの実行 対 7月3日のレガシー）</b></p>
+<table>
+  <tr><th>見た項目</th><th>結果</th></tr>
+  <tr><td>モジュール読み込み行</td><td>完全一致（<code>QC/FastQC/0.12.1 Dev/R/4.6.0 Tools/Picard/3.2.0 Tools/samtools/1.20 Dev/Python/3.12.8 QC/fastp/0.23.4 QC/MultiQC/1.35</code>）</td></tr>
+  <tr><td>集計ツールの版</td><td>1.35 = 1.35（前日の修正前は1.30だった）</td></tr>
+  <tr><td>集計データのファイル集合</td><td>完全一致（両方向で差分なし）</td></tr>
+  <tr><td>品質チェックの成果物</td><td>4ファイル、名前まで一致</td></tr>
+  <tr><td>出力の表</td><td>5列、見出しまで一致（注文番号を含む）。値は結果ディレクトリ名だけが異なる</td></tr>
+  <tr><td>読み取られる割り当て値</td><td><code>cores 1</code> / <code>ram 15</code> / <code>scratch 10</code> / <code>partition employee</code> — 完全一致。順番待ち役が読むのはこの4つだけ</td></tr>
+</table>
+<p><b>残る良性の差（すべて測定済み、直さないと決めたもの）</b>: 作業領域変数の引用符の有無、<code>process_mode</code> 行の位置、レガシーだけが持つ <code>samples</code> / <code>generate_ai_summary</code> / <code>per_section_ai_summaries</code>、こちらだけが持つ <code>dataRoot</code> / <code>resultDir</code>、通知先メールが空（完了通知が飛ばない）、末尾コメントの綴り誤り <code>CLEAN AUP</code>。</p>
+<p><b>本番ノードに残っている実物</b></p>
+<ul>
+  <li><code>/scratch/Fastqc_113260_113260_2026-08-21--14-49-49/</code> — 14時49分の生成物。<code>dataset.tsv</code>（4列、注文番号なし）、<code>input_dataset.tsv</code>、<code>parameters.tsv</code>、<code>scripts/Fastqc_113260_202608211449516690.sh</code>。このスクリプトの末尾は既に <code>g-req -w copy</code>、モジュール行は正解と同じ。</li>
+  <li>起動スクリプトは読み取り専用の版（2331バイト、8月18日付、<code>SUSHI_READ_ONLY=1</code> と <code>LEGACY_APPS_DIR=/srv/sushi/production/master/lib</code> のみ）に戻っている。権限付きの版は <code>run_backend_082.sh.with-write-authority-20260821</code>（2763バイト）として隣に残置。</li>
+  <li>本番ノードの版は枝 <code>feat/082-env-write-credential</code> の <code>f087d05</code>。作業ツリーの変更は <code>backend/config/database.yml</code> だけ（意図的）。</li>
+  <li>投入スクリプトの二重実行防止ファイル <code>/home/masaomi/.newsushi_082_phase4_submitted</code> は<b>存在しない</b>。成功応答が返らなかったので書かれなかったという意味で、投入が完了しなかったことの独立した証拠になる。</li>
+</ul>
+<p><b>今日書かれた運用スクリプト4件（リポジトリ外。<code>ssh fgcz-h-082 'bash -s' &lt; ファイル</code> で流す）</b></p>
+<table>
+  <tr><th>ファイル</th><th>役割</th></tr>
+  <tr><td><code>/home/masaomi/082_phase4_grant_write_authority.sh</code>（94行）</td><td>起動スクリプトへ4行の環境変数を挿入（<code>exec</code> の前でなければ効かない）、再起動、起動報告、応答確認。二重適用を <code>assert</code> で拒む</td></tr>
+  <tr><td><code>/home/masaomi/082_phase4_probe.sh</code>（50行）</td><td>読み取り用の資格情報で否定側を再証明。姿勢を「追加のみ許す」として引数で渡す</td></tr>
+  <tr><td><code>/home/masaomi/082_phase4_submit.sh</code>（106行）</td><td>本番への1回だけの投入。ホスト確認、二重投入防止、前後の行数取得を内蔵</td></tr>
+  <tr><td><code>/home/masaomi/082_phase4_revert.sh</code>（101行）</td><td>固まった処理をコマンド行を確認してから停止し、控えを復元、再起動、読み取り専用を証明</td></tr>
+</table>
+<p><b>点検の項目数は姿勢で変わる</b>: 読み取り専用では起動経路19件・通信経路5件、追加のみ許す姿勢では17件・4件。前者の数だけを覚えていると、後者を失敗と読み違える。</p>
+<p><b>時間を取った罠（記録より）</b>: ログの末尾400行を見る検証は二つの起動をまたぐので、権限を外した後にも「書き込み用の資格情報が有効」と読めてしまう。稼働中のプロセスの環境か点検スクリプトで確かめること。返り値000はこちらが断念した意味で、サーバが止まった証拠ではない。</p>
+</details>
+
+<details>
+<summary>付録 C — 読んだもの</summary>
+<ul>
+  <li><code>…/context/session_20260813_090000_whitespace/handoff_new_sushi_20260821_082_first_write_blocked_by_gstore_copy_as_masaomi/…md</code> — 今日の正本。権限付与から差し戻しまでの7段、原因、修正、次の行動。保存時刻16時21分</li>
+  <li><code>…/handoff_new_sushi_20260820_082_phase4_blocked_on_authority_grant/…md</code> — 前日の記録。5つの決定、移植版が優先される発見、検証ノードでの2回の実行、権限付与が代理できないこと</li>
+  <li><code>…/handoff_new_sushi_20260821_082_cutover_phase2_done_phase01_needs_goahead/…md</code> — 名前だけ今日の日付を持つ8月14日の記録（食い違いの節で扱った）</li>
+  <li><code>docs/082-write-cutover-plan.md</code> — 設計文書。三つの関門、権限の道筋(B')、可逆性の非対称、前提条件、6段の手順、中止条件</li>
+  <li><code>git show d818b7d</code> — 今日の修正コミットと差分。コミット文に原因と測定が入っている</li>
+  <li><code>backend/app/services/job_submission_service.rb</code> — <code>copy_scratch_to_gstore</code> と <code>run_bounded_copy</code>。コピーが行の作成より前にあること</li>
+  <li><code>backend/app/helpers/sushi_config_helper.rb</code> — <code>copy_command</code> / <code>submit_copy_now?</code> / <code>gstore_copy_timeout</code></li>
+  <li><code>backend/spec/services/gstore_submit_copy_spec.rb</code> — この経路に初めて付いた試験11件</li>
+  <li><code>/usr/local/ngseq/bin/g-req</code> — 3行のラッパ</li>
+  <li><code>/usr/local/ngseq/opt/gtools/gtools/gstore-request</code> — 転送役の利用者名と鍵の定数、<code>copynow</code> にだけ渡している箇所</li>
+  <li><code>/usr/local/ngseq/opt/gtools/gtools/src/gstore/commands.py</code> — <code>copynow</code>（SSH 2回）、<code>transfer</code>（要求行の登録）、<code>wait</code>（上限のない <code>while True</code>）</li>
+  <li><code>/home/masaomi/082_phase4_grant_write_authority.sh</code> / <code>_probe.sh</code> / <code>_submit.sh</code> / <code>_revert.sh</code> — 今日の運用手順4件（付録 B の表）</li>
+  <li><code>/srv/gstore/projects/p35611/Fastqc_9_9_2026-08-21--16-48-00/</code> — 今日の検証ノードでの実行結果一式とログ</li>
+  <li><code>/srv/gstore/projects/p35611/o35755_Fastqc_2026-07-03--14-30-06/</code> — レガシーの正解</li>
+  <li><code>/srv/gstore/projects/p35611/Fastqc_9_level2_multiqc135_20260820_9_2026-08-20--11-41-25/</code> — 前日の検証済み実行（集計ツール1.35）</li>
+  <li><code>/scratch/Fastqc_113260_113260_2026-08-21--14-49-49/</code>（本番ノード上、読み取りのみ） — 本番の投入が生成した4点</li>
+  <li><code>backend/log/development.log</code>（検証ノード） — コピー命令の履歴。8月20日までは即時、今日16時48分だけキュー経由</li>
+  <li><code>sacct --allusers</code> — 今日の計算機群の記録2本（片方 FAILED、片方 COMPLETED）</li>
+  <li><code>run_backend_082.sh</code> と3つの控え（本番ノード上） — いま何が効いているか</li>
+  <li>稼働中プロセスの環境（<code>/proc/&lt;pid&gt;/environ</code>） — 検証ノードの再起動時刻、アプリ源、鍵の代理人の引き継ぎ</li>
+  <li><code>git log</code> ／ <code>git rev-parse</code>（両ノード） — 表紙の版と、本番ノードに置かれた版</li>
+</ul>
+</details>
+
+</body>
+</html>
