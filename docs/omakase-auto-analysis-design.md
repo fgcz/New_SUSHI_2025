@@ -194,6 +194,20 @@ Checked in the repo / on this host, not assumed.
 | The SUSHI backend instance on the production node fgcz-h-082 is **`SUSHI_READ_ONLY=1`** today | prior session decision |
 | FGCZ AI policy: the on-prem vLLM covers up to `confidential` and is the only channel permitted for personal data | `ai-usage-policy` skill |
 
+Measured against production on 2026-08-20 / 2026-08-21, read-only, no LLM. These are
+counts, not decisions; §17 step 1 is what produced them.
+
+| Measurement | Where |
+|------|--------|
+| **`Species` is absent from B-Fabric order metadata** — the order endpoint returns 49 fields and the sample endpoint 13; none is species / organism / taxon / strain | `scripts/omakase_metadata_audit` |
+| **49.2% of sequencing orders** (722/1467, 12 months) carry both fields a recipe needs. One service type carries the whole gap: Ready-made Libraries Sequencing is 77.3% vague or empty | same |
+| The service types that deliver data for analysis are already at 98.3% (574/584) | same |
+| The Sequencing Application menu has **5 duplicate entries**, one of them a misspelling (`Experssion`, 11 orders) | same |
+| **Species does exist on the delivered SUSHI dataset**: of 1376 raw datasets from 974 finished orders, 51.7% resolve to a curated reference build with no human input, 39.2% say `NA` / `n/a` / blank — and the same service type is 76.7% of that gap | `scripts/omakase_species_audit` |
+| **`{{ reference_for(species) }}` already exists on disk**: `/srv/GT/reference-favorite` is a curated recommended build per species (5 species), which SUSHI already lists first in the `refBuild` dropdown | `backend/lib/global_variables.rb:77` |
+| **13 of the 18 allow-listed apps declare `Species` in `required_columns`**, so the execution layer has to read the dataset whatever the trigger does | legacy `*App.rb` |
+| 5.7% of delivered datasets carry **more than one** Species value, so one `refBuild` cannot cover them | `scripts/omakase_species_audit` |
+
 ---
 
 ## 3. Layer 0 — data minimisation instead of consent
@@ -237,6 +251,28 @@ notification:
 > *"Experiment parameters will be processed by a local AI model."*
 
 Wording and placement to be confirmed with whoever owns customer-facing text.
+
+### 3.2a Species is not on the order — decision pending
+
+The allow-list above lists Species as an order field. It is not one, and the diagram is
+wrong on that line. Measured on production (§2): the order endpoint has no species field
+of any kind. Species is a **column on the SUSHI dataset**, so it exists only once data has
+been delivered.
+
+Three exits were on the table. The measurement (`scripts/omakase_species_audit/README.md`)
+answers them:
+
+| Exit | Verdict |
+|---|---|
+| 1. the trigger also reads the delivered SUSHI dataset | Works today — 54.6% of raw datasets resolve to a reference build, and it is free, because 13 of the 18 allow-listed apps require the column anyway |
+| 2. Species becomes a B-Fabric order field | The fix for the 39.2% that says `NA` — not an alternative to exit 1. Folded into `docs/omakase-bfabric-metadata-request.md` |
+| 3. defer reference resolution | Does not unblock: `refBuild` is a required parameter, so a deferred value cannot be pre-validated, which §5.2 forbids |
+
+**Recommendation: exit 1 now, exit 2 as the metadata request.** Not yet confirmed by the
+project owner, so the allow-list line above is left as it is until it is.
+
+Note for L0: reading the dataset does not widen the payload. Species, and only Species, is
+taken from it. The dataset also holds sample names, which stay excluded.
 
 ### 3.3 The one caveat to keep in view
 
@@ -316,6 +352,16 @@ autostart: true                     # false ⇒ always HELD, human must press GO
 | Reviewable | a diff in git | a prompt edit |
 | Signed off by a domain expert | yes, per recipe | no |
 | Auditable after an incident | yes | "the model chose it" |
+
+`{{ reference_for(species) }}` is not a function to be written. `/srv/GT/reference-favorite`
+already holds a curated recommended build per species, maintained by the reference owners,
+and SUSHI already lists it at the top of the `refBuild` dropdown
+(`backend/lib/global_variables.rb:77`). Five species today, covering 85% of every dataset
+whose Species value resolves at all. OMAKASE looks the value up; it must not invent a
+species-to-build policy, because that choice is a domain decision that already has an
+owner. `species_in_reference_catalog: true` in the predicate above is therefore a real
+gate, not a placeholder — 4.3% of delivered datasets name a species that is in the catalog
+but has no curated build, and those need a human to pick.
 
 `refBuild` resolution is not cosmetic. Unresolved `ref_selector` params were reaching
 SLURM and polluting output rows until the `required_params` gate landed (`f3dfa9a`;
@@ -778,10 +824,14 @@ Promote a recipe because its own counters say so — not because the system feel
 
 **B-Fabric metadata — Simon (in progress)**
 
-* More accurate order metadata: Service Type, Sequencing Application, Species,
-  Instrument, Library Protocol. Ready-made library sequencing filed as
-  Sequencing Application "Custom/Other" cannot drive any decision.
+* Written up with the numbers attached: **`docs/omakase-bfabric-metadata-request.md`**
+  (draft, not sent). Three requests, all aimed at one service type:
+  Sequencing Application mandatory for Ready-made Libraries Sequencing (503 orders),
+  Species as a new order field (76.7% of that gap is the same service type),
+  and five duplicate menu entries including one misspelling.
 * Which fields can realistically become mandatory, and from when?
+* Not asked for, deliberately: Bench Access and Genome Informatics read 0% but are not
+  analysis targets, so their metadata does not need to change.
 
 **Customer communication**
 
@@ -818,6 +868,13 @@ Promote a recipe because its own counters say so — not because the system feel
 ## 17. Suggested first step
 
 Three things, none of which touch production.
+
+**Step 1 is done** (2026-08-20 / 21). `scripts/omakase_metadata_audit` and
+`scripts/omakase_species_audit` — read-only, no LLM, aggregate output. Results are in §2;
+what they change is in §3.2a (Species) and §5.1 (reference resolution), and the metadata
+request they justify is `docs/omakase-bfabric-metadata-request.md`. **Step 2 should start
+with the service types already near 100%** — NGS, Single Cell, Spatial, Long Read, ONT —
+and not with Ready-made Libraries, whose metadata is 77% unusable until the request lands.
 
 ```
 1.  METADATA-READINESS AUDIT   (read-only, B-Fabric orders, recent months)
