@@ -65,7 +65,34 @@ module SushiConfigHelper
     def copy_method
       ENV.fetch('SUSHI_COPY_METHOD', storage_config['copy_method'] || 'g-req')
     end
-    
+
+    # Should the submit-time scratch->gstore copy use the `copynow` fast path?
+    #
+    # `copynow` is a trxcopy-ONLY path: gtools runs `ssh trxcopy@<file server>` for both the
+    # mkdir and the rsync (gstore-request: copynow(..., ssh_user, ssh_key)). Legacy production
+    # SUSHI can use it because Passenger runs it AS trxcopy. New SUSHI runs as masaomi, whose
+    # only key authorised for trxcopy is passphrase-protected and not a default identity name,
+    # so ssh can offer it only through an ssh-agent. Where no agent is inherited the ssh falls
+    # back to a password prompt with its output discarded and blocks forever.
+    #
+    # The queued `g-req -w copy` needs no ssh at all — it registers a request for the transfer
+    # daemon (which is already trxcopy) and waits for it. That is the same path the generated
+    # job script's footer has always used from SLURM compute nodes as masaomi.
+    #
+    # Default OFF, so an agentless deployment works. Set SUSHI_SUBMIT_COPY_NOW=1 on an instance
+    # that really runs as trxcopy to take the fast path again.
+    def submit_copy_now?
+      %w[1 true yes].include?(ENV.fetch('SUSHI_SUBMIT_COPY_NOW', '').downcase)
+    end
+
+    # Wall-clock bound for the submit-time gstore copy, in seconds.
+    #
+    # gtools' own wait() is `while True` with no timeout, so an unfulfilled request or a stalled
+    # ssh holds the calling thread indefinitely. Bound it here instead.
+    def gstore_copy_timeout
+      ENV.fetch('SUSHI_GSTORE_COPY_TIMEOUT', '900').to_i
+    end
+
     # Generate copy command based on environment
     def copy_command(src, dest, options = {})
       case copy_method
