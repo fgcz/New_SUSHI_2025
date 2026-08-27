@@ -88,7 +88,17 @@ if write_configured
   check(results, "write token is unsaved", write_token.persisted?, false)
   check(results, "the two credentials have DIFFERENT names",
         write_cfg.name != EnvApiToken.config.name, true)
-  check(results, "the rack policy is additive, not full", policy, "additive")
+  # Which narrowed write policy is in force is an operator choice (submit_only allows ONLY
+  # job submission; additive also allows dataset import and the set-once B-Fabric link and
+  # exempts the internal bridge). What must never be true here is `full`, so assert
+  # membership and PRINT the value rather than pinning one name — pinning `additive` made
+  # this check fail on a node deliberately configured submit_only, which is a false alarm on
+  # the stricter posture of the two.
+  narrowed = %w[submit_only additive]
+  check(results, "the rack policy is a narrowed write policy, not full",
+        narrowed.include?(policy), true)
+  puts "        rack policy in force: #{policy.inspect}" \
+       "#{policy == 'submit_only' ? ' (job submission is the only permitted write)' : ''}"
   puts "        write credential scope #{write_cfg.scope.inspect}, name #{write_cfg.name.inspect}"
   puts "        -> production rows created in this window are attributable to " \
        "apitoken:#{write_cfg.name}"
