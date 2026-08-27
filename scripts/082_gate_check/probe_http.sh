@@ -20,7 +20,7 @@
 # exist.
 #
 # Usage:
-#   SUSHI_PROBE_TOKEN=<bearer> bash probe_http.sh <base_url> <read_only|additive>
+#   SUSHI_PROBE_TOKEN=<bearer> bash probe_http.sh <base_url> <read_only|submit_only|additive>
 #
 # Always run it with the READ credential, in either posture. At Phase 4 that is exactly
 # step 15's "a second (read-only) credential still cannot write": the write credential
@@ -34,12 +34,12 @@ POSTURE="${2:-}"
 TOKEN="${SUSHI_PROBE_TOKEN:-}"
 
 if [ -z "$BASE" ] || [ -z "$POSTURE" ]; then
-  echo "usage: SUSHI_PROBE_TOKEN=<bearer> bash probe_http.sh <base_url> <read_only|additive>" >&2
+  echo "usage: SUSHI_PROBE_TOKEN=<bearer> bash probe_http.sh <base_url> <read_only|submit_only|additive>" >&2
   exit 2
 fi
 case "$POSTURE" in
-  read_only|additive) ;;
-  *) echo "posture must be read_only or additive (got '$POSTURE')" >&2; exit 2 ;;
+  read_only|submit_only|additive) ;;
+  *) echo "posture must be read_only, submit_only or additive (got '$POSTURE')" >&2; exit 2 ;;
 esac
 if [ -z "$TOKEN" ]; then
   echo "SUSHI_PROBE_TOKEN is not set" >&2
@@ -86,9 +86,20 @@ if [ "$POSTURE" = "read_only" ]; then
   probe "job submit"      POST   /api/v1/jobs            '{}' 403 read_only
   probe "dataset delete"  DELETE /v1/datasets/999999999  '-'  403 read_only
 else
-  # Under additive, POST /api/v1/jobs is allow-listed and passes gate 1, so whatever
-  # answers now is downstream of it. DELETE is still refused, and names the policy.
-  probe "dataset delete"  DELETE /v1/datasets/999999999  '-'  403 additive
+  # Under additive AND submit_only, POST /api/v1/jobs is allow-listed and passes gate 1, so
+  # whatever answers now is downstream of it. DELETE is still refused, and names the policy.
+  probe "dataset delete"  DELETE /v1/datasets/999999999  '-'  403 "$POSTURE"
+
+  if [ "$POSTURE" = "submit_only" ]; then
+    # The one route that SEPARATES the two write postures, so it is what proves on the real
+    # node that the narrowing took effect rather than that some gate merely refused:
+    # additive allow-lists this import and would hand it to the token gate, while
+    # submit_only refuses it AT gate 1 and names itself doing so. Inert either way — an
+    # empty body has nothing to register.
+    probe "dataset import"  POST   /v1/datasets/register  '{}' 403 submit_only
+    # Same argument for the set-once B-Fabric link, which additive allow-lists by pattern.
+    probe "bfabric-id link" PUT    /v1/datasets/999999999/bfabric-id '{}' 403 submit_only
+  fi
 fi
 
 echo
