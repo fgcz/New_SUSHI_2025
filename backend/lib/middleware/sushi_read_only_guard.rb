@@ -14,8 +14,10 @@ module Middleware
   #
   #   read_only   — reject every non-safe method (POST/PUT/PATCH/DELETE). Only safe
   #                 methods and the dry-run allowlist (validation) pass.
-  #   submit_only — allow exactly ONE write: job submission. Dataset import, the set-once
-  #                 B-Fabric link and the WHOLE internal bridge are refused. Its purpose is
+  #   submit_only — allow exactly one WRITING REQUEST: job submission. Dataset import, the
+  #                 set-once B-Fabric link and every MUTATING request to the internal
+  #                 bridge are refused. (Safe methods are never gated by any policy, so a
+  #                 GET under /internal/ still passes — see the caveat below.) Its purpose is
   #                 that a backend sharing a database with the live legacy production system
   #                 exposes a single writing route, so a new app or an AI agent calling an
   #                 individual endpoint cannot reach the database through any other one.
@@ -33,9 +35,25 @@ module Middleware
   # The internal bridge (/internal/*, machine principal) is exempt under `additive` so
   # the job_manager can advance job state (CREATED→RUNNING→COMPLETED); its principal
   # auth is still enforced downstream. Under `read_only` the bridge is blocked too
-  # (a read-only mirror has no writing daemon), and under `submit_only` it is blocked by
-  # design — that exemption is the one surface this policy narrows which `additive` did not
-  # restrict at all.
+  # (a read-only mirror has no writing daemon), and under `submit_only` its mutating verbs
+  # are blocked by design — that exemption is the one surface this policy narrows which
+  # `additive` did not restrict at all.
+  #
+  # CAVEAT — no policy here makes the PROCESS read-only, and `read_only` is not a promise
+  # that nothing is written. This guard gates HTTP methods and paths; it cannot see what a
+  # handler does. At least one READ path writes: `DataSet#samples_length` backfills
+  # `num_samples` with `save` when the column is NULL, and it is called from
+  # `GET /api/v1/datasets/:id` and `GET /api/v1/projects/:number/datasets`. Legacy's
+  # `data_set.rb` has the identical method, so this is PARITY, not a defect introduced here,
+  # and it is deliberately not changed. Two consequences worth knowing:
+  #   * a GET can UPDATE a row, which row COUNTS and max(id) cannot detect — do not treat
+  #     "counts unchanged" as proof that nothing was written;
+  #   * measured on the production database 2026-08-27: 55 of 82,967 `data_sets` rows have a
+  #     NULL `num_samples`, and 0 of the 18 rows reachable under the project-scoped
+  #     credential — so the backfill could fire there in principle but not through that
+  #     credential's scope.
+  # Found by an independent cross-model review of the `submit_only` commit, not by these
+  # specs, which stop at the middleware boundary with a dummy downstream app.
   class SushiReadOnlyGuard
     # Every recognized policy value. A non-empty value absent from this list is a
     # misconfiguration and fails CLOSED — see #policy.

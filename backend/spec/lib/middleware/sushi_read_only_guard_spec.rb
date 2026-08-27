@@ -130,13 +130,18 @@ RSpec.describe Middleware::SushiReadOnlyGuard do
       expect(mw.call(env_for('POST', '/v1/datasets/validate'))[0]).to eq 200
     end
 
+    # Each of these asserts a denial alongside the pass. A pass-through-only example would
+    # also be satisfied by an implementation that had accidentally resolved to `full`, so it
+    # would not discriminate on its own — raised by an independent review of this commit.
     it 'allows job submission — the one write this policy exists to permit' do
       expect(mw.call(env_for('POST', '/api/v1/jobs'))[0]).to eq 200
+      expect(mw.call(env_for('POST', '/v1/datasets/register'))[0]).to eq 403
     end
 
     it 'allows the job route in its normalized variants, as the other policies do' do
       expect(mw.call(env_for('POST', '/api/v1/jobs/'))[0]).to eq 200
       expect(mw.call(env_for('POST', '/api/v1/jobs.json'))[0]).to eq 200
+      expect(mw.call(env_for('DELETE', '/api/v1/jobs.json'))[0]).to eq 403
     end
 
     it 'closes the two dataset import routes that additive allows' do
