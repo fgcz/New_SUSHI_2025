@@ -227,6 +227,55 @@ RSpec.describe Middleware::SushiReadOnlyGuard do
       end
     end
 
+    # PRESENT-BUT-BLANK is not the same as ABSENT. A variable that exists with no usable value
+    # is a misconfiguration — a templating step that expanded to nothing, `-e VAR` with no
+    # value — and reading it as "the operator wants the default" grants every write on the
+    # shared production database. Only an ABSENT variable keeps the historical default.
+    # Raised as P1 by an independent reviewer after the first version shipped.
+    it 'fails CLOSED when the variable is present but blank' do
+      ['', ' ', "\t", '   '].each do |blank|
+        ENV['SUSHI_WRITE_POLICY'] = blank
+        status, _headers, body = mw.call(env_for('POST', '/api/v1/jobs'))
+        expect(status).to eq(403), "expected #{blank.inspect} to fail closed, got #{status}"
+        expect(JSON.parse(body.join)['error']).to eq 'read_only'
+      end
+    end
+
+    it 'still means full when the variable is ABSENT, which is the operator decision' do
+      ENV.delete('SUSHI_WRITE_POLICY')
+      expect(mw.call(env_for('POST', '/api/v1/jobs'))[0]).to eq 200
+    end
+
+    # A misconfiguration and a deliberate read_only are indistinguishable from the `error`
+    # field alone, which cost the reviewer's concern about a typo being mistaken for a working
+    # submit_only node. The field stays the EFFECTIVE policy (machines read it); the human
+    # message says the fallback fired.
+    it 'says in the message that a fallback happened, without echoing the bad value' do
+      ENV['SUSHI_WRITE_POLICY'] = 'submit-only'
+      _status, _headers, body = mw.call(env_for('POST', '/api/v1/jobs'))
+      message = JSON.parse(body.join)['message']
+      expect(message).to include('unrecognized')
+      expect(message).not_to include('submit-only')
+    end
+
+    it 'says nothing about a fallback when the policy was recognized' do
+      ENV['SUSHI_WRITE_POLICY'] = 'read_only'
+      _status, _headers, body = mw.call(env_for('POST', '/api/v1/jobs'))
+      expect(JSON.parse(body.join)['message']).not_to include('unrecognized')
+    end
+
+    # scripts/082_gate_check/verify_gates.rb reports the posture on a production node by
+    # calling this private reader, so that it needs no HTTP request. Renaming it to
+    # resolve_policy silently broke that check, and the suite stayed green because the script
+    # is not under test. Pin the name and the shape here instead of trusting nobody to rename
+    # it again.
+    it 'keeps the private #policy reader the gate-check script calls' do
+      ENV['SUSHI_WRITE_POLICY'] = 'submit_only'
+      expect(described_class.new(nil).send(:policy)).to eq 'submit_only'
+      ENV.delete('SUSHI_WRITE_POLICY')
+      expect(described_class.new(nil).send(:policy)).to eq 'full'
+    end
+
     it 'accepts a valid policy irrespective of surrounding whitespace and case' do
       ENV['SUSHI_WRITE_POLICY'] = '  Submit_Only  '
       expect(mw.call(env_for('POST', '/api/v1/jobs'))[0]).to eq 200

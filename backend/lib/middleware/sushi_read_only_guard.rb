@@ -106,7 +106,7 @@ module Middleware
     end
 
     def call(env)
-      pol = policy
+      pol, fell_back = resolve_policy
       return @app.call(env) if pol == "full"
 
       method = env["REQUEST_METHOD"]
@@ -123,24 +123,43 @@ module Middleware
         return @app.call(env) if submit_only?(method, path)
       end
 
-      deny(pol, method, env["PATH_INFO"].to_s)
+      deny(pol, method, env["PATH_INFO"].to_s, fell_back)
     end
 
     private
 
+    # The effective policy name on its own. Kept as a one-line reader because
+    # scripts/082_gate_check/verify_gates.rb calls it (`send(:policy)`) to report the posture
+    # on a production node without making an HTTP request — renaming it silently broke that
+    # check once, and a green suite did not notice because the script is not under test.
     def policy
-      explicit = ENV["SUSHI_WRITE_POLICY"].to_s.strip.downcase
-      return explicit if POLICIES.include?(explicit)
+      resolve_policy.first
+    end
 
-      # A non-empty value that is not a recognized policy is a MISCONFIGURATION, not a
-      # request for the default. Falling through would read `submitonly` or `additivee` as
-      # `full` and grant every write against a database shared with the live legacy
-      # production system, so it fails CLOSED instead. An UNSET variable is not a typo: it
-      # keeps the historical default below, so no existing deployment changes behaviour.
-      return "read_only" unless explicit.empty?
+    # Returns [policy, fell_back]. `fell_back` is true only when the variable was SET to
+    # something this class does not recognize, which is what the denial message reports.
+    def resolve_policy
+      raw = ENV["SUSHI_WRITE_POLICY"]
+      explicit = raw.to_s.strip.downcase
+      return [explicit, false] if POLICIES.include?(explicit)
 
-      return "read_only" if ENV["SUSHI_READ_ONLY"] == "1"
-      "full"
+      # A variable that is PRESENT but does not name a policy is a MISCONFIGURATION, not a
+      # request for the default, so it fails CLOSED. Falling through would read `submitonly`
+      # or `additivee` as `full` and grant every write against a database shared with the
+      # live legacy production system.
+      #
+      # PRESENT-BUT-BLANK counts as present. `raw.nil?` — not `explicit.empty?` — is the test,
+      # because a variable that exists with no usable value (a templating step that expanded
+      # to nothing, `-e VAR` with no value) is the same kind of accident as a typo. Using the
+      # stripped value here read `SUSHI_WRITE_POLICY="   "` as unset and granted `full`;
+      # raised as P1 by an independent review of the first version.
+      #
+      # An ABSENT variable is a different case and keeps the historical default below, so no
+      # existing deployment changes behaviour — that is a deliberate operator decision.
+      return ["read_only", true] unless raw.nil?
+
+      return ["read_only", false] if ENV["SUSHI_READ_ONLY"] == "1"
+      ["full", false]
     end
 
     # Normalize a trailing slash and any .format suffix before matching.
@@ -166,10 +185,18 @@ module Middleware
       SUBMIT_ONLY_ROUTES.include?([method, path])
     end
 
-    def deny(pol, method, path)
+    def deny(pol, method, path, fell_back = false)
+      # `error` stays the EFFECTIVE policy because machines read it — the gate-check probe
+      # asserts on it by name. A misconfiguration is indistinguishable from a deliberate
+      # read_only from that field alone, which is how a typo could be mistaken for a working
+      # submit_only node, so the human-readable message says the fallback fired. The bad value
+      # itself is NOT echoed: it is operator-supplied input and a response body is the wrong
+      # place to reflect it.
+      hint = fell_back ? " (SUSHI_WRITE_POLICY is set to an unrecognized value, so it fell " \
+                         "back to the strictest policy)" : ""
       body = JSON.generate(
         error: pol, # "read_only" | "submit_only" | "additive"
-        message: "This SUSHI backend write policy is '#{pol}'; " \
+        message: "This SUSHI backend write policy is '#{pol}'#{hint}; " \
                  "#{method} #{path} is not permitted."
       )
       # Rack 3 (Rails 8) requires lowercase response header field names.
