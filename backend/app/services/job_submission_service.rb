@@ -1,6 +1,11 @@
+require 'open3'
+
 # Service for handling job submission
 # Creates job scripts, registers datasets, and saves job records
 class JobSubmissionService
+  # `timeout` reports 124 when it had to stop the command itself.
+  TIMEOUT_EXIT_STATUS = 124
+
   attr_reader :sushi_app, :input_dataset, :output_dataset, :job, :jobs, :errors
 
   def initialize(dataset_id:, app_name:, parameters:, user:, next_dataset_name: nil, next_dataset_comment: nil)
@@ -384,20 +389,33 @@ class JobSubmissionService
 
   # Copy scratch directory to gstore before job submission
   # Uses g-req command for FGCZ environment (gstore is read-only)
+  #
+  # This copy MUST finish before any row is written — #submit calls it before
+  # create_output_dataset and create_job_records on purpose. The job_manager daemon is the job
+  # queue: it polls `jobs` and sbatches the script from its gStore path, so a row that exists
+  # before its script has landed is a row the daemon can pick up and fail on. That is why the
+  # queued form is `g-req -w copy` (wait) and not a fire-and-forget `g-req copy`.
   def copy_scratch_to_gstore
     src = @sushi_app.scratch_result_dir
     dest = @sushi_app.gstore_project_dir
-    
-    copy_cmd = SushiConfigHelper.copy_command(src, dest, now: true)
+
+    copy_cmd = SushiConfigHelper.copy_command(src, dest, now: SushiConfigHelper.submit_copy_now?)
     Rails.logger.info("Copying scratch to gstore: #{copy_cmd}")
-    
-    success = system(copy_cmd)
-    unless success
-      @errors << "Failed to copy files from scratch to gstore: #{copy_cmd}"
-      Rails.logger.error("Copy command failed: #{copy_cmd}")
+
+    status, output = run_bounded_copy(copy_cmd)
+    unless status.success?
+      detail = if status.exitstatus == TIMEOUT_EXIT_STATUS
+                 "timed out after #{SushiConfigHelper.gstore_copy_timeout}s"
+               else
+                 "exit #{status.exitstatus}"
+               end
+      @errors << "Failed to copy files from scratch to gstore (#{detail}): #{copy_cmd}"
+      # The output is the whole diagnosis and used to be thrown away: a bare system() call
+      # discarded it, so an ssh stuck on a password prompt left NOTHING in the log.
+      Rails.logger.error("Copy command failed (#{detail}): #{copy_cmd}\n#{output}")
       return false
     end
-    
+
     # Wait for script file to appear in gstore (g-req may have NFS delay)
     wait_for_gstore_file(@sushi_app.gstore_script_dir, max_wait: 30)
     
@@ -409,6 +427,17 @@ class JobSubmissionService
     false
   end
   
+  # Run a copy command under a wall-clock bound, capturing its combined output.
+  #
+  # `timeout` is used rather than Ruby's Timeout, because the thing that hangs is a grandchild
+  # process (g-req -> gstore-request -> ssh) and Timeout only unwinds the Ruby frame, leaving
+  # the child running and the request half-done. -k also KILLs a child that ignores TERM.
+  def run_bounded_copy(copy_cmd)
+    bounded = "timeout -k 30 #{SushiConfigHelper.gstore_copy_timeout} #{copy_cmd}"
+    output, status = Open3.capture2e(bounded)
+    [status, output]
+  end
+
   # Wait for files to appear in gstore directory (handles NFS cache delay)
   def wait_for_gstore_file(gstore_dir, max_wait: 30)
     start_time = Time.now

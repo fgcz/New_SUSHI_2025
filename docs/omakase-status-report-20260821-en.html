@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMAKASE — status report, 2026-08-21</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#5b6472; --line:#d4d9e0; --bg:#ffffff; --panel:#f7f9fc;
+    /* Data colours. Blue = already exists / usable, amber = needs work, grey = out of
+       scope. Validated by the six-check script (adjacent CVD separation
+       delta-E 25.9 protan / 27.0 tritan, all checks PASS). */
+    --ok:#2b74c9; --ok-d:#1a5aa8; --ok-l:#6fa3dd; --warn:#cf7a00; --neutral:#8a919c;
+    --ok-bg:#eaf2fb; --warn-bg:#fdf2e3; --neutral-bg:#f0f1f4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.75; font-size:15px;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:44px 24px 96px}
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:30px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  h2{font-size:20px;margin:50px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+  h2 .n{color:var(--muted);font-weight:400;margin-right:10px;font-variant-numeric:tabular-nums}
+  h3{font-size:16px;margin:28px 0 8px}
+  p{margin:10px 0}
+  .lead{font-size:15.5px;color:#2b3340;margin:6px 0 18px}
+  figure{margin:22px 0 8px;padding:0}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  svg{max-width:100%;height:auto;display:block}
+  .fig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:12px;margin:22px 0 8px}
+  .kpi{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fff}
+  .kpi .v{font-size:27px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
+  .kpi .k{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .kpi.w .v{color:var(--warn)} .kpi.o .v{color:var(--ok-d)}
+
+  .legend{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:12.5px;margin:12px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:14px;height:14px;border-radius:4px;flex:0 0 auto}
+  .sw.a{background:var(--ok-d)} .sw.b{background:var(--ok)} .sw.c{background:var(--ok-l)}
+  .sw.d{background:var(--neutral)} .sw.e{background:var(--warn)}
+
+  .stack{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:20px 0 8px}
+  .layer{display:grid;grid-template-columns:56px 1.4fr 1fr 128px;border-bottom:1px solid var(--line)}
+  .layer:last-child{border-bottom:0}
+  .layer .id{background:#eef1f6;font-weight:700;font-size:13px;display:flex;align-items:center;
+             justify-content:center;color:#3a4a63;border-right:1px solid var(--line)}
+  .layer .q{padding:10px 14px;font-size:14px}
+  .layer .who{padding:10px 14px;font-size:13px;color:var(--muted);border-left:1px dashed var(--line)}
+  .layer .st{padding:10px 12px;font-size:12px;font-weight:700;border-left:1px solid var(--line);
+             display:flex;align-items:center}
+  .layer.hd{background:#eef1f6}
+  .layer.hd .q,.layer.hd .who,.layer.hd .st{font-size:12px;color:#3a4a63;font-weight:700}
+  .st.run{background:var(--ok-bg);color:var(--ok-d)}
+  .st.plan{background:var(--neutral-bg);color:#43494f}
+  .st.todo{background:var(--warn-bg);color:#7a4900}
+
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+  th{background:#eef1f6;font-weight:600}
+  td.r{text-align:right;font-variant-numeric:tabular-nums}
+  td.ok{background:var(--ok-bg);color:var(--ok-d);font-weight:600;text-align:center}
+  td.no{background:var(--warn-bg);color:#7a4900;font-weight:600;text-align:center}
+  caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);padding-bottom:6px}
+
+  .callout{border-left:4px solid var(--ok);background:var(--ok-bg);padding:12px 16px;
+           border-radius:0 8px 8px 0;margin:18px 0}
+  .callout.k{border-color:var(--warn);background:var(--warn-bg)}
+  .callout .t{font:700 13.5px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+              margin-bottom:2px;color:var(--ink)}
+  .callout p{margin:4px 0;font-size:14px}
+
+  ul{margin:10px 0;padding-left:22px} li{margin:5px 0}
+  code{background:#eef1f5;padding:1px 6px;border-radius:4px;font-size:12.5px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  @media print{
+    body{font-size:11pt} .wrap{padding:0} h2{page-break-after:avoid}
+    figure,.fig,table,.stack,.kpis{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false"><defs>
+  <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#5b6472"></path>
+  </marker>
+  <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#cf7a00"></path>
+  </marker>
+</defs></svg>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>OMAKASE — status report</h1>
+  <p class="sub">Automated first-pass analysis for finished sequencing orders — where the project actually stands</p>
+  <div class="meta">
+    <span>Written <b>2026-08-21</b></span>
+    <span>Design <b>v0.3</b> (<code>docs/omakase-auto-analysis-design.md</code>)</span>
+    <span>Implementation code <b>none yet</b></span>
+    <span>Writes to production <b>zero</b></span>
+  </div>
+</header>
+
+<p class="lead">
+In one line: <b>the design is finished, the measuring is finished, and the next step is
+for a person to write the recipes.</b> Nothing is waiting on a decision any more. What
+is left is the part only a domain expert can do — writing down current best practice.
+</p>
+
+<div class="kpis">
+  <div class="kpi o"><div class="v">51.7%</div><div class="k">of delivered datasets resolve to a reference genome with no human input</div></div>
+  <div class="kpi w"><div class="v">39.2%</div><div class="k">say <code>NA</code> or nothing in the Species column, so nothing can be decided</div></div>
+  <div class="kpi w"><div class="v">76.7%</div><div class="k">of that gap sits in a single service type</div></div>
+  <div class="kpi o"><div class="v">1</div><div class="k">new component to build; everything else already exists</div></div>
+</div>
+<p class="sub">Three colours in every figure. <b>Blue = already exists or usable</b>, <b>amber = needs work</b>, <b>grey = out of scope</b>.</p>
+
+<h2><span class="n">1</span>What OMAKASE is, in seven layers</h2>
+
+<p>
+When sequencing for an order finishes, a <b>rule</b> — not a language model — selects a
+first-pass analysis, a bioinformatician approves it, and it runs through the existing
+SUSHI job path. A deterministic check decides whether the result is sane, and a person
+releases it. The catchphrase is <b>rules decide, AI assists, humans release</b>.
+</p>
+
+<div class="stack">
+  <div class="layer hd"><div class="id">Layer</div><div class="q">Job</div><div class="who">Owner</div><div class="st">State</div></div>
+  <div class="layer"><div class="id">L0</div><div class="q">Data minimisation — what may the AI see?</div><div class="who">field allow-list in code</div><div class="st plan">design only</div></div>
+  <div class="layer"><div class="id">L1</div><div class="q">Trigger — sequencing for order X finished</div><div class="who">polls B-Fabric</div><div class="st plan">design only</div></div>
+  <div class="layer"><div class="id">L2</div><div class="q">Decision — which analysis, which parameters</div><div class="who">versioned recipe catalog; the model breaks ties only</div><div class="st todo">next up</div></div>
+  <div class="layer"><div class="id">L3</div><div class="q">Gate — human veto window, then start</div><div class="who">state machine + business-hours timer</div><div class="st plan">design only</div></div>
+  <div class="layer"><div class="id">L4</div><div class="q">Execution</div><div class="who">SUSHI backend REST API → job_manager → SLURM → gStore</div><div class="st run">already running</div></div>
+  <div class="layer"><div class="id">L5</div><div class="q">QC — is the result sane?</div><div class="who">deterministic tiers first; the model writes prose only</div><div class="st plan">design only</div></div>
+  <div class="layer"><div class="id">L6</div><div class="q">Release</div><div class="who">phase 1 a person, phase 2 per-recipe automation</div><div class="st plan">design only</div></div>
+</div>
+
+<h3>Only one component gets built</h3>
+<p>
+The single piece of new development is <code>omakase-core</code>, a plain Python daemon
+with its own state database. The SUSHI schema is not changed. Every change to SUSHI goes
+through the REST API, and <b>no path is built that writes the database directly</b>.
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 196" role="img" aria-label="Execution path. Only omakase-core is new; the REST API through SLURM and gStore already exist.">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">Execution path — the one amber box is new, everything else is already in production</text>
+
+  <rect x="4" y="46" width="136" height="66" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"><title>The only new component</title></rect>
+  <text x="72" y="72" font-size="13" text-anchor="middle" fill="#7a4900"><tspan font-weight="700">omakase-core</tspan></text>
+  <text x="72" y="91" font-size="11.5" text-anchor="middle" fill="#7a4900">new, not started</text>
+
+  <rect x="172" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="240" y="72" font-size="12.5" text-anchor="middle" fill="#1a5aa8">SUSHI backend</text>
+  <text x="240" y="91" font-size="11.5" text-anchor="middle" fill="#1a5aa8">REST API</text>
+
+  <rect x="340" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="408" y="72" font-size="12.5" text-anchor="middle" fill="#1a5aa8">Job rows</text>
+  <text x="408" y="91" font-size="11.5" text-anchor="middle" fill="#1a5aa8">status CREATED</text>
+
+  <rect x="508" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="576" y="78" font-size="12.5" text-anchor="middle" fill="#1a5aa8">job_manager</text>
+  <text x="576" y="95" font-size="11" text-anchor="middle" fill="#1a5aa8">existing daemon</text>
+
+  <rect x="676" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="744" y="83" font-size="12.5" text-anchor="middle" fill="#1a5aa8">SLURM</text>
+
+  <rect x="844" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="912" y="83" font-size="12.5" text-anchor="middle" fill="#1a5aa8">gStore</text>
+
+  <line x1="142" y1="79" x2="168" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="310" y1="79" x2="336" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="478" y1="79" x2="504" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="646" y1="79" x2="672" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="814" y1="79" x2="840" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+
+  <text x="240" y="141" font-size="11.5" text-anchor="middle" fill="#5b6472">project scope enforced</text>
+  <text x="240" y="157" font-size="11.5" text-anchor="middle" fill="#5b6472">by the token</text>
+  <text x="408" y="141" font-size="11.5" text-anchor="middle" fill="#5b6472">required-parameter</text>
+  <text x="408" y="157" font-size="11.5" text-anchor="middle" fill="#5b6472">gate already passed</text>
+
+  <text x="0" y="188" font-size="11.5" fill="#7a4900">No route to the SUSHI database exists outside this path.</text>
+</svg>
+</div>
+<figcaption>Figure 1 — The execution path. Everything in blue is already used in production; nothing on the SUSHI side was invented for this project.</figcaption>
+</figure>
+
+<h2><span class="n">2</span>How far the work has come</h2>
+
+<p>
+The agreed order is A → B → C → D. A and B are done, and so is the measurement (B2) that
+B turned out to require.
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 176" role="img" aria-label="Progress. A, B and B2 are done, C is next, D is a separate track.">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">The agreed order, and where we are in it</text>
+
+  <rect x="6" y="40" width="180" height="84" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="96" y="64" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">A. On-prem model</tspan></text>
+  <text x="96" y="84" font-size="11.5" text-anchor="middle" fill="#1a5aa8">leak paths closed</text>
+  <text x="96" y="108" font-size="11.5" text-anchor="middle" fill="#1a5aa8">done 08-20</text>
+
+  <rect x="206" y="40" width="180" height="84" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="296" y="64" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">B. Metadata audit</tspan></text>
+  <text x="296" y="84" font-size="11.5" text-anchor="middle" fill="#1a5aa8">1467 orders read</text>
+  <text x="296" y="108" font-size="11.5" text-anchor="middle" fill="#1a5aa8">done 08-20</text>
+
+  <rect x="406" y="40" width="180" height="84" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="496" y="64" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">B2. Species measured</tspan></text>
+  <text x="496" y="84" font-size="11.5" text-anchor="middle" fill="#1a5aa8">1376 datasets</text>
+  <text x="496" y="108" font-size="11.5" text-anchor="middle" fill="#1a5aa8">done 08-21</text>
+
+  <rect x="606" y="40" width="180" height="84" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2.5"></rect>
+  <text x="696" y="64" font-size="12.5" text-anchor="middle" fill="#7a4900"><tspan font-weight="700">C. Attended prototype</tspan></text>
+  <text x="696" y="84" font-size="11.5" text-anchor="middle" fill="#7a4900">reasoning parts only</text>
+  <text x="696" y="108" font-size="11.5" text-anchor="middle" fill="#7a4900">next</text>
+
+  <rect x="806" y="40" width="188" height="84" rx="8" fill="#f0f1f4" stroke="#8a919c" stroke-width="2" stroke-dasharray="5 4"></rect>
+  <text x="900" y="64" font-size="12.5" text-anchor="middle" fill="#43494f"><tspan font-weight="700">D. Package a skillset</tspan></text>
+  <text x="900" y="84" font-size="11.5" text-anchor="middle" fill="#43494f">wanted in general</text>
+  <text x="900" y="108" font-size="11.5" text-anchor="middle" fill="#43494f">separate track</text>
+
+  <line x1="188" y1="82" x2="202" y2="82" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="388" y1="82" x2="402" y2="82" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="588" y1="82" x2="602" y2="82" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="788" y1="82" x2="802" y2="82" stroke="#8a919c" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ah)"></line>
+
+  <text x="0" y="164" font-size="11.5" fill="#5b6472">D was explicitly taken off OMAKASE's critical path. It sits outside this sequence.</text>
+</svg>
+</div>
+<figcaption>Figure 2 — C (an attended prototype) is next. D is deliberately not on the critical path.</figcaption>
+</figure>
+
+<h2><span class="n">3</span>The most important thing the measurements found</h2>
+
+<p>
+There are two entry points: <b>the B-Fabric order record</b> and <b>the dataset delivered
+into SUSHI</b>. Both were measured against production — read-only, no language model,
+aggregate output only. <b>Both gaps turned out to sit in the same single service type.</b>
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 306" role="img" aria-label="Two independent measurements converge on one service type.">
+  <text x="40" y="18" font-size="13" fill="#1c1f26"><tspan font-weight="700">Entry 1 — B-Fabric order metadata</tspan></text>
+  <rect x="40" y="30" width="420" height="28" rx="4" fill="#dfe4ec"><title>1467 sequencing orders in 12 months</title></rect>
+  <text x="470" y="49" font-size="12" fill="#5b6472">1467 sequencing orders</text>
+  <rect x="40" y="66" width="207" height="28" rx="4" fill="#2b74c9"></rect>
+  <text x="52" y="85" font-size="12.5" fill="#ffffff"><tspan font-weight="700">722 = 49.2%</tspan></text>
+  <text x="257" y="85" font-size="12" fill="#1a5aa8">a recipe can be selected</text>
+
+  <text x="540" y="18" font-size="13" fill="#1c1f26"><tspan font-weight="700">Entry 2 — datasets delivered into SUSHI</tspan></text>
+  <rect x="540" y="30" width="420" height="28" rx="4" fill="#dfe4ec"><title>1376 delivered datasets behind 974 orders</title></rect>
+  <text x="825" y="49" font-size="12" fill="#5b6472">1376 datasets</text>
+  <rect x="540" y="66" width="217" height="28" rx="4" fill="#2b74c9"></rect>
+  <text x="552" y="85" font-size="12.5" fill="#ffffff"><tspan font-weight="700">712 = 51.7%</tspan></text>
+  <text x="767" y="85" font-size="12" fill="#1a5aa8">reference resolved</text>
+
+  <path d="M250,102 L250,150 L420,150 L420,186" fill="none" stroke="#cf7a00" stroke-width="2.5" marker-end="url(#ahw)"></path>
+  <path d="M750,102 L750,150 L580,150 L580,186" fill="none" stroke="#cf7a00" stroke-width="2.5" marker-end="url(#ahw)"></path>
+
+  <rect x="180" y="192" width="640" height="92" rx="10" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2.5"></rect>
+  <text x="500" y="218" font-size="14" text-anchor="middle" fill="#7a4900"><tspan font-weight="700">Both gaps sit in the same single service type</tspan></text>
+  <text x="500" y="242" font-size="13" text-anchor="middle" fill="#7a4900">Ready-made Libraries Sequencing</text>
+  <text x="500" y="264" font-size="12" text-anchor="middle" fill="#7a4900">22.7% decidable on the order side · 414 of the 540 unusable Species values (76.7%)</text>
+</svg>
+</div>
+<figcaption>Figure 3 — Two measurements taken independently landed in the same place. One change to one form moves both numbers.</figcaption>
+</figure>
+
+<div class="callout k">
+  <div class="t">This is the finding that mattered</div>
+  <p>
+  A vague complaint — "the metadata quality is poor" — became a specific request:
+  <b>one field, on one service type</b>. And in that service type FGCZ did not prepare
+  the library; the customer did, so <b>the customer knows the answer</b>.
+  </p>
+</div>
+
+<h2><span class="n">4</span>Readiness per service type</h2>
+
+<p>
+The 1376 delivered datasets, split by the service type of their order. Blue is
+"Species names something specific", amber is "<code>NA</code>, <code>n/a</code> or blank,
+so nothing can be decided".
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 424" role="img" aria-label="Stacked bar chart of delivered datasets per service type, split by whether Species is usable.">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">Delivered datasets per service type, and how many carry no usable Species</text>
+
+  <line x1="268" y1="34" x2="268" y2="374" stroke="#d4d9e0" stroke-width="1"></line>
+  <line x1="425" y1="34" x2="425" y2="374" stroke="#e8ebf0" stroke-width="1"></line>
+  <line x1="582" y1="34" x2="582" y2="374" stroke="#e8ebf0" stroke-width="1"></line>
+  <line x1="739" y1="34" x2="739" y2="374" stroke="#e8ebf0" stroke-width="1"></line>
+  <text x="268" y="392" font-size="11" text-anchor="middle" fill="#5b6472">0</text>
+  <text x="425" y="392" font-size="11" text-anchor="middle" fill="#5b6472">200</text>
+  <text x="582" y="392" font-size="11" text-anchor="middle" fill="#5b6472">400</text>
+  <text x="739" y="392" font-size="11" text-anchor="middle" fill="#5b6472">600</text>
+
+  <text x="252" y="55" font-size="12" text-anchor="end" fill="#1c1f26"><tspan font-weight="700">Ready-made Libraries</tspan></text>
+  <rect x="268" y="42" width="235" height="20" rx="3" fill="#2b74c9"><title>Species specific: 300</title></rect>
+  <rect x="505" y="42" width="323" height="20" rx="3" fill="#cf7a00"><title>Species unusable: 414</title></rect>
+  <text x="836" y="57" font-size="11" fill="#5b6472">714 · 414 unusable</text>
+
+  <text x="252" y="91" font-size="12" text-anchor="end" fill="#1c1f26">High Throughput (NGS)</text>
+  <rect x="268" y="78" width="267" height="20" rx="3" fill="#2b74c9"><title>Species specific: 340</title></rect>
+  <rect x="537" y="78" width="76" height="20" rx="3" fill="#cf7a00"><title>Species unusable: 100</title></rect>
+  <text x="621" y="93" font-size="11" fill="#5b6472">440 · 100 unusable</text>
+
+  <text x="252" y="127" font-size="12" text-anchor="end" fill="#1c1f26">Single Cell Sequencing</text>
+  <rect x="268" y="114" width="75" height="20" rx="3" fill="#2b74c9"><title>Species specific: 95</title></rect>
+  <rect x="345" y="114" width="3" height="20" fill="#cf7a00"><title>Species unusable: 4</title></rect>
+  <text x="356" y="129" font-size="11" fill="#5b6472">99 · 4</text>
+
+  <text x="252" y="163" font-size="12" text-anchor="end" fill="#1c1f26">Spatial Gene Expression</text>
+  <rect x="268" y="150" width="43" height="20" rx="3" fill="#2b74c9"><title>Species specific: 55</title></rect>
+  <rect x="313" y="150" width="4" height="20" fill="#cf7a00"><title>Species unusable: 5</title></rect>
+  <text x="325" y="165" font-size="11" fill="#5b6472">60 · 5</text>
+
+  <text x="252" y="199" font-size="12" text-anchor="end" fill="#1c1f26">Genome Informatics</text>
+  <rect x="268" y="186" width="24" height="20" rx="3" fill="#2b74c9"><title>Species specific: 30</title></rect>
+  <rect x="294" y="186" width="6" height="20" fill="#cf7a00"><title>Species unusable: 8</title></rect>
+  <text x="308" y="201" font-size="11" fill="#5b6472">38 · 8</text>
+
+  <text x="252" y="235" font-size="12" text-anchor="end" fill="#1c1f26">order not readable</text>
+  <rect x="268" y="222" width="7" height="20" rx="3" fill="#2b74c9"><title>Species specific: 9</title></rect>
+  <rect x="277" y="222" width="2" height="20" fill="#cf7a00"><title>Species unusable: 3</title></rect>
+  <text x="287" y="237" font-size="11" fill="#5b6472">12 · 3</text>
+
+  <text x="252" y="271" font-size="12" text-anchor="end" fill="#1c1f26">CRISPR Screen</text>
+  <rect x="268" y="258" width="2" height="20" fill="#2b74c9"><title>Species specific: 3</title></rect>
+  <rect x="272" y="258" width="3" height="20" fill="#cf7a00"><title>Species unusable: 4</title></rect>
+  <text x="283" y="273" font-size="11" fill="#5b6472">7 · 4</text>
+
+  <text x="252" y="307" font-size="12" text-anchor="end" fill="#1c1f26">Protein Analysis Services</text>
+  <rect x="268" y="294" width="3" height="20" fill="#2b74c9"><title>Species specific: 4</title></rect>
+  <text x="279" y="309" font-size="11" fill="#5b6472">4 · 0</text>
+
+  <text x="252" y="343" font-size="12" text-anchor="end" fill="#1c1f26">Long Read Sequencing</text>
+  <rect x="268" y="330" width="2" height="20" fill="#cf7a00"><title>Species unusable: 2</title></rect>
+  <text x="278" y="345" font-size="11" fill="#5b6472">2 · 2</text>
+
+  <text x="0" y="414" font-size="11.5" fill="#5b6472">Nothing is truncated: the small service types are all shown. A thin bar means few datasets.</text>
+</svg>
+</div>
+<div class="legend">
+  <span><i class="sw b"></i>Species names something specific</span>
+  <span><i class="sw e"></i>Species is <code>NA</code>, <code>n/a</code> or blank</span>
+</div>
+<figcaption>Figure 4 — The top two rows are 84% of the whole. The seven below are small, and some are not analysis targets at all.</figcaption>
+</figure>
+
+<table>
+<caption>The same data. "Decidable on the order side" is what B-Fabric order metadata alone can decide.</caption>
+<thead><tr><th>Service type</th><th>Delivered datasets</th><th>Species unusable</th><th>Share</th><th>Decidable on the order side</th></tr></thead>
+<tbody>
+<tr><td><b>Ready-made Libraries Sequencing</b></td><td class="r">714</td><td class="r">414</td><td class="no">58.0%</td><td class="no">22.7%</td></tr>
+<tr><td>High Throughput Sequencing (NGS)</td><td class="r">440</td><td class="r">100</td><td class="no">22.7%</td><td class="ok">96.8%</td></tr>
+<tr><td>Single Cell Sequencing</td><td class="r">99</td><td class="r">4</td><td class="ok">4.0%</td><td class="ok">100%</td></tr>
+<tr><td>Spatial Gene Expression</td><td class="r">60</td><td class="r">5</td><td class="ok">8.3%</td><td class="ok">100%</td></tr>
+<tr><td>Genome Informatics</td><td class="r">38</td><td class="r">8</td><td class="r">21.1%</td><td>not an analysis target</td></tr>
+<tr><td>order not readable</td><td class="r">12</td><td class="r">3</td><td class="r">25.0%</td><td>—</td></tr>
+<tr><td>CRISPR Screen</td><td class="r">7</td><td class="r">4</td><td class="r">57.1%</td><td class="ok">100%</td></tr>
+<tr><td>Protein Analysis Services</td><td class="r">4</td><td class="r">0</td><td class="ok">0%</td><td>—</td></tr>
+<tr><td>Long Read Sequencing</td><td class="r">2</td><td class="r">2</td><td class="r">100%</td><td class="ok">100%</td></tr>
+<tr><th>Total</th><th class="r">1376</th><th class="r">540</th><th class="r">39.2%</th><th class="r">49.2%</th></tr>
+</tbody>
+</table>
+
+<p class="sub">
+Long Read reads 100% unusable, but that is two datasets — not a number to draw a
+conclusion from. Genome Informatics (which <i>is</i> the bioinformatics service) and
+Bench Access (where the customer does the bench work) read 0% on the order side, and
+<b>are deliberately excluded from the metadata request</b>: they are not analysis targets.
+</p>
+
+<h2><span class="n">5</span>Where Species comes from</h2>
+
+<p>
+The design assumed Species could be read from the order. <b>There is no Species field on
+the order.</b> Verified against production: the order endpoint returns 49 fields and the
+sample endpoint 13, and none of them is species, organism, taxon or strain. Species is a
+<b>column on the SUSHI dataset</b>, so it exists only once data has been delivered.
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 348" role="img" aria-label="Where Species comes from: not the order, but the dataset, normalised and looked up in the curated reference table.">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">From Species to a reference build — and the dead ends</text>
+
+  <rect x="10" y="34" width="250" height="58" rx="8" fill="#f0f1f4" stroke="#8a919c" stroke-width="2" stroke-dasharray="5 4"></rect>
+  <text x="135" y="58" font-size="12.5" text-anchor="middle" fill="#43494f"><tspan font-weight="700">B-Fabric order</tspan></text>
+  <text x="135" y="78" font-size="11.5" text-anchor="middle" fill="#43494f">no Species field, 0 of 49</text>
+
+  <rect x="10" y="112" width="250" height="58" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="135" y="136" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">delivered SUSHI dataset</tspan></text>
+  <text x="135" y="156" font-size="11.5" text-anchor="middle" fill="#1a5aa8">has a Species column</text>
+
+  <rect x="330" y="112" width="200" height="58" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="430" y="136" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">normalise spelling</tspan></text>
+  <text x="430" y="156" font-size="11.5" text-anchor="middle" fill="#1a5aa8">syntax only</text>
+
+  <rect x="330" y="196" width="200" height="66" rx="8" fill="#eaf2fb" stroke="#1a5aa8" stroke-width="2.5"></rect>
+  <text x="430" y="220" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">curated build table</tspan></text>
+  <text x="430" y="238" font-size="11" text-anchor="middle" fill="#1a5aa8">reference-favorite</text>
+  <text x="430" y="254" font-size="11" text-anchor="middle" fill="#1a5aa8">human-maintained, 5 species</text>
+
+  <rect x="330" y="288" width="200" height="48" rx="8" fill="#1a5aa8"></rect>
+  <text x="430" y="318" font-size="13" text-anchor="middle" fill="#ffffff"><tspan font-weight="700">refBuild resolved</tspan></text>
+
+  <line x1="262" y1="141" x2="326" y2="141" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="430" y1="172" x2="430" y2="192" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="430" y1="264" x2="430" y2="284" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+
+  <text x="600" y="30" font-size="12.5" fill="#7a4900"><tspan font-weight="700">Dead ends — a person is needed</tspan></text>
+
+  <rect x="600" y="40" width="392" height="52" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"></rect>
+  <text x="614" y="62" font-size="12" fill="#7a4900"><tspan font-weight="700">39.2%</tspan> — Species is NA, n/a or blank</text>
+  <text x="614" y="80" font-size="11.5" fill="#7a4900">nothing can be proposed until somebody fills it in</text>
+
+  <rect x="600" y="102" width="392" height="52" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"></rect>
+  <text x="614" y="124" font-size="12" fill="#7a4900"><tspan font-weight="700">4.3%</tspan> — in the catalog, but no curated build</text>
+  <text x="614" y="142" font-size="11.5" fill="#7a4900">1 to 4 candidates; a person chooses which one</text>
+
+  <rect x="600" y="164" width="392" height="52" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"></rect>
+  <text x="614" y="186" font-size="12" fill="#7a4900"><tspan font-weight="700">5.7%</tspan> — more than one Species in one dataset</text>
+  <text x="614" y="204" font-size="11.5" fill="#7a4900">one refBuild cannot cover it: fan out per sample, or refuse</text>
+
+  <rect x="600" y="226" width="392" height="52" rx="8" fill="#f0f1f4" stroke="#8a919c" stroke-width="2"></rect>
+  <text x="614" y="248" font-size="12" fill="#43494f"><tspan font-weight="700">1.9%</tspan> — a real species with no reference at all</text>
+  <text x="614" y="266" font-size="11.5" fill="#43494f">that is a genome-building conversation, not automation</text>
+
+  <path d="M530,141 L565,141 L565,66" fill="none" stroke="#cf7a00" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ahw)"></path>
+  <path d="M565,141 L565,128" fill="none" stroke="#cf7a00" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ahw)"></path>
+  <path d="M565,141 L565,190" fill="none" stroke="#cf7a00" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ahw)"></path>
+</svg>
+</div>
+<figcaption>Figure 5 — The function that picks a reference genome was not something to write. It was already a table on disk.</figcaption>
+</figure>
+
+<div class="callout">
+  <div class="t">The finding that made the design smaller</div>
+  <p>
+  <code>/srv/GT/reference-favorite</code> is a <b>human-maintained table of the
+  recommended build per species</b> — human, mouse, rat, dog and <i>Arabidopsis
+  thaliana</i>. It is what SUSHI already lists at the top of the reference dropdown. So
+  OMAKASE does not need to invent a species-to-build policy, and <b>must not</b>: that
+  decision already has an owner. Those five species cover 712 of the 836 datasets that
+  name a specific species — 85.2%.
+  </p>
+</div>
+
+<h3>Reading Species costs nothing extra</h3>
+<p>
+Of the 18 allow-listed apps, <b>13 declare Species as a required column</b>. The
+execution layer therefore has to read the dataset before it can build a job, whatever
+the trigger does. "Also read the dataset" is a cost already being paid.
+</p>
+
+<h2><span class="n">6</span>What the 1376 Species values actually say</h2>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 152" role="img" aria-label="Breakdown of the Species value on 1376 delivered datasets.">
+  <text x="40" y="20" font-size="12.5" fill="#5b6472">1376 delivered datasets, classified by what the Species column says</text>
+  <rect x="40" y="36" width="474" height="42" rx="3" fill="#1a5aa8"><title>Curated build exists: 712</title></rect>
+  <text x="56" y="63" font-size="14" fill="#ffffff"><tspan font-weight="700">51.7%</tspan> resolved, no human input</text>
+  <rect x="516" y="36" width="24" height="42" rx="3" fill="#2b74c9"><title>Needs an alias signed off: 39</title></rect>
+  <rect x="542" y="36" width="37" height="42" rx="3" fill="#6fa3dd"><title>In catalog, no curated build: 59</title></rect>
+  <rect x="581" y="36" width="15" height="42" rx="3" fill="#8a919c"><title>No reference in the catalog: 26</title></rect>
+  <rect x="598" y="36" width="362" height="42" rx="3" fill="#cf7a00"><title>No usable value: 540</title></rect>
+  <text x="614" y="63" font-size="14" fill="#ffffff"><tspan font-weight="700">39.2%</tspan> no usable value</text>
+  <text x="40" y="102" font-size="11.5" fill="#5b6472">Counting "is the column filled?" gives 98.7%. That is the number not to quote.</text>
+  <text x="40" y="122" font-size="11.5" fill="#5b6472">39.2% of it is NA, n/a or blank — the same thing as "Custom / Other" on the order side.</text>
+</svg>
+</div>
+<div class="legend">
+  <span><i class="sw a"></i>curated build exists 712</span>
+  <span><i class="sw b"></i>needs an alias signed off 39</span>
+  <span><i class="sw c"></i>in catalog, no curated build 59</span>
+  <span><i class="sw d"></i>no reference in the catalog 26</span>
+  <span><i class="sw e"></i>no usable value 540</span>
+</div>
+<figcaption>Figure 6 — Segment width is proportional to count. The three narrow ones are easier to read in the table.</figcaption>
+</figure>
+
+<table>
+<caption>Same as figure 6. Population: raw datasets delivered in 12 months — 1376 datasets behind 974 orders.</caption>
+<thead><tr><th>Class</th><th>Datasets</th><th>Share</th><th>What it means</th></tr></thead>
+<tbody>
+<tr><td>curated build exists</td><td class="r">712</td><td class="r">51.7%</td><td><code>refBuild</code> resolves with no human judgment</td></tr>
+<tr><td>needs an alias signed off</td><td class="r">39</td><td class="r">2.8%</td><td><code>Human</code>=<code>Homo_sapiens</code> and similar. These are claims about biology and <b>need a human signature</b></td></tr>
+<tr><td>in catalog, no curated build</td><td class="r">59</td><td class="r">4.3%</td><td>1 to 4 candidates; a person picks</td></tr>
+<tr><td>no reference in the catalog</td><td class="r">26</td><td class="r">1.9%</td><td>the species is real; the genome is not built</td></tr>
+<tr><td>no usable value</td><td class="r">540</td><td class="r">39.2%</td><td><code>NA</code> 297, <code>n/a</code> 215, blank 18, <code>Unidentified</code> 10</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <div class="t">One note on how the number was built</div>
+  <p>
+  "Needs an alias signed off" is a <b>separate class on purpose</b>. That
+  <code>Human</code> and <code>Homo_sapiens</code> are the same thing is a claim about
+  biology, not something a machine should decide by itself. So the headline 51.7%
+  contains no identity judgment invented here. <code>Escherichia coli K12</code> is left
+  unresolved deliberately — the catalog holds three K12 strains, and picking one would be
+  exactly the forbidden move.
+  </p>
+</div>
+
+<h2><span class="n">7</span>The request that follows, and its evidence</h2>
+
+<p>
+The earlier informal ask — "we need better metadata" — has been replaced by a document
+with the numbers attached (<code>docs/omakase-bfabric-metadata-request.md</code>,
+<b>draft, not sent</b>). All three requests point at the same single service type.
+</p>
+
+<table>
+<thead><tr><th>Request</th><th>What</th><th>What it buys</th></tr></thead>
+<tbody>
+<tr><td><b>R1</b></td><td>For Ready-made Libraries Sequencing only: make Sequencing Application mandatory and remove <code>Custom / Other</code> as an answer</td><td>503 orders a year become decidable. Sequencing orders go from 49.2% to roughly 83%</td></tr>
+<tr><td><b>R2</b></td><td>Add Species as an order field, mandatory for the same service type</td><td>a proposal can be formed before data lands, and the ordered species can be checked against the delivered one</td></tr>
+<tr><td><b>R3</b></td><td>Clean up five duplicate entries in the Sequencing Application menu, one of which is a misspelling (<code>Experssion</code>, 11 orders)</td><td>224 orders stop being ambiguous. Costs nothing but a vocabulary edit</td></tr>
+</tbody>
+</table>
+
+<p class="sub">
+The misspelling is the worst of the three from a rule-writer's point of view: nobody will
+ever write a rule for that spelling, so 11 orders fall through silently. We normalise on
+our side as well, so the two defences overlap.
+</p>
+
+<h2><span class="n">8</span>Safety — what the measurements did not do</h2>
+
+<table>
+<thead><tr><th>Concern</th><th>What was actually done</th></tr></thead>
+<tbody>
+<tr><td>Was the production database put at risk?</td><td><code>SELECT</code> only. No write, no DDL, no migration. Every statement ran under a time limit, and every join used an indexed column</td></tr>
+<tr><td>Was order metadata sent to an AI?</td><td><b>No language model was called at all.</b> The audit scripts contain no model call</td></tr>
+<tr><td>Could anyone or any project be identified from the output?</td><td>Aggregate only. Order labels, project names, requester names and sample names were never printed. Species names and service types are institutional controlled vocabulary, so those are shown</td></tr>
+<tr><td>Was anything changed in B-Fabric?</td><td><code>read</code> only</td></tr>
+</tbody>
+</table>
+
+<h2><span class="n">9</span>What happens next</h2>
+
+<p>
+Nothing is blocked on a decision. What remains is <b>step 2 of design §17 — writing the
+recipes</b>.
+</p>
+
+<table>
+<thead><tr><th>Next piece of work</th><th>Who</th><th>State</th></tr></thead>
+<tbody>
+<tr><td><b>Write the recipes</b>, starting with the service types already near 100% — NGS, Single Cell, Spatial, Long Read, ONT</td><td>a bioinformatician</td><td class="no">the real work. Deriving them from historic jobs was explicitly ruled out in the design</td></tr>
+<tr><td>Recipe schema, loader and match predicate, validating every proposal against the app's own parameter definition before it is shown</td><td>engineering</td><td class="ok">can be built independently of the recipes themselves</td></tr>
+<tr><td>Normalising the Sequencing Application spellings (the five duplicate pairs)</td><td>engineering</td><td class="ok">specified in the request document; it belongs in the match predicate</td></tr>
+<tr><td>C. Attended prototype of the reasoning parts</td><td>engineering</td><td class="ok">calling the on-prem model from Python avoids the dependency problem entirely</td></tr>
+<tr><td>Sending the metadata request</td><td>the requester's call</td><td class="no">still a draft; not sent</td></tr>
+<tr><td>Whether to package the agent prototype body (hermes-agent) as a skillset</td><td>separate track</td><td class="no">keeping it off OMAKASE's critical path is decided; packaging it is not, and is under review elsewhere</td></tr>
+</tbody>
+</table>
+
+<div class="callout k">
+  <div class="t">The standing condition on recipes</div>
+  <p>
+  The recipe catalog and the QC thresholds are <b>hand-written from day one</b> and never
+  generated by an agent. Break that and the deterministic core (<code>omakase-core</code>)
+  can no longer be carved out later. The catalog is also valuable in its own right: it
+  becomes <b>the first machine-readable record of current best practice per order
+  type</b>.
+  </p>
+</div>
+
+<h3>Questions sitting with other people</h3>
+<ul>
+  <li><b>Which B-Fabric field says that new data has reached gStore?</b> The field, its
+      values, and the delay between the files landing and B-Fabric showing it. This
+      decides the shape of the trigger.</li>
+  <li>Can a comment be made visible to FGCZ staff only, and on which entity — order,
+      container or workunit? The shape of the phase-1 gate depends on it.</li>
+  <li>Is there a service account we may read with?</li>
+  <li>Who owns the wording and placement of the sentence shown to customers:
+      "Experiment parameters will be processed by a local AI model."</li>
+</ul>
+
+<footer>
+  <p>
+  Sources: <code>docs/omakase-auto-analysis-design.md</code> (design v0.3; the
+  measurements are recorded in §2, §3.2a and §5.1),
+  <code>scripts/omakase_metadata_audit/</code> (the order-side audit),
+  <code>scripts/omakase_species_audit/</code> (the Species measurement),
+  <code>docs/omakase-bfabric-metadata-request.md</code> (the request, in draft).
+  </p>
+  <p>
+  Numbers are as of 2026-08-21 over a rolling 12-month window, so they drift slightly as
+  the window moves. Each script's README records how to re-take its snapshot. It is a
+  production database: get explicit go-ahead first, even for a read.
+  </p>
+  <p>
+  The figures use three colours only (blue, amber, grey), checked with a validator for
+  colour-vision separation (adjacent pairs at least delta-E 25.9). No meaning is carried
+  by colour alone — every mark is also labelled, and every figure has a table.
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

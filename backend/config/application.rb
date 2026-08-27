@@ -24,9 +24,10 @@ module Backend
     config.autoload_lib(ignore: %w[assets tasks apps middleware fgcz.rb global_variables.rb sushi_fabric.rb
                                    env_api_token.rb])
 
-    # Server-side write-policy guard (SUSHI_WRITE_POLICY = read_only | additive | full;
-    # SUSHI_READ_ONLY=1 still means read_only; default full). Rack-level so it covers
-    # every controller hierarchy uniformly. See lib/middleware/sushi_read_only_guard.rb.
+    # Server-side write-policy guard (SUSHI_WRITE_POLICY = read_only | submit_only |
+    # additive | full; SUSHI_READ_ONLY=1 still means read_only; default full; a non-empty
+    # unrecognized value fails closed to read_only). Rack-level so it covers every
+    # controller hierarchy uniformly. See lib/middleware/sushi_read_only_guard.rb.
     config.middleware.use Middleware::SushiReadOnlyGuard
 
     # Configuration for the application, engines, and railties goes here.

@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMAKASE 現状レポート — 2026-08-21</title>
+<style>
+  :root{
+    --ink:#1c1f26; --muted:#5b6472; --line:#d4d9e0; --bg:#ffffff; --panel:#f7f9fc;
+    /* データ色。青=すでにある／使える、橙=手当てが必要、灰=対象外。
+       6項目の検証スクリプトを通した値（色覚差 ΔE 25.9 protan / 27.0 tritan）。 */
+    --ok:#2b74c9; --ok-d:#1a5aa8; --ok-l:#6fa3dd; --warn:#cf7a00; --neutral:#8a919c;
+    --ok-bg:#eaf2fb; --warn-bg:#fdf2e3; --neutral-bg:#f0f1f4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP","Yu Gothic",Meiryo,sans-serif;
+    line-height:1.85; font-size:15px;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:44px 24px 96px}
+  header.top{border-bottom:3px solid var(--ink);padding-bottom:20px;margin-bottom:30px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .meta{display:flex;gap:26px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--muted)}
+  .meta b{color:var(--ink);font-weight:600}
+  h2{font-size:20px;margin:50px 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+  h2 .n{color:var(--muted);font-weight:400;margin-right:10px;font-variant-numeric:tabular-nums}
+  h3{font-size:16px;margin:28px 0 8px}
+  p{margin:10px 0}
+  .lead{font-size:15.5px;color:#2b3340;margin:6px 0 18px}
+  figure{margin:22px 0 8px;padding:0}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
+  svg{max-width:100%;height:auto;display:block}
+  .fig{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:12px;margin:22px 0 8px}
+  .kpi{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:#fff}
+  .kpi .v{font-size:27px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums}
+  .kpi .k{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .kpi.w .v{color:var(--warn)} .kpi.o .v{color:var(--ok-d)}
+
+  .legend{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:12.5px;margin:12px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:14px;height:14px;border-radius:4px;flex:0 0 auto}
+  .sw.a{background:var(--ok-d)} .sw.b{background:var(--ok)} .sw.c{background:var(--ok-l)}
+  .sw.d{background:var(--neutral)} .sw.e{background:var(--warn)}
+
+  .stack{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:20px 0 8px}
+  .layer{display:grid;grid-template-columns:56px 1.45fr 1fr 132px;border-bottom:1px solid var(--line)}
+  .layer:last-child{border-bottom:0}
+  .layer .id{background:#eef1f6;font-weight:700;font-size:13px;display:flex;align-items:center;
+             justify-content:center;color:#3a4a63;border-right:1px solid var(--line)}
+  .layer .q{padding:10px 14px;font-size:14px}
+  .layer .who{padding:10px 14px;font-size:13px;color:var(--muted);border-left:1px dashed var(--line)}
+  .layer .st{padding:10px 12px;font-size:12px;font-weight:700;border-left:1px solid var(--line);
+             display:flex;align-items:center}
+  .layer.hd{background:#eef1f6;font-weight:600}
+  .layer.hd .q,.layer.hd .who,.layer.hd .st{font-size:12px;color:#3a4a63;font-weight:700}
+  .st.run{background:var(--ok-bg);color:var(--ok-d)}
+  .st.plan{background:var(--neutral-bg);color:#43494f}
+  .st.todo{background:var(--warn-bg);color:#7a4900}
+
+  table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:7px 11px;text-align:left;vertical-align:top}
+  th{background:#eef1f6;font-weight:600}
+  td.r{text-align:right;font-variant-numeric:tabular-nums}
+  td.ok{background:var(--ok-bg);color:var(--ok-d);font-weight:600;text-align:center}
+  td.no{background:var(--warn-bg);color:#7a4900;font-weight:600;text-align:center}
+  caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);padding-bottom:6px}
+
+  .callout{border-left:4px solid var(--ok);background:var(--ok-bg);padding:12px 16px;
+           border-radius:0 8px 8px 0;margin:18px 0}
+  .callout.k{border-color:var(--warn);background:var(--warn-bg)}
+  .callout .t{font:700 13.5px/1.7 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;
+              margin-bottom:2px;color:var(--ink)}
+  .callout p{margin:4px 0;font-size:14px}
+
+  ul{margin:10px 0;padding-left:22px} li{margin:5px 0}
+  code{background:#eef1f5;padding:1px 6px;border-radius:4px;font-size:12.5px;
+       font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+  @media print{
+    body{font-size:11pt} .wrap{padding:0} h2{page-break-after:avoid}
+    figure,.fig,table,.stack,.kpis{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true" focusable="false"><defs>
+  <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#5b6472"></path>
+  </marker>
+  <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#cf7a00"></path>
+  </marker>
+</defs></svg>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>OMAKASE 現状レポート</h1>
+  <p class="sub">受注が終わった配列解析に、一次解析を自動で提案する仕組み — いま何がどこまで来ているか</p>
+  <div class="meta">
+    <span>作成 <b>2026-08-21</b></span>
+    <span>設計 <b>v0.3</b>（<code>docs/omakase-auto-analysis-design.md</code>）</span>
+    <span>実装コード <b>まだ無し</b></span>
+    <span>本番への書き込み <b>ゼロ</b></span>
+  </div>
+</header>
+
+<p class="lead">
+一行で言うと、<b>設計は終わり、測定も終わり、次はレシピを人が書く段階</b>です。
+判断待ちで止まっているものはもうありません。止まっているのは「現在のベストプラクティスを
+書き下す」という、人にしかできない作業です。
+</p>
+
+<div class="kpis">
+  <div class="kpi o"><div class="v">51.7%</div><div class="k">納品データセットのうち、人手ゼロで参照ゲノムまで決まる割合</div></div>
+  <div class="kpi w"><div class="v">39.2%</div><div class="k">Species 欄が <code>NA</code> や空で、何も決められない割合</div></div>
+  <div class="kpi w"><div class="v">76.7%</div><div class="k">その欠損のうち、たった1つのサービス種別が占める割合</div></div>
+  <div class="kpi o"><div class="v">1</div><div class="k">新しく作るコンポーネントの数（他はすべて既存）</div></div>
+</div>
+<p class="sub">図表の色は3色だけです。<b>青 = すでにある／使える</b>、<b>橙 = 手当てが必要</b>、<b>灰 = 対象外</b>。</p>
+
+<h2><span class="n">1</span>OMAKASE とは何か、7つの層</h2>
+
+<p>
+受注の配列解析が終わったら、<b>規則</b>（言語モデルではなく）が一次解析を選び、
+バイオインフォマティシャンが承認し、既存の SUSHI のジョブ経路で実行する。
+結果の健全性を機械が判定し、人が顧客に渡す。合言葉は
+<b>「規則が決める・AI は助ける・人が出す」</b>です。
+</p>
+
+<div class="stack">
+  <div class="layer hd"><div class="id">層</div><div class="q">仕事</div><div class="who">担当するもの</div><div class="st">現状</div></div>
+  <div class="layer"><div class="id">L0</div><div class="q">データ最小化 — AI に何を見せるか</div><div class="who">コード内の項目許可リスト</div><div class="st plan">設計のみ</div></div>
+  <div class="layer"><div class="id">L1</div><div class="q">トリガー — 受注 X の配列解析が終わった</div><div class="who">B-Fabric を定期的に読む</div><div class="st plan">設計のみ</div></div>
+  <div class="layer"><div class="id">L2</div><div class="q">判断 — どの解析を、どのパラメータで</div><div class="who">版管理されたレシピ集。LLM は同点決着のみ</div><div class="st todo">次はここ</div></div>
+  <div class="layer"><div class="id">L3</div><div class="q">ゲート — 人が拒否できる時間、その後開始</div><div class="who">状態機械＋営業時間タイマー</div><div class="st plan">設計のみ</div></div>
+  <div class="layer"><div class="id">L4</div><div class="q">実行</div><div class="who">SUSHI backend の REST API → job_manager → SLURM → gStore</div><div class="st run">既存で稼働</div></div>
+  <div class="layer"><div class="id">L5</div><div class="q">QC — 結果は妥当か</div><div class="who">機械的な判定が先。LLM は文章だけ</div><div class="st plan">設計のみ</div></div>
+  <div class="layer"><div class="id">L6</div><div class="q">リリース</div><div class="who">第1段階は人、第2段階はレシピごとに自動</div><div class="st plan">設計のみ</div></div>
+</div>
+
+<h3>作るものは1つだけ</h3>
+<p>
+新規開発は <code>omakase-core</code>（自前の状態データベースを持つ Python の常駐プロセス）だけです。
+SUSHI のスキーマは変更しません。SUSHI への変更はすべて REST API 経由で、
+<b>データベースを直接書く経路は作りません</b>。
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 196" role="img" aria-label="実行経路。omakase-core だけが新規で、REST API から SLURM、gStore までは既存。">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">実行経路 — 橙の1つだけが新規、あとはすべて既に動いているもの</text>
+
+  <rect x="4" y="46" width="136" height="66" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"><title>新しく作る唯一のコンポーネント</title></rect>
+  <text x="72" y="72" font-size="13" text-anchor="middle" fill="#7a4900"><tspan font-weight="700">omakase-core</tspan></text>
+  <text x="72" y="91" font-size="11.5" text-anchor="middle" fill="#7a4900">新規・未着手</text>
+
+  <rect x="172" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="240" y="72" font-size="12.5" text-anchor="middle" fill="#1a5aa8">SUSHI backend</text>
+  <text x="240" y="91" font-size="11.5" text-anchor="middle" fill="#1a5aa8">REST API</text>
+
+  <rect x="340" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="408" y="72" font-size="12.5" text-anchor="middle" fill="#1a5aa8">Job 行</text>
+  <text x="408" y="91" font-size="11.5" text-anchor="middle" fill="#1a5aa8">状態 CREATED</text>
+
+  <rect x="508" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="576" y="78" font-size="12.5" text-anchor="middle" fill="#1a5aa8">job_manager</text>
+  <text x="576" y="95" font-size="11" text-anchor="middle" fill="#1a5aa8">既存の常駐</text>
+
+  <rect x="676" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="744" y="83" font-size="12.5" text-anchor="middle" fill="#1a5aa8">SLURM</text>
+
+  <rect x="844" y="46" width="136" height="66" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="912" y="83" font-size="12.5" text-anchor="middle" fill="#1a5aa8">gStore</text>
+
+  <line x1="142" y1="79" x2="168" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="310" y1="79" x2="336" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="478" y1="79" x2="504" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="646" y1="79" x2="672" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="814" y1="79" x2="840" y2="79" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+
+  <text x="240" y="141" font-size="11.5" text-anchor="middle" fill="#5b6472">プロジェクト単位の</text>
+  <text x="240" y="157" font-size="11.5" text-anchor="middle" fill="#5b6472">トークンで認可</text>
+  <text x="408" y="141" font-size="11.5" text-anchor="middle" fill="#5b6472">必須パラメータの</text>
+  <text x="408" y="157" font-size="11.5" text-anchor="middle" fill="#5b6472">検査を通過済み</text>
+
+  <text x="0" y="188" font-size="11.5" fill="#7a4900">この経路の外に、SUSHI のデータベースへ書き込む道は用意しない。</text>
+</svg>
+</div>
+<figcaption>図1 — 実行の経路。青は既に本番で使われているもので、OMAKASE のために発明したものは1つもありません。</figcaption>
+</figure>
+
+<h2><span class="n">2</span>ここまでの進み方</h2>
+
+<p>
+合意した順番は A → B → C → D です。A と B は終わり、B の途中で必要になった
+実測（B2）も終わりました。
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 176" role="img" aria-label="進捗。A、B、B2 が完了、C が次、D は別トラック。">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">合意した進め方と、いまの位置</text>
+
+  <rect x="6" y="40" width="180" height="84" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="96" y="64" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">A. オンプレ LLM 接続</tspan></text>
+  <text x="96" y="84" font-size="11.5" text-anchor="middle" fill="#1a5aa8">漏れる経路を閉じた</text>
+  <text x="96" y="108" font-size="11.5" text-anchor="middle" fill="#1a5aa8">完了 08-20</text>
+
+  <rect x="206" y="40" width="180" height="84" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="296" y="64" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">B. 受注メタデータ監査</tspan></text>
+  <text x="296" y="84" font-size="11.5" text-anchor="middle" fill="#1a5aa8">1467 受注を読んだ</text>
+  <text x="296" y="108" font-size="11.5" text-anchor="middle" fill="#1a5aa8">完了 08-20</text>
+
+  <rect x="406" y="40" width="180" height="84" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="496" y="64" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">B2. Species 実測</tspan></text>
+  <text x="496" y="84" font-size="11.5" text-anchor="middle" fill="#1a5aa8">1376 データセット</text>
+  <text x="496" y="108" font-size="11.5" text-anchor="middle" fill="#1a5aa8">完了 08-21</text>
+
+  <rect x="606" y="40" width="180" height="84" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2.5"></rect>
+  <text x="696" y="64" font-size="12.5" text-anchor="middle" fill="#7a4900"><tspan font-weight="700">C. 試作（人が同席）</tspan></text>
+  <text x="696" y="84" font-size="11.5" text-anchor="middle" fill="#7a4900">推論部分だけを試す</text>
+  <text x="696" y="108" font-size="11.5" text-anchor="middle" fill="#7a4900">次はここ</text>
+
+  <rect x="806" y="40" width="188" height="84" rx="8" fill="#f0f1f4" stroke="#8a919c" stroke-width="2" stroke-dasharray="5 4"></rect>
+  <text x="900" y="64" font-size="12.5" text-anchor="middle" fill="#43494f"><tspan font-weight="700">D. skillset 化</tspan></text>
+  <text x="900" y="84" font-size="11.5" text-anchor="middle" fill="#43494f">汎用機能として希望</text>
+  <text x="900" y="108" font-size="11.5" text-anchor="middle" fill="#43494f">別トラック・未着手</text>
+
+  <line x1="188" y1="82" x2="202" y2="82" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="388" y1="82" x2="402" y2="82" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="588" y1="82" x2="602" y2="82" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="788" y1="82" x2="802" y2="82" stroke="#8a919c" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ah)"></line>
+
+  <text x="0" y="164" font-size="11.5" fill="#5b6472">D は「OMAKASE の必須経路ではない」と明示的に決めた項目です。順番の外にあります。</text>
+</svg>
+</div>
+<figcaption>図2 — 進み方。C（人が同席する試作）が次で、D は OMAKASE の必須経路から外してあります。</figcaption>
+</figure>
+
+<h2><span class="n">3</span>測ってわかった一番大事なこと</h2>
+
+<p>
+入口は2つあります。<b>B-Fabric の受注情報</b>と、<b>SUSHI に納品されたデータセット</b>です。
+両方を本番で実測しました。読み取りのみ、言語モデルは使わず、出力は集計値だけです。
+そして<b>両方の欠損が、同じ1つのサービス種別に集まっていました</b>。
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 306" role="img" aria-label="2つの入口の実測結果が、同じ1つのサービス種別に収束する。">
+  <text x="40" y="18" font-size="13" fill="#1c1f26"><tspan font-weight="700">入口① B-Fabric の受注メタデータ</tspan></text>
+  <rect x="40" y="30" width="420" height="28" rx="4" fill="#dfe4ec"><title>直近12か月の配列解析受注 1467 件</title></rect>
+  <text x="470" y="49" font-size="12" fill="#5b6472">配列解析の受注 1467 件</text>
+  <rect x="40" y="66" width="207" height="28" rx="4" fill="#2b74c9"></rect>
+  <text x="52" y="85" font-size="12.5" fill="#ffffff"><tspan font-weight="700">722 件 = 49.2%</tspan></text>
+  <text x="257" y="85" font-size="12" fill="#1a5aa8">レシピを選べる</text>
+
+  <text x="540" y="18" font-size="13" fill="#1c1f26"><tspan font-weight="700">入口② SUSHI の納品データセット</tspan></text>
+  <rect x="540" y="30" width="420" height="28" rx="4" fill="#dfe4ec"><title>受注 974 件から納品された 1376 データセット</title></rect>
+  <rect x="540" y="66" width="217" height="28" rx="4" fill="#2b74c9"></rect>
+  <text x="552" y="85" font-size="12.5" fill="#ffffff"><tspan font-weight="700">712 件 = 51.7%</tspan></text>
+  <text x="767" y="85" font-size="12" fill="#1a5aa8">参照ゲノムまで決まる</text>
+  <text x="815" y="49" font-size="12" fill="#5b6472">納品データセット 1376 件</text>
+
+  <path d="M250,102 L250,150 L420,150 L420,186" fill="none" stroke="#cf7a00" stroke-width="2.5" marker-end="url(#ahw)"></path>
+  <path d="M750,102 L750,150 L580,150 L580,186" fill="none" stroke="#cf7a00" stroke-width="2.5" marker-end="url(#ahw)"></path>
+
+  <rect x="180" y="192" width="640" height="92" rx="10" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2.5"></rect>
+  <text x="500" y="218" font-size="14" text-anchor="middle" fill="#7a4900"><tspan font-weight="700">欠損はどちらも同じ1つのサービス種別に集まっている</tspan></text>
+  <text x="500" y="242" font-size="13" text-anchor="middle" fill="#7a4900">Ready-made Libraries Sequencing</text>
+  <text x="500" y="264" font-size="12" text-anchor="middle" fill="#7a4900">受注側は 22.7% しか決められず ／ データセット側の欠損 540 件のうち 414 件（76.7%）がここ</text>
+</svg>
+</div>
+<figcaption>図3 — 2つの入口を別々に測ったのに、同じ場所に行き当たりました。1つのフォームの1つの変更で、両方の数字が動きます。</figcaption>
+</figure>
+
+<div class="callout k">
+  <div class="t">これが今回の一番の収穫です</div>
+  <p>
+  「メタデータの質が悪い」という漠然とした話が、<b>「1つのサービス種別の1つの項目」</b>という
+  具体的な依頼に変わりました。しかもその種別は、FGCZ が調製していないライブラリ
+  （顧客が作って持ち込むもの）なので、<b>顧客は答えを知っています</b>。
+  </p>
+</div>
+
+<h2><span class="n">4</span>サービス種別ごとの準備度</h2>
+
+<p>
+納品データセット 1376 件を、受注のサービス種別ごとに分けたものです。
+青が「Species が具体的に書かれている」件数、橙が「<code>NA</code>・<code>n/a</code>・空欄で使えない」件数です。
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 424" role="img" aria-label="サービス種別ごとの納品データセット数と、そのうち Species が使えない件数の積み上げ棒グラフ。">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">納品データセット数（横軸）と、そのうち Species が使えない件数</text>
+
+  <line x1="268" y1="34" x2="268" y2="374" stroke="#d4d9e0" stroke-width="1"></line>
+  <line x1="425" y1="34" x2="425" y2="374" stroke="#e8ebf0" stroke-width="1"></line>
+  <line x1="582" y1="34" x2="582" y2="374" stroke="#e8ebf0" stroke-width="1"></line>
+  <line x1="739" y1="34" x2="739" y2="374" stroke="#e8ebf0" stroke-width="1"></line>
+  <text x="268" y="392" font-size="11" text-anchor="middle" fill="#5b6472">0</text>
+  <text x="425" y="392" font-size="11" text-anchor="middle" fill="#5b6472">200</text>
+  <text x="582" y="392" font-size="11" text-anchor="middle" fill="#5b6472">400</text>
+  <text x="739" y="392" font-size="11" text-anchor="middle" fill="#5b6472">600</text>
+
+  <text x="252" y="55" font-size="12" text-anchor="end" fill="#1c1f26"><tspan font-weight="700">Ready-made Libraries</tspan></text>
+  <rect x="268" y="42" width="235" height="20" rx="3" fill="#2b74c9"><title>Species が具体的: 300 件</title></rect>
+  <rect x="505" y="42" width="323" height="20" rx="3" fill="#cf7a00"><title>Species が使えない: 414 件</title></rect>
+  <text x="836" y="57" font-size="11" fill="#5b6472">714 ・ 欠損 414</text>
+
+  <text x="252" y="91" font-size="12" text-anchor="end" fill="#1c1f26">High Throughput (NGS)</text>
+  <rect x="268" y="78" width="267" height="20" rx="3" fill="#2b74c9"><title>Species が具体的: 340 件</title></rect>
+  <rect x="537" y="78" width="76" height="20" rx="3" fill="#cf7a00"><title>Species が使えない: 100 件</title></rect>
+  <text x="621" y="93" font-size="11" fill="#5b6472">440 ・ 欠損 100</text>
+
+  <text x="252" y="127" font-size="12" text-anchor="end" fill="#1c1f26">Single Cell Sequencing</text>
+  <rect x="268" y="114" width="75" height="20" rx="3" fill="#2b74c9"><title>Species が具体的: 95 件</title></rect>
+  <rect x="345" y="114" width="3" height="20" fill="#cf7a00"><title>Species が使えない: 4 件</title></rect>
+  <text x="356" y="129" font-size="11" fill="#5b6472">99 ・ 欠損 4</text>
+
+  <text x="252" y="163" font-size="12" text-anchor="end" fill="#1c1f26">Spatial Gene Expression</text>
+  <rect x="268" y="150" width="43" height="20" rx="3" fill="#2b74c9"><title>Species が具体的: 55 件</title></rect>
+  <rect x="313" y="150" width="4" height="20" fill="#cf7a00"><title>Species が使えない: 5 件</title></rect>
+  <text x="325" y="165" font-size="11" fill="#5b6472">60 ・ 欠損 5</text>
+
+  <text x="252" y="199" font-size="12" text-anchor="end" fill="#1c1f26">Genome Informatics</text>
+  <rect x="268" y="186" width="24" height="20" rx="3" fill="#2b74c9"><title>Species が具体的: 30 件</title></rect>
+  <rect x="294" y="186" width="6" height="20" fill="#cf7a00"><title>Species が使えない: 8 件</title></rect>
+  <text x="308" y="201" font-size="11" fill="#5b6472">38 ・ 欠損 8</text>
+
+  <text x="252" y="235" font-size="12" text-anchor="end" fill="#1c1f26">受注が読めなかったもの</text>
+  <rect x="268" y="222" width="7" height="20" rx="3" fill="#2b74c9"><title>Species が具体的: 9 件</title></rect>
+  <rect x="277" y="222" width="2" height="20" fill="#cf7a00"><title>Species が使えない: 3 件</title></rect>
+  <text x="287" y="237" font-size="11" fill="#5b6472">12 ・ 欠損 3</text>
+
+  <text x="252" y="271" font-size="12" text-anchor="end" fill="#1c1f26">CRISPR Screen</text>
+  <rect x="268" y="258" width="2" height="20" fill="#2b74c9"><title>Species が具体的: 3 件</title></rect>
+  <rect x="272" y="258" width="3" height="20" fill="#cf7a00"><title>Species が使えない: 4 件</title></rect>
+  <text x="283" y="273" font-size="11" fill="#5b6472">7 ・ 欠損 4</text>
+
+  <text x="252" y="307" font-size="12" text-anchor="end" fill="#1c1f26">Protein Analysis Services</text>
+  <rect x="268" y="294" width="3" height="20" fill="#2b74c9"><title>Species が具体的: 4 件</title></rect>
+  <text x="279" y="309" font-size="11" fill="#5b6472">4 ・ 欠損 0</text>
+
+  <text x="252" y="343" font-size="12" text-anchor="end" fill="#1c1f26">Long Read Sequencing</text>
+  <rect x="268" y="330" width="2" height="20" fill="#cf7a00"><title>Species が使えない: 2 件</title></rect>
+  <text x="278" y="345" font-size="11" fill="#5b6472">2 ・ 欠損 2</text>
+
+  <text x="0" y="414" font-size="11.5" fill="#5b6472">件数の少ない種別も省略せずに全部載せています。棒が細いのは件数が少ないからです。</text>
+</svg>
+</div>
+<div class="legend">
+  <span><i class="sw b"></i>Species が具体的に書かれている</span>
+  <span><i class="sw e"></i>Species が <code>NA</code> ・ <code>n/a</code> ・空欄</span>
+</div>
+<figcaption>図4 — 上2つで全体の 84% を占めます。下の7種別は件数が少なく、解析対象でないものも含みます。</figcaption>
+</figure>
+
+<table>
+<caption>同じ数字を表で。受注側の「決定可能」は B-Fabric の受注メタデータだけで判断した割合です。</caption>
+<thead><tr><th>サービス種別</th><th>納品データセット</th><th>Species 欠損</th><th>欠損率</th><th>受注側の決定可能</th></tr></thead>
+<tbody>
+<tr><td><b>Ready-made Libraries Sequencing</b></td><td class="r">714</td><td class="r">414</td><td class="no">58.0%</td><td class="no">22.7%</td></tr>
+<tr><td>High Throughput Sequencing (NGS)</td><td class="r">440</td><td class="r">100</td><td class="no">22.7%</td><td class="ok">96.8%</td></tr>
+<tr><td>Single Cell Sequencing</td><td class="r">99</td><td class="r">4</td><td class="ok">4.0%</td><td class="ok">100%</td></tr>
+<tr><td>Spatial Gene Expression</td><td class="r">60</td><td class="r">5</td><td class="ok">8.3%</td><td class="ok">100%</td></tr>
+<tr><td>Genome Informatics</td><td class="r">38</td><td class="r">8</td><td class="r">21.1%</td><td>解析対象でない</td></tr>
+<tr><td>受注が読めなかったもの</td><td class="r">12</td><td class="r">3</td><td class="r">25.0%</td><td>—</td></tr>
+<tr><td>CRISPR Screen</td><td class="r">7</td><td class="r">4</td><td class="r">57.1%</td><td class="ok">100%</td></tr>
+<tr><td>Protein Analysis Services</td><td class="r">4</td><td class="r">0</td><td class="ok">0%</td><td>—</td></tr>
+<tr><td>Long Read Sequencing</td><td class="r">2</td><td class="r">2</td><td class="r">100%</td><td class="ok">100%</td></tr>
+<tr><th>合計</th><th class="r">1376</th><th class="r">540</th><th class="r">39.2%</th><th class="r">49.2%</th></tr>
+</tbody>
+</table>
+
+<p class="sub">
+Long Read が 100% 欠損に見えますが、データセットは2件だけです。割合で判断できる数ではありません。
+Genome Informatics（バイオインフォマティクス業務そのもの）と Bench Access（顧客が実験する枠）は
+受注側 0% ですが、<b>そもそも自動解析の対象ではないので依頼の対象にもしません</b>。
+</p>
+
+<h2><span class="n">5</span>Species はどこから来るのか</h2>
+
+<p>
+設計では Species を受注情報から読む前提でしたが、<b>受注情報に Species という項目は存在しません</b>。
+本番で確認しました。受注は49項目、サンプルは13項目を返しますが、種・生物種・分類・株に当たるものは1つもありません。
+Species は<b>SUSHI のデータセットの列</b>で、つまりデータが納品されてから初めて存在します。
+</p>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 348" role="img" aria-label="Species の出どころ。受注には無く、データセットにある。正規化して既存の推奨ゲノム表を引く。">
+  <text x="0" y="16" font-size="12.5" fill="#5b6472">Species から参照ゲノムまでの経路と、行き止まり</text>
+
+  <rect x="10" y="34" width="250" height="58" rx="8" fill="#f0f1f4" stroke="#8a919c" stroke-width="2" stroke-dasharray="5 4"></rect>
+  <text x="135" y="58" font-size="12.5" text-anchor="middle" fill="#43494f"><tspan font-weight="700">B-Fabric 受注</tspan></text>
+  <text x="135" y="78" font-size="11.5" text-anchor="middle" fill="#43494f">Species 項目なし（49項目中0）</text>
+
+  <rect x="10" y="112" width="250" height="58" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="135" y="136" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">SUSHI 納品データセット</tspan></text>
+  <text x="135" y="156" font-size="11.5" text-anchor="middle" fill="#1a5aa8">Species 列がある</text>
+
+  <rect x="330" y="112" width="200" height="58" rx="8" fill="#eaf2fb" stroke="#2b74c9" stroke-width="2"></rect>
+  <text x="430" y="136" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">表記の正規化</tspan></text>
+  <text x="430" y="156" font-size="11.5" text-anchor="middle" fill="#1a5aa8">機械的な整形だけ</text>
+
+  <rect x="330" y="196" width="200" height="66" rx="8" fill="#eaf2fb" stroke="#1a5aa8" stroke-width="2.5"></rect>
+  <text x="430" y="220" font-size="12.5" text-anchor="middle" fill="#1a5aa8"><tspan font-weight="700">推奨ゲノムの表</tspan></text>
+  <text x="430" y="238" font-size="11" text-anchor="middle" fill="#1a5aa8">reference-favorite</text>
+  <text x="430" y="254" font-size="11" text-anchor="middle" fill="#1a5aa8">人が保守・5種</text>
+
+  <rect x="330" y="288" width="200" height="48" rx="8" fill="#1a5aa8"></rect>
+  <text x="430" y="318" font-size="13" text-anchor="middle" fill="#ffffff"><tspan font-weight="700">refBuild が決まる</tspan></text>
+
+  <line x1="262" y1="141" x2="326" y2="141" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="430" y1="172" x2="430" y2="192" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+  <line x1="430" y1="264" x2="430" y2="284" stroke="#5b6472" stroke-width="2" marker-end="url(#ah)"></line>
+
+  <text x="600" y="30" font-size="12.5" fill="#7a4900"><tspan font-weight="700">行き止まり — 人の手が必要</tspan></text>
+
+  <rect x="600" y="40" width="392" height="52" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"></rect>
+  <text x="614" y="62" font-size="12" fill="#7a4900"><tspan font-weight="700">39.2%</tspan> — Species が NA・n/a・空欄</text>
+  <text x="614" y="80" font-size="11.5" fill="#7a4900">誰かが値を入れるまで、何も提案できない</text>
+
+  <rect x="600" y="102" width="392" height="52" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"></rect>
+  <text x="614" y="124" font-size="12" fill="#7a4900"><tspan font-weight="700">4.3%</tspan> — カタログにあるが推奨ゲノムが未設定</text>
+  <text x="614" y="142" font-size="11.5" fill="#7a4900">候補が1〜4個。どれを使うかは人が決める</text>
+
+  <rect x="600" y="164" width="392" height="52" rx="8" fill="#fdf2e3" stroke="#cf7a00" stroke-width="2"></rect>
+  <text x="614" y="186" font-size="12" fill="#7a4900"><tspan font-weight="700">5.7%</tspan> — 1つのデータセットに Species が複数</text>
+  <text x="614" y="204" font-size="11.5" fill="#7a4900">単一の refBuild では覆えない。展開するか拒否する</text>
+
+  <rect x="600" y="226" width="392" height="52" rx="8" fill="#f0f1f4" stroke="#8a919c" stroke-width="2"></rect>
+  <text x="614" y="248" font-size="12" fill="#43494f"><tspan font-weight="700">1.9%</tspan> — 種名は具体的だが参照ゲノムが無い</text>
+  <text x="614" y="266" font-size="11.5" fill="#43494f">ゲノムを作る話になる。自動化の対象外</text>
+
+  <path d="M530,141 L565,141 L565,66" fill="none" stroke="#cf7a00" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ahw)"></path>
+  <path d="M565,141 L565,128" fill="none" stroke="#cf7a00" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ahw)"></path>
+  <path d="M565,141 L565,190" fill="none" stroke="#cf7a00" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#ahw)"></path>
+</svg>
+</div>
+<figcaption>図5 — 参照ゲノムを決める関数は「書くもの」ではなく、すでにディスクにある表でした。</figcaption>
+</figure>
+
+<div class="callout">
+  <div class="t">設計を1つ楽にした発見</div>
+  <p>
+  <code>/srv/GT/reference-favorite</code> は、<b>種ごとの推奨ゲノムを人が保守している表</b>です。
+  ヒト・マウス・ラット・イヌ・シロイヌナズナの5種。SUSHI の画面で参照ゲノムを選ぶとき、
+  一番上に出てくるのがこれです。つまり「種から参照ゲノムを決める方針」を OMAKASE が
+  発明する必要はなく、<b>発明してはいけません</b>。その判断には既に持ち主がいます。
+  この5種で、種名が具体的に書かれている 836 件のうち 712 件（85.2%）を覆います。
+  </p>
+</div>
+
+<h3>Species を読むのは追加コストではない</h3>
+<p>
+許可リストに載っている18個のアプリのうち<b>13個が Species を必須列として宣言</b>しています。
+つまり実行する側は、どんなトリガーであれデータセットを読まないとジョブを作れません。
+「データセットも読む」という選択は、すでに払っているコストです。
+</p>
+
+<h2><span class="n">6</span>Species の値、1376 件の内訳</h2>
+
+<figure>
+<div class="fig">
+<svg viewBox="0 0 1000 152" role="img" aria-label="納品データセット1376件のSpecies値の内訳。">
+  <text x="40" y="20" font-size="12.5" fill="#5b6472">納品データセット 1376 件を、Species の値で分類したもの</text>
+  <rect x="40" y="36" width="474" height="42" rx="3" fill="#1a5aa8"><title>推奨ゲノムまで決まる: 712 件</title></rect>
+  <text x="56" y="63" font-size="14" fill="#ffffff"><tspan font-weight="700">51.7%</tspan> 人手ゼロで決まる</text>
+  <rect x="516" y="36" width="24" height="42" rx="3" fill="#2b74c9"><title>別名の承認が必要: 39 件</title></rect>
+  <rect x="542" y="36" width="37" height="42" rx="3" fill="#6fa3dd"><title>カタログにあるが推奨未設定: 59 件</title></rect>
+  <rect x="581" y="36" width="15" height="42" rx="3" fill="#8a919c"><title>参照ゲノムが無い: 26 件</title></rect>
+  <rect x="598" y="36" width="362" height="42" rx="3" fill="#cf7a00"><title>使える値が無い: 540 件</title></rect>
+  <text x="614" y="63" font-size="14" fill="#ffffff"><tspan font-weight="700">39.2%</tspan> 値が無い</text>
+  <text x="40" y="102" font-size="11.5" fill="#5b6472">「列が埋まっているか」で数えると 98.7% になります。引用してはいけない数字です。</text>
+  <text x="40" y="122" font-size="11.5" fill="#5b6472">中身の 39.2% は NA・n/a・空欄で、受注側の「Custom / Other」と同じものです。</text>
+</svg>
+</div>
+<div class="legend">
+  <span><i class="sw a"></i>推奨ゲノムまで決まる 712</span>
+  <span><i class="sw b"></i>別名の承認が必要 39</span>
+  <span><i class="sw c"></i>カタログにあるが推奨未設定 59</span>
+  <span><i class="sw d"></i>参照ゲノムが無い 26</span>
+  <span><i class="sw e"></i>使える値が無い 540</span>
+</div>
+<figcaption>図6 — 帯の幅は件数に比例します。細い3つは表で確認してください。</figcaption>
+</figure>
+
+<table>
+<caption>図6 と同じ内容。対象は12か月間に納品された生データセット 1376 件（受注 974 件分）。</caption>
+<thead><tr><th>分類</th><th>データセット</th><th>割合</th><th>意味</th></tr></thead>
+<tbody>
+<tr><td>推奨ゲノムまで決まる</td><td class="r">712</td><td class="r">51.7%</td><td>人の判断ゼロで <code>refBuild</code> が決まる</td></tr>
+<tr><td>別名の承認が必要</td><td class="r">39</td><td class="r">2.8%</td><td><code>Human</code>=<code>Homo_sapiens</code> など、生物学上の同一性の主張。<b>人の承認が必要</b></td></tr>
+<tr><td>カタログにあるが推奨未設定</td><td class="r">59</td><td class="r">4.3%</td><td>候補は1〜4個。人が選ぶ</td></tr>
+<tr><td>参照ゲノムが無い</td><td class="r">26</td><td class="r">1.9%</td><td>種名は具体的。ゲノム整備の話になる</td></tr>
+<tr><td>使える値が無い</td><td class="r">540</td><td class="r">39.2%</td><td><code>NA</code> 297・<code>n/a</code> 215・空 18・<code>Unidentified</code> 10</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+  <div class="t">数字の作り方について1つだけ</div>
+  <p>
+  「別名の承認が必要」を<b>別枠にしてある</b>のは意図的です。<code>Human</code> と
+  <code>Homo_sapiens</code> が同じ、というのは生物学上の主張であって、機械が勝手に決めてよいものでは
+  ありません。だから 51.7% という見出しの数字には、こちらが推測で作った同一性判断が1つも
+  入っていません。<code>Escherichia coli K12</code> はカタログに3つの株があるので、あえて未解決のまま
+  残してあります。
+  </p>
+</div>
+
+<h2><span class="n">7</span>いま出ている依頼と、その根拠</h2>
+
+<p>
+「メタデータをもっと正確に」という以前の口頭依頼を、数字付きの文書に置き換えました
+（<code>docs/omakase-bfabric-metadata-request.md</code>、<b>下書き・未送付</b>）。3つの依頼はすべて
+同じ1つのサービス種別に向いています。
+</p>
+
+<table>
+<thead><tr><th>依頼</th><th>内容</th><th>これで何が買えるか</th></tr></thead>
+<tbody>
+<tr><td><b>R1</b></td><td>Ready-made Libraries Sequencing に限り、Sequencing Application を必須にし <code>Custom / Other</code> を不可にする</td><td>年 503 受注が判定可能になる。配列解析の受注全体で 49.2% → 約 83%</td></tr>
+<tr><td><b>R2</b></td><td>Species を受注項目として新設（同じ種別で必須）</td><td>データ納品前に提案を作れる。注文した種と納品された種の照合もできる</td></tr>
+<tr><td><b>R3</b></td><td>Sequencing Application のメニューにある重複5組を整理。うち1つは綴り間違い（<code>Experssion</code>、11 受注）</td><td>224 受注が曖昧でなくなる。語彙の編集だけで済む</td></tr>
+</tbody>
+</table>
+
+<p class="sub">
+綴り間違いは、規則を書く側から見ると特に厄介です。誰もその綴りで規則を書かないので、
+11 件が静かに漏れます。こちら側でも正規化して二重に守ります。
+</p>
+
+<h2><span class="n">8</span>安全性 — 測定で何もしていないこと</h2>
+
+<table>
+<thead><tr><th>心配</th><th>実際にやったこと</th></tr></thead>
+<tbody>
+<tr><td>本番データベースを壊していないか</td><td><code>SELECT</code> のみ。書き込み・スキーマ変更・マイグレーションは一切なし。文の実行時間に上限を設定し、索引のある列で結合</td></tr>
+<tr><td>受注情報を AI に送っていないか</td><td><b>言語モデルは1回も呼んでいません</b>。監査スクリプトに LLM の呼び出しは含まれません</td></tr>
+<tr><td>個人や案件が特定できる情報が出ていないか</td><td>出力は集計値のみ。受注名・案件名・依頼者名・サンプル名は一度も出力していません。種名とサービス種別は施設の統制語彙なので表示しています</td></tr>
+<tr><td>B-Fabric を変更していないか</td><td><code>read</code> のみ</td></tr>
+</tbody>
+</table>
+
+<h2><span class="n">9</span>次にやること</h2>
+
+<p>
+判断待ちで止まっているものはありません。残っているのは
+<b>設計 §17 のステップ2、レシピを書く作業</b>です。
+</p>
+
+<table>
+<thead><tr><th>次の作業</th><th>誰が</th><th>状態</th></tr></thead>
+<tbody>
+<tr><td><b>レシピを書く</b> — 準備度が 100% に近い種別から（NGS、Single Cell、Spatial、Long Read、ONT）</td><td>バイオインフォマティシャン</td><td class="no">ここが本体。過去のジョブから機械的に導くことは、設計で明示的に否定済み</td></tr>
+<tr><td>レシピの形式・読み込み・条件判定の仕組み。提案を見せる前にアプリの設定と突き合わせて検証する部分</td><td>実装側</td><td class="ok">レシピ本体と独立に作れる</td></tr>
+<tr><td>Sequencing Application の表記ゆれ正規化（重複5組）</td><td>実装側</td><td class="ok">仕様は依頼書に記載済み。実装先はレシピの判定部分</td></tr>
+<tr><td>C. 人が同席する試作（推論部分のみ）</td><td>実装側</td><td class="ok">Python から直接オンプレのモデルを呼ぶ方針で、依存問題を回避できる</td></tr>
+<tr><td>依頼書の送付</td><td>依頼元の判断</td><td class="no">下書きのまま。送っていません</td></tr>
+<tr><td>エージェント本体のプロトタイプ（hermes-agent）を skillset にするか</td><td>別トラック</td><td class="no">OMAKASE の必須経路から外すことは決定済み。skillset 化そのものは未決で、別セッションでレビュー中</td></tr>
+</tbody>
+</table>
+
+<div class="callout k">
+  <div class="t">レシピについての約束事</div>
+  <p>
+  レシピ集と QC の判定基準は<b>最初から人が手で書く</b>ものとし、エージェントに生成させません。
+  ここを崩すと、後から決定論的な中核（<code>omakase-core</code>）を切り出すことができなくなります。
+  レシピ集はそれ自体に価値があります — <b>受注種別ごとの「現在のベストプラクティス」を
+  機械が読める形にした最初の記録</b>になります。
+  </p>
+</div>
+
+<h3>他の人に預けてある確認事項</h3>
+<ul>
+  <li><b>B-Fabric のどの項目を見れば「新しいデータが gStore に届いた」とわかるか。</b>
+      項目名、値、そして実際にファイルが置かれてから B-Fabric に現れるまでの遅れ。
+      これがトリガーの形を決めます。</li>
+  <li>コメントを職員だけに見せられるか、どの単位（受注／コンテナ／作業単位）で可能か。
+      第1段階のゲートの形がこれで決まります。</li>
+  <li>読み取り用のサービスアカウントを使えるか。</li>
+  <li>顧客に出す一文「実験パラメータはローカルの AI モデルで処理されます」の文面と置き場所を誰が決めるか。</li>
+</ul>
+
+<footer>
+  <p>
+  出典: <code>docs/omakase-auto-analysis-design.md</code>（設計・v0.3、測定結果は §2 / §3.2a / §5.1 に反映）、
+  <code>scripts/omakase_metadata_audit/</code>（受注側の監査）、
+  <code>scripts/omakase_species_audit/</code>（Species の実測）、
+  <code>docs/omakase-bfabric-metadata-request.md</code>（依頼書の下書き）。
+  </p>
+  <p>
+  数字は 2026-08-21 時点。対象期間は「直近12か月」なので、期間の窓が動けば少しずつ変わります。
+  再取得の手順は各スクリプトの README にあります。本番データベースなので、読み取りだけであっても
+  実行前に了解を取ってください。
+  </p>
+  <p>
+  図表の色は3色（青・橙・灰）のみで、色覚特性による見分けにくさを検証スクリプトで確認済みです
+  （隣接する色の差 ΔE 25.9 以上）。色だけに意味を持たせず、必ず文字と表を併記しています。
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

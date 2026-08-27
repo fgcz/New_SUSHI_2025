@@ -1,9 +1,19 @@
 # OMAKASE — session handoff
 
-Written 2026-08-03, updated 2026-08-06. Read this first when resuming in a new session.
-L2 record: `omakase_auto_analysis_v04_handoff_20260803` (see also
-`omakase_auto_analysis_v03_docs_slides_pptx_20260803` and
+Written 2026-08-03, updated 2026-08-06 and 2026-08-21. Read this first when resuming in a
+new session. L2 record: `handoff_omakase_20260821_species_measured_step2_is_next` (detail
+in `omakase_20260821_species_measured_hermes_scope_clarified`; earlier records
+`omakase_auto_analysis_v04_handoff_20260803`,
+`omakase_auto_analysis_v03_docs_slides_pptx_20260803`,
 `omakase_auto_analysis_design_20260731`).
+
+> **State as of 2026-08-21.** §17 step 1 is done: both audits ran against production,
+> read-only, no model call. Nothing is blocked on a decision. What remains is step 2 —
+> a bioinformatician writing the recipes. The measurements are in the design's §2, what
+> they change is in §3.2a and §5.1, and the illustrated summary is
+> `docs/omakase-status-report-20260821-{ja,en}.html`. Section 6 of this file
+> (open items) is still accurate apart from the Simon entry, which is now a written
+> request in draft.
 
 ---
 
@@ -16,7 +26,9 @@ analysis if nobody replies within a grace period, then an AI checks the result a
 forwards it to the customer. Phase 1 gates everything through a bioinformatician; phase 2
 lets the AI write customer-facing comments.
 
-**Status: design only. No implementation. No code has been written.**
+**Status: no OMAKASE implementation exists.** The design is complete, and §17 step 1 (the
+metadata audits) is done — but those scripts are read-only measurement tools, not the
+system. Nothing polls, proposes, gates or runs anything yet.
 
 ---
 
@@ -31,6 +43,11 @@ lets the AI write customer-facing comments.
 | `docs/presentations/omakase_auto_analysis_en.html` | 43 KB | Deck, EN, 14 slides |
 | `docs/presentations/omakase_auto_analysis_{ja,en}.pptx` | ~67 KB | Editable PowerPoint, generated |
 | `docs/presentations/deck_to_pptx.py` | 31 KB | Deck HTML → pptx converter |
+| `docs/omakase-status-report-20260821-{ja,en}.html` | ~40 KB | **Status report**, 6 figures, JA+EN — where the system stands after the audits |
+| `docs/omakase-bfabric-metadata-request.md` | 8 KB | The metadata request with the numbers attached. **Draft, not sent** |
+| `scripts/omakase_metadata_audit/` | — | §17 step 1: the order-side audit (read-only, no LLM) |
+| `scripts/omakase_species_audit/` | — | Where Species comes from and what it resolves to (read-only, no LLM) |
+| `scripts/html_artifact_check/` | — | Mechanical gate for these HTML artifacts; there is no browser on these nodes |
 | `docs/omakase-HANDOFF.md` | this file | |
 
 > **Committed on 2026-08-06** (`97221ea`, local `main`, not pushed). They were untracked
