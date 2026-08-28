@@ -2,6 +2,10 @@
 # This service loads *App.rb files from the apps directory and extracts
 # metadata, parameters, and form field definitions
 class ApplicationConfigParser
+  # Title for the leading group, which legacy leaves unnamed (its form simply
+  # starts, and an 'hr-header' introduces every later section).
+  DEFAULT_GROUP_TITLE = 'Parameters'.freeze
+
   class << self
     # Parse a SUSHI application file and return its configuration
     # @param app_name [String] The application name (e.g., 'Fastqc')
@@ -32,6 +36,7 @@ class ApplicationConfigParser
 
       # Create an instance to extract configuration
       instance = app_class.new
+      form_fields = extract_form_fields(instance)
 
       # Extract configuration
       {
@@ -41,11 +46,45 @@ class ApplicationConfigParser
         description: clean_description(instance.description),
         required_columns: instance.required_columns,
         required_params: instance.required_params,
-        form_fields: extract_form_fields(instance),
+        form_fields: form_fields,
+        param_groups: build_param_groups(form_fields),
         modules: instance.modules,
         inherit_tags: instance.inherit_tags,
         inherit_columns: instance.inherit_columns
       }
+    end
+
+    # The same fields as +form_fields+, split into the sections legacy draws.
+    # A field carrying an 'hr-header' opens a new section and stays a normal,
+    # editable field inside it — legacy renders the header as its own table row
+    # and then falls through to the regular input
+    # (set_parameters.html.erb:78-84 followed by :128-157).
+    def build_param_groups(fields)
+      fields.each_with_object([]) do |field, groups|
+        header = field[:section_header].to_s.strip
+
+        if header.empty?
+          groups << new_param_group(DEFAULT_GROUP_TITLE, groups) if groups.empty?
+        else
+          groups << new_param_group(header, groups)
+        end
+
+        groups.last[:fields] << field
+      end
+    end
+
+    def new_param_group(title, groups)
+      base = title.to_s.parameterize(separator: '_')
+      base = "group_#{groups.size + 1}" if base.empty?
+
+      id = base
+      suffix = 2
+      while groups.any? { |group| group[:id] == id }
+        id = "#{base}_#{suffix}"
+        suffix += 1
+      end
+
+      { id: id, title: title.to_s, fields: [] }
     end
     
     def extract_form_fields(instance)
@@ -80,6 +119,12 @@ class ApplicationConfigParser
       # Add options for select fields
       elsif value.is_a?(Array)
         field[:options] = value
+      # A Hash param (refBuild is the one every app carries) is a label => value
+      # selector: legacy submits the VALUE and shows the key
+      # (set_parameters.html.erb:133-134, :151-152).
+      elsif value.is_a?(Hash)
+        field[:options] = value.values.map(&:to_s)
+        field[:option_labels] = value.keys.map(&:to_s) if value.keys.map(&:to_s) != value.values.map(&:to_s)
       end
       
       # Add multi_selection flag if present
@@ -102,9 +147,9 @@ class ApplicationConfigParser
     end
     
     def infer_field_type(value, meta)
-      return 'section' if meta['hr-header'] || meta[:'hr-header']
-      
       case value
+      when Hash
+        'select'
       when Array
         if meta['multi_selection'] || meta[:multi_selection]
           'multi_select'
@@ -128,6 +173,10 @@ class ApplicationConfigParser
       case value
       when Array
         value.first
+      when Hash
+        # Legacy pre-selects nothing, so the first entry wins — for refBuild that
+        # is the {'select' => ''} placeholder, i.e. "not chosen yet".
+        value.values.first
       else
         value
       end

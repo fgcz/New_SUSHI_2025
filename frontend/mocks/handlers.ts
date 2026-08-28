@@ -150,28 +150,39 @@ export const handlers = [
   }),
 
   // GET /api/v1/application_configs/:appName - Get application form schema
+  // Shaped exactly like Api::V1::ApplicationConfigsController#show: the flat
+  // form_fields plus the same fields grouped by their section_header, which is
+  // what ApplicationConfigParser.build_param_groups produces. An app whose very
+  // first parameter carries an 'hr-header' yields no unnamed leading group.
   http.get('*/api/v1/application_configs/:appName', ({ params }) => {
     const appName = params.appName
+
+    const resourceFields = [
+      { name: 'cores', type: 'select', default_value: 8, options: ['1', '2', '4', '8'], description: 'Number of CPU cores', section_header: 'Resource Parameters' },
+      { name: 'ram', type: 'select', default_value: 32, options: ['16', '32', '64'], description: 'RAM in GB' },
+      { name: 'scratch', type: 'select', default_value: 400, options: ['100', '400'], description: 'Scratch space in GB' },
+      { name: 'partition', type: 'select', default_value: 'employee', options: ['employee', 'normal'], description: 'Cluster partition' },
+    ]
+    const toolFields = [
+      { name: 'refBuild', type: 'select', default_value: '', options: ['', 'Homo_sapiens/GENCODE/GRCh38.p13'], description: 'Reference genome', section_header: 'Tool Parameters' },
+      { name: 'paired', type: 'boolean', default_value: true, description: 'Paired-end data' },
+      { name: 'featureLevel', type: 'select', default_value: 'gene', options: ['gene', 'transcript'], description: 'Feature level' },
+      { name: 'specialOptions', type: 'text', default_value: '', description: 'Special options' },
+    ]
 
     return HttpResponse.json({
       application: {
         name: appName,
-        class_name: appName,
+        class_name: `${appName}App`,
         category: 'Analysis',
         description: `Mock application: ${appName}`,
         required_columns: ['Name'],
-        required_params: ['cores'],
+        required_params: ['cores', 'refBuild'],
         modules: ['Tools/Analysis'],
+        form_fields: [...resourceFields, ...toolFields],
         param_groups: [
-          {
-            id: 'resources',
-            title: 'Resource Parameters',
-            description: 'Configure compute resources',
-            fields: [
-              { name: 'cores', type: 'integer', default_value: 4, description: 'CPU cores' },
-              { name: 'ram', type: 'integer', default_value: 16, description: 'RAM in GB' },
-            ],
-          },
+          { id: 'resource_parameters', title: 'Resource Parameters', fields: resourceFields },
+          { id: 'tool_parameters', title: 'Tool Parameters', fields: toolFields },
         ],
       },
     })
