@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import Breadcrumbs from '@/lib/ui/Breadcrumbs';
@@ -23,17 +24,34 @@ export default function DatasetDetailPage() {
   // State for expandable input actions
   const [activeAction, setActiveAction] = useState<'comment' | 'rename' | 'bfabricId' | null>(null);
   const [inputValue, setInputValue] = useState('');
+  const queryClient = useQueryClient();
+
+  // Every action below talks to the real backend, so a failure has to be shown
+  // rather than assumed away.
+  const runAction = async (action: () => Promise<unknown>, refresh = false) => {
+    try {
+      await action();
+      if (refresh) {
+        await queryClient.invalidateQueries({ queryKey: ['datasets', datasetId] });
+      }
+      return true;
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Request failed');
+      return false;
+    }
+  };
 
   const handleActionSubmit = async () => {
     if (!inputValue.trim()) return;
-    if (activeAction === 'comment') {
-      await datasetApi.addComment(datasetId, inputValue);
-    } else if (activeAction === 'rename') {
-      await datasetApi.renameDataset(datasetId, inputValue);
-    } else if (activeAction === 'bfabricId') {
-      await datasetApi.setBFabricId(datasetId, inputValue);
-    }
-    alert('Mock call api');
+
+    const ok = await runAction(() => {
+      if (activeAction === 'comment') return datasetApi.addComment(datasetId, inputValue);
+      if (activeAction === 'rename') return datasetApi.renameDataset(datasetId, inputValue);
+      if (activeAction === 'bfabricId') return datasetApi.setBFabricId(datasetId, inputValue);
+      return Promise.resolve();
+    }, true);
+
+    if (!ok) return;
     setActiveAction(null);
     setInputValue('');
   };
@@ -117,8 +135,16 @@ export default function DatasetDetailPage() {
         <div className="flex items-center gap-1">
           <button
             onClick={async () => {
-              const { path } = await datasetApi.getDatasetDataFolder(datasetId);
-              router.push(`/files/${path}`);
+              try {
+                const { path } = await datasetApi.getDatasetDataFolder(datasetId);
+                if (!path) {
+                  alert('This dataset has no files in gStore yet.');
+                  return;
+                }
+                router.push(`/files/${path}`);
+              } catch (error) {
+                alert(error instanceof Error ? error.message : 'Request failed');
+              }
             }}
             className="px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
             title="Data Folder"
@@ -158,7 +184,7 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          onClick={async () => { await datasetApi.downloadDataset(datasetId); alert('Mock call api'); }}
+          onClick={() => runAction(() => datasetApi.downloadDataset(datasetId))}
         >
           Download
         </button>
@@ -170,7 +196,7 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
-          onClick={async () => { await datasetApi.mergeDataset(datasetId); alert('Mock call api'); }}
+          onClick={() => runAction(() => datasetApi.mergeDataset(datasetId))}
         >
           Merge with another dataset
         </button>
@@ -183,8 +209,16 @@ export default function DatasetDetailPage() {
         <button
           className="px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
           onClick={async () => {
-            const { appName } = await datasetApi.getResubmitData(datasetId);
-            router.push(`/projects/${projectNumber}/datasets/${datasetId}/run-application/${appName}?resubmit=true`);
+            try {
+              const { appName } = await datasetApi.getResubmitData(datasetId);
+              if (!appName) {
+                alert('This dataset was not produced by an application, so there is nothing to re-run.');
+                return;
+              }
+              router.push(`/projects/${projectNumber}/datasets/${datasetId}/run-application/${appName}?resubmit=true`);
+            } catch (error) {
+              alert(error instanceof Error ? error.message : 'Request failed');
+            }
           }}
         >
           Run Again
@@ -203,7 +237,11 @@ export default function DatasetDetailPage() {
         </button>
         <button
           className="px-2 py-1 text-xs font-medium text-red-600 bg-white border border-red-300 rounded hover:bg-red-50"
-          onClick={async () => { await datasetApi.deleteDataset(datasetId); alert('Mock call api'); }}
+          onClick={async () => {
+            if (!confirm(`Delete dataset ${datasetId}? This cannot be undone.`)) return;
+            const ok = await runAction(() => datasetApi.deleteDataset(datasetId));
+            if (ok) router.push(`/projects/${projectNumber}/datasets`);
+          }}
         >
           Delete
         </button>

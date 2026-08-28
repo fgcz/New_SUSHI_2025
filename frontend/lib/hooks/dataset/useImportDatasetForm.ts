@@ -147,7 +147,7 @@ export function useImportDatasetForm({ projectNumber, treeData }: UseImportDatas
         name: datasetName.trim(),
         parentId: noParent ? null : parentId,
       });
-      alert('Mock import successful!');
+      alert(`Dataset "${datasetName.trim()}" imported.`);
       router.push(`/projects/${projectNumber}/datasets`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import failed');
