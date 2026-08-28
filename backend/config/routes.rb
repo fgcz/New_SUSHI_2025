@@ -75,7 +75,7 @@ Rails.application.routes.draw do
       # Private API routes (JWT authentication required)
       # These endpoints require a valid JWT token in the Authorization header
       resources :authentication_config, only: [:index, :update]
-      resources :datasets, only: [:index, :show, :create] do
+      resources :datasets, only: [:index, :show, :create, :update] do
         collection do
           post 'from_tsv'
         end
@@ -83,6 +83,10 @@ Rails.application.routes.draw do
           get 'tree'
           get 'runnable_apps'
           get 'samples'
+          get 'paths'
+          get 'parameters'
+          get 'resubmit'
+          get 'tsv'
         end
       end
 
@@ -90,11 +94,18 @@ Rails.application.routes.draw do
       resources :projects, only: [:index], param: :project_number do
         get 'datasets', to: 'projects#datasets'
         get 'datasets/tree', to: 'projects#datasets_tree'
+        get 'datasets/tsv', to: 'projects#datasets_tsv'
         member do
           get 'jobs'
         end
       end
       
+      # Read-only gStore browser
+      resources :files, only: [:index]
+
+      # Job counts per submitter
+      resources :rankings, only: [:index]
+
       # Application configurations
       resources :application_configs, only: [:index, :show], param: :app_name
       

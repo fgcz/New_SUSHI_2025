@@ -194,6 +194,14 @@ module Api
         end
       end
 
+      def job_project_number(job)
+        [job.next_dataset_id, job.input_dataset_id].compact.each do |dsid|
+          number = DataSet.find_by(id: dsid)&.project&.number
+          return number if number
+        end
+        nil
+      end
+
       # A job is in the token's scope if either its produced or consumed dataset
       # belongs to a project the token is authorized for.
       def job_in_token_scope?(job)
@@ -225,6 +233,9 @@ module Api
 
         if include_details
           result.merge!(
+            # The UI needs the owning project to link a job back into its
+            # project pages; a job reaches it only through one of its datasets.
+            project_number: job_project_number(job),
             script_path: job.script_path,
             submit_job_id: job.submit_job_id,
             start_time: job.start_time&.iso8601,

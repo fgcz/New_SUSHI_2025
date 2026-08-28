@@ -163,6 +163,17 @@ RSpec.describe Middleware::SushiReadOnlyGuard do
       expect(mw.call(env_for('POST',  '/internal/legacy/datasets/register'))[0]).to eq 403
     end
 
+    it 'closes the dataset edit route the UI uses for rename and comment' do
+      # Added with the dataset actions on 2026-08-28. It is a mutating PATCH, so
+      # it is denied here by the same rule that denies every other edit — no
+      # production authority was widened by giving the UI a way to rename.
+      expect(mw.call(env_for('PATCH', '/api/v1/datasets/1'))[0]).to eq 403
+      expect(mw.call(env_for('PUT',   '/api/v1/datasets/1'))[0]).to eq 403
+      expect(mw.call(env_for('GET',   '/api/v1/datasets/1/tsv'))[0]).to eq 200
+      expect(mw.call(env_for('GET',   '/api/v1/files'))[0]).to eq 200
+      expect(mw.call(env_for('GET',   '/api/v1/rankings'))[0]).to eq 200
+    end
+
     it 'closes DELETE and mutating PUT/PATCH generally' do
       expect(mw.call(env_for('DELETE', '/v1/datasets/1'))[0]).to eq 403
       expect(mw.call(env_for('PUT',    '/v1/datasets/1'))[0]).to eq 403
