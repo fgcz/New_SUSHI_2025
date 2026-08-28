@@ -14,6 +14,10 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     resource '*',
       headers: :any,
       methods: [:get, :post, :put, :patch, :delete, :options, :head],
+      # Content-Disposition is not a CORS-safelisted response header, so without
+      # this the TSV downloads reach the browser with the client's fallback name
+      # instead of the one the server chose.
+      expose: ['Content-Disposition'],
       credentials: false  # Set credentials to false
   end
 end
