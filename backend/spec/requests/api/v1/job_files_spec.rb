@@ -125,6 +125,27 @@ RSpec.describe 'Api::V1::Jobs script and logs', type: :request do
       expect(JSON.parse(response.body)['error']).to eq('Logs not found')
     end
 
+    # This is where a job's logs live for its whole run; only when it completes
+    # do they move into the gStore result dir. Confining reads to gStore alone
+    # made every RUNNING job report "Logs not found".
+    it 'serves logs from the daemon staging directory of a running job' do
+      staging = Dir.mktmpdir('sushi-job-logs-spec')
+      allow(SushiConfigHelper).to receive(:job_log_dir).and_return(staging)
+      running_out = File.join(staging, 'Fastqc_9.sh_sushiID789_o.log')
+      running_err = File.join(staging, 'Fastqc_9.sh_sushiID789_e.log')
+      File.write(running_out, "Started\n")
+      File.write(running_err, '')
+      running = create(:job, data_set: dataset, status: 'RUNNING',
+                             stdout_path: running_out, stderr_path: running_err)
+
+      get "/api/v1/jobs/#{running.id}/logs"
+
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['logs']).to include('Started')
+    ensure
+      FileUtils.remove_entry(staging) if staging && File.directory?(staging)
+    end
+
     it 'is 404 when the row carries no log paths' do
       pathless = create(:job, data_set: dataset, stdout_path: nil, stderr_path: nil)
 

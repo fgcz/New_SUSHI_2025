@@ -186,8 +186,15 @@ module Api
         job_file_roots.any? { |root| real == root || real.start_with?("#{root}/") }
       end
 
+      # gStore holds a finished job's artefacts; the daemon's staging directory
+      # holds a running job's logs; scratch holds the script while it is built.
       def job_file_roots
-        [SushiConfigHelper.gstore_dir, SushiConfigHelper.scratch_dir].compact_blank.map do |dir|
+        [
+          SushiConfigHelper.gstore_dir,
+          SushiConfigHelper.scratch_dir,
+          SushiConfigHelper.job_log_dir,
+          Rails.application.config.submit_job_script_dir
+        ].compact_blank.uniq.map do |dir|
           File.realpath(dir)
         rescue SystemCallError
           File.expand_path(dir)

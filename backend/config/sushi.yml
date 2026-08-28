@@ -17,6 +17,10 @@ defaults: &defaults
     scratch_dir: /scratch
     # GStore directory (shared storage, read-only from application server)
     gstore_dir: /srv/gstore/projects
+    # Where the job_manager daemon writes a job's stdout/stderr WHILE it runs.
+    # They move into the gStore result dir only when the job completes, so a
+    # running job's logs live here and nowhere else.
+    job_log_dir: /misc/fgcz01/sushi/.trxcopy/job_scripts
     # Copy method: 'g-req' for production (FGCZ), 'rsync' for demo/local
     copy_method: g-req
 
@@ -30,6 +34,7 @@ development:
   storage:
     scratch_dir: /scratch
     gstore_dir: /srv/gstore/projects
+    job_log_dir: /misc/fgcz01/sushi/.trxcopy/job_scripts
     copy_method: g-req  # Use g-req for FGCZ environment
 
 test:

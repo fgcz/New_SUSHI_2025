@@ -61,6 +61,13 @@ module SushiConfigHelper
       ENV.fetch('GSTORE_DIR', storage_config['gstore_dir'] || '/srv/gstore/projects')
     end
 
+    # Where a RUNNING job's stdout/stderr live. The job_manager daemon writes
+    # them into its own staging directory and they only reach the gStore result
+    # dir when the job completes (ENV takes precedence over sushi.yml).
+    def job_log_dir
+      ENV.fetch('JOB_LOG_DIR', storage_config['job_log_dir'] || '/misc/fgcz01/sushi/.trxcopy/job_scripts')
+    end
+
     # Get copy method (ENV takes precedence over sushi.yml)
     def copy_method
       ENV.fetch('SUSHI_COPY_METHOD', storage_config['copy_method'] || 'g-req')
