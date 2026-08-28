@@ -99,7 +99,12 @@ Rails.application.routes.draw do
       resources :application_configs, only: [:index, :show], param: :app_name
       
       # Job submission and management
-      resources :jobs, only: [:create, :show, :index]
+      resources :jobs, only: [:create, :show, :index] do
+        member do
+          get 'script'
+          get 'logs'
+        end
+      end
       
       # Private test endpoints (JWT authentication required)
       get 'test/protected', to: 'test#protected'

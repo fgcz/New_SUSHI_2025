@@ -62,18 +62,55 @@ module Api
       # GET /api/v1/jobs/:id
       # Get job details
       def show
-        job = Job.find(params[:id])
-
-        # Token requests: enforce the job's dataset project is in the token's scope.
-        if token_authenticated? && !job_in_token_scope?(job)
-          return render json: { error: 'Forbidden' }, status: :forbidden
-        end
+        # Token requests are confined to the job's dataset project by scoped_job.
+        job = scoped_job or return
 
         render json: {
           job: serialize_job(job, include_details: true)
         }
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'Job not found' }, status: :not_found
+      end
+
+      # GET /api/v1/jobs/:id/script
+      # The submitted job script, as legacy's job_monitoring#print_script serves it.
+      def script
+        job = scoped_job or return
+
+        path = job.script_path
+        unless job_file_readable?(path)
+          return render json: { error: 'Script not found', job_id: job.id }, status: :not_found
+        end
+
+        lines = File.read(path).lines
+        # Legacy records the absolute path as line 2 (print_script). It inserts the
+        # line without a terminator, which glues it to line 3; we terminate it.
+        text = lines.size > 1 ? lines.insert(1, "##{path}\n").join : lines.join
+
+        render json: { job_id: job.id, path: path, script: text }
+      end
+
+      # GET /api/v1/jobs/:id/logs
+      # stdout and stderr concatenated the way legacy's job_monitoring#print_log
+      # does it, including the ___STDOUT_END___ / ___STDERR_END___ markers.
+      def logs
+        job = scoped_job or return
+
+        stdout_path = job.stdout_path
+        stderr_path = job.stderr_path
+        unless job_file_readable?(stdout_path) && job_file_readable?(stderr_path)
+          return render json: { error: 'Logs not found', job_id: job.id }, status: :not_found
+        end
+
+        text = [
+          stdout_path, '-' * 50, File.read(stdout_path), "___STDOUT_END___\n",
+          stderr_path, '-' * 50, File.read(stderr_path), '___STDERR_END___'
+        ].join("\n")
+
+        render json: {
+          job_id: job.id,
+          stdout_path: stdout_path,
+          stderr_path: stderr_path,
+          logs: text
+        }
       end
 
       # GET /api/v1/jobs
@@ -116,6 +153,46 @@ module Api
       end
 
       private
+
+      # The job named by :id, or nil after rendering the matching error. Callers
+      # use `job = scoped_job or return`.
+      def scoped_job
+        job = Job.find(params[:id])
+
+        if token_authenticated? && !job_in_token_scope?(job)
+          render json: { error: 'Forbidden' }, status: :forbidden
+          return nil
+        end
+
+        job
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Job not found' }, status: :not_found
+        nil
+      end
+
+      # Script and log paths come out of the database, so reads are confined to
+      # the two directories SUSHI itself writes into. Legacy reads them unguarded
+      # (job_monitoring_controller#print_script / #print_log).
+      def job_file_readable?(path)
+        return false if path.blank?
+
+        real = begin
+          File.realpath(path)
+        rescue SystemCallError
+          nil
+        end
+        return false unless real && File.file?(real)
+
+        job_file_roots.any? { |root| real == root || real.start_with?("#{root}/") }
+      end
+
+      def job_file_roots
+        [SushiConfigHelper.gstore_dir, SushiConfigHelper.scratch_dir].compact_blank.map do |dir|
+          File.realpath(dir)
+        rescue SystemCallError
+          File.expand_path(dir)
+        end
+      end
 
       # A job is in the token's scope if either its produced or consumed dataset
       # belongs to a project the token is authorized for.
