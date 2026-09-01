@@ -17,6 +17,13 @@
 /.next/
 /out/
 
+# Runtime pid file written by ../run_frontend_082.sh so a restart can stop the
+# previous server. `/.next/` above matches the directory only, so this was
+# turning up as an untracked file in the PRODUCTION checkout on 082 — noise that
+# a later session has to decide about. Kept in place rather than moved to /tmp:
+# the running instance is only stoppable via the path it was recorded under.
+/.next-server-*.pid
+
 # production
 /build
 
