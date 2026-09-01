@@ -35,9 +35,16 @@ PIDF="$PWD/.next-server-082.pid"
 # every request from a build four hours old for exactly that reason, and the
 # health check at the bottom passed each time, because the orphan cheerfully
 # returns 200. Killing by listening socket cannot make that mistake.
+#
+# `|| true` is load-bearing, not defensive noise. When the port is FREE, grep
+# matches nothing and exits 1; under the `set -euo pipefail` at the top of this
+# file that failure propagates out of the command substitution and kills the
+# script. It did: the first version stopped the old server, then died before
+# building, taking :4000 down with no message — the caller's pipe to `tail` had
+# swallowed the status. "No listener" is the normal answer here, not an error.
 listeners_on_port() {
   ss -ltnp "sport = :$PORT" 2>/dev/null |
-    grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u
+    grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u || true
 }
 
 for sig in TERM TERM KILL; do
