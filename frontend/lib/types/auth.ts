@@ -40,14 +40,18 @@ export interface AuthenticationConfig {
   };
 }
 
+// Mirrors the backend's TokenResponse contract (AuthController#token_response):
+// { access_token, token_type, user: { user_id, login, projects } }. The previous
+// shape here ({ token, user: { id, email }, message }) matched nothing the server
+// sends, so a SUCCESSFUL login stored `undefined` as the bearer and reported failure.
 export interface LoginResponse {
-  token: string;
+  access_token: string;
+  token_type: string;
   user: {
-    id: number;
+    user_id: number;
     login: string;
-    email: string;
+    projects: number[];
   };
-  message: string;
 }
 
 export interface TokenVerifyResponse {

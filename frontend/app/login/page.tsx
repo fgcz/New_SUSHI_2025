@@ -30,7 +30,7 @@ export default function LoginPage() {
       // Use JWT authentication (supports both standard and LDAP)
       const result = await authApi.login(login, password);
 
-      if (result.token) {
+      if (result.access_token) {
         // Login successful
         router.push('/');
       } else {
