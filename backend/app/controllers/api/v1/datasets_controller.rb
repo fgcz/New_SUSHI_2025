@@ -11,7 +11,12 @@ module Api
                    elsif AuthenticationHelper.authentication_skipped?
                      DataSet.all
                    else
-                     current_user.data_sets
+                     # Project membership, not ownership — same correction as
+                     # authorized_dataset below. 4,056 rows for a 77-project account
+                     # against 1,348 owned, measured on production; this action has no
+                     # caller in the UI, which lists per project and paginates.
+                     DataSet.joins(:project)
+                            .where(projects: { number: authorized_project_numbers })
                    end
         
         render json: {
@@ -29,17 +34,7 @@ module Api
       end
       
       def show
-        dataset = if token_authenticated?
-                    DataSet.find(params[:id])
-                  elsif AuthenticationHelper.authentication_skipped?
-                    DataSet.find(params[:id])
-                  else
-                    current_user.data_sets.find(params[:id])
-                  end
-        # Token requests: enforce the dataset's project is in the token's scope.
-        if token_authenticated? && !api_token_project_numbers.include?(dataset.project&.number.to_i)
-          return render json: { error: 'Forbidden' }, status: :forbidden
-        end
+        dataset = authorized_dataset(params[:id]) or return
 
         # Build detailed payload similar to legacy SUSHI data_set/show
         render json: {
@@ -215,7 +210,12 @@ module Api
       # GET /api/v1/datasets/:id/tree
       # Returns the parent tree to root and all children recursively
       def tree
-        dataset = find_authorized_dataset
+        # `or return` because the lookup now RENDERS the 404/403 and answers nil,
+        # the same contract scoped_dataset has used all along. It used to raise and
+        # let the rescue below answer, so without this the action would carry on
+        # with nil and turn a refusal into a 500. The rescue stays as a backstop
+        # for anything further down that still raises.
+        dataset = find_authorized_dataset or return
         tree_nodes = build_dataset_tree(dataset)
         render json: tree_nodes
       rescue ActiveRecord::RecordNotFound
@@ -225,7 +225,12 @@ module Api
       # GET /api/v1/datasets/:id/runnable_apps
       # Returns runnable applications grouped by category
       def runnable_apps
-        dataset = find_authorized_dataset
+        # `or return` because the lookup now RENDERS the 404/403 and answers nil,
+        # the same contract scoped_dataset has used all along. It used to raise and
+        # let the rescue below answer, so without this the action would carry on
+        # with nil and turn a refusal into a 500. The rescue stays as a backstop
+        # for anything further down that still raises.
+        dataset = find_authorized_dataset or return
         apps = runnable_applications_by_category(dataset)
         render json: apps
       rescue ActiveRecord::RecordNotFound
@@ -235,7 +240,12 @@ module Api
       # GET /api/v1/datasets/:id/samples
       # Returns all samples in the dataset
       def samples
-        dataset = find_authorized_dataset
+        # `or return` because the lookup now RENDERS the 404/403 and answers nil,
+        # the same contract scoped_dataset has used all along. It used to raise and
+        # let the rescue below answer, so without this the action would carry on
+        # with nil and turn a refusal into a 500. The rescue stays as a backstop
+        # for anything further down that still raises.
+        dataset = find_authorized_dataset or return
         samples_data = serialize_samples(dataset)
         render json: samples_data
       rescue ActiveRecord::RecordNotFound
@@ -292,14 +302,39 @@ module Api
 
       # The dataset named by :id, or nil after rendering the matching error.
       # Same rule as #show: project scope for token callers, ownership otherwise.
-      def scoped_dataset
-        dataset = if token_authenticated? || AuthenticationHelper.authentication_skipped?
-                    DataSet.find(params[:id])
-                  else
-                    current_user.data_sets.find(params[:id])
-                  end
+      # THE one rule for "may this caller read this dataset". There were three
+      # near-copies of it and all three said OWNERSHIP — `current_user.data_sets` —
+      # which is not what authorizes anything here. Measured on the production
+      # database: dataset 113260 in project 35611 has a NULL `user_id`, masaomi owns
+      # 1348 of 83,071 datasets, and 9 of the 19 datasets in his own project 35611
+      # are owned by someone else. So a logged-in user got "Dataset not found" for
+      # 98% of production, including datasets in projects he is a member of.
+      #
+      # It stayed hidden because this branch only runs when a login is REQUIRED: with
+      # authentication skipped — every node until 082 today — the unscoped
+      # `DataSet.find` above it was taken instead.
+      #
+      # Project membership is the rule, and ProjectAuthorizable already computes it
+      # for the project and gStore surfaces; this makes datasets use the same answer.
+      def authorized_dataset(id)
+        dataset = DataSet.find(id)
 
-        if token_authenticated? && !api_token_project_numbers.include?(dataset.project&.number.to_i)
+        if token_authenticated?
+          unless api_token_project_numbers.include?(dataset.project&.number.to_i)
+            render json: { error: 'Forbidden' }, status: :forbidden
+            return nil
+          end
+          return dataset
+        end
+
+        return dataset if AuthenticationHelper.authentication_skipped?
+
+        # `authorized_project_numbers`, deliberately — it is the resolver the project
+        # and gStore surfaces already use, so all three now give one answer. (The
+        # other resolver in ProjectAuthorizable, current_user_project_numbers, asks
+        # LDAP unconditionally and would refuse everything on a node where LDAP is
+        # off but a login is still required.)
+        unless authorized_project_numbers.include?(dataset.project&.number.to_i)
           render json: { error: 'Forbidden' }, status: :forbidden
           return nil
         end
@@ -310,13 +345,13 @@ module Api
         nil
       end
 
+      def scoped_dataset
+        authorized_dataset(params[:id])
+      end
+
       # Find dataset with authorization check
       def find_authorized_dataset
-        if AuthenticationHelper.authentication_skipped?
-          DataSet.find(params[:id])
-        else
-          current_user.data_sets.find(params[:id])
-        end
+        authorized_dataset(params[:id])
       end
       
       # Build tree structure containing ancestors, current dataset, and descendants

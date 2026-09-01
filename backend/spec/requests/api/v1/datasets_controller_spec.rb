@@ -3,7 +3,85 @@ require 'rails_helper'
 RSpec.describe 'Api::V1::Datasets', type: :request do
   let(:user) { create(:user, login: 'testuser') }
   let(:project) { create(:project, number: 1001) }
-  
+
+  # Reading a dataset is authorized by PROJECT MEMBERSHIP, not by ownership.
+  #
+  # Every other example in this file creates its dataset with `user: user`, i.e.
+  # owned by whoever is signed in, so the ownership scoping that used to be here
+  # passed all of them. Production does not look like that: measured on 082,
+  # dataset 113260 in project 35611 has a NULL `user_id`, and 9 of the 19 datasets
+  # in that project belong to somebody else. The first authenticated session on
+  # that node got "Dataset not found" for 98% of the database.
+  describe 'reading a dataset the signed-in user does not OWN' do
+    let(:someone_else) { create(:user, login: 'colleague') }
+    let(:foreign_dataset) { create(:data_set, name: 'Not mine', project: project, user: someone_else) }
+    let(:ownerless_dataset) { create(:data_set, name: 'No owner', project: project, user: nil) }
+
+    # LDAP has to be ON for membership to come from LDAP at all: with it off the
+    # resolver falls back to "every project that exists", which is the behaviour the
+    # project and gStore surfaces already have and is why the rest of this file
+    # passes without stubbing FGCZ. Worth knowing on its own — a node with
+    # SUSHI_REQUIRE_AUTH=1 and no LDAP grants every signed-in user everything.
+    before do
+      mock_authentication_skipped(false)
+      mock_ldap_auth_enabled(true)
+    end
+
+    context 'and IS a member of its project' do
+      before { allow(FGCZ).to receive(:get_user_projects2).and_return(['p1001']) }
+
+      it 'serves it' do
+        get "/api/v1/datasets/#{foreign_dataset.id}", headers: jwt_headers_for(user)
+
+        expect(response).to have_http_status(:success)
+        expect(JSON.parse(response.body)['name']).to eq('Not mine')
+      end
+
+      it 'serves one with no owner at all, as production has' do
+        get "/api/v1/datasets/#{ownerless_dataset.id}", headers: jwt_headers_for(user)
+
+        expect(response).to have_http_status(:success)
+      end
+
+      it 'serves its tree and its sample rows too, not just the show payload' do
+        get "/api/v1/datasets/#{foreign_dataset.id}/tree", headers: jwt_headers_for(user)
+        expect(response).to have_http_status(:success)
+
+        get "/api/v1/datasets/#{foreign_dataset.id}/samples", headers: jwt_headers_for(user)
+        expect(response).to have_http_status(:success)
+      end
+    end
+
+    context 'and is NOT a member of its project' do
+      before { allow(FGCZ).to receive(:get_user_projects2).and_return(['p9999']) }
+
+      it 'is refused — the loosened lookup must not authorize everything' do
+        get "/api/v1/datasets/#{foreign_dataset.id}", headers: jwt_headers_for(user)
+
+        expect(response).to have_http_status(:forbidden)
+        expect(JSON.parse(response.body)['error']).to eq('Forbidden')
+      end
+
+      it 'is refused even for a dataset the user DOES own' do
+        mine = create(:data_set, name: 'Mine', project: project, user: user)
+
+        get "/api/v1/datasets/#{mine.id}", headers: jwt_headers_for(user)
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    it 'still answers 404 for an id that does not exist' do
+      allow(FGCZ).to receive(:get_user_projects2).and_return(['p1001'])
+
+      get '/api/v1/datasets/99999999', headers: jwt_headers_for(user)
+
+      expect(response).to have_http_status(:not_found)
+      expect(JSON.parse(response.body)['error']).to eq('Dataset not found')
+    end
+  end
+
+
   describe 'GET /api/v1/datasets/:id/tree' do
     context 'when authentication is skipped' do
       before { mock_authentication_skipped(true) }
