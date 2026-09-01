@@ -164,7 +164,12 @@ export default function Header() {
               </button>
             
             {showProjectsDropdown && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-48">
+              // max-h + overflow-y-auto: an FGCZ employee is a member of many projects
+              // (77 for the account this was found with), and an uncapped list runs off the
+              // bottom of the viewport, so the projects sorted last are simply unreachable.
+              // overscroll-contain stops the wheel from chaining to the page once the list
+              // hits its end, which is what made the main screen scroll along with it.
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-48 max-h-[70vh] overflow-y-auto overscroll-contain">
                 {projectsLoading ? (
                   <div className="px-4 py-2 text-gray-500">Loading...</div>
                 ) : userProjects && userProjects.projects.length > 0 ? (
@@ -225,7 +230,11 @@ export default function Header() {
             )}
             <span className="text-gray-700">
             Hi, {userName}
-            {/* Auth Skipped indicator commented out
+            {/* Sign out was commented out along with the "Auth Skipped" badge beside it.
+                That was harmless while every node ran without authentication, but once a
+                node requires a login there is no way out of the session at all — the token
+                lives in localStorage and nothing in the UI clears it. handleLogout has
+                been here, unused, the whole time. */}
             {authStatus?.authentication_skipped ? (
               <span className="text-green-600 ml-1">| Auth Skipped</span>
             ) : (
@@ -236,7 +245,6 @@ export default function Header() {
                 | Sign out
               </button>
             )}
-            */}
           </span>
         </nav>
       </div>
