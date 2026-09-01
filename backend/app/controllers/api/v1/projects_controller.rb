@@ -130,8 +130,44 @@ module Api
         }
       end
 
+      # GET /api/v1/projects/:project_number/datasets/tsv
+      # The project's dataset LIST as TSV, column for column as legacy's
+      # data_set_controller#data_sets_tsv_string writes it.
+      def datasets_tsv
+        project_number = resolve_project_number
+
+        unless authorized_project_numbers.include?(project_number)
+          return render json: { error: 'Project not accessible' }, status: :forbidden
+        end
+
+        project = Project.find_by(number: project_number)
+        return render json: { error: 'Project not found' }, status: :not_found unless project
+
+        headers = %w[ID Name Project SushiApp Samples Who Created BFabricID]
+        zone = Rails.application.config.time_zone.to_s.split('/').last
+        tsv = CSV.generate('', headers: headers, write_headers: true, col_sep: "\t") do |out|
+          project.data_sets.includes(:user, :project).order(:id).each do |dataset|
+            out << [
+              dataset.id,
+              dataset.name,
+              project_number,
+              dataset.sushi_app_name,
+              "#{dataset.completed_samples.to_i} / #{dataset.samples_length}",
+              dataset.user&.login || 'sushi_lover',
+              "#{dataset.created_at.strftime('%Y-%b-%d %X ')}#{zone}",
+              dataset.bfabric_id.to_s
+            ]
+          end
+        end
+
+        send_data tsv,
+                  type: 'text/tab-separated-values',
+                  filename: "p#{project_number}_datasets.tsv",
+                  disposition: 'attachment'
+      end
+
       private
-      
+
       def resolve_project_number
         (params[:project_number] || params[:project_id] || params[:project_project_number] || params[:id]).to_i
       end
@@ -150,43 +186,6 @@ module Api
           bfabric_id: dataset.bfabric_id,
           project_number: dataset.project&.number
         }
-      end
-
-      def resolve_user_projects
-        # A bearer ApiToken authorizes exactly its own projects (user → live FGCZ;
-        # static → stored scope), taking precedence over the anonymous default.
-        if respond_to?(:token_authenticated?, true) && token_authenticated?
-          return api_token_project_numbers.uniq.sort
-        end
-
-        # Anonymous mode → allow access to all existing projects
-        if AuthenticationHelper.authentication_skipped?
-          return Project.pluck(:number).uniq.sort
-        end
-
-        # Course mode
-        if AuthenticationHelper.respond_to?(:course_mode?) && AuthenticationHelper.course_mode?
-          users = SushiFabric::Application.config.course_users rescue nil
-          return users ? users.flatten.uniq.sort : [1001]
-        end
-
-        # FGCZ/LDAP mode
-        if AuthenticationHelper.ldap_auth_enabled? && current_user
-          begin
-            if defined?(FGCZ) && FGCZ.respond_to?(:get_user_projects2)
-              return FGCZ.get_user_projects2(current_user.login).map { |p| p.gsub(/p/, '').to_i }.sort
-            end
-          rescue => e
-            Rails.logger.error "FGCZ project lookup failed: #{e.message}"
-          end
-        end
-
-        # Fallback - allow access to all existing projects
-        Project.pluck(:number).uniq.sort
-      end
-
-      def authorized_project_numbers
-        @authorized_project_numbers ||= resolve_user_projects
       end
 
       def apply_job_filters(relation)

@@ -51,6 +51,7 @@ module Api
           required_columns: config[:required_columns],
           required_params: config[:required_params],
           form_fields: config[:form_fields],
+          param_groups: config[:param_groups],
           modules: config[:modules],
           inherit_tags: config[:inherit_tags],
           inherit_columns: config[:inherit_columns]

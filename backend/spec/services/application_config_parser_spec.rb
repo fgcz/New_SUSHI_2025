@@ -105,6 +105,84 @@ RSpec.describe ApplicationConfigParser do
     end
   end
 
+  describe 'param_groups' do
+    # The frontend's run-application page steps through param_groups; when it is
+    # empty the block holding the submit button is not rendered at all.
+    def parse_fixture(app_name)
+      cfg = Rails.application.config
+      old_dir = cfg.legacy_apps_dir
+      old_list = cfg.legacy_apps_allowlist
+      cfg.legacy_apps_dir = Rails.root.join('spec', 'fixtures', 'legacy_apps').to_s
+      cfg.legacy_apps_allowlist = [app_name]
+      described_class.parse(app_name)
+    ensure
+      cfg.legacy_apps_dir = old_dir
+      cfg.legacy_apps_allowlist = old_list
+    end
+
+    context 'an app with no section headers' do
+      subject(:config) { described_class.parse('Fastqc') }
+
+      it 'returns exactly one group holding every field' do
+        expect(config[:param_groups].size).to eq(1)
+        expect(config[:param_groups].first[:fields]).to eq(config[:form_fields])
+      end
+
+      it 'titles it with the default, since legacy leaves the first section unnamed' do
+        expect(config[:param_groups].first[:title]).to eq('Parameters')
+        expect(config[:param_groups].first[:id]).to eq('parameters')
+      end
+    end
+
+    context 'an app with section headers' do
+      subject(:config) { parse_fixture('FooBarSections') }
+
+      it 'opens a new group at every header and keeps the leading one' do
+        expect(config[:param_groups].map { |g| g[:title] })
+          .to eq(['Parameters', 'AI summaries', 'Notification'])
+      end
+
+      it 'derives the id from the title' do
+        expect(config[:param_groups].map { |g| g[:id] })
+          .to eq(%w[parameters ai_summaries notification])
+      end
+
+      it 'puts the header-carrying field inside the section it opens' do
+        ai_group = config[:param_groups].find { |g| g[:title] == 'AI summaries' }
+        expect(ai_group[:fields].map { |f| f[:name] }).to eq(%w[generate_ai_summary ai_model])
+      end
+
+      it 'loses no field: the groups partition form_fields in order' do
+        expect(config[:param_groups].flat_map { |g| g[:fields] }).to eq(config[:form_fields])
+      end
+
+      it 'keeps the header-carrying field editable instead of typing it as a section' do
+        field = config[:form_fields].find { |f| f[:name] == 'generate_ai_summary' }
+        expect(field[:type]).to eq('boolean')
+        expect(field[:section_header]).to eq('AI summaries')
+      end
+    end
+
+    context 'a Hash-valued parameter such as refBuild' do
+      subject(:config) { parse_fixture('FooBarSections') }
+
+      let(:field) { config[:form_fields].find { |f| f[:name] == 'refBuild' } }
+
+      it 'becomes a selector over the submittable values, not a text box' do
+        expect(field[:type]).to eq('select')
+        expect(field[:options]).to eq(['', 'Homo_sapiens/GENCODE/GRCh38.p13'])
+      end
+
+      it 'defaults to the first entry rather than dumping the whole Hash' do
+        expect(field[:default_value]).to eq('')
+      end
+
+      it 'carries the labels only when they differ from the values' do
+        expect(field[:option_labels]).to eq(['select', 'Homo_sapiens/GENCODE/GRCh38.p13'])
+      end
+    end
+  end
+
   describe 'field descriptions' do
     subject(:config) { described_class.parse('Fastqc') }
 

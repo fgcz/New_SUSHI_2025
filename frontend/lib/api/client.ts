@@ -54,6 +54,34 @@ export class HttpClient {
     }
   }
 
+  // Fetches a non-JSON body (the TSV exports) and hands it to the browser as a
+  // download. The server names the file in Content-Disposition; `fallbackName`
+  // is only used when the header is absent.
+  async download(endpoint: string, fallbackName: string): Promise<void> {
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(`${this.baseUrl}${endpoint}`, { headers });
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const blob = await response.blob();
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = match ? match[1] : fallbackName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   buildQueryString(params: Record<string, any>): string {
     const search = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {

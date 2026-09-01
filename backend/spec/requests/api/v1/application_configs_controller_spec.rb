@@ -86,6 +86,19 @@ RSpec.describe 'Api::V1::ApplicationConfigs', type: :request do
         expect(special_options_field['default_value']).to eq('')
       end
 
+      # The run-application page reads param_groups and renders nothing —
+      # including the submit button — when it is missing or empty.
+      it 'returns the same fields grouped into param_groups' do
+        get '/api/v1/application_configs/Fastqc'
+        app = JSON.parse(response.body)['application']
+
+        expect(app['param_groups']).to be_an(Array)
+        expect(app['param_groups']).not_to be_empty
+        expect(app['param_groups'].first['title']).to be_a(String)
+        expect(app['param_groups'].first['title']).not_to be_empty
+        expect(app['param_groups'].flat_map { |g| g['fields'] }).to eq(app['form_fields'])
+      end
+
       it 'includes field descriptions' do
         get '/api/v1/application_configs/Fastqc'
         body = JSON.parse(response.body)

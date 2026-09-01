@@ -7,8 +7,8 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ login, password }),
     });
-    
-    httpClient.setToken(response.token);
+
+    httpClient.setToken(response.access_token);
     return response;
   },
 
@@ -22,8 +22,8 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ login, email, password, password_confirmation }),
     });
-    
-    httpClient.setToken(response.token);
+
+    httpClient.setToken(response.access_token);
     return response;
   },
 

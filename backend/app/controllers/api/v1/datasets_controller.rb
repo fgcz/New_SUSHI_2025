@@ -64,6 +64,62 @@ module Api
         render json: { error: 'Dataset not found' }, status: :not_found
       end
       
+      # PATCH /api/v1/datasets/:id
+      # Legacy writes exactly these two from its show page (data_set_controller
+      # #add_comment and #edit_name); nothing else about a dataset is editable.
+      def update
+        dataset = scoped_dataset or return
+
+        if dataset.update(dataset_update_params)
+          render json: { id: dataset.id, name: dataset.name, comment: dataset.comment }
+        else
+          render json: { errors: dataset.errors.full_messages }, status: :unprocessable_entity
+        end
+      end
+
+      # GET /api/v1/datasets/:id/paths
+      # The project-relative gStore directories this dataset's files live in,
+      # which is what the UI turns into a browse link (DataSet#paths).
+      def paths
+        dataset = scoped_dataset or return
+
+        render json: { dataset_id: dataset.id, paths: dataset.paths }
+      end
+
+      # GET /api/v1/datasets/:id/parameters
+      # The fully-resolved parameters of the job that produced this dataset.
+      def parameters
+        dataset = scoped_dataset or return
+
+        render json: { dataset_id: dataset.id, parameters: dataset.job_parameters || {} }
+      end
+
+      # GET /api/v1/datasets/:id/resubmit
+      # What the run-application form needs to re-run the app that produced this
+      # dataset. 'sushi_app' is dropped: it records which app ran, and is not one
+      # of the app's own parameters.
+      def resubmit
+        dataset = scoped_dataset or return
+
+        stored = dataset.job_parameters || {}
+        render json: {
+          dataset_id: dataset.id,
+          app_name: dataset.sushi_app_name,
+          parameters: stored.except('sushi_app')
+        }
+      end
+
+      # GET /api/v1/datasets/:id/tsv
+      # The dataset itself as TSV — legacy's DataSet#save_as_tsv content.
+      def tsv
+        dataset = scoped_dataset or return
+
+        send_data dataset.tsv_string,
+                  type: 'text/tab-separated-values',
+                  filename: "#{dataset.name}_dataset.tsv",
+                  disposition: 'attachment'
+      end
+
       def create
         dataset = current_user.data_sets.build(dataset_params)
         
@@ -230,6 +286,30 @@ module Api
         end
       end
       
+      def dataset_update_params
+        params.require(:dataset).permit(:name, :comment)
+      end
+
+      # The dataset named by :id, or nil after rendering the matching error.
+      # Same rule as #show: project scope for token callers, ownership otherwise.
+      def scoped_dataset
+        dataset = if token_authenticated? || AuthenticationHelper.authentication_skipped?
+                    DataSet.find(params[:id])
+                  else
+                    current_user.data_sets.find(params[:id])
+                  end
+
+        if token_authenticated? && !api_token_project_numbers.include?(dataset.project&.number.to_i)
+          render json: { error: 'Forbidden' }, status: :forbidden
+          return nil
+        end
+
+        dataset
+      rescue ActiveRecord::RecordNotFound
+        render json: { error: 'Dataset not found' }, status: :not_found
+        nil
+      end
+
       # Find dataset with authorization check
       def find_authorized_dataset
         if AuthenticationHelper.authentication_skipped?

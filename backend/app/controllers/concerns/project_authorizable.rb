@@ -72,4 +72,44 @@ module ProjectAuthorizable
   def fallback_all_projects
     Project.pluck(:number).map(&:to_s)
   end
+
+  # The project numbers this caller may see, as Integers. Lived privately in
+  # ProjectsController until the gStore browser needed the same rule; moved here
+  # unchanged so there is one answer rather than two.
+  def authorized_project_numbers
+    @authorized_project_numbers ||= resolve_user_projects
+  end
+
+  def resolve_user_projects
+    # A bearer ApiToken authorizes exactly its own projects (user → live FGCZ;
+    # static → stored scope), taking precedence over the anonymous default.
+    if respond_to?(:token_authenticated?, true) && token_authenticated?
+      return api_token_project_numbers.uniq.sort
+    end
+
+    # Anonymous mode → allow access to all existing projects
+    if AuthenticationHelper.authentication_skipped?
+      return Project.pluck(:number).uniq.sort
+    end
+
+    # Course mode
+    if AuthenticationHelper.respond_to?(:course_mode?) && AuthenticationHelper.course_mode?
+      users = SushiFabric::Application.config.course_users rescue nil
+      return users ? users.flatten.uniq.sort : [1001]
+    end
+
+    # FGCZ/LDAP mode
+    if AuthenticationHelper.ldap_auth_enabled? && current_user
+      begin
+        if defined?(FGCZ) && FGCZ.respond_to?(:get_user_projects2)
+          return FGCZ.get_user_projects2(current_user.login).map { |p| p.gsub(/p/, '').to_i }.sort
+        end
+      rescue => e
+        Rails.logger.error "FGCZ project lookup failed: #{e.message}"
+      end
+    end
+
+    # Fallback - allow access to all existing projects
+    Project.pluck(:number).uniq.sort
+  end
 end
