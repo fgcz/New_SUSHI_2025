@@ -14,12 +14,31 @@ module Api
         next_dataset_name = job_params[:next_dataset_name]
         next_dataset_comment = job_params[:next_dataset_comment]
 
+        input = DataSet.find_by(id: dataset_id)
+
         # Token requests: the input dataset's project must be in the token's scope.
         if token_authenticated?
-          input = DataSet.find_by(id: dataset_id)
           unless input && api_token_project_numbers.include?(input.project&.number.to_i)
             return render json: { error: 'Forbidden' }, status: :forbidden
           end
+        elsif !AuthenticationHelper.authentication_skipped?
+          # The SAME rule for an interactive session, which had none at all: a
+          # signed-in user could submit against a dataset in somebody else's
+          # project, because only the token branch above was ever checked. That
+          # went unnoticed while no node required a login and the write policy
+          # refused the route outright.
+          unless input && authorized_project_numbers.include?(input.project&.number.to_i)
+            return render json: { error: 'Forbidden' }, status: :forbidden
+          end
+
+          # INTERIM, and the only thing narrowing WHO may write: for a JWT session
+          # there is no capability check anywhere else. `ApiToken#can_write?` and
+          # the absent `capabilities` column — gates 2 and 3 of the 082 cutover —
+          # guard the bearer-token surface only, so once the Rack policy allows
+          # POST /api/v1/jobs, every signed-in user could submit. Legacy does not
+          # restrict submission to employees; see FGCZ.employee? for how to lift
+          # this when New SUSHI's submit path has earned it.
+          return unless submitter_is_employee?
         end
 
         # Get current user (or use default if auth is skipped)
@@ -153,6 +172,27 @@ module Api
       end
 
       private
+
+      # True when the signed-in user may submit; renders 403 and returns false
+      # otherwise. Memoized because one refusal per request is enough and the
+      # answer costs an LDAP round trip.
+      #
+      # The message names the restriction rather than saying "Forbidden", because
+      # the person reading it can do nothing about it and needs to know that.
+      def submitter_is_employee?
+        return @submitter_is_employee unless @submitter_is_employee.nil?
+
+        @submitter_is_employee = FGCZ.employee?(current_user&.login)
+        unless @submitter_is_employee
+          render json: {
+            error: 'not_an_employee',
+            message: 'Submitting jobs from New SUSHI is currently limited to FGCZ employees. ' \
+                     'Please use the existing SUSHI for this run.'
+          }, status: :forbidden
+        end
+
+        @submitter_is_employee
+      end
 
       # The job named by :id, or nil after rendering the matching error. Callers
       # use `job = scoped_job or return`.
