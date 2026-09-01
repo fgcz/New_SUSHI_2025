@@ -29,7 +29,16 @@ export function useJobSubmission(): UseJobSubmissionReturn {
       setSuccess(true);
     } catch (error) {
       console.error("Job submission failed:", error);
-      setError("Failed to submit job. Please try again.");
+      // Show what the server said. The old text was a fixed
+      // "Failed to submit job. Please try again." which threw the reason away and
+      // then gave advice that cannot work: on a read-only node the refusal is
+      // permanent and says so ("write policy is 'read_only'"), and a validation
+      // error names the field. Retrying was never the answer to either.
+      setError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Failed to submit job.",
+      );
     } finally {
       setIsSubmitting(false);
     }

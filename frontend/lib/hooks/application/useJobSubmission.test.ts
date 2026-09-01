@@ -31,10 +31,10 @@ describe('useJobSubmission', () => {
 
     act(() => {
       result.current.submitJob({
-        projectNumber: 1001,
-        datasetId: 1,
-        appName: 'TestApp',
-        nextDataset: { name: 'Output', comment: '' },
+        project_number: 1001,
+        dataset_id: 1,
+        app_name: 'TestApp',
+        next_dataset: { name: 'Output', comment: '' },
         parameters: {},
       });
     });
@@ -49,10 +49,10 @@ describe('useJobSubmission', () => {
 
     await act(async () => {
       await result.current.submitJob({
-        projectNumber: 1001,
-        datasetId: 1,
-        appName: 'TestApp',
-        nextDataset: { name: 'Output', comment: '' },
+        project_number: 1001,
+        dataset_id: 1,
+        app_name: 'TestApp',
+        next_dataset: { name: 'Output', comment: '' },
         parameters: {},
       });
     });
@@ -62,24 +62,49 @@ describe('useJobSubmission', () => {
     expect(result.current.isSubmitting).toBe(false);
   });
 
-  it('sets error on failed submission', async () => {
-    mockSubmitJob.mockRejectedValue(new Error('Network error'));
-
+  async function submitAndFailWith(thrown: unknown) {
+    mockSubmitJob.mockRejectedValue(thrown);
     const { result } = renderHook(() => useJobSubmission());
 
     await act(async () => {
       await result.current.submitJob({
-        projectNumber: 1001,
-        datasetId: 1,
-        appName: 'TestApp',
-        nextDataset: { name: 'Output', comment: '' },
+        project_number: 1001,
+        dataset_id: 1,
+        app_name: 'TestApp',
+        next_dataset: { name: 'Output', comment: '' },
         parameters: {},
       });
     });
 
-    expect(result.current.error).toBe('Failed to submit job. Please try again.');
+    return result;
+  }
+
+  it('reports what the server said, not a fixed sentence', async () => {
+    const result = await submitAndFailWith(new Error('Network error'));
+
+    expect(result.current.error).toBe('Network error');
     expect(result.current.success).toBe(false);
     expect(result.current.isSubmitting).toBe(false);
+  });
+
+  // What a user actually hit on the production node: submitting is refused there
+  // by the read-only write policy. The old fixed text said "Please try again",
+  // advice that can never succeed against a permanent refusal.
+  it('passes a read-only refusal through verbatim', async () => {
+    const refusal = new Error(
+      "This SUSHI backend write policy is 'read_only'; POST /api/v1/jobs is not permitted.",
+    );
+
+    const result = await submitAndFailWith(refusal);
+
+    expect(result.current.error).toContain('read_only');
+    expect(result.current.error).not.toContain('try again');
+  });
+
+  it('still says something when the thrown value carries no message', async () => {
+    const result = await submitAndFailWith(new Error(''));
+
+    expect(result.current.error).toBe('Failed to submit job.');
   });
 
   it('resets error before new submission', async () => {
@@ -91,10 +116,10 @@ describe('useJobSubmission', () => {
     // First submission fails
     await act(async () => {
       await result.current.submitJob({
-        projectNumber: 1001,
-        datasetId: 1,
-        appName: 'TestApp',
-        nextDataset: { name: 'Output', comment: '' },
+        project_number: 1001,
+        dataset_id: 1,
+        app_name: 'TestApp',
+        next_dataset: { name: 'Output', comment: '' },
         parameters: {},
       });
     });
@@ -104,10 +129,10 @@ describe('useJobSubmission', () => {
     // Second submission should clear error
     await act(async () => {
       await result.current.submitJob({
-        projectNumber: 1001,
-        datasetId: 1,
-        appName: 'TestApp',
-        nextDataset: { name: 'Output', comment: '' },
+        project_number: 1001,
+        dataset_id: 1,
+        app_name: 'TestApp',
+        next_dataset: { name: 'Output', comment: '' },
         parameters: {},
       });
     });
@@ -123,10 +148,10 @@ describe('useJobSubmission', () => {
 
     await act(async () => {
       await result.current.submitJob({
-        projectNumber: 1001,
-        datasetId: 1,
-        appName: 'TestApp',
-        nextDataset: { name: 'Output', comment: '' },
+        project_number: 1001,
+        dataset_id: 1,
+        app_name: 'TestApp',
+        next_dataset: { name: 'Output', comment: '' },
         parameters: {},
       });
     });
@@ -146,10 +171,10 @@ describe('useJobSubmission', () => {
 
     const { result } = renderHook(() => useJobSubmission());
     const jobData = {
-      projectNumber: 1001,
-      datasetId: 1,
-      appName: 'TestApp',
-      nextDataset: { name: 'Output', comment: 'Test comment' },
+      project_number: 1001,
+      dataset_id: 1,
+      app_name: 'TestApp',
+      next_dataset: { name: 'Output', comment: 'Test comment' },
       parameters: { cores: 4, ram: 16 },
     };
 
