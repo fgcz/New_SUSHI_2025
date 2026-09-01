@@ -1,4 +1,7 @@
 require 'rails_helper'
+# The controller requires this lazily, inside the LDAP branch, so the constant does
+# not exist yet when the examples below set their expectations on it.
+require 'net/ldap'
 
 # B2 auth gateway — conformance with backend/swagger/v1/swagger.yaml
 RSpec.describe 'Api::V1::Auth', type: :request do
@@ -38,6 +41,60 @@ RSpec.describe 'Api::V1::Auth', type: :request do
     it 'still accepts the legacy :login parameter' do
       post '/api/v1/auth/login', params: { login: 'alice', password: password }
       expect(response).to have_http_status(:ok)
+    end
+
+    # The LDAP branch used to create the local row "regardless of auto_create_user".
+    # On 082 that is an INSERT into the live legacy production `users` table on
+    # someone's first sign-in, from a node that is supposed to write nothing.
+    context 'when LDAP authenticates a login that has no local user row' do
+      let(:ldap) { instance_double(Net::LDAP) }
+
+      before do
+        allow(AuthenticationHelper).to receive(:ldap_auth_enabled?).and_return(true)
+        allow(Net::LDAP).to receive(:new).and_return(ldap)
+        allow(ldap).to receive(:bind_as).and_return(true)
+      end
+
+      it 'refuses instead of creating one when auto_create_user is false' do
+        allow(AuthenticationHelper).to receive(:ldap_config).and_return('auto_create_user' => false)
+
+        expect {
+          post '/api/v1/auth/login', params: { username: 'newcomer', password: 'whatever' }
+        }.not_to change(User, :count)
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+
+      it 'creates one when auto_create_user is true' do
+        allow(AuthenticationHelper).to receive(:ldap_config).and_return('auto_create_user' => true)
+
+        expect {
+          post '/api/v1/auth/login', params: { username: 'newcomer', password: 'whatever' }
+        }.to change(User, :count).by(1)
+
+        expect(response).to have_http_status(:ok)
+        expect(User.find_by(login: 'newcomer')).to be_present
+      end
+    end
+
+    # 082 runs against legacy production SUSHI's database, which has no
+    # refresh_tokens table and must never gain one. Before this, a login there
+    # raised on the INSERT and answered 500; now the login succeeds and simply
+    # carries no refresh cookie. This is the property that makes the whole login
+    # path write-free, which is in turn why the read-only gate lets it through.
+    context 'when the refresh_tokens table is absent (082)' do
+      before { allow(RefreshToken).to receive(:available?).and_return(false) }
+
+      it 'still returns a usable access token and writes no refresh row' do
+        expect {
+          post '/api/v1/auth/login', params: { username: 'alice', password: password }
+        }.not_to change(RefreshToken, :count)
+
+        expect(response).to have_http_status(:ok)
+        expect(body['access_token']).to be_present
+        expect(body['user']).to include('user_id' => user.id, 'login' => 'alice')
+        expect(response.headers['Set-Cookie'].to_s).not_to match(/refresh_token=/)
+      end
     end
 
     it 'returns 401 on invalid credentials' do

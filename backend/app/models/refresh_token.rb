@@ -14,6 +14,26 @@ class RefreshToken < ApplicationRecord
   # Active = not revoked and not expired.
   scope :active, -> { where(revoked: false).where('expires_at > ?', Time.current) }
 
+  # Is this table actually present in the database we are connected to?
+  #
+  # 082's database IS legacy production SUSHI's, which has no `refresh_tokens`
+  # table and must never gain one — no migration runs on that node, by standing
+  # decision. Without this check a successful login there raises
+  # ActiveRecord::StatementInvalid on the INSERT and answers 500, so LDAP could
+  # not be exercised on the production node at all.
+  #
+  # Memoized per process: a login must not cost a schema query, and the answer
+  # cannot change while the process lives. Rails' reloader resets the class in
+  # development, which re-asks — that is the behaviour we want after a migration.
+  def self.available?
+    return @available unless @available.nil?
+
+    @available = connection.table_exists?(table_name)
+  rescue StandardError => e
+    Rails.logger.error("RefreshToken.available? check failed: #{e.message}")
+    @available = false
+  end
+
   # SHA-256 hex digest used as the at-rest representation of a raw token.
   def self.hash_token(raw)
     Digest::SHA256.hexdigest(raw.to_s)

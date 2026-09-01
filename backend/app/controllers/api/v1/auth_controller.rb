@@ -122,7 +122,19 @@ module Api
 
       # ----- token issuance -------------------------------------------------
 
+      # Issuing a refresh token is the ONLY database write a login performs, and it
+      # is skipped where the table does not exist (082 — see RefreshToken.available?).
+      # Skipping rather than failing is deliberate: the caller still receives a usable
+      # access token, and the only thing lost is session continuity — /auth/refresh has
+      # nothing to rotate and /auth/logout-all nothing to revoke. That trade makes the
+      # whole login path write-free, which is what lets it run under a read_only policy
+      # against a database shared with the live legacy production system.
       def issue_tokens_for(user)
+        unless RefreshToken.available?
+          Rails.logger.info('AuthController: refresh_tokens table absent; issuing an access token only')
+          return
+        end
+
         _record, raw = RefreshToken.issue(user: user, ttl: REFRESH_TTL)
         set_refresh_cookie(raw)
       end
@@ -214,8 +226,22 @@ module Api
           )
 
           if ldap.bind_as(base: "cn=#{login},ou=Users,dc=bfabric,dc=org", password: password)
-            # If user doesn't exist locally, create it (regardless of auto_create_user setting).
+            # A first-time login used to create the local row "regardless of
+            # auto_create_user", ignoring the setting in authentication.yml, which is
+            # false. On 082 that would INSERT into the live legacy production `users`
+            # table (2203 rows) on someone's first sign-in — a write nobody asked for,
+            # from a node whose whole posture is that it writes nothing. The setting is
+            # now honoured.
+            #
+            # Consequence worth knowing: with creation disabled, a real employee whose
+            # password is correct but who has no row yet is refused like a bad password.
+            # The log line below is the only place that distinction is visible.
             unless user
+              unless AuthenticationHelper.ldap_config['auto_create_user']
+                Rails.logger.warn("LDAP bind succeeded for #{login} but no local user row exists and auto_create_user is false; refusing")
+                return nil
+              end
+
               user_attrs = { login: login }
               unless AuthenticationHelper.legacy_database?
                 user_attrs[:email] = "#{login}@bfabric.org"

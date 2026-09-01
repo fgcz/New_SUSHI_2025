@@ -13,7 +13,7 @@ module Middleware
   # Ordered strictest first:
   #
   #   read_only   — reject every non-safe method (POST/PUT/PATCH/DELETE). Only safe
-  #                 methods and the dry-run allowlist (validation) pass.
+  #                 methods and the write-free allowlist (validation, login) pass.
   #   submit_only — allow exactly one WRITING REQUEST: job submission. Dataset import, the
   #                 set-once B-Fabric link and every MUTATING request to the internal
   #                 bridge are refused. (Safe methods are never gated by any policy, so a
@@ -61,10 +61,24 @@ module Middleware
 
     SAFE_METHODS = %w[GET HEAD OPTIONS TRACE].freeze
 
-    # POST endpoints that perform NO write (validation/dry-run) — allowed in every
-    # non-full policy. Matched after normalizing trailing slash / .format suffix.
-    DRY_RUN_PATHS = %w[
+    # POST endpoints that perform NO database write — allowed in every non-full policy.
+    # Matched after normalizing trailing slash / .format suffix.
+    #
+    # Membership here is a CLAIM ABOUT THE HANDLER, not a convenience: adding a path
+    # that does write would silently defeat every policy below `full`. Each entry:
+    #
+    #   /v1/datasets/validate  — a dry run; validates a body and persists nothing.
+    #   /api/v1/auth/login     — write-free only because BOTH of its former writes were
+    #                            removed: the refresh-token row is skipped where the
+    #                            table is absent (AuthController#issue_tokens_for), and
+    #                            the LDAP path no longer creates a `users` row against
+    #                            auto_create_user: false. Authentication itself is an
+    #                            LDAP bind plus an in-memory JWT. Without this entry a
+    #                            read-only node cannot be logged into at all, so its UI
+    #                            is a login screen nobody can pass.
+    NO_WRITE_PATHS = %w[
       /v1/datasets/validate
+      /api/v1/auth/login
     ].freeze
 
     # Additive (create-only) routes allowed under the `additive` policy. Each entry is
@@ -113,7 +127,7 @@ module Middleware
       return @app.call(env) if SAFE_METHODS.include?(method)
 
       path = normalize(env["PATH_INFO"].to_s)
-      return @app.call(env) if dry_run?(path)
+      return @app.call(env) if write_free?(path)
 
       if pol == "additive"
         return @app.call(env) if internal_bridge?(path)
@@ -167,8 +181,8 @@ module Middleware
       path.sub(%r{/\z}, "").sub(/\.[a-z0-9]+\z/i, "")
     end
 
-    def dry_run?(path)
-      DRY_RUN_PATHS.include?(path)
+    def write_free?(path)
+      NO_WRITE_PATHS.include?(path)
     end
 
     def internal_bridge?(path)

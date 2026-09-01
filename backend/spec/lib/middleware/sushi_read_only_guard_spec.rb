@@ -107,6 +107,21 @@ RSpec.describe Middleware::SushiReadOnlyGuard do
       expect(mw.call(env_for('POST', '/v1/datasets/validate.json'))[0]).to eq 200
     end
 
+    # Without this a read-only node serves a login screen nobody can pass: the UI
+    # redirects to /login, the POST is refused by the gate, and the node is unusable
+    # by a human even though every page behind it is a GET. The login is only eligible
+    # because both of its writes were removed — see NO_WRITE_PATHS.
+    it 'allows the login POST, which writes nothing once the refresh row is skipped' do
+      expect(mw.call(env_for('POST', '/api/v1/auth/login'))[0]).to eq 200
+    end
+
+    # The pass above must not have widened the whole auth surface. register CREATES a
+    # user and logout-all UPDATEs rows, so both stay denied.
+    it 'still blocks the auth routes that do write' do
+      expect(mw.call(env_for('POST', '/api/v1/auth/register'))[0]).to eq 403
+      expect(mw.call(env_for('POST', '/api/v1/auth/logout-all'))[0]).to eq 403
+    end
+
     it 'returns a lowercase content-type header (Rack 3 spec)' do
       _status, headers, _body = mw.call(env_for('POST', '/api/v1/jobs'))
       expect(headers).to have_key('content-type')
@@ -128,6 +143,11 @@ RSpec.describe Middleware::SushiReadOnlyGuard do
 
     it 'allows the non-mutating validate allowlist POST, which writes nothing by design' do
       expect(mw.call(env_for('POST', '/v1/datasets/validate'))[0]).to eq 200
+    end
+
+    it 'allows the login POST here too, and still refuses the auth routes that write' do
+      expect(mw.call(env_for('POST', '/api/v1/auth/login'))[0]).to eq 200
+      expect(mw.call(env_for('POST', '/api/v1/auth/register'))[0]).to eq 403
     end
 
     # Each of these asserts a denial alongside the pass. A pass-through-only example would

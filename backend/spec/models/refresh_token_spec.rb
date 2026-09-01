@@ -53,4 +53,40 @@ RSpec.describe RefreshToken, type: :model do
       expect(described_class.active.where(user_id: other.id).count).to eq(1)
     end
   end
+
+  # The 082 production database has no such table and must never gain one, so the
+  # auth controller asks before writing. Both branches are pinned because a check
+  # that can only answer "true" would pass here and still 500 on the node it exists for.
+  describe '.available?' do
+    before { described_class.instance_variable_set(:@available, nil) }
+
+    after { described_class.instance_variable_set(:@available, nil) }
+
+    it 'is true when the table is present, as it is in the test schema' do
+      expect(described_class.available?).to be(true)
+    end
+
+    it 'is false when the table is absent' do
+      allow(described_class.connection).to receive(:table_exists?)
+        .with(described_class.table_name).and_return(false)
+
+      expect(described_class.available?).to be(false)
+    end
+
+    it 'memoizes, so a login costs no schema query after the first' do
+      allow(described_class.connection).to receive(:table_exists?)
+        .with(described_class.table_name).and_return(true)
+
+      3.times { described_class.available? }
+
+      expect(described_class.connection).to have_received(:table_exists?).once
+    end
+
+    it 'fails closed when the connection itself raises' do
+      allow(described_class.connection).to receive(:table_exists?)
+        .and_raise(ActiveRecord::StatementInvalid, 'connection lost')
+
+      expect(described_class.available?).to be(false)
+    end
+  end
 end
