@@ -20,7 +20,16 @@ defaults: &defaults
     # Where the job_manager daemon writes a job's stdout/stderr WHILE it runs.
     # They move into the gStore result dir only when the job completes, so a
     # running job's logs live here and nowhere else.
-    job_log_dir: /misc/fgcz01/sushi/.trxcopy/job_scripts
+    #
+    # A LIST, because this directory has moved and differs between nodes. The
+    # first entry is where the daemon serving 082 writes (measured 2026-09-01
+    # against a live RUNNING job); the second was the only configured value until
+    # then and had not been written to since 2026-08-28. One path meant a running
+    # job's logs answered "Logs not found" even though the file existed and was
+    # world-readable.
+    job_log_dirs:
+      - /misc/fgcz01/sushi/job_scripts
+      - /misc/fgcz01/sushi/.trxcopy/job_scripts
     # Copy method: 'g-req' for production (FGCZ), 'rsync' for demo/local
     copy_method: g-req
 
@@ -34,7 +43,9 @@ development:
   storage:
     scratch_dir: /scratch
     gstore_dir: /srv/gstore/projects
-    job_log_dir: /misc/fgcz01/sushi/.trxcopy/job_scripts
+    job_log_dirs:
+      - /misc/fgcz01/sushi/job_scripts
+      - /misc/fgcz01/sushi/.trxcopy/job_scripts
     copy_method: g-req  # Use g-req for FGCZ environment
 
 test:

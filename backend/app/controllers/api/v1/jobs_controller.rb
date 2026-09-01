@@ -232,7 +232,7 @@ module Api
         [
           SushiConfigHelper.gstore_dir,
           SushiConfigHelper.scratch_dir,
-          SushiConfigHelper.job_log_dir,
+          *SushiConfigHelper.job_log_dirs,
           Rails.application.config.submit_job_script_dir
         ].compact_blank.uniq.map do |dir|
           File.realpath(dir)

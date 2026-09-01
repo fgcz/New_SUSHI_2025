@@ -130,7 +130,7 @@ RSpec.describe 'Api::V1::Jobs script and logs', type: :request do
     # made every RUNNING job report "Logs not found".
     it 'serves logs from the daemon staging directory of a running job' do
       staging = Dir.mktmpdir('sushi-job-logs-spec')
-      allow(SushiConfigHelper).to receive(:job_log_dir).and_return(staging)
+      allow(SushiConfigHelper).to receive(:job_log_dirs).and_return([staging])
       running_out = File.join(staging, 'Fastqc_9.sh_sushiID789_o.log')
       running_err = File.join(staging, 'Fastqc_9.sh_sushiID789_e.log')
       File.write(running_out, "Started\n")
@@ -144,6 +144,51 @@ RSpec.describe 'Api::V1::Jobs script and logs', type: :request do
       expect(JSON.parse(response.body)['logs']).to include('Started')
     ensure
       FileUtils.remove_entry(staging) if staging && File.directory?(staging)
+    end
+
+    # The staging directory MOVED, and one configured path is what made a real
+    # RUNNING job on 082 answer "Logs not found" while its file sat there
+    # world-readable. Both locations must be served, and neither may shadow the
+    # other.
+    it 'serves logs from EITHER configured staging directory' do
+      old_dir = Dir.mktmpdir('sushi-job-logs-old')
+      new_dir = Dir.mktmpdir('sushi-job-logs-new')
+      allow(SushiConfigHelper).to receive(:job_log_dirs).and_return([new_dir, old_dir])
+
+      [[old_dir, 'from-the-old-location'], [new_dir, 'from-the-new-location']].each do |dir, marker|
+        out = File.join(dir, "#{marker}_o.log")
+        err = File.join(dir, "#{marker}_e.log")
+        File.write(out, "#{marker}\n")
+        File.write(err, '')
+        job = create(:job, data_set: dataset, status: 'RUNNING',
+                           stdout_path: out, stderr_path: err)
+
+        get "/api/v1/jobs/#{job.id}/logs"
+
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)['logs']).to include(marker)
+      end
+    ensure
+      [old_dir, new_dir].compact.each { |d| FileUtils.remove_entry(d) if File.directory?(d) }
+    end
+
+    # Widening the allow-list must not have removed it.
+    it 'still refuses a log path outside every configured directory' do
+      elsewhere = Dir.mktmpdir('sushi-job-logs-elsewhere')
+      allow(SushiConfigHelper).to receive(:job_log_dirs).and_return([Dir.mktmpdir('sushi-allowed')])
+      out = File.join(elsewhere, 'sneaky_o.log')
+      err = File.join(elsewhere, 'sneaky_e.log')
+      File.write(out, "secret\n")
+      File.write(err, '')
+      job = create(:job, data_set: dataset, status: 'RUNNING',
+                         stdout_path: out, stderr_path: err)
+
+      get "/api/v1/jobs/#{job.id}/logs"
+
+      expect(response).to have_http_status(:not_found)
+      expect(JSON.parse(response.body)['error']).to eq('Logs not found')
+    ensure
+      FileUtils.remove_entry(elsewhere) if elsewhere && File.directory?(elsewhere)
     end
 
     it 'is 404 when the row carries no log paths' do

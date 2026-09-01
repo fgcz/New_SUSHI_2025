@@ -61,11 +61,37 @@ module SushiConfigHelper
       ENV.fetch('GSTORE_DIR', storage_config['gstore_dir'] || '/srv/gstore/projects')
     end
 
-    # Where a RUNNING job's stdout/stderr live. The job_manager daemon writes
-    # them into its own staging directory and they only reach the gStore result
-    # dir when the job completes (ENV takes precedence over sushi.yml).
-    def job_log_dir
-      ENV.fetch('JOB_LOG_DIR', storage_config['job_log_dir'] || '/misc/fgcz01/sushi/.trxcopy/job_scripts')
+    # Where a RUNNING job's stdout/stderr live, as a LIST of directories.
+    #
+    # The job_manager daemon writes them into its own staging directory and they
+    # reach the gStore result dir only when the job COMPLETES. There is more than
+    # one such directory in practice, and it MOVED:
+    #
+    #   /misc/fgcz01/sushi/job_scripts          the daemon serving 082, measured
+    #                                           2026-09-01 with a live RUNNING job
+    #   /misc/fgcz01/sushi/.trxcopy/job_scripts the single value configured until
+    #                                           now, measured on 083 on 2026-08-28
+    #                                           and untouched since that day
+    #
+    # With one path configured, a running job's logs answered "Logs not found" on
+    # the node that matters — the database recorded the right file and it was
+    # world-readable; only our own allow-list rejected it. A list survives the next
+    # move without another incident.
+    #
+    # Accepts a YAML list or a comma-separated string, in sushi.yml or in
+    # JOB_LOG_DIRS. The older singular JOB_LOG_DIR / job_log_dir still works and
+    # still means "exactly this one", so an operator can still narrow it.
+    DEFAULT_JOB_LOG_DIRS = [
+      '/misc/fgcz01/sushi/job_scripts',
+      '/misc/fgcz01/sushi/.trxcopy/job_scripts'
+    ].freeze
+
+    def job_log_dirs
+      raw = ENV['JOB_LOG_DIRS'] || ENV['JOB_LOG_DIR'] ||
+            storage_config['job_log_dirs'] || storage_config['job_log_dir']
+
+      list = Array(raw).flat_map { |entry| entry.to_s.split(',') }.map(&:strip).reject(&:empty?)
+      list.empty? ? DEFAULT_JOB_LOG_DIRS : list
     end
 
     # Get copy method (ENV takes precedence over sushi.yml)
