@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DatasetSample } from '@/lib/types';
 import { datasetApi } from '@/lib/api';
+import { cellLink } from '@/lib/datasetCells';
 
 interface DatasetSamplesProps {
   samples: DatasetSample[]
@@ -112,13 +113,30 @@ export default function DatasetSamples({ samples, projectNumber, datasetId}: Dat
               <tr key={sample.Name} className="odd:bg-white even:bg-gray-50/50 hover:bg-brand-50 transition-colors">
                 {Array.from(new Set(samples.flatMap(s => Object.keys(s)))).map((column) => {
                   const cellValue = sample[column] !== undefined ? String(sample[column]) : '-';
+                  // [Link] and [File] columns name something in gStore. Every cell
+                  // used to be dead text, so a finished job's HTML report could not
+                  // be opened at all — see lib/datasetCells.ts for where each tag
+                  // points and how that compares with legacy.
+                  const link = cellLink(column, sample[column]);
                   return (
                     <td
                       key={column}
-                      className="px-3 py-2 text-gray-700 max-w-[200px] truncate cursor-default"
+                      className={`px-3 py-2 text-gray-700 max-w-[200px] truncate ${link ? '' : 'cursor-default'}`}
                       title={cellValue}
                     >
-                      {cellValue}
+                      {link ? (
+                        <a
+                          href={link.href}
+                          className="text-brand-600 hover:underline"
+                          {...(link.external
+                            ? { target: '_blank', rel: 'noopener noreferrer' }
+                            : {})}
+                        >
+                          {cellValue.split('/').pop() || cellValue}
+                        </a>
+                      ) : (
+                        cellValue
+                      )}
                     </td>
                   );
                 })}
