@@ -17,6 +17,7 @@ let authStatus: { authentication_skipped: boolean; current_user?: string } | nul
 let authLoading = false;
 let projects: { number: number }[] = [{ number: 1001 }];
 let projectsLoading = false;
+let selectedProject: number | null = null;
 
 vi.mock('@/providers/AuthContext', () => ({
   useAuth: () => ({ authStatus, loading: authLoading, error: null }),
@@ -24,7 +25,7 @@ vi.mock('@/providers/AuthContext', () => ({
 
 vi.mock('@/lib/hooks', () => ({
   useProjectList: () => ({
-    userProjects: { projects },
+    userProjects: { projects, selected_project: selectedProject },
     isLoading: projectsLoading,
     error: null,
     isEmpty: projects.length === 0,
@@ -39,6 +40,8 @@ describe('Home (landing page)', () => {
     authLoading = false;
     projects = [{ number: 1001 }];
     projectsLoading = false;
+    selectedProject = null;
+    localStorage.clear();
   });
 
   it('does not navigate while authentication is still being checked', () => {
@@ -64,6 +67,25 @@ describe('Home (landing page)', () => {
     render(<Home />);
 
     expect(replace).toHaveBeenCalledWith('/projects/4321');
+  });
+
+  // Landing on the lowest-numbered project after every sign-in was the complaint.
+  it('forwards to the project this browser last looked at, over the first', () => {
+    authStatus = { authentication_skipped: false, current_user: 'masaomi' };
+    projects = [{ number: 4321 }, { number: 35611 }];
+    localStorage.setItem('last_project', '35611');
+    render(<Home />);
+
+    expect(replace).toHaveBeenCalledWith('/projects/35611');
+  });
+
+  it("forwards to the project legacy SUSHI recorded when this browser has none", () => {
+    authStatus = { authentication_skipped: false, current_user: 'masaomi' };
+    projects = [{ number: 4321 }, { number: 35611 }];
+    selectedProject = 35611;
+    render(<Home />);
+
+    expect(replace).toHaveBeenCalledWith('/projects/35611');
   });
 
   it('forwards on a node where authentication is switched off', () => {

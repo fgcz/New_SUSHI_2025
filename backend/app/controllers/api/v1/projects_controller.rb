@@ -6,7 +6,8 @@ module Api
         projects = resolve_user_projects
         render json: {
           projects: projects.map { |n| { number: n } },
-          current_user: current_user&.login || 'anonymous'
+          current_user: current_user&.login || 'anonymous',
+          selected_project: remembered_project(projects)
         }
       end
 
@@ -167,6 +168,28 @@ module Api
       end
 
       private
+
+      # The project this user last chose, or nil.
+      #
+      # Legacy SUSHI keeps it in `users.selected_project` (default -1) and reuses it
+      # at sign-in — see its application_helper.rb#project_init. We READ that column
+      # and never write it: this backend can run against the live production
+      # database under a read-only policy, where legacy remains the only writer.
+      # 2,185 of 2,203 production users already carry a real value, so reading alone
+      # restores the behaviour for nearly everyone without a single write.
+      #
+      # Faithful to legacy on the awkward case too: a remembered project the user is
+      # no longer a member of is IGNORED rather than offered. Legacy lets an EMPLOYEE
+      # jump to any project they type, but does not extend that to the remembered
+      # value, and neither do we. Measured: masaomi's stored 41161 is absent from his
+      # 77 LDAP projects, so legacy also falls back to the first — which is exactly
+      # the symptom that prompted this.
+      def remembered_project(authorized_numbers)
+        value = current_user&.selected_project
+        return nil if value.nil? || value.to_i.negative?
+
+        authorized_numbers.include?(value.to_i) ? value.to_i : nil
+      end
 
       def resolve_project_number
         (params[:project_number] || params[:project_id] || params[:project_project_number] || params[:id]).to_i

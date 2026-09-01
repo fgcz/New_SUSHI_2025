@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useProjectList } from '@/lib/hooks';
 import { projectApi } from '@/lib/api';
+import { rememberProject } from '@/lib/lastProject';
 
 // Authentication status component
 const AuthStatus = () => {
@@ -74,6 +75,17 @@ export default function Header() {
   useEffect(() => {
     if (projectNumber) {
       setSearchQuery(projectNumber.toString());
+    }
+  }, [projectNumber]);
+
+  // Remember the project being viewed so the next sign-in lands here rather than on
+  // the lowest-numbered one. This is the WRITE half of legacy SUSHI's
+  // `users.selected_project`; it goes to the browser because the production backend
+  // is read-only against the live legacy database. The Header does it because it is
+  // the one component mounted on every project page.
+  useEffect(() => {
+    if (projectNumber) {
+      rememberProject(projectNumber);
     }
   }, [projectNumber]);
 

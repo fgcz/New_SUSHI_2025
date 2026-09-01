@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@/providers/AuthContext";
 import { useProjectList } from "@/lib/hooks";
+import { chooseLandingProject } from "@/lib/lastProject";
 
 // The landing page forwards you into a project. It must not do so before knowing
 // WHO you are: AuthContext sends an unauthenticated visitor to /login, and this
@@ -21,17 +22,28 @@ export default function Home() {
 
   // Either signed in, or on a node with authentication switched off.
   const admitted = Boolean(authStatus?.authentication_skipped || authStatus?.current_user);
-  const firstProject = userProjects?.projects?.[0]?.number;
   const waiting = authLoading || (admitted && projectsLoading);
+
+  // Landing on the LOWEST-numbered project after every sign-in was the complaint.
+  // chooseLandingProject prefers what this browser last looked at, then what legacy
+  // SUSHI recorded for the user, and only then falls back to the first.
+  const authorized = useMemo(
+    () => (userProjects?.projects ?? []).map((p) => p.number),
+    [userProjects],
+  );
+  const destination = useMemo(
+    () => (waiting ? undefined : chooseLandingProject(authorized, userProjects?.selected_project)),
+    [waiting, authorized, userProjects],
+  );
 
   useEffect(() => {
     if (waiting || !admitted) return;
-    if (firstProject !== undefined) {
-      router.replace(`/projects/${firstProject}`);
+    if (destination !== undefined) {
+      router.replace(`/projects/${destination}`);
     }
-  }, [waiting, admitted, firstProject, router]);
+  }, [waiting, admitted, destination, router]);
 
-  if (admitted && !waiting && firstProject === undefined) {
+  if (admitted && !waiting && destination === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-gray-600">

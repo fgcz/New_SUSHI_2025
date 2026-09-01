@@ -19,6 +19,55 @@ RSpec.describe 'Api::V1::Projects', type: :request do
       end
     end
 
+    # Legacy SUSHI records the project a user last chose in `users.selected_project`
+    # and reuses it at sign-in. We read that column and never write it — the
+    # production backend is read-only against the live legacy database, so legacy
+    # stays the only writer. Reported symptom without this: every sign-in landed on
+    # the lowest-numbered project.
+    describe 'the remembered project' do
+      before do
+        mock_authentication_skipped(false)
+        mock_ldap_auth_enabled(true)
+        allow(FGCZ).to receive(:get_user_projects2).and_return(%w[p1001 p1002])
+      end
+
+      it 'is reported when the user is still a member of it' do
+        user.update!(selected_project: 1002)
+
+        get '/api/v1/projects', headers: jwt_headers_for(user)
+
+        expect(JSON.parse(response.body)['selected_project']).to eq(1002)
+      end
+
+      # Measured on production: masaomi's stored 41161 is absent from his 77 LDAP
+      # projects. Legacy ignores it in that case and so do we — honouring it would
+      # send a user to a project they can no longer open.
+      it 'is withheld when the user is no longer a member of it' do
+        user.update!(selected_project: 41161)
+
+        get '/api/v1/projects', headers: jwt_headers_for(user)
+
+        expect(JSON.parse(response.body)['selected_project']).to be_nil
+      end
+
+      it "is withheld for legacy's unset marker, -1" do
+        user.update!(selected_project: -1)
+
+        get '/api/v1/projects', headers: jwt_headers_for(user)
+
+        expect(JSON.parse(response.body)['selected_project']).to be_nil
+      end
+
+      it 'never writes the column — that is legacy\'s job, and this node is read-only' do
+        user.update!(selected_project: 1002)
+
+        expect {
+          get '/api/v1/projects', headers: jwt_headers_for(user)
+          get '/api/v1/projects', headers: jwt_headers_for(user)
+        }.not_to change { user.reload.selected_project }
+      end
+    end
+
     context 'when JWT authentication is required' do
       before do
         mock_authentication_skipped(false)
