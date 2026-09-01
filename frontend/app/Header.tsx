@@ -235,16 +235,21 @@ export default function Header() {
                 node requires a login there is no way out of the session at all — the token
                 lives in localStorage and nothing in the UI clears it. handleLogout has
                 been here, unused, the whole time. */}
+            {/* THREE states, not two. Written as a two-way choice on
+                authentication_skipped alone, every "not skipped" case fell to Sign out —
+                including the two where there is no session to end: authStatus === null
+                immediately after logout, and the login page itself, which renders this
+                same header. Signing out therefore left the link in place. */}
             {authStatus?.authentication_skipped ? (
               <span className="text-green-600 ml-1">| Auth Skipped</span>
-            ) : (
+            ) : authStatus?.current_user ? (
               <button
                 onClick={handleLogout}
                 className="text-brand-600 hover:underline ml-1 bg-transparent border-none cursor-pointer"
               >
                 | Sign out
               </button>
-            )}
+            ) : null}
           </span>
         </nav>
       </div>

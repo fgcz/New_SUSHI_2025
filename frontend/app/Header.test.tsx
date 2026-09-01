@@ -59,6 +59,24 @@ describe('Header', () => {
       expect(screen.getByText(/auth skipped/i)).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument();
     });
+
+    // logout() sets authStatus to null and pushes /login, and the login page renders this
+    // same header. Both are "authentication required, no session" — offering Sign out
+    // there is what left the link visible after signing out.
+    it('offers nothing to sign out of once the session is gone', () => {
+      authStatus = null;
+      render(<Header />);
+
+      expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument();
+    });
+
+    it('offers nothing when authentication is required but nobody is signed in', () => {
+      authStatus = { authentication_skipped: false };
+      render(<Header />);
+
+      expect(screen.queryByRole('button', { name: /sign out/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/auth skipped/i)).not.toBeInTheDocument();
+    });
   });
 
   describe('the projects dropdown', () => {
