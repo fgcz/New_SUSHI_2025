@@ -203,4 +203,91 @@ RSpec.describe BfabricOidc::TokenVerifier do
       expect(rejection(BfabricOidcTestKeys.sign(claims)).reason).to eq('not_configured')
     end
   end
+
+  # ------------------------------------------------------------------------------------
+  # THE SHAPE B-FABRIC ACTUALLY ISSUES.
+  #
+  # Everything above tests criteria in the abstract. This block tests the criteria against
+  # the claim set MEASURED on 2026-09-03 from two real device-code logins, one on test and
+  # one on production — recorded in
+  # scripts/bfabric_oauth_check/fixtures/measured_claims_2026-09-03.json.
+  #
+  # The signature is ours (we do not have B-Fabric's private key), but every claim NAME and
+  # VALUE below is the real one. If B-Fabric changes the shape, this is what fails.
+  # ------------------------------------------------------------------------------------
+  describe 'the real claim set measured on 2026-09-03' do
+    def measured_access_token_claims(**overrides)
+      now = Time.now.to_i
+      {
+        'iss' => issuer,
+        'aud' => 'API',                       # a STRING, not a list, on both instances
+        'sub' => 'masaomi',
+        'client_id' => 'CLI',                 # present, though claims_supported omits it
+        'scope' => 'profile api:read email openid api:write',
+        'exp' => now + 3600,
+        'iat' => now,
+        'jti' => '4f1c2b90-0000-4000-8000-000000000000'
+      }.merge(overrides.transform_keys(&:to_s))
+    end
+
+    # The id_token differs from the access token in exactly two ways that matter here.
+    def measured_id_token_claims
+      now = Time.now.to_i
+      {
+        'iss' => issuer, 'aud' => 'CLI', 'sub' => 'masaomi', 'at_hash' => 'Ck5nR1p2',
+        'acr' => '1', 'auth_time' => now, 'email' => 'masaomi@example.org',
+        'email_verified' => true, 'family_name' => 'H', 'given_name' => 'M',
+        'name' => 'M H', 'exp' => now + 3600, 'iat' => now
+      }
+    end
+
+    before do
+      ENV['BFABRIC_OIDC_AUDIENCE'] = 'API'
+      BfabricOidc.reset!
+    end
+
+    it 'accepts it, and reads out the login and the granted scopes' do
+      result = verify(BfabricOidcTestKeys.sign(measured_access_token_claims))
+      expect(result.sub).to eq('masaomi')
+      expect(result.scopes).to include('api:read', 'api:write')
+    end
+
+    # `aud` is the literal string "API" on BOTH instances, which every B-Fabric API token
+    # carries. It separates an access token from an id_token; it does NOT separate a token
+    # minted for us from one minted for another relying party. Recorded so nobody reads
+    # the aud check as more protection than it is.
+    it 'is the same audience on test and on production' do
+      %w[https://fgcz-bfabric-test.uzh.ch/bfabric https://fgcz-bfabric.uzh.ch/bfabric].each do |iss|
+        allow(BfabricOidc::JwksCache).to receive(:expected_issuer).and_return(iss)
+        token = BfabricOidcTestKeys.sign(measured_access_token_claims('iss' => iss))
+        expect(verify(token).sub).to eq('masaomi')
+      end
+    end
+
+    it 'rejects the real ID TOKEN presented in an access token\'s place' do
+      # Two independent guards catch it: aud is CLI rather than API, and at_hash is present.
+      expect(rejection(BfabricOidcTestKeys.sign(measured_id_token_claims)).reason)
+        .to be_in(%w[bad_audience at_hash_present])
+    end
+
+    # The correction this measurement forced: the design assumed no per-client narrowing
+    # was possible because production's `claims_supported` lists neither client_id nor azp.
+    # The access token carries client_id anyway — claims_supported under-promises as well
+    # as over-promising. So the allow-list is real, and this proves it against the real shape.
+    describe 'with the client allow-list turned on' do
+      before do
+        ENV['BFABRIC_OIDC_ALLOWED_CLIENT_IDS'] = 'CLI'
+        BfabricOidc.reset!
+      end
+
+      it 'accepts the real token, because client_id is genuinely present' do
+        expect(verify(BfabricOidcTestKeys.sign(measured_access_token_claims)).sub).to eq('masaomi')
+      end
+
+      it 'rejects a token minted for a different B-Fabric client' do
+        token = BfabricOidcTestKeys.sign(measured_access_token_claims('client_id' => 'SomeOtherApp'))
+        expect(rejection(token).reason).to eq('client_not_allowed')
+      end
+    end
+  end
 end

@@ -1,0 +1,85 @@
+{
+  "_comment": [
+    "Measured on 2026-09-03 by scripts/bfabric_oauth_check/measure_token_claims.sh, from two",
+    "real device-code logins (public client CLI) — one against the test instance, one against",
+    "production. NO TOKEN IS RECORDED HERE: only claim NAMES, and the few claim VALUES that",
+    "define the verifier's accept criteria. `sub` is the measuring user's own login.",
+    "",
+    "This file is the authority for BfabricOidc::TokenVerifier's accept criteria. The OIDC",
+    "discovery document is NOT: its `claims_supported` over-promises (it lists `groups` and",
+    "`containers`, both of which are delivered nowhere) AND under-promises (it lists neither",
+    "`client_id` nor `azp`, yet the access token carries `client_id`). Measure, do not infer."
+  ],
+  "measured_on": "2026-09-03",
+  "instances": {
+    "test": {
+      "base_url": "https://fgcz-bfabric-test.uzh.ch/bfabric",
+      "issuer": "https://fgcz-bfabric-test.uzh.ch/bfabric",
+      "access_token_aud": "API",
+      "granted_scope": "profile api:read email openid api:write"
+    },
+    "prod": {
+      "base_url": "https://fgcz-bfabric.uzh.ch/bfabric",
+      "issuer": "https://fgcz-bfabric.uzh.ch/bfabric",
+      "access_token_aud": "API",
+      "granted_scope": "openid email profile api:read api:write"
+    }
+  },
+  "identical_on_both_instances": true,
+  "access_token": {
+    "header": { "alg": "RS256", "kid": "bfabric-oauth-rsa" },
+    "claim_names": ["aud", "client_id", "exp", "iat", "iss", "jti", "scope", "sub"],
+    "aud": "API",
+    "aud_is_a_string_not_a_list": true,
+    "sub": "masaomi",
+    "client_id": "CLI",
+    "azp_present": false,
+    "at_hash_present": false,
+    "expires_in": 3600,
+    "refresh_token_issued": true
+  },
+  "id_token": {
+    "claim_names": ["acr", "at_hash", "aud", "auth_time", "email", "email_verified",
+                    "exp", "family_name", "given_name", "iat", "iss", "name", "sub"],
+    "aud": "CLI",
+    "at_hash_present": true
+  },
+  "userinfo": {
+    "claim_names": ["email", "email_verified", "family_name", "given_name", "name", "sub"],
+    "sub": "masaomi",
+    "groups_present": false,
+    "containers_present": false
+  },
+  "consequences": {
+    "audience_narrows_to_the_api_not_to_us": [
+      "`aud` is the literal string API on BOTH instances. Every B-Fabric API token carries it,",
+      "so it separates an access token from an id_token (aud=CLI) but does NOT separate a token",
+      "minted for New SUSHI from one minted for any other B-Fabric relying party. Asking for a",
+      "resource indicator (RFC 8707) or a SUSHI-specific aud remains open question 2."
+    ],
+    "client_id_makes_the_allow_list_real": [
+      "`client_id` IS present, contradicting the inference drawn from `claims_supported`.",
+      "BFABRIC_OIDC_ALLOWED_CLIENT_IDS=CLI is therefore enforceable and is the ONLY narrowing",
+      "available today. Its limit, stated plainly: CLI is the PUBLIC client anyone may drive,",
+      "so the allow-list blocks a token minted for a DIFFERENT B-Fabric client and does not",
+      "block someone who deliberately uses CLI. Add the confidential client's id to the list",
+      "when the browser path is registered."
+    ],
+    "id_token_is_doubly_excluded": [
+      "An id_token presented where an access token belongs now fails twice over: its aud is CLI,",
+      "not API, and it carries at_hash which the access token never does."
+    ],
+    "issuer_needs_no_pinning": [
+      "`iss` equals the base URL exactly on both instances, so BFABRIC_OIDC_ISSUER can stay",
+      "unset and the discovery document's own `issuer` is used."
+    ],
+    "ldap_still_supplies_membership": [
+      "Neither groups nor containers appears in the access token, the id_token or /userinfo.",
+      "Re-confirmed on production, not inferred."
+    ],
+    "device_code_works_on_production": [
+      "The public client CLI is registered for the device_code grant on PRODUCTION as well as",
+      "test. This closes one of the seven questions for the B-Fabric team."
+    ]
+  }
+}
