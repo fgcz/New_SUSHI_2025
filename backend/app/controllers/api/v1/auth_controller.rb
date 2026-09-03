@@ -1,8 +1,11 @@
 module Api
   module V1
     class AuthController < ApplicationController
-      # Reuse the shared project resolver for the User payload (contract: User.projects).
-      include ProjectAuthorizable
+      # Session minting — the JWT, the refresh cookie and the User payload — lives in the
+      # shared concern so the B-Fabric OIDC login converges on exactly this code rather
+      # than growing a parallel one. It brings ProjectAuthorizable with it, which is what
+      # supplies the User payload's project list (contract: User.projects).
+      include SessionIssuing
 
       # Skip CSRF protection for API endpoints.
       skip_before_action :verify_authenticity_token
@@ -10,9 +13,6 @@ module Api
       # before_action self-skips public/cookie actions via skip_jwt_authentication?
       # (login, register, login_options, refresh, logout) and enforces a bearer
       # access token for the rest (me, logout-all, verify).
-
-      # Lifetime of the opaque refresh token / its cookie (matches Ronald's FastAPI: 7 days).
-      REFRESH_TTL = (ENV['JWT_REFRESH_TOKEN_EXPIRE_DAYS'] || 7).to_i.days
 
       # POST /api/v1/auth/login
       # Authenticate (LDAP or standard) and issue tokens.
@@ -78,6 +78,10 @@ module Api
       def login_options
         render json: {
           ldap_auth: AuthenticationHelper.ldap_auth_enabled?,
+          # Kept in step with AuthenticationController#login_options, which is the one the
+          # frontend calls. Two endpoints answer this question; updating only one is a
+          # silent failure (the button simply never renders).
+          bfabric_oidc: AuthenticationHelper.bfabric_oidc_enabled?,
           authentication_skipped: AuthenticationHelper.authentication_skipped?
         }
       end
@@ -121,58 +125,10 @@ module Api
       private
 
       # ----- token issuance -------------------------------------------------
-
-      # Issuing a refresh token is the ONLY database write a login performs, and it
-      # is skipped where the table does not exist (082 — see RefreshToken.available?).
-      # Skipping rather than failing is deliberate: the caller still receives a usable
-      # access token, and the only thing lost is session continuity — /auth/refresh has
-      # nothing to rotate and /auth/logout-all nothing to revoke. That trade makes the
-      # whole login path write-free, which is what lets it run under a read_only policy
-      # against a database shared with the live legacy production system.
-      def issue_tokens_for(user)
-        unless RefreshToken.available?
-          Rails.logger.info('AuthController: refresh_tokens table absent; issuing an access token only')
-          return
-        end
-
-        _record, raw = RefreshToken.issue(user: user, ttl: REFRESH_TTL)
-        set_refresh_cookie(raw)
-      end
-
-      # Contract: TokenResponse { access_token, token_type, user }.
-      def token_response(user)
-        {
-          access_token: generate_jwt_token(user),
-          token_type: 'bearer',
-          user: serialize_user(user)
-        }
-      end
-
-      # Contract: User { user_id, login, projects }.
-      def serialize_user(user)
-        {
-          user_id: user.id,
-          login: user.login,
-          projects: current_user_project_numbers_for(user).map(&:to_i)
-        }
-      end
-
-      # ----- refresh cookie -------------------------------------------------
-
-      def set_refresh_cookie(raw)
-        cookies[:refresh_token] = {
-          value: raw,
-          httponly: true,
-          secure: !Rails.env.local?, # HTTPS only outside dev/test (matches FastAPI)
-          same_site: :strict,        # contract-frozen
-          expires: REFRESH_TTL.from_now,
-          path: '/'
-        }
-      end
-
-      def clear_refresh_cookie
-        cookies.delete(:refresh_token, path: '/')
-      end
+      #
+      # issue_tokens_for / token_response / serialize_user / set_refresh_cookie /
+      # clear_refresh_cookie / REFRESH_TTL now live in SessionIssuing (included above),
+      # unchanged. They moved so the B-Fabric OIDC login can converge on them.
 
       # ----- credential authentication --------------------------------------
 

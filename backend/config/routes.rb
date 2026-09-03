@@ -71,7 +71,15 @@ Rails.application.routes.draw do
       post 'auth/logout-all', to: 'auth#logout_all'       # bearer
       get  'auth/me', to: 'auth#me'                        # bearer
       get  'auth/verify', to: 'auth#verify'               # DEPRECATED (use auth/me)
-      
+
+      # B-Fabric OIDC session exchange. A GET on purpose (the Rack write guard never sees
+      # safe methods, so NO_WRITE_PATHS does not grow), and namespaced under /api/v1
+      # MANDATORILY: the top-level `get 'auth/:provider/callback'` declared near the top of
+      # this file would otherwise swallow /auth/bfabric/callback into
+      # AuthenticationController#oauth_callback, which calls User.from_omniauth and blows
+      # up on the production schema (no provider/uid columns).
+      get 'auth/bfabric/session', to: 'bfabric_auth#session'
+
       # Private API routes (JWT authentication required)
       # These endpoints require a valid JWT token in the Authorization header
       resources :authentication_config, only: [:index, :update]

@@ -132,6 +132,37 @@ check(results, "grant_env_write! refuses a PERSISTED record",
       end,
       "ArgumentError")
 
+puts "\n=== 7. the write-free path list has NOT grown ==="
+# NO_WRITE_PATHS is a CLAIM ABOUT THE HANDLER: a path listed there is asserted to write
+# nothing, and it bypasses every policy below `full`. Adding one that does write would
+# silently defeat read_only against a database shared with live legacy production.
+#
+# Until now nothing asserted its contents, so a widening would have passed this check
+# unnoticed. The B-Fabric OIDC work's central safety claim is that this list does not grow
+# — its routes are GETs, and SushiReadOnlyGuard returns early for safe methods before any
+# path is consulted — so that claim is pinned here rather than left to review.
+check(results, "NO_WRITE_PATHS is exactly the two known write-free POSTs",
+      Middleware::SushiReadOnlyGuard::NO_WRITE_PATHS,
+      %w[/v1/datasets/validate /api/v1/auth/login])
+
+puts "\n=== 8. B-Fabric OIDC posture ==="
+if defined?(BfabricOidc)
+  oidc = BfabricOidc.config
+  puts "        requested=#{oidc.requested?} enabled=#{BfabricOidc.enabled?} " \
+       "base_url=#{oidc.base_url.inspect} audience=#{oidc.access_token_audience.inspect}"
+  # Fail-closed is the property, not "off". A node that asked for the feature and did not
+  # get it must say why; a node that got it must have an audience to check tokens against.
+  check(results, "the OIDC config reports no errors", oidc.errors, [])
+  if BfabricOidc.enabled?
+    check(results, "an expected audience is configured (else `aud` is unchecked)",
+          oidc.access_token_audience.to_s.empty?, false)
+    puts "        client allow-list: " \
+         "#{oidc.enforce_client_allow_list? ? oidc.allowed_client_ids.inspect : 'NONE — any B-Fabric client is accepted'}"
+  end
+else
+  puts "        (this node does not carry the B-Fabric OIDC code)"
+end
+
 failed = results.count(false)
 puts "\n" + "-" * 78
 puts(failed.zero? ? "ALL #{results.size} CHECKS PASS" : "#{failed} of #{results.size} CHECKS FAILED")

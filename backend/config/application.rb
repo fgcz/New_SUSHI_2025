@@ -3,6 +3,7 @@ require_relative "boot"
 require "rails/all"
 require_relative "../lib/middleware/sushi_read_only_guard"
 require_relative "../lib/env_api_token"
+require_relative "../lib/bfabric_oidc"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -21,8 +22,12 @@ module Backend
     # development reloader discards autoloaded constants between requests, which
     # would re-read ENV and undo the once-per-process freeze of the credential —
     # and the production node runs in development mode. See lib/env_api_token.rb.
+    #
+    # bfabric_oidc.rb / bfabric_oidc/ are required above for the SAME reason, plus one
+    # more: reloading would discard the JWKS cache every request, turning one network
+    # fetch per hour into one per request against B-Fabric, on the login path.
     config.autoload_lib(ignore: %w[assets tasks apps middleware fgcz.rb global_variables.rb sushi_fabric.rb
-                                   env_api_token.rb])
+                                   env_api_token.rb bfabric_oidc.rb bfabric_oidc])
 
     # Server-side write-policy guard (SUSHI_WRITE_POLICY = read_only | submit_only |
     # additive | full; SUSHI_READ_ONLY=1 still means read_only; default full; a non-empty

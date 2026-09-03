@@ -34,6 +34,15 @@ module AuthenticationHelper
     config['ldap_auth']['enabled']
   end
 
+  # B-Fabric OIDC login. Configured from ENV via BfabricOidc, NOT from the `oauth2_login`
+  # key in authentication.yml — deliberately. Flipping `oauth2_login.enabled` adds
+  # `devise :omniauthable`, re-wires the devise routes (see config/routes.rb) and sends
+  # callbacks to User.from_omniauth, which SELECTs provider/uid columns the production
+  # users table does not have. That scaffolding stays dead; this is a separate switch.
+  def self.bfabric_oidc_enabled?
+    defined?(BfabricOidc) ? BfabricOidc.enabled? : false
+  end
+
   def self.wallet_auth_enabled?
     config['wallet_auth']['enabled']
   end
@@ -65,6 +74,11 @@ module AuthenticationHelper
     methods << :two_factor if two_factor_auth_enabled?
     methods << :ldap if ldap_auth_enabled?
     methods << :wallet if wallet_auth_enabled?
+    # Consequence worth knowing: this makes authentication_skipped? false on a node that
+    # had no other login method enabled. 082 and 083 both set SUSHI_REQUIRE_AUTH=1, so it
+    # is inert there, but a developer instance that turns B-Fabric OIDC on will start
+    # demanding a credential — which is the correct behaviour, just not a silent one.
+    methods << :bfabric_oidc if bfabric_oidc_enabled?
     methods
   end
   

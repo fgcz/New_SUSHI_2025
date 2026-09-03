@@ -11,6 +11,10 @@ class AuthenticationController < ApplicationController
       two_factor_auth: AuthenticationHelper.two_factor_auth_enabled?,
       ldap_auth: AuthenticationHelper.ldap_auth_enabled?,
       wallet_auth: AuthenticationHelper.wallet_auth_enabled?,
+      # This is the endpoint the FRONTEND actually calls (/auth/login_options). The
+      # /api/v1 twin below must be kept in step: advertising the method on only one of
+      # them means the button never appears and nothing anywhere reports an error.
+      bfabric_oidc: AuthenticationHelper.bfabric_oidc_enabled?,
       enabled_methods: AuthenticationHelper.enabled_auth_methods,
       authentication_skipped: AuthenticationHelper.authentication_skipped?,
       current_user: current_user&.login

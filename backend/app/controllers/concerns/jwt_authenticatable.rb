@@ -22,10 +22,15 @@ module JwtAuthenticatable
     
     payload = decode_jwt_token(token)
     return render_unauthorized unless payload
-    
+
     user = User.find_by(id: payload['user_id'])
     return render_unauthorized unless user
-    
+
+    # Retained, not discarded. The payload carries the session's provenance (`src`) and,
+    # for a B-Fabric session, the scopes B-Fabric actually granted — which is what
+    # Api::V1::BaseController#authorize_bfabric_session_write! reads. Until now the JWT
+    # path had NO write-capability check of any kind.
+    @jwt_payload = payload
     @current_user = user
   end
 
@@ -60,7 +65,12 @@ module JwtAuthenticatable
     
     # Get authentication configuration
     return true if controller_name == 'authentication_config' && action_name == 'index'
-    
+
+    # B-Fabric OIDC session exchange: authenticated by a B-FABRIC bearer token, which is
+    # not a SUSHI JWT and must not be run through this decoder. The controller verifies it
+    # itself and mints the SUSHI JWT the rest of the system speaks.
+    return true if controller_name == 'bfabric_auth'
+
     # Health check
     return true if request.path == '/up'
     
