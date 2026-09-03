@@ -17,6 +17,20 @@ Rails.application.config.after_initialize do
       "audience=#{config.access_token_audience} required_scope=#{config.required_scope})"
     )
 
+    if config.device_login_enabled?
+      # Worth one line at boot: these two routes are UNAUTHENTICATED by necessity (they
+      # are the login) and they make outbound calls to B-Fabric, so an operator reading
+      # the log should know they are open and what bounds them.
+      Rails.logger.info(
+        "BfabricOidc: browser device login ENABLED (public client " \
+        "#{config.device_client_id}, at most #{BfabricOidc::DeviceFlow::MAX_PENDING} " \
+        'sign-ins in progress, poll interval enforced server-side)'
+      )
+    else
+      Rails.logger.info('BfabricOidc: browser device login is OFF; only the ' \
+                        'machine-facing token exchange is available')
+    end
+
     unless config.enforce_client_allow_list?
       # WARN, not INFO. This is the one narrowing the design would like to have and
       # cannot assume: production's `claims_supported` lists neither `client_id` nor

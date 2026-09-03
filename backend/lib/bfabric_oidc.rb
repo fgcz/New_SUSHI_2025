@@ -3,6 +3,8 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require 'cgi'
+require 'securerandom'
 
 # B-Fabric OpenID Connect support.
 #
@@ -49,6 +51,7 @@ module BfabricOidc
     def reset!
       @config = nil
       JwksCache.reset!
+      DeviceFlow.reset!
     end
   end
 end
@@ -56,3 +59,4 @@ end
 require_relative 'bfabric_oidc/config'
 require_relative 'bfabric_oidc/jwks_cache'
 require_relative 'bfabric_oidc/token_verifier'
+require_relative 'bfabric_oidc/device_flow'

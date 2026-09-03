@@ -79,6 +79,10 @@ Rails.application.routes.draw do
       # AuthenticationController#oauth_callback, which calls User.from_omniauth and blows
       # up on the production schema (no provider/uid columns).
       get 'auth/bfabric/session', to: 'bfabric_auth#session'
+      # The browser login. GETs for the same reason: the Rack guard never sees a safe
+      # method, so NO_WRITE_PATHS stays at its two entries.
+      get 'auth/bfabric/device/start', to: 'bfabric_auth#device_start'
+      get 'auth/bfabric/device/poll',  to: 'bfabric_auth#device_poll'
 
       # Private API routes (JWT authentication required)
       # These endpoints require a valid JWT token in the Authorization header

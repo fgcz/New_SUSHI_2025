@@ -4,10 +4,35 @@ export interface AuthenticationStatus {
   two_factor_auth: boolean;
   ldap_auth: boolean;
   wallet_auth: boolean;
+  // B-Fabric OIDC. Answered by BOTH login_options endpoints; the backend keeps them in
+  // step because advertising it on only one makes the button silently never appear.
+  bfabric_oidc?: boolean;
   enabled_methods: string[];
   authentication_skipped: boolean;
   current_user?: string;
 }
+
+// What the backend hands back when it has begun a device login on our behalf.
+//
+// Note what is ABSENT: `device_code`. Whoever holds that can redeem the login at B-Fabric
+// themselves, so it stays on the server and the browser carries only the opaque `handle`.
+export interface BfabricDeviceStart {
+  handle: string;
+  user_code: string;
+  verification_uri: string;
+  // RFC 8628's no-typing-required URL. B-Fabric does not send it (measured on both
+  // instances), so `verification_uri_guess` is our constructed attempt at the same thing:
+  // the same page with `?user_code=...` appended. If the page ignores it the user types
+  // the code instead, which is why the code is always displayed too.
+  verification_uri_complete?: string | null;
+  verification_uri_guess: string;
+  interval: number;
+  expires_in: number;
+}
+
+export type BfabricDevicePoll =
+  | { status: 'pending'; retry_in?: number }
+  | ({ status: 'ok' } & LoginResponse);
 
 export interface AuthenticationConfig {
   standard_login: {

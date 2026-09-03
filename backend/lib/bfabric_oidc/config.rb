@@ -11,8 +11,12 @@ module BfabricOidc
     DEFAULT_HTTP_TIMEOUT   = 5
     DEFAULT_LEEWAY         = 30
 
+    DEFAULT_DEVICE_CLIENT_ID = 'CLI'
+    DEFAULT_DEVICE_SCOPE = 'openid profile email api:read'
+
     attr_reader :base_url, :access_token_audience, :expected_issuer, :jwks_uri,
                 :client_id, :allowed_client_ids, :required_scope,
+                :device_client_id, :device_scope,
                 :http_timeout, :leeway, :errors
 
     def self.build(env = ENV)
@@ -33,6 +37,14 @@ module BfabricOidc
       @http_timeout          = positive_int(env['BFABRIC_OIDC_HTTP_TIMEOUT']) || DEFAULT_HTTP_TIMEOUT
       @leeway                = positive_int(env['BFABRIC_OIDC_LEEWAY']) || DEFAULT_LEEWAY
 
+      # The browser login. `device_client_id` is the PUBLIC client (`CLI`), which needs no
+      # registration and no redirect_uri — deliberately NOT the same field as `client_id`,
+      # which will hold the confidential client for the authorization-code flow later.
+      # Mixing them would let a secret-bearing client be driven by an unauthenticated route.
+      @device_login          = env['BFABRIC_OIDC_DEVICE_LOGIN'].to_s.strip != '0'
+      @device_client_id      = presence(env['BFABRIC_OIDC_DEVICE_CLIENT_ID']) || DEFAULT_DEVICE_CLIENT_ID
+      @device_scope          = presence(env['BFABRIC_OIDC_DEVICE_SCOPE']) || DEFAULT_DEVICE_SCOPE
+
       validate!
 
       @allowed_client_ids.freeze
@@ -48,6 +60,14 @@ module BfabricOidc
 
     def requested?
       @requested
+    end
+
+    # The browser login route pair. On by default wherever the feature is on, because a
+    # node that can verify a B-Fabric token has no reason to refuse a browser one; set
+    # BFABRIC_OIDC_DEVICE_LOGIN=0 to keep the machine-facing exchange while closing the
+    # unauthenticated start/poll surface.
+    def device_login_enabled?
+      enabled? && @device_login
     end
 
     # The client allow-list is OPT-IN, and when opted into it is enforced STRICTLY —
