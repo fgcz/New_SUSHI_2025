@@ -37,7 +37,25 @@ case "$INSTANCE" in
 esac
 
 CLIENT_ID="${BFABRIC_OAUTH_CLIENT_ID:-CLI}"
-SCOPE="${BFABRIC_OAUTH_SCOPE:-openid profile email api:read api:write}"
+
+# api:write is deliberately NOT requested by default.
+#
+# The write-capability gate for B-Fabric sessions is the NEW thing here, and the only
+# interesting question about it is whether it REFUSES. A token carrying api:write proves
+# only that a permissive path stays permissive, which the rspec suite already covers. So
+# the default run asks for a read-only consent and expects POST /api/v1/jobs to come back
+# 403 insufficient_scope.
+#
+# To exercise the other direction:
+#   BFABRIC_OAUTH_SCOPE='openid profile email api:read api:write' bash probe.sh ...
+SCOPE="${BFABRIC_OAUTH_SCOPE:-openid profile email api:read}"
+
+# A device approval costs a human ten seconds of attention and cannot be replayed, so a
+# session obtained once can be reused across runs:
+#   SUSHI_JWT="$(cat /path/to/jwt)" bash probe.sh ...
+# When set, the device-code leg is skipped entirely. The exchange itself is then NOT
+# exercised, and the script says so rather than reporting a pass it did not earn.
+PRESET_JWT="${SUSHI_JWT:-}"
 
 pass=0; fail=0; skip=0
 hr() { printf '%s\n' "------------------------------------------------------------------"; }
@@ -90,6 +108,16 @@ fi
 hr
 
 # ---------------------------------------------------------------- 1. device login
+if [ -n "$PRESET_JWT" ]; then
+  echo "SUSHI_JWT was supplied — skipping the device login AND the exchange."
+  echo "The read paths and the write gates below are still exercised in full."
+  JWT="$PRESET_JWT"
+  BF_TOKEN=""
+  note "the exchange itself is not exercised on this run (SUSHI_JWT was preset)"
+  hr
+fi
+
+if [ -z "$PRESET_JWT" ]; then
 DEVICE_URL="$(curl -fsS "$BFBASE/.well-known/openid-configuration" | jq_get device_authorization_endpoint)"
 TOKEN_URL="$(curl -fsS "$BFBASE/.well-known/openid-configuration" | jq_get token_endpoint)"
 [ -n "$DEVICE_URL" ] || { echo "no device_authorization_endpoint at $BFBASE" >&2; exit 1; }
@@ -147,8 +175,6 @@ else
   exit 1
 fi
 
-AUTH=(-H "Authorization: Bearer $JWT")
-
 # The B-Fabric token must be worthless anywhere else. This is the design's central claim —
 # the ticket is torn at the door — and it is the one thing that would make confining the
 # bearer to a single route pointless if it failed.
@@ -156,6 +182,9 @@ CODE="$(status -H "Authorization: Bearer $BF_TOKEN" "$SUSHI/api/v1/projects")"
 [ "$CODE" = "401" ] && ok "the B-Fabric token is refused on an ordinary route ($CODE)" \
                      || bad "a B-Fabric token was accepted outside the exchange route ($CODE)"
 hr
+fi
+
+AUTH=(-H "Authorization: Bearer $JWT")
 
 # ---------------------------------------------------------------- 3. read paths
 echo "=== login-required READ paths, under a real B-Fabric session ==="
@@ -176,26 +205,44 @@ else
   echo "         This is the 'login succeeds, UI is empty' failure. Check LDAP, not OIDC."
 fi
 
-PNUM="$(printf '%s' "$PROJECTS" | python3 -c 'import json,sys
+# PICK A PROJECT THAT ACTUALLY HAS DATA, rather than the first one LDAP returns.
+#
+# The first run of this script took the first LDAP project (729) and found nothing, so the
+# two most valuable probes below — the ownership-vs-membership case and the job log paths —
+# were SKIPPED and the run still looked mostly green. The cause: LDAP membership and the
+# SUSHI `projects` table are different populations. Measured 2026-09-03 on 083: LDAP returns
+# 77 projects for this user, the database holds 19 project rows in total, and 729 has no row
+# at all. A probe that stops at the first project is a probe that mostly tests nothing.
+PNUMS="$(printf '%s' "$PROJECTS" | python3 -c 'import json,sys
 try: d=json.load(sys.stdin)
 except Exception: raise SystemExit
 d = d.get("projects", d) if isinstance(d, dict) else d
-if isinstance(d, list) and d:
-    p = d[0]
-    print(p.get("number") if isinstance(p, dict) else p)')"
+if isinstance(d, list):
+    for p in d:
+        n = p.get("number") if isinstance(p, dict) else p
+        if n is not None: print(n)')"
 
-DSID=""
-if [ -n "$PNUM" ]; then
-  CODE="$(status "${AUTH[@]}" "$SUSHI/api/v1/projects/$PNUM/datasets")"
-  [ "$CODE" = "200" ] && ok "GET /api/v1/projects/$PNUM/datasets ($CODE)" \
-                      || bad "GET /api/v1/projects/$PNUM/datasets ($CODE)"
-  DSID="$(curl -sS "${AUTH[@]}" "$SUSHI/api/v1/projects/$PNUM/datasets" | python3 -c 'import json,sys
+SCAN_CAP="${PROBE_SCAN_CAP:-30}"
+PNUM=""; DSID=""; tried=0; total=0
+for n in $PNUMS; do total=$((total+1)); done
+for n in $PNUMS; do
+  [ "$tried" -ge "$SCAN_CAP" ] && break
+  tried=$((tried+1))
+  ID="$(curl -sS "${AUTH[@]}" "$SUSHI/api/v1/projects/$n/datasets" | python3 -c 'import json,sys
 try: d=json.load(sys.stdin)
 except Exception: raise SystemExit
 d = d.get("datasets", d) if isinstance(d, dict) else d
 if isinstance(d, list) and d and isinstance(d[0], dict): print(d[0].get("id",""))')"
+  if [ -n "$ID" ]; then PNUM="$n"; DSID="$ID"; break; fi
+done
+
+if [ -n "$PNUM" ]; then
+  ok "found a project holding datasets: p$PNUM (checked $tried of $total)"
 else
-  note "no project number available, so the dataset probes cannot run"
+  # Explicit, because a silent cap reads as "covered everything" when it did not.
+  bad "none of the $tried projects checked (of $total) returned a dataset"
+  echo "         LDAP membership and the SUSHI projects table are different populations;"
+  echo "         raise PROBE_SCAN_CAP if you believe a later project has data."
 fi
 
 if [ -n "$DSID" ]; then
@@ -255,22 +302,53 @@ echo "  POST /api/v1/jobs           -> $JOBS_CODE"
 echo "  POST /v1/datasets/register  -> $REG_CODE"
 echo "  DELETE /v1/datasets/999...  -> $DEL_CODE"
 
-case "$JOBS_CODE" in
-  403) ok "job submission is refused — by the Rack policy or by the api:write scope gate" ;;
-  401) ok "job submission is refused (401)" ;;
-  2*)  bad "JOB SUBMISSION WAS ACCEPTED. Stop and check the node's write policy." ;;
-  *)   ok "job submission answered $JOBS_CODE (not a success)" ;;
-esac
+# THE NEGATIVE CONTROL FOR THE NEW GATE. With the default read-only consent the session
+# carries no api:write, so authorize_bfabric_session_write! must refuse with 403
+# insufficient_scope BEFORE the controller is reached. Anything else — including a 500 from
+# the controller choking on the empty body — means the request got PAST the gate, which is
+# the whole thing this probe exists to detect.
+WANT_WRITE=no
+case "$SCOPE" in *api:write*) WANT_WRITE=yes ;; esac
+
+if [ "$WANT_WRITE" = "no" ]; then
+  if [ "$JOBS_CODE" = "403" ]; then
+    REASON="$(curl -sS -X POST "${AUTH[@]}" -H 'Content-Type: application/json' -d '{}' \
+              "$SUSHI/api/v1/jobs" | jq_get error)"
+    if [ "$REASON" = "insufficient_scope" ]; then
+      ok "job submission refused by the api:write scope gate (403 insufficient_scope)"
+    else
+      ok "job submission refused with 403 (by '${REASON:-the Rack write policy}', not the scope gate)"
+    fi
+  else
+    bad "expected 403 insufficient_scope for a session without api:write, got $JOBS_CODE"
+    echo "         The request reached past authorize_bfabric_session_write!."
+  fi
+else
+  case "$JOBS_CODE" in
+    2*) bad "JOB SUBMISSION WAS ACCEPTED. Stop and check the node's write policy." ;;
+    403) ok "job submission refused at 403 even though api:write was granted (Rack policy)" ;;
+    *)  ok "api:write was granted, so the gate let it through; the controller answered $JOBS_CODE" ;;
+  esac
+fi
+# /v1/* is the bearer-only ApiToken surface and does not accept a SUSHI JWT at all, so a
+# 401 here is AUTHENTICATION refusing, not the write policy. Said plainly, because reading
+# it as "the write policy held" would be a false comfort.
 case "$REG_CODE" in
+  401) ok "dataset import is unreachable with a JWT (401 — the /v1 surface is bearer-only)" ;;
   2*) bad "dataset import was ACCEPTED ($REG_CODE)" ;;
   *)  ok "dataset import is refused ($REG_CODE)" ;;
 esac
 case "$DEL_CODE" in
+  401) ok "dataset delete is unreachable with a JWT (401 — the /v1 surface is bearer-only)" ;;
   2*) bad "dataset delete was ACCEPTED ($DEL_CODE)" ;;
   *)  ok "dataset delete is refused ($DEL_CODE)" ;;
 esac
 hr
 
 printf '%d passed, %d failed, %d skipped\n' "$pass" "$fail" "$skip"
-echo "No token was written to disk; both tokens are gone when this process exits."
+if [ -n "$PRESET_JWT" ]; then
+  echo "This script wrote no token to disk. SUSHI_JWT came from the caller, who owns it."
+else
+  echo "No token was written to disk; both tokens are gone when this process exits."
+fi
 [ "$fail" -eq 0 ] || exit 1
