@@ -203,7 +203,12 @@ m.load_state(m.KeyStore("keyring"))
 
     def fake_exchange(sushi, bf_token):
         calls.append(("exchange", bf_token))
-        return {"access_token": fake_jwt(1800), "granted_scopes": ["openid", "api:read"]}
+        # A marker claim, so a renewed token is DISTINGUISHABLE from the one that was
+        # already stored. fake_jwt is deterministic within the same second, so without
+        # this the "--force actually replaced it" assertion compares a token with itself
+        # and can never fail.
+        return {"access_token": fake_jwt(1800, minted_by="exchange"),
+                "granted_scopes": ["openid", "api:read"]}
 
     def fake_refresh(token_url, client_id, refresh_token):
         calls.append(("refresh", refresh_token))
@@ -226,6 +231,26 @@ m.load_state(m.KeyStore("keyring"))
     check("an expired JWT is re-exchanged, WITHOUT touching the refresh token",
           [c[0] for c in calls] == ["exchange"] and out and ss.jwt_exp(out) > int(time.time()),
           f"calls={calls}")
+
+    # --force takes the SAME path an expiry takes, which is what makes it a usable stand-in
+    # for waiting 30 minutes when proving the mechanism on a live node.
+    good = sample_state(jwt=fake_jwt(1800))
+    calls.clear()
+    ss.save_state(good, ks, key3, salt, 600)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        ss.cmd_token(Args(force=True))
+    check("--force renews a session that is still good, by the same route as an expiry",
+          [c[0] for c in calls] == ["exchange"]
+          and buf.getvalue().strip() != good["jwt"], f"calls={calls}")
+
+    calls.clear()
+    ss.save_state(good, ks, key3, salt, 600)
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        ss.cmd_token(Args())
+    check("...and without --force the same state is served from cache, no call at all",
+          calls == [] and buf.getvalue().strip() == good["jwt"], f"calls={calls}")
 
     st = sample_state(jwt=fake_jwt(-10))
     st["bfabric_access_expires_at"] = int(time.time()) - 10   # both dead

@@ -396,7 +396,10 @@ def cmd_token(args):
     state, _ = load_state(keystore)
     now = int(time.time())
 
-    if jwt_exp(state.get("jwt", "")) - SKEW > now:
+    # `--force` skips only this shortcut. Everything below is the same code the natural
+    # expiry runs, so forcing proves the renewal MECHANISM without waiting 30 minutes for
+    # the TRIGGER (which is the one comparison on this line, covered by selftest.py).
+    if not getattr(args, "force", False) and jwt_exp(state.get("jwt", "")) - SKEW > now:
         print(state["jwt"])
         return
 
@@ -487,6 +490,9 @@ def main():
     lo.set_defaults(func=cmd_login)
 
     tk = sub.add_parser("token", help="print a valid SUSHI JWT, renewing if needed")
+    tk.add_argument("--force", action="store_true",
+                    help="renew even if the cached session is still good — no approval, "
+                         "and it never spends the refresh token unless it has to")
     tk.set_defaults(func=cmd_token)
 
     st = sub.add_parser("status", help="show what is stored, without printing any secret")
