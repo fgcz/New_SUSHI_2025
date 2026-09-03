@@ -112,6 +112,20 @@ if keyring_ok:
           b"BFABRIC-REFRESH-SECRET" not in raw and b"BFABRIC-ACCESS-SECRET" not in raw
           and state["jwt"].encode() not in raw)
 
+    # A shape check that works WITHOUT knowing the secrets, so it can also be run against a
+    # real session file. Note that grepping the whole file for `eyJ` is NOT a valid test:
+    # the header line is base64 of JSON, and base64 of anything starting `{"` begins `eyJ`
+    # — which is exactly why a JWT does. That false alarm cost a round trip on 2026-09-03.
+    import re as _re
+    head_b64, body_b64 = raw.strip().split(b"\n")
+    body = base64.b64decode(body_b64)
+    check("the header is the only readable part, and holds no secret",
+          set(json.loads(base64.b64decode(head_b64))) == {"v", "mode", "salt"})
+    check("the ciphertext contains no printable run long enough to be a token",
+          not _re.findall(rb"[ -~]{12,}", body))
+    check("'eyJ' appears only in the header, never in the ciphertext",
+          b"eyJ" in head_b64 and b"eyJ" not in body_b64)
+
     back, kmode = ss.load_state(ks)
     check("it decrypts back to exactly what went in", back == state)
     check("the header records the key mode", kmode == "keyring")
@@ -180,6 +194,79 @@ m.load_state(m.KeyStore("keyring"))
           and state["jwt"] not in out,
           out)
 
+    # ---- THE RENEWAL CHAIN ------------------------------------------------
+    # The helper's whole claim is "one approval, then it renews itself". These cases pin
+    # WHICH branch fires when, with the network stubbed: the live proof is only that the
+    # stubs match reality, which the exchange endpoint's own request specs cover.
+    print("\n=== renewal chain (network stubbed) ===")
+    calls = []
+
+    def fake_exchange(sushi, bf_token):
+        calls.append(("exchange", bf_token))
+        return {"access_token": fake_jwt(1800), "granted_scopes": ["openid", "api:read"]}
+
+    def fake_refresh(token_url, client_id, refresh_token):
+        calls.append(("refresh", refresh_token))
+        return {"access_token": "BFABRIC-ACCESS-2", "expires_in": 3600,
+                "refresh_token": "BFABRIC-REFRESH-2"}
+
+    real_exchange, real_refresh = ss.exchange, ss.bfabric_refresh
+    ss.exchange, ss.bfabric_refresh = fake_exchange, fake_refresh
+
+    def run_token(state):
+        calls.clear()
+        ss.save_state(state, ks, key3, salt, 600)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            ss.cmd_token(Args())
+        return buf.getvalue().strip()
+
+    st = sample_state(jwt=fake_jwt(-10))          # JWT dead, B-Fabric token still alive
+    out = run_token(st)
+    check("an expired JWT is re-exchanged, WITHOUT touching the refresh token",
+          [c[0] for c in calls] == ["exchange"] and out and ss.jwt_exp(out) > int(time.time()),
+          f"calls={calls}")
+
+    st = sample_state(jwt=fake_jwt(-10))
+    st["bfabric_access_expires_at"] = int(time.time()) - 10   # both dead
+    out = run_token(st)
+    check("an expired B-Fabric token is refreshed first, then exchanged",
+          [c[0] for c in calls] == ["refresh", "exchange"], f"calls={calls}")
+
+    stored, _ = ss.load_state(ks)
+    check("a rotated refresh token is the one kept",
+          stored["refresh_token"] == "BFABRIC-REFRESH-2")
+    check("the renewed B-Fabric token is kept too",
+          stored["bfabric_access_token"] == "BFABRIC-ACCESS-2")
+
+    ss.bfabric_refresh = lambda *a: None          # B-Fabric rejects the refresh token
+    st = sample_state(jwt=fake_jwt(-10))
+    st["bfabric_access_expires_at"] = int(time.time()) - 10
+    ss.save_state(st, ks, key3, salt, 600)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            ss.cmd_token(Args())
+        rc = 0
+    except SystemExit as e:
+        rc = e.code
+    check("a rejected refresh token asks for a new login (exit 2), it does not crash", rc == 2)
+
+    ss.bfabric_refresh = fake_refresh
+    st = sample_state(jwt=fake_jwt(-10))
+    st["bfabric_access_expires_at"] = int(time.time()) - 10
+    st["refresh_token"] = None                    # --no-refresh was used at login
+    ss.save_state(st, ks, key3, salt, 600)
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            ss.cmd_token(Args())
+        rc = 0
+    except SystemExit as e:
+        rc = e.code
+    check("with --no-refresh, expiry asks for a new login rather than inventing one", rc == 2)
+
+    ss.exchange, ss.bfabric_refresh = real_exchange, real_refresh
+
+    print("\n=== logout ===")
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         ss.cmd_logout(Args())
