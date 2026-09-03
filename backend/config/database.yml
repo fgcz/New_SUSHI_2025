@@ -9,23 +9,20 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
 
-# --- SQLite development (default; disabled while testing against legacy MySQL) ---
-# development:
-#   <<: *default
-#   database: storage/development.sqlite3
-
-# --- Legacy MySQL development: connect to the legacy SUSHI `sushi` DB via socket,
-#     mirroring legacy SUSHI's own database.yml. Requires LEGACY_DATABASE=true and
-#     SUSHI_DB_* env (sourced from /etc/sushi/secret.env). Do NOT commit this switch. ---
 development:
-  adapter: mysql2
-  encoding: utf8mb4
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: <%= ENV.fetch("SUSHI_DB_NAME", "sushi") %>
-  username: <%= ENV.fetch("SUSHI_DB_USERNAME", "sushilover") %>
-  password: <%= ENV["SUSHI_DB_PASSWORD"] %>
-  socket: /var/run/mysqld/mysqld.sock
-  reconnect: true
+  <<: *default
+  database: storage/development.sqlite3
+
+# MySQL configuration (commented out for SQLite3 development)
+#development:
+#  adapter: mysql2
+#  pool: 10
+#  username: sushilover
+#  password: uf***
+#  database: sushi
+#  encoding: utf8
+#  socket: /var/run/mysqld/mysqld.sock
+#  reconnect: true
 
 # Uncomment below and comment out the above 'development' section to use legacy SUSHI MySQL database
 # Also set LEGACY_DATABASE=true environment variable
