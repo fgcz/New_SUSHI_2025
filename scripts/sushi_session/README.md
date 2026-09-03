@@ -5,11 +5,16 @@ a human approves once in a browser, and afterwards this helper keeps a valid ses
 on its own until B-Fabric's refresh token expires.
 
 ```bash
-scripts/sushi_session/sushi-session login --instance test --sushi http://localhost:3010
-scripts/sushi_session/sushi-session status
-curl -H "Authorization: Bearer $(scripts/sushi_session/sushi-session token)" \
-     http://localhost:3010/api/v1/projects
+S="python3 scripts/sushi_session/sushi-session"     # or chmod +x it and drop the python3
+
+$S login --instance test --sushi http://localhost:3010
+$S status
+curl -H "Authorization: Bearer $($S token)" http://localhost:3010/api/v1/projects
 ```
+
+The file is committed without an executable bit, so invoke it through `python3` unless you
+`chmod +x` your own checkout. Putting it on `PATH` as `sushi-session` is the intended
+end state.
 
 Add `--write` at login if you intend to submit jobs. Without `api:write` the backend
 refuses every non-safe method with `403 insufficient_scope` — that is the gate working, not

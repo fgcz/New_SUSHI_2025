@@ -1,0 +1,5 @@
+# selftest.py imports `sushi-session` through SourceFileLoader, which writes bytecode here.
+# The selftest also sets sys.dont_write_bytecode, so this is the belt to that's braces —
+# the repo's root .gitignore carries a local-only modification and must not be touched.
+__pycache__/
+*.pyc

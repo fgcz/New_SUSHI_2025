@@ -21,6 +21,10 @@ import sys
 import tempfile
 import time
 
+# Loading `sushi-session` through SourceFileLoader would otherwise drop a __pycache__ next
+# to a user-facing script. It was committed once by accident; this stops it at the source.
+sys.dont_write_bytecode = True
+
 TMP = tempfile.mkdtemp(prefix="sushi-session-selftest-")
 os.environ["XDG_CONFIG_HOME"] = TMP
 
