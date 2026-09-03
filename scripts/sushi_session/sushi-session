@@ -1,0 +1,503 @@
+#!/usr/bin/env python3
+"""Log in to New SUSHI once with B-Fabric, then keep a usable session without a browser.
+
+WHAT IT IS FOR. The New SUSHI backend can be driven entirely without the web UI, which is
+how a coding agent or a script uses it. Authentication goes through B-Fabric's device-code
+flow: a human approves once, in any browser, and after that this helper renews everything
+automatically until B-Fabric's own refresh token expires.
+
+    sushi-session login            # once. approve in a browser.
+    sushi-session token            # prints a SUSHI JWT, refreshing as needed
+    curl -H "Authorization: Bearer $(sushi-session token)" "$SUSHI/api/v1/projects"
+
+WHERE THE CREDENTIALS LIVE, AND WHY.
+
+    ~/.config/new-sushi/session.enc   AES-256-GCM ciphertext, mode 0600
+    kernel keyring (@u), key "new-sushi-session"   the 32-byte key, NEVER on disk
+
+That split is the whole point, and it is chosen from two measurements on the FGCZ nodes
+rather than from habit:
+
+  * $HOME IS NFS (fgcz-home-linux:/Homes/<user>). A plaintext token in the home directory
+    therefore crosses the network and lands on a fileserver, inside whatever backup regime
+    that server has. bfabricPy's own token cache is plaintext-in-$HOME; here that is a
+    worse trade than it looks.
+  * THE KERNEL KEYRING IS AVAILABLE (keyutils 1.6.1, a live @u keyring). So the key can
+    stay in kernel memory, scoped to this user on this host, and never be written anywhere.
+
+WHAT THIS DOES AND DOES NOT PROTECT AGAINST — stated exactly, because "encrypted at rest"
+is often claimed to mean more than it does:
+
+    defeated  | the file leaving the host: backup, rsync, scp, an accidental git commit
+    defeated  | another user on the node reading the file (0600 as well)
+    defeated  | the NFS server, or anyone with a snapshot of it
+    NOT       | root on this host
+    NOT       | anything running AS YOU on this host — including this helper, by design
+
+If you need protection from the last two, use `--key-mode passphrase`: the key is then
+derived from something only you know, nothing on the machine can decrypt the file, and the
+cost is that you type the passphrase (or export SUSHI_SESSION_PASSPHRASE, which puts it
+back on the machine and is honest only if you know that).
+
+WHAT IS STORED. B-Fabric's refresh token is the strongest credential in play — it is
+LIMS-wide and long-lived, strictly bigger than the SUSHI session it renews. It is stored
+only so that one approval lasts; `--no-refresh` keeps it out of the file entirely, at the
+cost of re-approving roughly hourly.
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import getpass
+import json
+import os
+import secrets
+import stat
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+INSTANCES = {
+    "test": "https://fgcz-bfabric-test.uzh.ch/bfabric",
+    "prod": "https://fgcz-bfabric.uzh.ch/bfabric",
+}
+DEFAULT_SUSHI = os.environ.get("SUSHI_API_URL", "http://fgcz-h-083.fgcz-net.unizh.ch:3010")
+DEFAULT_CLIENT_ID = os.environ.get("BFABRIC_OAUTH_CLIENT_ID", "CLI")
+DEFAULT_SCOPE = "openid profile email api:read"
+
+CONFIG_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "new-sushi")
+STATE_PATH = os.path.join(CONFIG_DIR, "session.enc")
+KEYRING_DESC = "new-sushi-session"
+
+# Renew a little before expiry rather than at it: a token that dies mid-request is a
+# confusing failure, and the cost of renewing early is one cheap HTTP call.
+SKEW = 60
+
+
+def die(message: str, code: int = 1):
+    print(f"sushi-session: {message}", file=sys.stderr)
+    raise SystemExit(code)
+
+
+def info(message: str):
+    print(message, file=sys.stderr)
+
+
+# --------------------------------------------------------------------------- crypto
+
+
+def _aesgcm():
+    try:
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    except ImportError:
+        die("the `cryptography` package is required (it is present in the FGCZ conda env "
+            "gi_py3.12.8). Activate that env, or `pip install cryptography`.")
+    return AESGCM
+
+
+class KeyStore:
+    """Where the 32-byte file-encryption key comes from."""
+
+    def __init__(self, mode: str):
+        self.mode = mode
+
+    # ---- kernel keyring ---------------------------------------------------
+    @staticmethod
+    def keyctl_available() -> bool:
+        try:
+            subprocess.run(["keyctl", "show", "@u"], check=True,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return True
+        except (OSError, subprocess.CalledProcessError):
+            return False
+
+    @staticmethod
+    def _keyring_id():
+        r = subprocess.run(["keyctl", "search", "@u", "user", KEYRING_DESC],
+                           capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else None
+
+    def _keyring_get(self):
+        kid = self._keyring_id()
+        if not kid:
+            return None
+        r = subprocess.run(["keyctl", "pipe", kid], capture_output=True)
+        return r.stdout if r.returncode == 0 and len(r.stdout) == 32 else None
+
+    def _keyring_put(self, key: bytes, ttl: int):
+        r = subprocess.run(["keyctl", "padd", "user", KEYRING_DESC, "@u"],
+                           input=key, capture_output=True)
+        if r.returncode != 0:
+            die(f"could not store the key in the kernel keyring: {r.stderr.decode().strip()}")
+        kid = r.stdout.decode().strip()
+        # An expiry the user did not ask for is better than a key that outlives its
+        # usefulness in kernel memory. It only forces a re-login, never data loss.
+        subprocess.run(["keyctl", "timeout", kid, str(ttl)],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def _keyring_clear(self):
+        kid = self._keyring_id()
+        if kid:
+            subprocess.run(["keyctl", "unlink", kid, "@u"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    # ---- passphrase -------------------------------------------------------
+    @staticmethod
+    def _passphrase(confirm: bool = False) -> str:
+        env = os.environ.get("SUSHI_SESSION_PASSPHRASE")
+        if env:
+            return env
+        if not sys.stdin.isatty():
+            die("a passphrase is needed but there is no terminal to ask on. "
+                "Export SUSHI_SESSION_PASSPHRASE, knowing that this puts it back on the machine.")
+        p = getpass.getpass("passphrase: ")
+        if confirm and p != getpass.getpass("passphrase (again): "):
+            die("the two passphrases differ")
+        if not p:
+            die("an empty passphrase is not a passphrase")
+        return p
+
+    @staticmethod
+    def _derive(passphrase: str, salt: bytes) -> bytes:
+        import hashlib
+        # scrypt is stdlib; these parameters cost roughly 100 ms and ~16 MB.
+        return hashlib.scrypt(passphrase.encode(), salt=salt, n=2 ** 14, r=8, p=1, dklen=32)
+
+    # ---- public -----------------------------------------------------------
+    def new_key(self, salt: bytes, ttl: int) -> bytes:
+        if self.mode == "passphrase":
+            return self._derive(self._passphrase(confirm=True), salt)
+        key = secrets.token_bytes(32)
+        self._keyring_put(key, ttl)
+        return key
+
+    def existing_key(self, salt: bytes):
+        if self.mode == "passphrase":
+            return self._derive(self._passphrase(), salt)
+        return self._keyring_get()
+
+    def clear(self):
+        if self.mode != "passphrase":
+            self._keyring_clear()
+
+
+def encrypt(state: dict, key: bytes, salt: bytes, mode: str) -> bytes:
+    AESGCM = _aesgcm()
+    nonce = secrets.token_bytes(12)
+    # The header travels in the clear and is AUTHENTICATED as associated data, so a file
+    # cannot be silently re-labelled as a different key mode to steer decryption.
+    header = json.dumps({"v": 1, "mode": mode,
+                         "salt": base64.b64encode(salt).decode()}).encode()
+    blob = AESGCM(key).encrypt(nonce, json.dumps(state).encode(), header)
+    return base64.b64encode(header) + b"\n" + base64.b64encode(nonce + blob) + b"\n"
+
+
+def decrypt(raw: bytes, keystore: KeyStore):
+    AESGCM = _aesgcm()
+    try:
+        head_b64, body_b64 = raw.strip().split(b"\n")
+        header = base64.b64decode(head_b64)
+        meta = json.loads(header)
+        body = base64.b64decode(body_b64)
+    except Exception:
+        die(f"{STATE_PATH} is not a session file this version understands")
+    salt = base64.b64decode(meta["salt"])
+    key = keystore.existing_key(salt)
+    if key is None:
+        die("the encryption key is gone from the kernel keyring (a reboot, a timeout, or "
+            "`sushi-session logout`). Run `sushi-session login` again.\n"
+            "         The file itself is intact but is useless without the key — which is "
+            "the property it was built for.")
+    try:
+        plain = AESGCM(key).decrypt(body[:12], body[12:], header)
+    except Exception:
+        die("the session file did not decrypt. Wrong passphrase, or the file was altered.")
+    return json.loads(plain), meta.get("mode", "keyring")
+
+
+# --------------------------------------------------------------------------- state
+
+
+def save_state(state: dict, keystore: KeyStore, key: bytes, salt: bytes, ttl: int):
+    os.makedirs(CONFIG_DIR, mode=0o700, exist_ok=True)
+    os.chmod(CONFIG_DIR, 0o700)
+    tmp = STATE_PATH + ".tmp"
+    # Create with 0600 BEFORE any secret reaches the file, then rename: a reader can never
+    # observe a world-readable window, and a crash cannot leave a half-written session.
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as fh:
+        fh.write(encrypt(state, key, salt, keystore.mode))
+    os.replace(tmp, STATE_PATH)
+
+
+def load_state(keystore: KeyStore):
+    if not os.path.exists(STATE_PATH):
+        die("no session. Run `sushi-session login` first.", code=2)
+    mode = stat.S_IMODE(os.stat(STATE_PATH).st_mode)
+    if mode & 0o077:
+        info(f"warning: {STATE_PATH} is mode {mode:o}; tightening it to 0600")
+        os.chmod(STATE_PATH, 0o600)
+    with open(STATE_PATH, "rb") as fh:
+        return decrypt(fh.read(), keystore)
+
+
+# --------------------------------------------------------------------------- http
+
+
+def http_json(url: str, data: dict | None = None, bearer: str | None = None,
+              timeout: int = 20, allow_error: bool = False):
+    body = urllib.parse.urlencode(data).encode() if data is not None else None
+    req = urllib.request.Request(url, data=body)
+    req.add_header("Accept", "application/json")
+    if bearer:
+        req.add_header("Authorization", f"Bearer {bearer}")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.load(r), r.status
+    except urllib.error.HTTPError as e:
+        payload = e.read()
+        if allow_error:
+            try:
+                return json.loads(payload), e.code
+            except Exception:
+                return {}, e.code
+        die(f"{url} answered {e.code}: {payload[:300].decode(errors='replace')}")
+    except Exception as e:
+        die(f"{url} could not be reached: {type(e).__name__}: {e}")
+
+
+def jwt_exp(token: str) -> int:
+    """Read `exp` out of our own JWT. No verification: the backend verifies, we only need
+    to know when to stop using it."""
+    try:
+        payload = token.split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        return int(claims.get("exp", 0))
+    except Exception:
+        return 0
+
+
+# --------------------------------------------------------------------------- flows
+
+
+def device_login(base: str, client_id: str, scope: str) -> dict:
+    disc, _ = http_json(base.rstrip("/") + "/.well-known/openid-configuration")
+    device_url = disc.get("device_authorization_endpoint")
+    token_url = disc.get("token_endpoint")
+    if not device_url:
+        die(f"{base} does not advertise a device_authorization_endpoint")
+
+    dev, _ = http_json(device_url, {"client_id": client_id, "scope": scope})
+    uri = dev.get("verification_uri_complete") or dev.get("verification_uri")
+    info("")
+    info("  Approve this in any browser, on any machine:")
+    info("")
+    info(f"      {uri}")
+    info(f"      user code: {dev.get('user_code')}")
+    info("")
+
+    interval = int(dev.get("interval") or 5)
+    deadline = time.time() + int(dev.get("expires_in") or 900)
+    while time.time() < deadline:
+        time.sleep(interval)
+        resp, _ = http_json(token_url, {
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+            "device_code": dev["device_code"],
+            "client_id": client_id,
+        }, allow_error=True)
+        err = resp.get("error")
+        if err == "authorization_pending":
+            continue
+        if err == "slow_down":
+            interval += 5
+            continue
+        if err:
+            die(f"B-Fabric refused the device code: {err}")
+        return {"token_url": token_url, **resp}
+    die("timed out waiting for approval")
+
+
+def bfabric_refresh(token_url: str, client_id: str, refresh_token: str):
+    resp, code = http_json(token_url, {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": client_id,
+    }, allow_error=True)
+    if resp.get("error") or code >= 400:
+        return None
+    return resp
+
+
+def exchange(sushi: str, bfabric_access_token: str):
+    url = sushi.rstrip("/") + "/api/v1/auth/bfabric/session"
+    resp, code = http_json(url, bearer=bfabric_access_token, allow_error=True)
+    if code == 404:
+        die("this backend does not have B-Fabric login enabled "
+            "(BFABRIC_OIDC_ENABLED=1 plus a restart is needed).")
+    if code != 200:
+        die(f"the exchange failed ({code}): {resp.get('error')} "
+            f"{resp.get('reason', '')} — {resp.get('message', '')}")
+    return resp
+
+
+# --------------------------------------------------------------------------- commands
+
+
+def cmd_login(args):
+    base = INSTANCES.get(args.instance, args.instance).rstrip("/")
+    keystore = KeyStore(args.key_mode)
+    if args.key_mode == "keyring" and not KeyStore.keyctl_available():
+        die("the kernel keyring is not available on this host. Use --key-mode passphrase.")
+
+    scope = args.scope
+    if args.write and "api:write" not in scope.split():
+        scope = scope + " api:write"
+
+    tok = device_login(base, args.client_id, scope)
+    session = exchange(args.sushi, tok["access_token"])
+
+    state = {
+        "bfabric_base": base,
+        "token_url": tok["token_url"],
+        "client_id": args.client_id,
+        "scope": tok.get("scope", scope),
+        "sushi": args.sushi.rstrip("/"),
+        "bfabric_access_token": tok["access_token"],
+        "bfabric_access_expires_at": int(time.time()) + int(tok.get("expires_in") or 3600),
+        "refresh_token": None if args.no_refresh else tok.get("refresh_token"),
+        "jwt": session["access_token"],
+        "login": session.get("user", {}).get("login"),
+        "granted_scopes": session.get("granted_scopes", []),
+    }
+
+    salt = secrets.token_bytes(16)
+    key = keystore.new_key(salt, args.key_ttl)
+    save_state(state, keystore, key, salt, args.key_ttl)
+
+    info(f"logged in as {state['login']}  (scopes: {' '.join(state['granted_scopes'])})")
+    if args.no_refresh:
+        info("no refresh token was stored, so expect to approve again in about an hour.")
+    else:
+        info("the B-Fabric refresh token is stored encrypted; the key is in the kernel "
+             "keyring only." if args.key_mode == "keyring" else
+             "the B-Fabric refresh token is stored encrypted under your passphrase.")
+    info(f"state: {STATE_PATH}")
+    if "api:write" not in state["granted_scopes"]:
+        info("note: api:write was NOT granted, so this session may read but not submit. "
+             "Re-run with --write if you need to submit jobs.")
+
+
+def cmd_token(args):
+    keystore = KeyStore(args.key_mode)
+    state, _ = load_state(keystore)
+    now = int(time.time())
+
+    if jwt_exp(state.get("jwt", "")) - SKEW > now:
+        print(state["jwt"])
+        return
+
+    # The SUSHI session lapsed. Two renewals are available and neither needs a human.
+    if state.get("bfabric_access_expires_at", 0) - SKEW <= now:
+        if not state.get("refresh_token"):
+            die("the B-Fabric token expired and no refresh token was stored. "
+                "Run `sushi-session login`.", code=2)
+        fresh = bfabric_refresh(state["token_url"], state["client_id"], state["refresh_token"])
+        if not fresh:
+            die("B-Fabric refused the refresh token (it has probably expired). "
+                "Run `sushi-session login`.", code=2)
+        state["bfabric_access_token"] = fresh["access_token"]
+        state["bfabric_access_expires_at"] = now + int(fresh.get("expires_in") or 3600)
+        # B-Fabric may rotate the refresh token; keep whichever it last gave us.
+        if fresh.get("refresh_token"):
+            state["refresh_token"] = fresh["refresh_token"]
+
+    session = exchange(state["sushi"], state["bfabric_access_token"])
+    state["jwt"] = session["access_token"]
+    state["granted_scopes"] = session.get("granted_scopes", state.get("granted_scopes", []))
+
+    # Re-use the file's existing salt so the passphrase mode does not silently re-derive
+    # under a new one, which would strand a caller who typed the same passphrase.
+    with open(STATE_PATH, "rb") as fh:
+        meta = json.loads(base64.b64decode(fh.read().strip().split(b"\n")[0]))
+    salt = base64.b64decode(meta["salt"])
+    save_state(state, keystore, keystore.existing_key(salt), salt, args.key_ttl)
+
+    print(state["jwt"])
+
+
+def cmd_status(args):
+    """Prints no secret. Every field here is a time, a name or a URL."""
+    keystore = KeyStore(args.key_mode)
+    if not os.path.exists(STATE_PATH):
+        print("no session — run `sushi-session login`")
+        raise SystemExit(2)
+    state, mode = load_state(keystore)
+    now = int(time.time())
+
+    def left(ts):
+        d = ts - now
+        return f"{d // 60}m {d % 60}s" if d > 0 else "EXPIRED"
+
+    print(f"login            : {state.get('login')}")
+    print(f"backend          : {state.get('sushi')}")
+    print(f"b-fabric         : {state.get('bfabric_base')}  (client {state.get('client_id')})")
+    print(f"granted scopes   : {' '.join(state.get('granted_scopes', []))}")
+    print(f"SUSHI JWT        : {left(jwt_exp(state.get('jwt', '')))}")
+    print(f"B-Fabric token   : {left(state.get('bfabric_access_expires_at', 0))}")
+    print(f"refresh token    : {'stored' if state.get('refresh_token') else 'NOT stored'}")
+    print(f"key protection   : {mode}"
+          + ("  (kernel keyring; the file alone cannot be decrypted)" if mode == "keyring"
+             else "  (passphrase; nothing on this machine can decrypt the file)"))
+    print(f"state file       : {STATE_PATH}")
+
+
+def cmd_logout(args):
+    KeyStore(args.key_mode).clear()
+    if os.path.exists(STATE_PATH):
+        os.remove(STATE_PATH)
+    print("session removed and the key dropped from the keyring.")
+    print("Note: this does NOT end your B-Fabric session — B-Fabric publishes no logout")
+    print("endpoint, so signing in again may complete without a prompt.")
+
+
+def main():
+    p = argparse.ArgumentParser(
+        prog="sushi-session",
+        description="Log in to New SUSHI via B-Fabric once, then keep a usable session with no browser.")
+    p.add_argument("--key-mode", choices=["keyring", "passphrase"], default="keyring",
+                   help="where the file-encryption key lives (default: the kernel keyring, "
+                        "never on disk)")
+    p.add_argument("--key-ttl", type=int, default=12 * 3600,
+                   help="seconds the key stays in the kernel keyring (default 12h)")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    lo = sub.add_parser("login", help="device-code login (one browser approval)")
+    lo.add_argument("--instance", default="test", help="test | prod | a base URL")
+    lo.add_argument("--sushi", default=DEFAULT_SUSHI, help="New SUSHI backend base URL")
+    lo.add_argument("--client-id", default=DEFAULT_CLIENT_ID)
+    lo.add_argument("--scope", default=DEFAULT_SCOPE)
+    lo.add_argument("--write", action="store_true",
+                    help="also request api:write, without which the backend refuses job submission")
+    lo.add_argument("--no-refresh", action="store_true",
+                    help="do not store B-Fabric's refresh token; re-approve roughly hourly")
+    lo.set_defaults(func=cmd_login)
+
+    tk = sub.add_parser("token", help="print a valid SUSHI JWT, renewing if needed")
+    tk.set_defaults(func=cmd_token)
+
+    st = sub.add_parser("status", help="show what is stored, without printing any secret")
+    st.set_defaults(func=cmd_status)
+
+    out = sub.add_parser("logout", help="wipe the stored session and the key")
+    out.set_defaults(func=cmd_logout)
+
+    args = p.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
