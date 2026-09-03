@@ -140,9 +140,24 @@ printf '\n'
 
 [ -n "$TOKEN_JSON" ] || { echo "timed out waiting for approval" >&2; exit 1; }
 
+say "approved — a token was issued. Analysing it locally now (nothing leaves this process)."
+
 # ---------------------------------------------------------------- the measurement
+#
+# THE ANALYSIS PROGRAM IS WRITTEN TO A TEMP FILE, and the token JSON is piped into it.
+#
+# It must NOT be `python3 - ... <<'PY'`. A heredoc REPLACES stdin, so python reads the
+# PROGRAM from stdin and the piped JSON is discarded; `json.load(sys.stdin)` then sees EOF
+# and dies with "Expecting value: line 1 column 1". That bug wasted two real device
+# approvals on 2026-09-03 — the token had already been issued and was thrown away.
+#
+# The token is NOT passed as an argument either: argv is visible to every user on the host
+# through `ps`.
 hr
-printf '%s' "$TOKEN_JSON" | python3 - "$USERINFO_URL" "$BASE" <<'PY'
+ANALYSIS_PY="$(mktemp -t bfabric_oauth_analysis.XXXXXX)"
+trap 'rm -f "$ANALYSIS_PY"' EXIT INT TERM
+
+cat > "$ANALYSIS_PY" <<'PY'
 import base64, json, sys, urllib.request
 
 def b64(seg):
@@ -164,23 +179,42 @@ print("granted scope         :", blob.get("scope"))
 print()
 
 access = blob.get("access_token")
-if not access or access.count(".") != 2:
-    print("!! the access token is not a JWT — this design verifies it locally and cannot.")
-    sys.exit(1)
+ap = {}
+access_is_jwt = bool(access) and access.count(".") == 2
 
-ah, ap = parts(access)
-print("=== ACCESS TOKEN ===")
-print("header                :", ah)
-print("claim names           :", sorted(ap.keys()))
-for k in ("iss", "aud", "sub", "scope", "scp", "client_id", "azp", "at_hash"):
-    if k in ap:
-        print(f"  {k:<20}: {ap[k]!r}")
-print()
-print("client_id present     :", "client_id" in ap)
-print("azp present           :", "azp" in ap)
-if "client_id" not in ap and "azp" not in ap:
-    print("  -> NO per-client narrowing is possible. Leave BFABRIC_OIDC_ALLOWED_CLIENT_IDS")
-    print("     UNSET; any B-Fabric client's token with this audience will be accepted.")
+if not access:
+    print("=== NO ACCESS TOKEN IN THE RESPONSE ===")
+    print("The token endpoint returned a body with no `access_token`. Its fields are listed")
+    print("above; if it names an `error`, that is what went wrong.")
+elif not access_is_jwt:
+    # Do NOT bail here. A device approval is expensive and the token is already spent;
+    # print everything that can still be learned from it.
+    print("=== ACCESS TOKEN — NOT A JWT ===")
+    print("This is decisive for the design: the backend verifies the token LOCALLY against")
+    print("the published JWKS, which an opaque token makes impossible. The headless path")
+    print("would have to call the introspection endpoint instead, which needs a")
+    print("confidential client — i.e. it would inherit the browser path's blocker.")
+    print("  length              :", len(access or ""))
+    print("  dot-separated parts :", (access or "").count(".") + 1)
+else:
+    ah, ap = parts(access)
+    print("=== ACCESS TOKEN ===")
+    print("header                :", ah)
+    print("claim names           :", sorted(ap.keys()))
+    for k in ("iss", "aud", "sub", "scope", "scp", "client_id", "azp", "at_hash"):
+        if k in ap:
+            print(f"  {k:<20}: {ap[k]!r}")
+    print()
+    print("client_id present     :", "client_id" in ap)
+    print("azp present           :", "azp" in ap)
+    if "client_id" not in ap and "azp" not in ap:
+        print("  -> NO per-client narrowing is possible. Leave BFABRIC_OIDC_ALLOWED_CLIENT_IDS")
+        print("     UNSET; any B-Fabric client's token with this audience will be accepted.")
+    if "aud" not in ap:
+        print("  -> NO `aud` claim at all. BFABRIC_OIDC_AUDIENCE cannot be set from this")
+        print("     token, and the backend will refuse to enable. Report this: it means")
+        print("     nothing distinguishes a token minted for us from one minted for")
+        print("     another B-Fabric relying party.")
 
 idt = blob.get("id_token")
 if idt and idt.count(".") == 2:
@@ -206,19 +240,40 @@ if userinfo_url:
 
 print()
 print("=" * 66)
-print("SET THESE ON THE NODE (and nothing else is needed to enable the headless path):")
-print("=" * 66)
 aud = ap.get("aud")
 aud = aud[0] if isinstance(aud, list) and aud else aud
-print("  export BFABRIC_OIDC_ENABLED=1")
-print("  export BFABRIC_OIDC_BASE_URL=" + base_url)
-print("  export BFABRIC_OIDC_AUDIENCE=" + str(aud))
-if ap.get("iss") and ap["iss"] != base_url:
-    print("  export BFABRIC_OIDC_ISSUER=" + str(ap["iss"]))
-    print("    (the `iss` claim differs from the base URL, so pin it explicitly)")
+
+if aud:
+    print("SET THESE ON THE NODE (nothing else is needed to enable the headless path):")
+    print("=" * 66)
+    print("  export BFABRIC_OIDC_ENABLED=1")
+    print("  export BFABRIC_OIDC_BASE_URL=" + base_url)
+    print("  export BFABRIC_OIDC_AUDIENCE=" + str(aud))
+    if ap.get("iss") and ap["iss"] != base_url:
+        print("  export BFABRIC_OIDC_ISSUER=" + str(ap["iss"]))
+        print("    (the `iss` claim differs from the base URL, so pin it explicitly)")
+    scopes = (ap.get("scope") or "").split()
+    if "api:write" not in scopes:
+        print()
+        print("  NOTE: api:write was NOT granted. A session exchanged from a token like this")
+        print("        can read but not submit — the backend's write gate will refuse it.")
+else:
+    print("CANNOT ENABLE THE FEATURE FROM THIS MEASUREMENT.")
+    print("=" * 66)
+    print("No usable `aud` was found, so BFABRIC_OIDC_AUDIENCE has no value to take and the")
+    print("backend will keep the feature off — deliberately. Take the claim dump above to")
+    print("the B-Fabric team before changing anything on our side.")
 print()
 print("The raw tokens were NOT written anywhere and are gone when this process exits.")
 PY
 
+printf '%s' "$TOKEN_JSON" | python3 "$ANALYSIS_PY" "$USERINFO_URL" "$BASE"
+ANALYSIS_RC=$?
+
 hr
+if [ "$ANALYSIS_RC" -ne 0 ]; then
+  say "The analysis exited $ANALYSIS_RC. The token was already issued and is now gone, so"
+  say "re-running means approving again — fix the analysis before you do."
+fi
 say "Reminder: the tokens above were held in memory only. Nothing was saved."
+exit "$ANALYSIS_RC"
