@@ -71,9 +71,10 @@ export default function LoginPage() {
     try {
       const start = await authApi.startBfabricDeviceLogin(allowWrite);
       // Prefer B-Fabric's own no-typing URL if it ever starts sending one; otherwise our
-      // constructed guess, which the approval page may or may not honour. Either way the
-      // code is shown below, so a page that ignores the parameter costs a paste, not a
-      // failed sign-in.
+      // constructed `?user_code=` guess, which a human sign-in on 2026-09-03 confirmed the
+      // approval page DOES honour — the code arrived already filled in. The code is still
+      // displayed below, so a future change that stops honouring it costs a paste rather
+      // than a failed sign-in.
       const url =
         start.verification_uri_complete || start.verification_uri_guess || start.verification_uri;
       if (popup && !popup.closed) {

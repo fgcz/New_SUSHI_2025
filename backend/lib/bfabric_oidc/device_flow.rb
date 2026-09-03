@@ -71,11 +71,15 @@ module BfabricOidc
           user_code: body["user_code"],
           verification_uri: body["verification_uri"],
           # RFC 8628's `verification_uri_complete` — the one that needs no typing — is NOT
-          # sent by B-Fabric (measured on both instances, 2026-09-03). We offer a
-          # constructed guess so the approval page can prefill the code IF it happens to
-          # read that parameter; whether it does cannot be checked from outside, because
-          # the page redirects to the B-Fabric home page for an unauthenticated fetch. If
-          # it is ignored, nothing breaks and the user types the code we also display.
+          # sent by B-Fabric (measured on both instances, 2026-09-03), so this is a URL we
+          # construct: the same approval page with `?user_code=` appended.
+          #
+          # IT WORKS. Confirmed by a human sign-in on 2026-09-03: the code arrived already
+          # filled in. That could not be checked from outside — the page redirects to the
+          # B-Fabric home page for an unauthenticated fetch — so only a person at a browser
+          # could establish it, and one did. Keep the fallback anyway: the caller also
+          # receives `user_code` and displays it, so a future B-Fabric change that stops
+          # honouring the parameter costs a paste rather than a failed sign-in.
           verification_uri_complete: body["verification_uri_complete"],
           verification_uri_guess: with_user_code(body["verification_uri"], body["user_code"]),
           interval: interval,

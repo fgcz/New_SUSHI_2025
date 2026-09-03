@@ -21,9 +21,10 @@ export interface BfabricDeviceStart {
   user_code: string;
   verification_uri: string;
   // RFC 8628's no-typing-required URL. B-Fabric does not send it (measured on both
-  // instances), so `verification_uri_guess` is our constructed attempt at the same thing:
-  // the same page with `?user_code=...` appended. If the page ignores it the user types
-  // the code instead, which is why the code is always displayed too.
+  // instances), so `verification_uri_guess` is our constructed equivalent: the same page
+  // with `?user_code=...` appended. A human sign-in on 2026-09-03 confirmed the approval
+  // page honours it — the code arrived already filled in. The code is displayed anyway, so
+  // a future change that stops honouring it costs a paste, not a failed sign-in.
   verification_uri_complete?: string | null;
   verification_uri_guess: string;
   interval: number;
