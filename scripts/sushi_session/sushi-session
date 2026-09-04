@@ -315,6 +315,29 @@ def refresh_expiry(tok: dict, now: int):
     return 0, "unknown — B-Fabric states no lifetime and the token is opaque"
 
 
+def prefill_uri(dev: dict):
+    """The approval URL with the code already in it, or None if one cannot be built.
+
+    RFC 8628 §3.3.1 makes `verification_uri_complete` optional and B-Fabric does not send
+    it, so this constructs it. That is not guesswork: the query parameter is `user_code`,
+    the same name the approval page uses for its form field, and it has been confirmed
+    working against both instances. It matters more than it looks — without it a human
+    copies a URL AND a code by hand, and the device code has lapsed mid-copy twice.
+
+    Returns None rather than a bare URL when there is nothing to add, so the caller can
+    tell "the code is in the link" from "you will have to type it".
+    """
+    if dev.get("verification_uri_complete"):
+        return dev["verification_uri_complete"]
+
+    plain, code = dev.get("verification_uri"), dev.get("user_code")
+    if not plain or not code:
+        return None
+
+    sep = "&" if "?" in plain else "?"
+    return f"{plain}{sep}user_code={urllib.parse.quote(code)}"
+
+
 def human_left(seconds: int) -> str:
     """A refresh token may live for days, and `10080m 0s` is not a readable answer."""
     if seconds <= 0:
@@ -340,16 +363,28 @@ def device_login(base: str, client_id: str, scope: str) -> dict:
         die(f"{base} does not advertise a device_authorization_endpoint")
 
     dev, _ = http_json(device_url, {"client_id": client_id, "scope": scope})
-    uri = dev.get("verification_uri_complete") or dev.get("verification_uri")
+    user_code = dev.get("user_code")
+    window = int(dev.get("expires_in") or 900)
+
+    uri = prefill_uri(dev)
+    plain = dev.get("verification_uri")
+
     info("")
     info("  Approve this in any browser, on any machine:")
     info("")
-    info(f"      {uri}")
-    info(f"      user code: {dev.get('user_code')}")
+    info(f"      {uri or plain}")
+    if uri and uri != plain:
+        info(f"      user code: {user_code}   (already filled in by the link above)")
+    else:
+        info(f"      user code: {user_code}   (type this on the page)")
+    info("")
+    # State the deadline. The code lapses whether or not anyone is watching, and a
+    # caller who does not know the window cannot tell "I was too slow" from "it broke".
+    info(f"  Waiting. The code is valid for about {window // 60} minutes.")
     info("")
 
     interval = int(dev.get("interval") or 5)
-    deadline = time.time() + int(dev.get("expires_in") or 900)
+    deadline = time.time() + window
     while time.time() < deadline:
         time.sleep(interval)
         resp, _ = http_json(token_url, {
@@ -363,10 +398,25 @@ def device_login(base: str, client_id: str, scope: str) -> dict:
         if err == "slow_down":
             interval += 5
             continue
+        # Two of B-Fabric's error codes mean something a person can act on, and echoing
+        # the raw code makes them read like a fault in this tool. Nothing is broken and
+        # nothing needs repair in either case: the remedy is to run `login` again.
+        if err == "expired_token":
+            die(f"the code {user_code} lapsed before it was approved "
+                f"(B-Fabric allows about {window // 60} minutes).\n"
+                "         Nothing is broken. Run `sushi-session login` again and approve "
+                "it straight away —\n"
+                "         the link printed above already carries the code, so it is one "
+                "click and one button.", code=2)
+        if err == "access_denied":
+            die("the sign-in was DECLINED at B-Fabric. If that was not deliberate, "
+                "check that you\n         approved the right code — this one was "
+                f"{user_code}.", code=2)
         if err:
             die(f"B-Fabric refused the device code: {err}")
         return {"token_url": token_url, **resp}
-    die("timed out waiting for approval")
+    die(f"the code {user_code} was not approved within about {window // 60} minutes. "
+        "Run `sushi-session login` again.", code=2)
 
 
 def bfabric_refresh(token_url: str, client_id: str, refresh_token: str):

@@ -25,7 +25,7 @@ a bug.
 ```
 [approve in a browser]  ← the only human step
         ↓
-B-Fabric refresh token     lifetime: ASK `status` — it is recorded at login
+B-Fabric refresh token     lifetime: UNKNOWABLE from the client (measured, see below)
         ↓ automatic
 B-Fabric access token      3600 s (measured)
         ↓ automatic
@@ -40,9 +40,27 @@ local encryption key       --key-ttl, default 12 h   ← lapses INDEPENDENTLY of
 `token` walks that chain: it returns the cached JWT if it is still good, otherwise
 re-exchanges, otherwise refreshes against B-Fabric first. **Nothing in the middle two steps
 needs a person.** One approval therefore lasts as long as the refresh token, and `status`
-now prints how long that is together with where the number came from — the token
-endpoint's own `refresh_expires_in`, an `exp` claim inside the refresh token, or
-`UNKNOWN` when B-Fabric states neither.
+prints how long that is together with where the number came from — the token endpoint's
+own `refresh_expires_in`, an `exp` claim inside the refresh token, or `UNKNOWN` when
+B-Fabric states neither.
+
+### The answer, measured 2026-09-04: `UNKNOWN`, and that is final from here
+
+Both sources were checked against a real login on the test instance, and neither carries
+the number:
+
+| source | result |
+|---|---|
+| `refresh_expires_in` / `refresh_token_expires_in` in the token response | absent |
+| `exp` inside the refresh token | not applicable — the token is **36 characters with no dots**, a UUID-shaped opaque string, not a JWT |
+
+So the lifetime is server-side state at B-Fabric and nothing returned to the client
+reveals it. `status` says `lifetime UNKNOWN` because that is the honest answer, not
+because the recording failed. Two ways remain to learn it, and only two:
+
+1. **Wait it out.** Log in with a key that outlives the token (`--key-ttl 604800`, below)
+   and keep calling `token`. The first `login` it demands is the answer.
+2. **Ask the B-Fabric team.** It belongs with the other open questions for them.
 
 ### The trap that made this number look unmeasurable
 

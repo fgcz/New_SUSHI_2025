@@ -392,6 +392,32 @@ out = buf.getvalue()
 check("a session predating this measurement says UNKNOWN, not EXPIRED",
       "UNKNOWN" in out and "EXPIRED" not in out, out)
 
+# ---- the approval link carries the code ----------------------------------------
+# B-Fabric does not send verification_uri_complete, so this builds it. The device code
+# lapsed mid-copy twice before this existed, which is the entire justification.
+print("=== the approval link ===")
+check("the server's own complete URI is preferred when it sends one",
+      ss.prefill_uri({"verification_uri_complete": "https://x/c",
+                      "verification_uri": "https://x", "user_code": "AAAA-BBBB"})
+      == "https://x/c")
+check("otherwise the code is appended as ?user_code=",
+      ss.prefill_uri({"verification_uri": "https://x/bfabric/oauth/device.html",
+                      "user_code": "JKLV-LRGT"})
+      == "https://x/bfabric/oauth/device.html?user_code=JKLV-LRGT")
+check("an existing query string is extended with &, not a second ?",
+      ss.prefill_uri({"verification_uri": "https://x/d?a=1", "user_code": "AB-CD"})
+      == "https://x/d?a=1&user_code=AB-CD")
+check("a code needing escaping is escaped",
+      ss.prefill_uri({"verification_uri": "https://x/d", "user_code": "A B/C"})
+      == "https://x/d?user_code=A%20B/C",
+      ss.prefill_uri({"verification_uri": "https://x/d", "user_code": "A B/C"}))
+# None, not the bare URL: the caller prints a different hint in each case, so it must be
+# able to tell "the code is in the link" from "you will have to type it".
+check("no code means None, so the caller can say 'type this' instead",
+      ss.prefill_uri({"verification_uri": "https://x/d"}) is None)
+check("no verification_uri at all also means None",
+      ss.prefill_uri({"user_code": "AB-CD"}) is None)
+
 print(f"\n{passed} passed, {failed} failed")
 try:
     import shutil
