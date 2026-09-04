@@ -18,8 +18,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sushi App",
-  description: "SUSHI - produced by Functional Genomics Center Zurich and SIB",
+  title: "Omics-Studio",
+  description: "Omics-Studio - produced by Functional Genomics Center Zurich and SIB",
 };
 
 export default function RootLayout({
