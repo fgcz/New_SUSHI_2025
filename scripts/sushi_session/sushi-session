@@ -8,7 +8,13 @@ automatically until B-Fabric's own refresh token expires.
 
     sushi-session login            # once. approve in a browser.
     sushi-session token            # prints a SUSHI JWT, refreshing as needed
+    sushi-session status           # what is stored, and how long each piece has left
     curl -H "Authorization: Bearer $(sushi-session token)" "$SUSHI/api/v1/projects"
+
+    sushi-session --key-ttl 604800 login    # a key that outlives the refresh token.
+                                            # NOTE the position: --key-ttl is a
+                                            # top-level option, so it goes BEFORE the
+                                            # subcommand or argparse rejects it.
 
 WHERE THE CREDENTIALS LIVE, AND WHY.
 

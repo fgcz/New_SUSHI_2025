@@ -25,19 +25,46 @@ a bug.
 ```
 [approve in a browser]  ← the only human step
         ↓
-B-Fabric refresh token     lifetime: NOT YET MEASURED   ← re-approve when this lapses
+B-Fabric refresh token     lifetime: ASK `status` — it is recorded at login
         ↓ automatic
 B-Fabric access token      3600 s (measured)
         ↓ automatic
 SUSHI JWT                  30 min
         ↓
    every API route
+
+local encryption key       --key-ttl, default 12 h   ← lapses INDEPENDENTLY of all
+                                                       of the above; see below
 ```
 
 `token` walks that chain: it returns the cached JWT if it is still good, otherwise
 re-exchanges, otherwise refreshes against B-Fabric first. **Nothing in the middle two steps
-needs a person.** One approval therefore lasts as long as the refresh token — a number
-nobody has measured yet, and one of the open questions for the B-Fabric team.
+needs a person.** One approval therefore lasts as long as the refresh token, and `status`
+now prints how long that is together with where the number came from — the token
+endpoint's own `refresh_expires_in`, an `exp` claim inside the refresh token, or
+`UNKNOWN` when B-Fabric states neither.
+
+### The trap that made this number look unmeasurable
+
+The obvious way to find the refresh token's lifetime is to keep using the session and see
+when it asks for another approval. **That measures the wrong thing.** The local key that
+decrypts the state file has its own TTL — `--key-ttl`, 12 hours by default — and it is
+usually the first to go. Observed: a session created at 16:08 could not be decrypted at
+11:00 the next morning, 19 hours later, and the refresh token had nothing to do with it.
+
+To actually reach the refresh token's expiry, ask for a key that outlives it:
+
+```bash
+$S --key-ttl 604800 login --instance test        # 7 days
+```
+
+**`--key-ttl` must come BEFORE the subcommand.** It is a top-level option, so
+`login --key-ttl 604800` fails with `unrecognized arguments` (exit 2). This is easy to get
+backwards and the error message does not hint at the cause.
+
+Losing the key is not data loss and not a corrupted file: the ciphertext at
+`~/.config/new-sushi/session.enc` survives and is simply useless without the key, which is
+the property it was built for. The answer is `login` again, not repair.
 
 ## Where the credentials live
 
