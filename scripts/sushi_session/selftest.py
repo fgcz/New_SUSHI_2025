@@ -325,6 +325,73 @@ check("a wrong passphrase does not decrypt", r.returncode != 0)
 check("...and says so without leaking whether the file is valid",
       "did not decrypt" in (r.stderr or ""), r.stderr[:200])
 
+# ---- THE REFRESH TOKEN'S LIFETIME -----------------------------------------------
+# This number was the last unmeasured one in the whole B-Fabric login, and the reason it
+# stayed unmeasured is worth pinning: the plan was "use it until it asks you to log in
+# again", which measures --key-ttl (12 h by default) and not B-Fabric at all. So the
+# lifetime has to be captured at the moment B-Fabric hands the token over. These cases
+# fix WHICH source is believed, in what order, and that "unknown" stays an honest answer
+# rather than becoming a guess.
+print("=== the refresh token's lifetime ===")
+now = int(time.time())
+
+at, src = ss.refresh_expiry({"refresh_expires_in": 604800, "refresh_token": "opaque"}, now)
+check("the token endpoint's own refresh_expires_in wins",
+      at == now + 604800 and src == "refresh_expires_in", f"{at - now} {src}")
+
+at, src = ss.refresh_expiry({"refresh_token_expires_in": "1209600", "refresh_token": "x"}, now)
+check("the Keycloak-style spelling is accepted too, as a string",
+      at == now + 1209600 and src == "refresh_token_expires_in", f"{at - now} {src}")
+
+# If B-Fabric states no lifetime, the token itself may still say so. Worth looking rather
+# than assuming opacity: an RS256 JWT is exactly what its access token turned out to be.
+at, src = ss.refresh_expiry({"refresh_token": fake_jwt(3 * 86400)}, now)
+check("a JWT refresh token has its own exp read when the endpoint is silent",
+      abs(at - (now + 3 * 86400)) <= 2 and "jwt exp" in src, f"{at - now} {src}")
+
+at, src = ss.refresh_expiry({"refresh_token": "wholly-opaque-string"}, now)
+check("an opaque token with no stated lifetime reports UNKNOWN, it does not invent one",
+      at == 0 and src.startswith("unknown"), f"{at} {src}")
+
+# A stated lifetime must beat a claim inside the token: the endpoint is the authority on
+# how long IT will honour the grant, whatever the token's own exp happens to say.
+at, src = ss.refresh_expiry({"refresh_expires_in": 60, "refresh_token": fake_jwt(99999)}, now)
+check("a stated lifetime outranks the token's own exp",
+      at == now + 60 and src == "refresh_expires_in", f"{at - now} {src}")
+
+check("days are rendered as days, not as 10080 minutes",
+      ss.human_left(7 * 86400) == "7d 0h 0m", ss.human_left(7 * 86400))
+check("a lapsed lifetime reads EXPIRED", ss.human_left(-5) == "EXPIRED")
+
+# status must show the LIFETIME and never the token. Both halves matter: the first is the
+# feature, the second is the property the whole encrypted-state design exists for.
+st = sample_state()
+st["refresh_expires_at"] = now + 5 * 86400
+st["refresh_expiry_source"] = "refresh_expires_in"
+ks.clear()
+key4 = ks.new_key(salt, 600)
+ss.save_state(st, ks, key4, salt, 600)
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    ss.cmd_status(Args())
+out = buf.getvalue()
+check("status reports how long the refresh token has left",
+      "5d" in out and "refresh_expires_in" in out, out)
+check("...and still prints no secret",
+      "BFABRIC-REFRESH-SECRET" not in out, out)
+
+# A session created before this existed has no recorded lifetime. It must not read as
+# "expired", which would send someone to re-approve a login that is still perfectly good.
+st2 = sample_state()
+st2.pop("refresh_expires_at", None)
+ss.save_state(st2, ks, key4, salt, 600)
+buf = io.StringIO()
+with contextlib.redirect_stdout(buf):
+    ss.cmd_status(Args())
+out = buf.getvalue()
+check("a session predating this measurement says UNKNOWN, not EXPIRED",
+      "UNKNOWN" in out and "EXPIRED" not in out, out)
+
 print(f"\n{passed} passed, {failed} failed")
 try:
     import shutil

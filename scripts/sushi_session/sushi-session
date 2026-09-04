@@ -281,6 +281,48 @@ def jwt_exp(token: str) -> int:
         return 0
 
 
+def refresh_expiry(tok: dict, now: int):
+    """When does the REFRESH token die, and how do we know?
+
+    This exists because the answer was unmeasurable. The plan of record was "keep using
+    it and see when it asks you to log in again", which cannot work: the local key has
+    its own TTL (--key-ttl, 12 h by default), so the first forced re-login measures the
+    KEY, not B-Fabric. Recording the number at the moment B-Fabric hands the token over
+    is the only way the question gets an answer without a week of waiting.
+
+    Three sources, in descending order of authority. The `source` is returned alongside
+    the timestamp and printed, because "7 days" derived from a claim in the token is a
+    different kind of fact from "7 days" the token endpoint stated outright.
+    """
+    for field in ("refresh_expires_in", "refresh_token_expires_in"):
+        if tok.get(field):
+            try:
+                return now + int(tok[field]), field
+            except (TypeError, ValueError):
+                pass
+
+    # Opaque or JWT? B-Fabric is not obliged to say, so look rather than assume.
+    exp = jwt_exp(tok.get("refresh_token") or "")
+    if exp:
+        return exp, "jwt exp in the refresh token"
+
+    return 0, "unknown — B-Fabric states no lifetime and the token is opaque"
+
+
+def human_left(seconds: int) -> str:
+    """A refresh token may live for days, and `10080m 0s` is not a readable answer."""
+    if seconds <= 0:
+        return "EXPIRED"
+    d, rem = divmod(seconds, 86400)
+    h, rem = divmod(rem, 3600)
+    m, s = divmod(rem, 60)
+    if d:
+        return f"{d}d {h}h {m}m"
+    if h:
+        return f"{h}h {m}m"
+    return f"{m}m {s}s"
+
+
 # --------------------------------------------------------------------------- flows
 
 
@@ -360,6 +402,9 @@ def cmd_login(args):
     tok = device_login(base, args.client_id, scope)
     session = exchange(args.sushi, tok["access_token"])
 
+    now = int(time.time())
+    refresh_at, refresh_src = refresh_expiry(tok, now)
+
     state = {
         "bfabric_base": base,
         "token_url": tok["token_url"],
@@ -367,8 +412,10 @@ def cmd_login(args):
         "scope": tok.get("scope", scope),
         "sushi": args.sushi.rstrip("/"),
         "bfabric_access_token": tok["access_token"],
-        "bfabric_access_expires_at": int(time.time()) + int(tok.get("expires_in") or 3600),
+        "bfabric_access_expires_at": now + int(tok.get("expires_in") or 3600),
         "refresh_token": None if args.no_refresh else tok.get("refresh_token"),
+        "refresh_expires_at": 0 if args.no_refresh else refresh_at,
+        "refresh_expiry_source": "not stored (--no-refresh)" if args.no_refresh else refresh_src,
         "jwt": session["access_token"],
         "login": session.get("user", {}).get("login"),
         "granted_scopes": session.get("granted_scopes", []),
@@ -417,6 +464,10 @@ def cmd_token(args):
         # B-Fabric may rotate the refresh token; keep whichever it last gave us.
         if fresh.get("refresh_token"):
             state["refresh_token"] = fresh["refresh_token"]
+            # A rotated token brings its own lifetime. Re-deriving here is what makes a
+            # long-lived session's remaining life honest instead of frozen at login.
+            state["refresh_expires_at"], state["refresh_expiry_source"] = \
+                refresh_expiry(fresh, now)
 
     session = exchange(state["sushi"], state["bfabric_access_token"])
     state["jwt"] = session["access_token"]
@@ -442,8 +493,7 @@ def cmd_status(args):
     now = int(time.time())
 
     def left(ts):
-        d = ts - now
-        return f"{d // 60}m {d % 60}s" if d > 0 else "EXPIRED"
+        return human_left(ts - now)
 
     print(f"login            : {state.get('login')}")
     print(f"backend          : {state.get('sushi')}")
@@ -451,7 +501,16 @@ def cmd_status(args):
     print(f"granted scopes   : {' '.join(state.get('granted_scopes', []))}")
     print(f"SUSHI JWT        : {left(jwt_exp(state.get('jwt', '')))}")
     print(f"B-Fabric token   : {left(state.get('bfabric_access_expires_at', 0))}")
-    print(f"refresh token    : {'stored' if state.get('refresh_token') else 'NOT stored'}")
+    if state.get("refresh_token"):
+        exp = state.get("refresh_expires_at", 0)
+        # The lifetime, not the token. This line is the whole point of recording it: it
+        # answers "how long until a human has to approve again" without waiting to find
+        # out the hard way. `unknown` is a real answer and is printed as one.
+        life = left(exp) if exp else "lifetime UNKNOWN"
+        print(f"refresh token    : stored, {life}")
+        print(f"  lifetime source: {state.get('refresh_expiry_source', 'not recorded (logged in before this was measured)')}")
+    else:
+        print("refresh token    : NOT stored")
     print(f"key protection   : {mode}"
           + ("  (kernel keyring; the file alone cannot be decrypted)" if mode == "keyring"
              else "  (passphrase; nothing on this machine can decrypt the file)"))
