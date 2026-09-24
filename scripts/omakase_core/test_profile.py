@@ -88,6 +88,16 @@ assert json.loads(ev.read_text())["env"] == "TEST"
 case("every event records its env")
 
 
+calls = []
+state = {"handled": {"1": {"seeded": True},
+                     "2": {"event": "/x/order_2.json"},
+                     "3": {"event": "/x/order_3.json", "ingest": {"rc": 3}}}}
+ran = W.ingest_pending(state, test, runner=lambda prof, path: (calls.append(path) or (3, "DECLINED: no recipe")))
+assert ran == 1 and calls == ["/x/order_2.json"] and state["handled"]["2"]["ingest"]["rc"] == 3
+assert W.ingest_pending(state, test, runner=lambda *a: (_ for _ in ()).throw(AssertionError)) == 0
+case("--ingest reconciles: only an event without an outcome is ingested, and only once")
+
+
 # --- the CLI
 def cli(*argv, env_extra=None):
     env = dict(os.environ, **(env_extra or {}))

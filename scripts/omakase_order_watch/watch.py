@@ -50,6 +50,8 @@ Usage:
     python watch.py --profile production           # loop at the default interval
     python watch.py --interval 1800                # every 30 minutes
     python watch.py --status                       # what has been seen so far
+    python watch.py --profile production --ingest  # watch, then propose (or decline) each
+                                                   # new order automatically
 
 Requires bfabricPy (present in gi_py3.12.8) and ~/.bfabricpy.yml.
 """
@@ -62,6 +64,7 @@ import random
 import signal
 import sys
 import time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -257,6 +260,47 @@ def tick(client, state, query, events_dir, max_new, dry_run, seed=False) -> int:
     return len(new)
 
 
+# --------------------------------------------------------------------- ingest
+
+INGEST_TIMEOUT = 900      # an order -> dataset lookup plus a dataset read; minutes at worst
+
+
+def run_ingest(prof: P.Profile, event_path: str) -> tuple[int, str]:
+    """`omakase ingest` on one event, as a separate process. (rc, the line that says why)."""
+    import subprocess
+    argv = [sys.executable, "-m", "omakase_core.omakase", "--profile", prof.name,
+            "ingest", "--event", event_path]
+    try:
+        r = subprocess.run(argv, cwd=str(Path(__file__).resolve().parent.parent),
+                           capture_output=True, text=True, timeout=INGEST_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return 124, f"ingest timed out after {INGEST_TIMEOUT}s"
+    text = (r.stdout + "\n" + r.stderr).strip().splitlines()
+    why = next((ln.strip() for ln in text if ln.startswith(("DECLINED", "FAILED", "candidate "))),
+               text[-1].strip() if text else "")
+    return r.returncode, why[:400]
+
+
+def ingest_pending(state: dict, prof: P.Profile, runner=run_ingest) -> int:
+    """Ingest every recorded event that has no ingest outcome yet. Returns how many ran.
+
+    Reconciliation again, not a queue: the handled-set says which orders have an event and
+    which of those have been ingested, so a watcher killed between writing an event and
+    ingesting it catches up on its next tick. A refusal (rc 3) is an outcome like any other
+    and is recorded; it is not retried, because the order and the catalog are what decide it.
+    """
+    ran = 0
+    for oid, entry in sorted(state["handled"].items()):
+        if not entry.get("event") or "ingest" in entry:
+            continue
+        rc, why = runner(prof, entry["event"])
+        entry["ingest"] = {"rc": rc, "at": now_iso(), "outcome": why}
+        outcome = {0: "PROPOSED/recorded", 3: "DECLINED"}.get(rc, f"FAILED rc={rc}")
+        log(f"  ingest order {oid}: {outcome} - {why}")
+        ran += 1
+    return ran
+
+
 # --------------------------------------------------------------------- cli
 
 
@@ -279,6 +323,9 @@ def main() -> int:
     ap.add_argument("--project", type=int, action="append", default=None,
                     help="restrict to a project id (repeatable)")
     ap.add_argument("--max-new", type=int, default=DEFAULT_MAX_NEW)
+    ap.add_argument("--ingest", action="store_true",
+                    help="after each tick, run `omakase ingest` (automatic recipe choice) on "
+                         "every event not yet ingested; proposals and declines are recorded")
     ap.add_argument("--state", type=Path, default=None,
                     help="default ~/.omakase/<profile>/order_watch_state.json")
     ap.add_argument("--events", type=Path, default=None,
@@ -309,6 +356,11 @@ def main() -> int:
         print(f"handled orders : {len(handled)}")
         seeded = sum(1 for v in handled.values() if v.get("seeded"))
         print(f"  of which seeded (never emitted an event): {seeded}")
+        events = [v for v in handled.values() if v.get("event")]
+        outcomes = Counter(v["ingest"]["rc"] for v in events if "ingest" in v)
+        print(f"  with an event: {len(events)}; ingested {sum(outcomes.values())} "
+              f"(proposed {outcomes.get(0, 0)}, declined {outcomes.get(3, 0)}, "
+              f"failed {sum(n for rc, n in outcomes.items() if rc not in (0, 3))})")
         return 0
 
     interval = max(args.interval, MIN_INTERVAL_SECONDS)
@@ -334,6 +386,8 @@ def main() -> int:
             tick(client, state, query, args.events, args.max_new, args.dry_run, seed=args.seed)
             if not args.dry_run:
                 save_state(args.state, state)
+                if args.ingest and not args.seed and ingest_pending(state, prof):
+                    save_state(args.state, state)
             backoff = interval
         except SystemExit:
             raise

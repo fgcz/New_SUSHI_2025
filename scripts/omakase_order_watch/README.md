@@ -135,3 +135,20 @@ separate team decision, already on the list of things to ask FGCZ.
 * Anything at all on the SUSHI side. No job is created, no database is touched.
 * Deciding whether a submitted job finished correctly. That is the second open
   question, still unanswered.
+
+## `--ingest`: from detection to a proposal (2026-09-24)
+
+With `--ingest`, every tick ends by running `omakase ingest` (automatic recipe choice) on
+each recorded event that has no ingest outcome yet — reconciliation again, so a watcher
+killed between the two steps catches up. The outcome (`rc` 0 proposed, 3 declined, other =
+failed, with the line that says why) is written into the handled entry and shown by
+`--status`. A decline is not retried: the order and the catalog decide it.
+
+Measured the same day, read-only, and the reason the production loop is NOT running yet:
+
+* since the last tick (2026-09-10) 12 orders left `processed` and 12 new ones arrived; 12
+  exceeds `--max-new 10`, so the watcher stops and asks, by design;
+* the fgcz-h-082 read token OMAKASE uses is project-scoped: resolving a new order's
+  dataset answered `GET /api/v1/projects/42326/datasets -> 403 Project not accessible`;
+* and the catalog's `match` wording accepts 0 of 1467 real orders
+  (`scripts/omakase_match_audit/README.md`), so every ingest would decline anyway.

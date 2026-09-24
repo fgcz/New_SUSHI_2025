@@ -41,7 +41,7 @@ if __package__ in (None, ""):  # allow `python omakase.py` as well as `-m`
 from . import evidence, gate, input_dataset, recipes, reference, store as S  # noqa: E402
 from . import constraints as K, match, notify, profile as P  # noqa: E402
 from .runner import ChainRunner             # noqa: E402
-from .sushi import SushiClient              # noqa: E402
+from .sushi import SushiClient, SushiError  # noqa: E402
 
 # Store, events and backend come from the profile; the history audit is shared by both.
 DEFAULT_HISTORY = P.HISTORY
@@ -622,6 +622,12 @@ def main() -> int:
         # to anyone watching. rc 3 so a caller can tell "declined" from "failed" (2).
         print(f"\nDECLINED: {exc}", file=sys.stderr)
         return 3
+    except SushiError as exc:
+        # The backend said no - a 403 for a project this token may not read, a 5xx. Not a
+        # refusal of the order (rc 3) and not a crash: rc 2 with the backend's own words, so
+        # the watcher records why instead of the last line of a traceback.
+        print(f"\nFAILED: the SUSHI backend refused: {exc}", file=sys.stderr)
+        return 2
     finally:
         st.close()
 
