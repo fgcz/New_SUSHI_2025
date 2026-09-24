@@ -107,6 +107,26 @@ CREATE TABLE IF NOT EXISTS submissions (
     UNIQUE(candidate_id, step_seq, attempt)
 );
 
+-- The recipe's constraints and `when` gates for one candidate (constraints.py). Added
+-- 2026-09-24; CREATE IF NOT EXISTS, so an older store gains it on its next open.
+CREATE TABLE IF NOT EXISTS checklist (
+    id           INTEGER PRIMARY KEY,
+    candidate_id INTEGER NOT NULL REFERENCES candidates(id),
+    idx          INTEGER NOT NULL,   -- position in `constraints`; 1000+N = step N's `when`
+    kind         TEXT    NOT NULL,   -- MACHINE | MANUAL | WHEN
+    severity     TEXT    NOT NULL,   -- refuse | hold
+    at_step_seq  INTEGER,            -- NULL = before the chain's first submission
+    assert_text  TEXT    NOT NULL,
+    reason       TEXT,
+    check_json   TEXT,
+    status       TEXT    NOT NULL,   -- PASS | FAIL | PENDING | CONFIRMED
+    detail       TEXT,
+    confirmed_by TEXT,
+    confirmed_at TEXT,
+    note         TEXT,
+    UNIQUE(candidate_id, idx)
+);
+
 CREATE INDEX IF NOT EXISTS idx_candidates_state ON candidates(state);
 CREATE INDEX IF NOT EXISTS idx_submissions_cand ON submissions(candidate_id, step_seq);
 """
@@ -324,3 +344,39 @@ class Store:
             return list(self.db.execute("SELECT * FROM verdicts ORDER BY id"))
         return list(self.db.execute(
             "SELECT * FROM verdicts WHERE candidate_id=? ORDER BY id", (candidate_id,)))
+
+    # --------------------------------------------------------------- checklist
+
+    def set_checklist(self, candidate_id: int, items) -> None:
+        """Replace the candidate's checklist (a new proposal or a revision re-assesses)."""
+        self.db.execute("DELETE FROM checklist WHERE candidate_id=?", (candidate_id,))
+        for i in items:
+            self.db.execute(
+                "INSERT INTO checklist (candidate_id, idx, kind, severity, at_step_seq, "
+                "assert_text, reason, check_json, status, detail) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (candidate_id, i["idx"], i["kind"], i["severity"], i["at_step_seq"],
+                 i["assert"], i.get("reason"),
+                 json.dumps(i["check"]) if i.get("check") is not None else None,
+                 i["status"], i.get("detail")))
+
+    def checklist(self, candidate_id: int) -> list[dict[str, Any]]:
+        rows = self.db.execute(
+            "SELECT * FROM checklist WHERE candidate_id=? ORDER BY idx", (candidate_id,))
+        return [{"idx": r["idx"], "kind": r["kind"], "severity": r["severity"],
+                 "at_step_seq": r["at_step_seq"], "assert": r["assert_text"],
+                 "reason": r["reason"],
+                 "check": json.loads(r["check_json"]) if r["check_json"] else None,
+                 "status": r["status"], "detail": r["detail"],
+                 "confirmed_by": r["confirmed_by"], "confirmed_at": r["confirmed_at"],
+                 "note": r["note"]} for r in rows]
+
+    def confirm_item(self, candidate_id: int, idx: int, actor: str,
+                     note: str | None = None) -> None:
+        """A named person takes responsibility for one open item. Recorded, never inferred."""
+        cur = self.db.execute(
+            "UPDATE checklist SET status=?, confirmed_by=?, confirmed_at=?, note=? "
+            "WHERE candidate_id=? AND idx=? AND status IN (?, ?) "
+            "AND NOT (kind='MACHINE' AND severity='refuse')",
+            ("CONFIRMED", actor, now_iso(), note, candidate_id, idx, "PENDING", "FAIL"))
+        if cur.rowcount != 1:
+            raise ValueError(f"candidate {candidate_id} has no open checklist item {idx}")

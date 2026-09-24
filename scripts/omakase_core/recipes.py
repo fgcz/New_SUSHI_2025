@@ -33,7 +33,8 @@ Deliberate limits, each a refusal rather than a guess:
   upstream steps it would be ambiguous whose output is the input.
 * A template must be the whole value (`refBuild: "{{ reference_for(species) }}"`), never
   spliced into a longer string.
-* `when` and `constraints` are parsed and validated here, and evaluated by ingest.
+* `when` and `constraints` are validated here and compiled into checklist items; ingest
+  evaluates them (constraints.py).
 * Selection (`select`) evaluates `match` in match.py; zero or several matches abstain.
 """
 from __future__ import annotations
@@ -45,7 +46,7 @@ from typing import Any
 
 import yaml
 
-from . import reference
+from . import constraints, reference
 
 FIXTURE_DIR = Path(__file__).parent / "recipes"
 DEFAULT_CATALOG = Path("/srv/sushi/masa_test_new_sushi_20260527/paul-scripts/Internal_Dev/omakase")
@@ -156,6 +157,8 @@ def load(recipe_id: str, version: int | None = None) -> dict[str, Any]:
         "match": raw["match"],
         "autostart": raw["autostart"],
         "constraints": raw.get("constraints") or [],
+        # the same rules, plus every step's `when`, as checklist items (constraints.py)
+        "items": constraints.compile_items(raw.get("constraints") or [], raw["steps"]),
         "qc_spec": raw.get("qc_spec"),
         "budget": raw.get("budget"),
         "steps": compile_steps(raw["steps"]),

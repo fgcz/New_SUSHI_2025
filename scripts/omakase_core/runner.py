@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 from typing import Any, Callable
 
-from . import store as S
+from . import constraints as K, store as S
 from .sushi import (JOB_COMPLETED, JOB_FAILED, JOB_TERMINAL, SushiError, is_transient,
                     submit_name)
 
@@ -81,13 +81,23 @@ class ChainRunner:
             sub = self.st.latest_submission(candidate_id, step["seq"])
             if sub is not None and sub["state"] not in (S.STEP_PENDING, S.STEP_RETRIED):
                 continue  # completed, failed, or still in flight
-            dep = step.get("depends_on_seq")
-            if dep is not None:
-                parent = self.st.latest_submission(candidate_id, int(dep))
-                if parent is None or parent["state"] != S.STEP_COMPLETED:
-                    continue
+            if not self._deps_done(candidate_id, step):
+                continue
+            if self._gates(candidate_id, step["seq"]):
+                continue  # a person has not confirmed what this step waits for
             ready.append(step)
         return ready
+
+    def _deps_done(self, candidate_id: int, step: dict) -> bool:
+        dep = step.get("depends_on_seq")
+        if dep is None:
+            return True
+        parent = self.st.latest_submission(candidate_id, int(dep))
+        return parent is not None and parent["state"] == S.STEP_COMPLETED
+
+    def _gates(self, candidate_id: int, seq: int | None) -> list[dict]:
+        """Open checklist items at this point (constraints.py). None = before the start."""
+        return K.open_items(self.st.checklist(candidate_id), seq)
 
     def _in_flight(self, candidate_id: int) -> list[tuple[dict, Any]]:
         """(step, submission) for every step whose jobs are with the cluster right now."""
@@ -260,6 +270,13 @@ class ChainRunner:
         if state in S.TERMINAL_CANDIDATE_STATES:
             return state
         if state == S.APPROVED:
+            # `approve` already refuses with items open; this is the second lock, for a
+            # store edited by other means.
+            gates = self._gates(candidate_id, None)
+            if gates:
+                self.log(f"  candidate {candidate_id} is APPROVED but {len(gates)} checklist "
+                         f"item(s) before the start are unconfirmed; not starting")
+                return state
             self.st.set_state(candidate_id, S.RUNNING, ACTOR, reason="approved chain starting")
             cand = self.st.candidate(candidate_id)
             state = S.RUNNING
@@ -292,6 +309,16 @@ class ChainRunner:
         # Nothing ready and nothing in flight means a step is FAILED with the chain still
         # marked RUNNING -- reachable only if a submission was closed outside a poll.
         if not self._in_flight(candidate_id) and not self._ready_steps(candidate_id):
+            waiting = [s for s in self._unfinished(candidate_id)
+                       if self._deps_done(candidate_id, s) and self._gates(candidate_id, s["seq"])]
+            if waiting:
+                # Not stuck: a person holds the key. Everything else ran; this waits.
+                for s in waiting:
+                    items = self._gates(candidate_id, s["seq"])
+                    self.log(f"  waiting: step {s['seq']} {s['app_name']} needs "
+                             f"{len(items)} checklist item(s) confirmed: "
+                             + ", ".join(str(i["idx"]) for i in items))
+                return self.st.candidate(candidate_id)["state"]
             stuck = [s["seq"] for s in self._unfinished(candidate_id)]
             self.st.set_state(candidate_id, S.CHAIN_HALTED, ACTOR,
                               reason=f"step(s) {stuck} can never run: nothing is in flight "

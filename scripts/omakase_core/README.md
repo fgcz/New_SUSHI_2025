@@ -107,9 +107,23 @@ an overlay. The draft spec for Paul is `docs/omakase-recipe-format-v1/PROPOSAL.m
 | `omakase_core/recipes/<id>_v<N>.yaml` | 5 engine fixtures; each matches no order and runs only when named | yes |
 | `$OMAKASE_CATALOG_DIR/recipes/` (default: the local clone `paul-scripts/Internal_Dev/omakase`) | the catalog — 12 recipes as of MR !1 — and its `references.yaml` | **no**: this repository is public and the catalog is Paul's, shared when he agrees |
 
-`python3 -m omakase_core.omakase recipes` lists both, invalid ones with their reasons.
-Recipes carrying `constraints` or a `when` are **declined at ingest** until those are
-evaluated (the next build step) — declined, not proposed as if they had been checked.
+`python3 -m omakase_core.omakase recipes` lists both, invalid ones with their reasons;
+`omakase match --event E` shows which recipe's `match` accepts an order and why the others
+do not. Selection proposes only on exactly ONE match (zero declines, several abstain).
+
+### Rules: `constraints` and `when` become a checklist (constraints.py)
+
+| item | how it is decided | if it fails / is open |
+|---|---|---|
+| MACHINE (`check:` expression) | at ingest, on the **effective** parameters — app defaults from `GET /api/v1/application_configs/:app`, overlaid by the recipe, stringified as submitted — for the first attempt AND the retry | `refuse`: the recipe is DECLINED for the order, no candidate is written; `hold`: open |
+| MANUAL (`check: manual` or none) | a named person, `omakase confirm --candidate C --item N --actor you` | open |
+| WHEN (a step's `when`) | not evaluated by the engine; a person confirms it holds, or revises the chain | open, gating that step |
+
+Open items `before_submit` make `approve` refuse; open items `before_step: X` let the runner
+submit everything else and wait at X — waiting, not halted. Confirmations record who and
+when; a revision re-assesses the rules and resets them. Measured live on 083: a
+`CyteTypeR: true` Flex recipe is DECLINED on `ScSeuratApp.CyteTypeR = 'true'`; with the
+default it proposes with 3 machine rules PASS and 4 manual rules open.
 
 ## The genome is derived, and the refusals are the feature
 

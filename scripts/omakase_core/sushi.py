@@ -138,6 +138,26 @@ class SushiClient:
         # The entries are `{"name": "BWA"}` -- base name only, no `App` suffix.
         return {a["name"] for a in d.get("applications", []) if a.get("name")}
 
+    def app_defaults(self, app_name: str) -> dict | None:
+        """`{param: default}` as the backend resolves them, or None if it does not know the app.
+
+        These are what a job actually receives for every key a recipe leaves out: the
+        backend applies all app defaults first and overlays the submitted parameters
+        (job_submission_service.rb:143-157). So a rule about a parameter has to be checked
+        against this merge, not against the recipe text — a data-egress switch reached
+        through an ordinary default is exactly what a recipe-only check would miss.
+        Measured 2026-09-24: CellRangerMulti declares includeIntrons=true, CellRangerVersion
+        defaults to Aligner/CellRanger/10.1.0 (the first option).
+        """
+        try:
+            d = self._call("GET", f"/api/v1/application_configs/{submit_name(app_name)}")
+        except SushiError as exc:
+            if "404" in str(exc):
+                return None
+            raise
+        fields = (d.get("application") or {}).get("form_fields") or []
+        return {f["name"]: f.get("default_value") for f in fields if f.get("name")}
+
     def dataset(self, dataset_id: int) -> dict:
         return self._call("GET", f"/api/v1/datasets/{dataset_id}")
 

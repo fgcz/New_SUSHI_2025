@@ -212,14 +212,21 @@ def cli(*argv):
 
 event = TMP / "event.json"
 event.write_text(json.dumps({"env": "TEST", "order": {"id": 35755, "project": {"id": 35611}}}))
-write(recipe(constraints=[{"assert": "ram is 30", "reason": "r"}]))
+# No template in these recipes, so ingest makes no backend call (--dataset given too).
+plain = [{"app": "FastqcApp", "params": {"ram": "15"}}, {"app": "FastqcApp", "when": "n_samples >= 2"}]
+write(recipe(steps=plain, constraints=[{"assert": "a person checked the sheet", "reason": "r"}]))
 rc, out = cli("ingest", "--event", str(event), "--dataset", "9", "--recipe", "demo_assay")
-assert rc == 3 and "does not evaluate yet" in out, (rc, out)
-case("ingest DECLINES a recipe with constraints instead of ignoring them (rc 3)")
-write(recipe(steps=[S[0], {**S[1], "when": "n_samples >= 2"}]))
-rc, out = cli("ingest", "--event", str(event), "--dataset", "9", "--recipe", "demo_assay")
-assert rc == 3 and "`when` on FeatureCountsApp" in out, (rc, out)
-case("ingest DECLINES a recipe with a `when` it cannot evaluate (rc 3)")
+assert rc == 0 and "PROPOSED" in out and "PENDING" in out and "runs only when" in out, (rc, out)
+case("a recipe with a manual rule and a `when` is PROPOSED with both on its checklist")
+cid = out.split("candidate ", 1)[1].split(":", 1)[0]
+rc, out = cli("approve", "--candidate", cid, "--actor", "tester")
+assert rc == 3 and "must confirm before" in out, (rc, out)
+case("approve is refused while a before-start item is open (rc 3)")
+rc, out = cli("confirm", "--candidate", cid, "--item", "0", "--actor", "tester")
+assert rc == 0 and "CONFIRMED" in out, (rc, out)
+rc, out = cli("approve", "--candidate", cid, "--actor", "tester")
+assert rc == 0 and "APPROVED" in out, (rc, out)
+case("after `confirm`, approve goes through; the step-2 gate stays open for the runner")
 write(recipe(version="broken"), name="demo_assay_v1.yaml")
 rc, out = cli("recipes", "--json")
 listed = {r["id"]: r for r in json.loads(out)["recipes"]}

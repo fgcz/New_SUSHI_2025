@@ -39,7 +39,7 @@ if __package__ in (None, ""):  # allow `python omakase.py` as well as `-m`
     __package__ = "omakase_core"
 
 from . import evidence, gate, input_dataset, recipes, reference, store as S  # noqa: E402
-from . import match, profile as P           # noqa: E402
+from . import constraints as K, match, profile as P  # noqa: E402
 from .runner import ChainRunner             # noqa: E402
 from .sushi import SushiClient              # noqa: E402
 
@@ -87,7 +87,15 @@ def cmd_ingest(args, st: S.Store) -> int:
     recipe = recipes.select(order, args.recipe, dataset)
     print(f"recipe:   {recipe['id']}@{recipe['version']} "
           + ("(named)" if args.recipe else "(the one recipe whose match accepts this order)"))
-    _refuse_unevaluated(recipe)
+    # Expand and check BEFORE a candidate exists, so a refused recipe leaves nothing behind.
+    steps, derived = _resolve_steps(recipe, args, dataset_id, dataset)
+    assessed = _assess(recipe, steps, args)
+    refused = K.refusals(assessed)
+    if refused:
+        raise recipes.RecipeError(
+            f"recipe {recipe['id']}@{recipe['version']} refuses this order - "
+            f"{len(refused)} rule(s) fail on the parameters that would be submitted:\n  "
+            + "\n  ".join(K.describe(i) for i in refused))
     # Deterministic, not random: the same order always lands in the same arm, so a rerun
     # cannot quietly move it. A control candidate is never proposed on, which is the only
     # way to later notice that OMAKASE has started influencing what people choose.
@@ -116,13 +124,16 @@ def cmd_ingest(args, st: S.Store) -> int:
         print(f"candidate {cid}: order {order_id} is in the CONTROL arm — no proposal made")
         return 0
 
-    steps, derived = _resolve_steps(recipe, args, dataset_id)
     st.set_steps(cid, steps)
+    st.set_checklist(cid, assessed)
+    waiting = K.open_items(assessed)
     ev = _evidence_for(st, cid, order, args.history)
     st.set_state(cid, S.PROPOSED, actor="omakase-core",
                  reason=f"recipe {recipe['id']}@{recipe['version']}, "
                         f"{len(steps)} steps; {evidence.describe(ev)}"
-                        + ("; " + "; ".join(derived) if derived else ""))
+                        + ("; " + "; ".join(derived) if derived else "")
+                        + (f"; {len(waiting)} checklist item(s) await a person"
+                           if waiting else ""))
     print(f"candidate {cid}: order {order_id}, dataset {dataset_id}, "
           f"recipe {recipe['id']}@{recipe['version']} -> PROPOSED")
     print(f"  input:    {found_by}")
@@ -133,21 +144,15 @@ def cmd_ingest(args, st: S.Store) -> int:
     return 0
 
 
-def _refuse_unevaluated(recipe: dict) -> None:
-    """Decline a recipe whose rules the engine does not evaluate yet, instead of ignoring them.
-
-    A `constraints` rule is a refusal the recipe author wrote down (two of the catalog's stop
-    data leaving the site), and a `when` gates a step. Proposing such a recipe while silently
-    skipping them would present a chain as checked when it is not.
-    """
-    gated = [s["app_name"] for s in recipe["steps"] if "when" in s]
-    if recipe.get("constraints") or gated:
-        raise recipes.RecipeError(
-            f"recipe {recipe['id']}@{recipe['version']} carries "
-            f"{len(recipe.get('constraints') or [])} constraint(s)"
-            + (f" and a `when` on {', '.join(gated)}" if gated else "")
-            + ", which this engine does not evaluate yet; it is declined rather than "
-              "proposed as if they had been checked")
+def _assess(recipe: dict, steps: list[dict], args) -> list[dict]:
+    """The recipe's checklist evaluated on these steps. Defaults are fetched only if needed."""
+    items = recipe.get("items") or []
+    defaults: dict[str, dict | None] = {}
+    if any(i["kind"] == K.MACHINE for i in items):
+        client = SushiClient(args.base_url, token(args.prof))
+        for app in sorted({st_["app_name"] for st_ in steps}):
+            defaults[app] = client.app_defaults(app)
+    return K.assess(items, steps, defaults)
 
 
 def _resolve_dataset(args, order: dict) -> tuple[int, str]:
@@ -163,7 +168,8 @@ def _resolve_dataset(args, order: dict) -> tuple[int, str]:
     return input_dataset.resolve(client, project, int(order["id"]))
 
 
-def _resolve_steps(recipe: dict, args, dataset_id: int) -> tuple[list[dict], list[str]]:
+def _resolve_steps(recipe: dict, args, dataset_id: int,
+                   dataset: dict | None = None) -> tuple[list[dict], list[str]]:
     """Expand the recipe's sentinels against the input dataset, before anyone approves.
 
     The dataset is only fetched when a sentinel is actually present, so the recipes that
@@ -173,10 +179,26 @@ def _resolve_steps(recipe: dict, args, dataset_id: int) -> tuple[list[dict], lis
     text = json.dumps(recipe["steps"])
     if recipes.FROM_SPECIES not in text and recipes.SAME_AS_PREVIOUS not in text:
         return recipe["steps"], []
-    dataset = None
-    if recipes.needs_dataset(recipe["steps"]):
+    if dataset is None and recipes.needs_dataset(recipe["steps"]):
         dataset = SushiClient(args.base_url, token(args.prof)).dataset(dataset_id)
     return recipes.resolve_parameters(recipe["steps"], dataset, recipe["id"])
+
+
+def _seqs(expr) -> set[int]:
+    if isinstance(expr, dict):
+        return ({expr["step"]} if "step" in expr else
+                set().union(*[_seqs(v) for v in expr.values()] or [set()]))
+    if isinstance(expr, list):
+        return set().union(*[_seqs(v) for v in expr] or [set()])
+    return set()
+
+
+def _print_checklist(items: list[dict]) -> None:
+    if not items:
+        return
+    print("  checklist:")
+    for i in items:
+        print("    " + K.describe(i))
 
 
 def _evidence_for(st: S.Store, cid: int, order: dict, history_path) -> dict | None:
@@ -211,6 +233,7 @@ def _print_candidate(st: S.Store, cid: int) -> None:
         state = f"{sub['state']} (attempt {sub['attempt']})" if sub else "not submitted"
         print(f"    {step['seq']}. {step['app_name']:<16} on {src:<20} "
               f"{json.dumps(step['parameters'], sort_keys=True)}  [{state}]")
+    _print_checklist(st.checklist(cid))
     subs = st.submissions(cid)
     if subs:
         print("  submissions:")
@@ -250,6 +273,7 @@ def _require_proposed(st: S.Store, cid: int):
 def cmd_approve(args, st: S.Store) -> int:
     """Accepted unchanged. The weakest of the three labels, and recorded as such."""
     _require_proposed(st, args.candidate)
+    _require_confirmed_before_start(st, args.candidate)
     proposed = st.steps(args.candidate)
     st.record_verdict(args.candidate, S.VERDICT_ACCEPTED, args.actor,
                       proposed_steps=proposed, final_steps=proposed, note=args.reason)
@@ -257,6 +281,33 @@ def cmd_approve(args, st: S.Store) -> int:
                  reason=args.reason or "accepted unchanged")
     print(f"candidate {args.candidate} APPROVED unchanged by {args.actor} "
           f"(verdict ACCEPTED recorded)")
+    return 0
+
+
+def _require_confirmed_before_start(st: S.Store, cid: int) -> None:
+    open_ = K.open_items(st.checklist(cid), None)
+    if open_:
+        raise recipes.RecipeError(
+            f"candidate {cid} has {len(open_)} checklist item(s) a person must confirm before "
+            f"the chain may start (omakase confirm --candidate {cid} --item N --actor you):\n  "
+            + "\n  ".join(K.describe(i) for i in open_))
+
+
+def cmd_confirm(args, st: S.Store) -> int:
+    """A named person confirms open checklist items. Each confirmation is recorded."""
+    items = st.checklist(args.candidate)
+    targets = ([i["idx"] for i in K.open_items(items)] if args.all else args.item)
+    if not targets:
+        print(f"candidate {args.candidate}: nothing open to confirm")
+        return 0
+    for idx in targets:
+        st.confirm_item(args.candidate, idx, args.actor, args.note)
+        st.record_transition(args.candidate, st.candidate(args.candidate)["state"],
+                             st.candidate(args.candidate)["state"], args.actor,
+                             reason=f"checklist item {idx} confirmed"
+                                    + (f": {args.note}" if args.note else ""))
+    print(f"candidate {args.candidate}: {len(targets)} item(s) confirmed by {args.actor}")
+    _print_checklist(st.checklist(args.candidate))
     return 0
 
 
@@ -288,7 +339,30 @@ def cmd_revise(args, st: S.Store) -> int:
                        .dataset(int(cand["input_dataset_id"]))
                        if recipes.needs_dataset(final) else None)
             final, _ = recipes.resolve_parameters(final, dataset, cand["recipe_id"])
+    # The recipe's rules hold for an edited chain exactly as for a proposed one. A rule is
+    # tied to a step by position, so an edit that changes which app sits at a position a
+    # rule names is refused rather than re-targeted by guesswork.
+    cand = st.candidate(args.candidate)
+    recipe = recipes.load(cand["recipe_id"], int(cand["recipe_version"])
+                          if str(cand["recipe_version"]).isdigit() else None)
+    was = {s_["seq"]: s_["app_name"] for s_ in recipe["steps"]}
+    now = {s_["seq"]: s_["app_name"] for s_ in final}
+    named = {i["at_step_seq"] for i in recipe["items"] if i["at_step_seq"]} | {
+        seq for i in recipe["items"] if i.get("check") for seq in _seqs(i["check"])}
+    moved = sorted(n for n in named if was.get(n) != now.get(n))
+    if moved:
+        raise recipes.RecipeError(
+            f"the revision changes step(s) {moved}, which the recipe's rules refer to; "
+            f"reject the proposal and name another recipe instead")
+    assessed = _assess(recipe, final, args)
+    refused = K.refusals(assessed)
+    if refused:
+        raise recipes.RecipeError(
+            "the revised chain breaks the recipe's rules:\n  "
+            + "\n  ".join(K.describe(i) for i in refused))
     st.set_steps(args.candidate, final)
+    st.set_checklist(args.candidate, assessed)   # re-assessed; earlier confirmations reset
+    _require_confirmed_before_start(st, args.candidate)
     st.record_verdict(args.candidate, S.VERDICT_EDITED, args.actor,
                       proposed_steps=proposed, final_steps=st.steps(args.candidate),
                       note=args.reason)
@@ -473,6 +547,15 @@ def main() -> int:
     p.add_argument("--actor", required=True)
     p.add_argument("--reason")
     p.set_defaults(fn=cmd_approve)
+
+    p = sub.add_parser("confirm", help="a named person confirms open checklist items")
+    p.add_argument("--candidate", type=int, required=True)
+    p.add_argument("--item", type=int, action="append", default=[],
+                   help="checklist index to confirm (repeatable)")
+    p.add_argument("--all", action="store_true", help="every open item")
+    p.add_argument("--actor", required=True)
+    p.add_argument("--note")
+    p.set_defaults(fn=cmd_confirm)
 
     p = sub.add_parser("revise", help="edit the chain, then approve (verdict EDITED)")
     p.add_argument("--candidate", type=int, required=True)
