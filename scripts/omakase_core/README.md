@@ -125,6 +125,18 @@ when; a revision re-assesses the rules and resets them. Measured live on 083: a
 `CyteTypeR: true` Flex recipe is DECLINED on `ScSeuratApp.CyteTypeR = 'true'`; with the
 default it proposes with 3 machine rules PASS and 4 manual rules open.
 
+## Notification (notify.py)
+
+A person is told when one is needed, or when the chain ends — `PROPOSED`, `WAITING` (an
+approved chain stopped before a step for a checklist item), `CHAIN_HALTED` (with the
+reason), `DONE` (with the output datasets). Each is sent at most once per candidate.
+
+Every notice is first written as an `.eml` to `outbox/` beside the store; that is the whole
+of it unless `OMAKASE_NOTIFY_TO` (comma-separated addresses) is set. Then it goes through
+`OMAKASE_SMTP` (default `localhost:25` — on fgcz-h-083 a loopback-only postfix relaying via
+`mail.fgcz.system`). A failed send leaves a `.failed` note and never changes the chain.
+`OMAKASE_NOTIFY_FROM` and `OMAKASE_PANEL_URL` are optional. Plain code; no model composes it.
+
 ## The genome is derived, and the refusals are the feature
 
 The meeting named two judgements the system must make on its own. The first —

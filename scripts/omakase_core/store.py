@@ -174,6 +174,16 @@ class Store:
         self.db.execute("PRAGMA foreign_keys = ON")
         self.db.execute("PRAGMA journal_mode = WAL")
         self.db.executescript(SCHEMA)
+        # Callables (event, candidate_id, **info), told AFTER a change is recorded. Empty by
+        # default: tests and read-only callers notify nobody. The CLI adds notify.Notifier.
+        self.listeners: list = []
+
+    def emit(self, event: str, candidate_id: int, **info: Any) -> None:
+        for listener in self.listeners:
+            try:
+                listener(event, candidate_id, **info)
+            except Exception:  # noqa: BLE001 - a listener must never undo a recorded change
+                pass
 
     def close(self) -> None:
         self.db.close()
@@ -229,6 +239,7 @@ class Store:
         self.db.execute("UPDATE candidates SET state=?, updated_at=? WHERE id=?",
                         (to_state, now_iso(), candidate_id))
         self.record_transition(candidate_id, from_state, to_state, actor, reason, payload)
+        self.emit("STATE", candidate_id, from_state=from_state, to_state=to_state, reason=reason)
 
     def record_transition(self, candidate_id: int, from_state: str | None,
                           to_state: str, actor: str, reason: str | None = None,

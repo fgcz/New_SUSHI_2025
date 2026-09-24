@@ -318,6 +318,7 @@ class ChainRunner:
                     self.log(f"  waiting: step {s['seq']} {s['app_name']} needs "
                              f"{len(items)} checklist item(s) confirmed: "
                              + ", ".join(str(i["idx"]) for i in items))
+                    self.st.emit("WAITING", candidate_id, seq=s["seq"])
                 return self.st.candidate(candidate_id)["state"]
             stuck = [s["seq"] for s in self._unfinished(candidate_id)]
             self.st.set_state(candidate_id, S.CHAIN_HALTED, ACTOR,

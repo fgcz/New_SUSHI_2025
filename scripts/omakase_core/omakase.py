@@ -39,7 +39,7 @@ if __package__ in (None, ""):  # allow `python omakase.py` as well as `-m`
     __package__ = "omakase_core"
 
 from . import evidence, gate, input_dataset, recipes, reference, store as S  # noqa: E402
-from . import constraints as K, match, profile as P  # noqa: E402
+from . import constraints as K, match, notify, profile as P  # noqa: E402
 from .runner import ChainRunner             # noqa: E402
 from .sushi import SushiClient              # noqa: E402
 
@@ -609,6 +609,9 @@ def main() -> int:
               f"backend ({args.prof.backend}); pass --profile instead", file=sys.stderr)
         return 2
     st = S.Store(args.store or args.prof.store_path)
+    # Tell a person when one is needed (PROPOSED, WAITING) or the chain ends (HALTED, DONE).
+    # Outbox only unless OMAKASE_NOTIFY_TO is set; see notify.py.
+    st.listeners.append(notify.Notifier(st, args.prof.name, log=lambda m: print(m, file=sys.stderr)))
     try:
         return args.fn(args, st)
     except (input_dataset.InputDatasetError, reference.ReferenceError,
