@@ -9,13 +9,16 @@ The first vertical slice of design v0.3 plus `docs/omakase-prototype-design-delt
 Nothing here uses a model. Per design decision D4 the trigger, the timer and every state
 transition are ordinary code.
 
-    python -m omakase_core.omakase ingest  --event ~/.omakase/events/order_40917.json \\
-                                           --dataset 9
+    python -m omakase_core.omakase ingest  --event ~/.omakase/test/events/order_35773.json
     python -m omakase_core.omakase show
     python -m omakase_core.omakase show    --candidate 1
     python -m omakase_core.omakase approve --candidate 1 --actor masaomi
     python -m omakase_core.omakase run     --candidate 1 --dry-run
     python -m omakase_core.omakase run     --candidate 1
+
+Every command works inside one profile (omakase_core/profile.py): `test` by default,
+B-Fabric TEST paired with the fgcz-h-083 backend, files under ~/.omakase/test/. An event
+from the other B-Fabric instance is refused at ingest, and `production` never submits.
 
 Approval is explicit and human, every time. The deadline-driven auto-approval of design
 v0.3 §10 is deliberately not in this slice.
@@ -36,13 +39,12 @@ if __package__ in (None, ""):  # allow `python omakase.py` as well as `-m`
     __package__ = "omakase_core"
 
 from . import evidence, gate, input_dataset, recipes, reference, store as S  # noqa: E402
+from . import profile as P                  # noqa: E402
 from .runner import ChainRunner             # noqa: E402
 from .sushi import SushiClient              # noqa: E402
 
-DEFAULT_STORE = Path.home() / ".omakase" / "omakase.sqlite3"
-DEFAULT_EVENTS = Path.home() / ".omakase" / "events"
-DEFAULT_HISTORY = Path.home() / ".omakase" / "audit" / "shapes_by_service_type.json"
-DEFAULT_BASE_URL = "http://fgcz-h-083.fgcz-net.unizh.ch:3010"
+# Store, events and backend come from the profile; the history audit is shared by both.
+DEFAULT_HISTORY = P.HISTORY
 MCP_JSON = Path("/srv/sushi/masa_test_new_sushi_20260527/.mcp.json")
 
 # Order fields carried into the candidate. The allow-list of design v0.3 §3: billing,
@@ -54,16 +56,17 @@ KEPT_ORDER_FIELDS = [
 ]
 
 
-def token() -> str:
-    """The backend bearer. Env first, then the MCP config, so no third copy exists."""
-    tok = os.environ.get("NEWSUSHI_TOKEN_083")
+def token(prof: P.Profile | None = None) -> str:
+    """The bearer for the profile's backend. Env first, then the MCP config, so no third
+    copy exists. Called without a profile it means the default one."""
+    name = (prof or P.get()).token_env
+    tok = os.environ.get(name)
     if tok:
         return tok
     try:
-        return json.load(MCP_JSON.open())["mcpServers"]["sushi-chain"]["env"]["NEWSUSHI_TOKEN_083"]
+        return json.load(MCP_JSON.open())["mcpServers"]["sushi-chain"]["env"][name]
     except Exception as exc:  # noqa: BLE001
-        raise SystemExit(
-            f"no backend token: set NEWSUSHI_TOKEN_083 or make {MCP_JSON} readable ({exc})")
+        raise SystemExit(f"no backend token: set {name} or make {MCP_JSON} readable ({exc})")
 
 
 # ------------------------------------------------------------------------ commands
@@ -71,6 +74,9 @@ def token() -> str:
 
 def cmd_ingest(args, st: S.Store) -> int:
     event = json.load(Path(args.event).open(encoding="utf-8"))
+    # Before anything else: an order id only means something inside its own B-Fabric
+    # instance, and this profile's backend holds datasets from exactly one of them.
+    P.check_env(event.get("env"), args.prof, f"event {args.event}")
     order = event.get("order") or {}
     order_id = int(order["id"])
     dataset_id, found_by = _resolve_dataset(args, order)
@@ -129,7 +135,7 @@ def _resolve_dataset(args, order: dict) -> tuple[int, str]:
     """
     if args.dataset:
         return int(args.dataset), f"named on the command line (--dataset {args.dataset})"
-    client = SushiClient(args.base_url, token())
+    client = SushiClient(args.base_url, token(args.prof))
     project = (order.get("project") or {}).get("id")
     return input_dataset.resolve(client, project, int(order["id"]))
 
@@ -144,7 +150,7 @@ def _resolve_steps(recipe: dict, args, dataset_id: int) -> tuple[list[dict], lis
     text = json.dumps(recipe["steps"])
     if recipes.FROM_SPECIES not in text:
         return recipe["steps"], []
-    client = SushiClient(args.base_url, token())
+    client = SushiClient(args.base_url, token(args.prof))
     return recipes.resolve_parameters(recipe["steps"], client.dataset(dataset_id))
 
 
@@ -292,7 +298,13 @@ def cmd_labels(args, st: S.Store) -> int:
 
 
 def cmd_run(args, st: S.Store) -> int:
-    client = SushiClient(args.base_url, token(), dry_run=args.dry_run)
+    if not args.prof.may_submit:
+        # Phase 0 reads production and writes nothing anywhere. A dry run is refused too:
+        # it still walks the state machine, and a RUNNING candidate there would be a lie.
+        print(f"\nDECLINED: profile {args.prof.name!r} never submits "
+              f"(B-Fabric {args.prof.bfabric_env} is read-only in phase 0)", file=sys.stderr)
+        return 3
+    client = SushiClient(args.base_url, token(args.prof), dry_run=args.dry_run)
     runner = ChainRunner(st, client, max_retries=args.max_retries)
     cid = args.candidate
     while True:
@@ -324,7 +336,12 @@ def cmd_gate(args, st: S.Store) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--store", type=Path, default=DEFAULT_STORE)
+    ap.add_argument("--profile", choices=sorted(P.PROFILES), default=None,
+                    help=f"B-Fabric instance + backend pair (default $OMAKASE_PROFILE, else "
+                         f"{P.DEFAULT}); decides the store, the backend and the token")
+    ap.add_argument("--store", type=Path, default=None,
+                    help="default ~/.omakase/<profile>/omakase.sqlite3. An explicit path is "
+                         "for scratch runs; it is not checked against the profile")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("ingest", help="turn an order event into a proposed candidate")
@@ -338,9 +355,9 @@ def main() -> int:
                    help="the history audit TSV, for counted evidence")
     p.add_argument("--control-every", type=int, default=0,
                    help="put every Nth order id in the control arm (0 = off)")
-    p.add_argument("--base-url", default=DEFAULT_BASE_URL,
-                   help="only contacted when a recipe derives a value from the dataset, "
-                        "such as refBuild from Species")
+    p.add_argument("--base-url", default=None,
+                   help="the profile's backend; any other value is refused. Only contacted "
+                        "to find the dataset or derive a value from it, such as refBuild")
     p.set_defaults(fn=cmd_ingest)
 
     p = sub.add_parser("show")
@@ -378,7 +395,7 @@ def main() -> int:
 
     p = sub.add_parser("run", help="drive the chain, one step at a time")
     p.add_argument("--candidate", type=int, required=True)
-    p.add_argument("--base-url", default=DEFAULT_BASE_URL)
+    p.add_argument("--base-url", default=None, help="the profile's backend; others refused")
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--once", action="store_true", help="one tick, then exit")
     p.add_argument("--poll", type=int, default=60)
@@ -389,11 +406,18 @@ def main() -> int:
     p.set_defaults(fn=cmd_recipes)
 
     args = ap.parse_args()
-    st = S.Store(args.store)
+    args.prof = P.get(args.profile)
+    if getattr(args, "base_url", None) is None:
+        args.base_url = args.prof.backend
+    elif args.base_url.rstrip("/") != args.prof.backend:
+        print(f"refused: --base-url {args.base_url} is not profile {args.prof.name!r}'s "
+              f"backend ({args.prof.backend}); pass --profile instead", file=sys.stderr)
+        return 2
+    st = S.Store(args.store or args.prof.store_path)
     try:
         return args.fn(args, st)
     except (input_dataset.InputDatasetError, reference.ReferenceError,
-            recipes.RecipeError) as exc:
+            recipes.RecipeError, P.EnvMismatch) as exc:
         # These are refusals, not crashes. An order whose data is not registered yet, a
         # dataset with no Species, a recipe that matches nothing -- all of them are the
         # system declining to proceed on purpose, and a traceback would read as a defect

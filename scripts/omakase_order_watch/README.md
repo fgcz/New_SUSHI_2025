@@ -76,7 +76,7 @@ a change in the status vocabulary.
 
 ## Output
 
-One JSON file per detected order, mode 0600, under `~/.omakase/events/`:
+One JSON file per detected order, mode 0600, under `~/.omakase/<profile>/events/` — `test` (B-Fabric TEST, the default) or `production` (B-Fabric PRODUCTION); see `omakase_core/profile.py`. Since 2026-09-24 every event and the state file carry `"env"`, and a state file from the other instance, or one without `env`, is refused:
 
 ```json
 {

@@ -35,13 +35,21 @@ watcher backs off instead of retrying immediately.
 
 Read-only by construction: `client.read` is the only B-Fabric call in this file.
 
+Profiles (2026-09-24)
+--------------------
+B-Fabric TEST and PRODUCTION are separate instances with separate order-id spaces, so the
+watcher works for exactly one of them at a time: `--profile test` (the default, B-Fabric
+TEST, paired with the fgcz-h-083 backend) or `--profile production` (B-Fabric PRODUCTION,
+paired with fgcz-h-082). Each keeps its state and events under ~/.omakase/<profile>/, and
+both files record `env`; a state file from the other instance, or one that does not say, is
+refused. See omakase_core/profile.py.
+
 Usage:
-    python watch.py --seed                 # adopt today's backlog, emit nothing
-    python watch.py --once                 # one tick, then exit
-    python watch.py                        # loop at the default interval
-    python watch.py --interval 1800        # every 30 minutes
-    python watch.py --env TEST --once      # smoke test
-    python watch.py --status               # what has been seen so far
+    python watch.py --once                         # one tick on B-Fabric TEST, then exit
+    python watch.py --profile production --seed    # adopt production's backlog, emit nothing
+    python watch.py --profile production           # loop at the default interval
+    python watch.py --interval 1800                # every 30 minutes
+    python watch.py --status                       # what has been seen so far
 
 Requires bfabricPy (present in gi_py3.12.8) and ~/.bfabricpy.yml.
 """
@@ -59,6 +67,10 @@ from pathlib import Path
 
 from bfabric import Bfabric
 
+if __package__ in (None, ""):  # `python watch.py` as well as `-m omakase_order_watch.watch`
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from omakase_core import profile as P  # noqa: E402
+
 TRIGGER_STATUS = "processed"
 
 # Below this the query stops being a considerate use of a shared server. The
@@ -73,9 +85,6 @@ DEFAULT_INTERVAL_SECONDS = 3600
 # It means the status vocabulary changed, the state file was lost, or --seed was
 # never run -- and in every one of those cases firing a burst of events is wrong.
 DEFAULT_MAX_NEW = 10
-
-DEFAULT_STATE = Path.home() / ".omakase" / "order_watch_state.json"
-DEFAULT_EVENTS = Path.home() / ".omakase" / "events"
 
 # Order fields carried into an event. Enough for the pipeline-choice stage to do
 # its work, and no free-text customer fields: order records are FGCZ `internal`.
@@ -117,11 +126,16 @@ def log(msg: str) -> None:
 # --------------------------------------------------------------------- state
 
 
-def load_state(path: Path) -> dict:
+def load_state(path: Path, prof: P.Profile) -> dict:
+    """The handled-set for one B-Fabric instance. Raises P.EnvMismatch for any other."""
     if not path.exists():
-        return {"version": 1, "seeded_at": None, "handled": {}, "ticks": 0}
+        return {"version": 1, "env": prof.bfabric_env, "seeded_at": None,
+                "handled": {}, "ticks": 0}
     with path.open(encoding="utf-8") as fh:
         state = json.load(fh)
+    # Reconciling one instance's processed-set against the other's handled-set would call
+    # every order new, or -- worse -- call a new one already handled because an id collides.
+    P.check_env(state.get("env"), prof, f"state file {path}")
     state.setdefault("handled", {})
     state.setdefault("ticks", 0)
     return state
@@ -164,11 +178,14 @@ def fetch_orders(client: Bfabric, ids: list[int]) -> list[dict]:
 # --------------------------------------------------------------------- events
 
 
-def write_event(events_dir: Path, order: dict) -> Path:
+def write_event(events_dir: Path, order: dict, env: str) -> Path:
     events_dir.mkdir(parents=True, exist_ok=True)
     oid = int(order["id"])
     payload = {
         "schema": "omakase.order_processed.v1",
+        # Which B-Fabric instance the order id belongs to. omakase_core refuses to ingest
+        # an event without it, or from the instance its profile does not pair with.
+        "env": env,
         "detected_at": now_iso(),
         "trigger_status": TRIGGER_STATUS,
         "order": {k: order.get(k) for k in EVENT_FIELDS},
@@ -229,7 +246,7 @@ def tick(client, state, query, events_dir, max_new, dry_run, seed=False) -> int:
             log(f"  DRY RUN would emit event for order {oid} "
                 f"(statusmodified={order.get('statusmodified')})")
             continue
-        path = write_event(events_dir, order)
+        path = write_event(events_dir, order, state["env"])
         state["handled"][str(oid)] = {
             "first_seen": now_iso(),
             "statusmodified": order.get("statusmodified"),
@@ -245,7 +262,12 @@ def tick(client, state, query, events_dir, max_new, dry_run, seed=False) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--env", default="PRODUCTION", choices=["PRODUCTION", "TEST"])
+    ap.add_argument("--profile", choices=sorted(P.PROFILES), default=None,
+                    help=f"which B-Fabric instance + backend pair (default $OMAKASE_PROFILE, "
+                         f"else {P.DEFAULT})")
+    ap.add_argument("--env", default=None, choices=["PRODUCTION", "TEST"],
+                    help="kept for old command lines; must agree with the profile or the "
+                         "run is refused")
     ap.add_argument("--interval", type=int, default=DEFAULT_INTERVAL_SECONDS,
                     help=f"seconds between ticks (floor {MIN_INTERVAL_SECONDS})")
     ap.add_argument("--once", action="store_true", help="one tick, then exit")
@@ -257,14 +279,28 @@ def main() -> int:
     ap.add_argument("--project", type=int, action="append", default=None,
                     help="restrict to a project id (repeatable)")
     ap.add_argument("--max-new", type=int, default=DEFAULT_MAX_NEW)
-    ap.add_argument("--state", type=Path, default=DEFAULT_STATE)
-    ap.add_argument("--events", type=Path, default=DEFAULT_EVENTS)
+    ap.add_argument("--state", type=Path, default=None,
+                    help="default ~/.omakase/<profile>/order_watch_state.json")
+    ap.add_argument("--events", type=Path, default=None,
+                    help="default ~/.omakase/<profile>/events")
     args = ap.parse_args()
 
-    state = load_state(args.state)
+    prof = P.get(args.profile)
+    if args.env and args.env != prof.bfabric_env:
+        print(f"refused: --env {args.env} contradicts profile {prof.name!r} "
+              f"(B-Fabric {prof.bfabric_env}); pass --profile instead", file=sys.stderr)
+        return 2
+    args.state = args.state or prof.state_path
+    args.events = args.events or prof.events_dir
+    try:
+        state = load_state(args.state, prof)
+    except P.EnvMismatch as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
 
     if args.status:
         handled = state.get("handled", {})
+        print(f"profile        : {prof.name} (B-Fabric {prof.bfabric_env}, backend {prof.backend})")
         print(f"state file     : {args.state}")
         print(f"seeded at      : {state.get('seeded_at')}")
         print(f"ticks so far   : {state.get('ticks')}")
@@ -279,9 +315,10 @@ def main() -> int:
     if interval != args.interval:
         log(f"interval raised to the {MIN_INTERVAL_SECONDS}s floor")
 
-    client = Bfabric.connect(config_file_env=args.env)
+    client = Bfabric.connect(config_file_env=prof.bfabric_env)
     query = build_query(args.project)
-    log(f"env={args.env} query={query} state={args.state} events={args.events}")
+    log(f"profile={prof.name} env={prof.bfabric_env} query={query} "
+        f"state={args.state} events={args.events}")
 
     if state.get("seeded_at") is None and not args.seed and not args.dry_run:
         log("WARNING: this state has never been seeded. The first tick will treat every "

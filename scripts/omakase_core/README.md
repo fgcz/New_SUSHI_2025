@@ -30,7 +30,7 @@ nothing here relies on SLURM to stop a chain.
 ```bash
 cd scripts
 python3 -m omakase_core.omakase recipes
-python3 -m omakase_core.omakase ingest  --event ~/.omakase/events/order_40917.json --dataset 9
+python3 -m omakase_core.omakase ingest  --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json
 python3 -m omakase_core.omakase show    --candidate 1
 python3 -m omakase_core.omakase approve --candidate 1 --actor <you>
 python3 -m omakase_core.omakase run     --candidate 1 --dry-run
@@ -73,7 +73,7 @@ needs to scale.
 usually has no registered dataset yet. That prints `DECLINED: …` and exits **3**, so a
 caller can tell "declined" from "failed" (2).
 
-Store defaults to `~/.omakase/omakase.sqlite3`. Tables are v0.3 §12 — `candidates`,
+Store defaults to `~/.omakase/<profile>/omakase.sqlite3` — `--profile test` (the default: B-Fabric TEST + the fgcz-h-083 backend) or `--profile production` (B-Fabric PRODUCTION + fgcz-h-082, read only: `run` is DECLINED). `ingest` DECLINES an event whose `env` is missing or belongs to the other instance. See `profile.py`. Tables are v0.3 §12 — `candidates`,
 `order_params`, `proposal_steps`, `transitions`, `submissions` — with two additions the
 stepped runner needs: `submissions.state/attempt/finished_at`, and
 `proposal_steps.retry_params_json`.
