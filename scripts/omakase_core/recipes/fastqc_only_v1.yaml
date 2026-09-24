@@ -1,33 +1,39 @@
-# The smallest recipe that can be run live today, and the default while the real catalog
-# does not exist. One step, no reference genome, a few minutes on the cluster.
+# The smallest recipe that can be run live today. One step, no reference genome, a few
+# minutes on the cluster.
 #
 # It is here so the whole path -- detection, candidate, proposal, human approval, chain
 # runner, completion -- can be exercised against real data on fgcz-h-083 without waiting
 # for a bioinformatician to author anything. It proposes nothing scientific.
+#
+# Format v1 since 2026-09-24. Until then its match said `always: true`, which made it the
+# default for any order. Format v1 has no catch-all, and a recipe that matches everything
+# would be the wrong default for a real catalog, so it is now named-only like every fixture.
 
+schema_version: 1
 id: fastqc_only
-version: v1
+version: 1
+author: Masaomi Hatakeyama (engine fixture - not a bioinformatician-signed recipe)
 description: >
   Quality-control the raw reads. A single step, used to prove the machinery end to end
   against real data; it is not a recommendation for any real order.
 
-# The real catalog matches on order metadata (design v0.3 §5). This one matches
-# everything, because choosing a recipe is not what the first slice tests.
+# Every list empty: it matches NO order and runs only when named.
 match:
-  always: true
+  service_type: []
+  sequencing_application: []
 
 steps:
-  - seq: 1
-    app_name: FastqcApp
-    depends_on_seq: null
-    parameters:
+  - app: FastqcApp
+    params:
       cores: 1
       ram: 15
       scratch: 10
     # FastqcApp declares ram as a selector offering [15, 30, 62], so the larger attempt is
     # the next rung rather than double. The recipe states it because the app author knows
     # the ladder and the runner does not.
-    retry_parameters:
-      cores: 1
+    retry_params:
       ram: 30
       scratch: 50
+
+autostart: false
+autostart_blocked_by: Engine fixture. No bioinformatician has signed it off.

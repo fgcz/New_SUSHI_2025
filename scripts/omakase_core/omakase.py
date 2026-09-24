@@ -82,6 +82,7 @@ def cmd_ingest(args, st: S.Store) -> int:
     dataset_id, found_by = _resolve_dataset(args, order)
 
     recipe = recipes.select(order, args.recipe)
+    _refuse_unevaluated(recipe)
     # Deterministic, not random: the same order always lands in the same arm, so a rerun
     # cannot quietly move it. A control candidate is never proposed on, which is the only
     # way to later notice that OMAKASE has started influencing what people choose.
@@ -127,6 +128,23 @@ def cmd_ingest(args, st: S.Store) -> int:
     return 0
 
 
+def _refuse_unevaluated(recipe: dict) -> None:
+    """Decline a recipe whose rules the engine does not evaluate yet, instead of ignoring them.
+
+    A `constraints` rule is a refusal the recipe author wrote down (two of the catalog's stop
+    data leaving the site), and a `when` gates a step. Proposing such a recipe while silently
+    skipping them would present a chain as checked when it is not.
+    """
+    gated = [s["app_name"] for s in recipe["steps"] if "when" in s]
+    if recipe.get("constraints") or gated:
+        raise recipes.RecipeError(
+            f"recipe {recipe['id']}@{recipe['version']} carries "
+            f"{len(recipe.get('constraints') or [])} constraint(s)"
+            + (f" and a `when` on {', '.join(gated)}" if gated else "")
+            + ", which this engine does not evaluate yet; it is declined rather than "
+              "proposed as if they had been checked")
+
+
 def _resolve_dataset(args, order: dict) -> tuple[int, str]:
     """The SUSHI dataset this order's data lives in. Explicit wins; otherwise search.
 
@@ -148,10 +166,12 @@ def _resolve_steps(recipe: dict, args, dataset_id: int) -> tuple[list[dict], lis
     that cannot reach the backend.
     """
     text = json.dumps(recipe["steps"])
-    if recipes.FROM_SPECIES not in text:
+    if recipes.FROM_SPECIES not in text and recipes.SAME_AS_PREVIOUS not in text:
         return recipe["steps"], []
-    client = SushiClient(args.base_url, token(args.prof))
-    return recipes.resolve_parameters(recipe["steps"], client.dataset(dataset_id))
+    dataset = None
+    if recipes.needs_dataset(recipe["steps"]):
+        dataset = SushiClient(args.base_url, token(args.prof)).dataset(dataset_id)
+    return recipes.resolve_parameters(recipe["steps"], dataset, recipe["id"])
 
 
 def _evidence_for(st: S.Store, cid: int, order: dict, history_path) -> dict | None:
@@ -249,6 +269,20 @@ def cmd_revise(args, st: S.Store) -> int:
     final = final["steps"] if isinstance(final, dict) and "steps" in final else final
     if not isinstance(final, list) or not final:
         raise SystemExit(f"{args.steps} must hold a list of steps, or a mapping with 'steps'")
+    if all(isinstance(s, dict) and "app" in s for s in final):
+        # Format v1 steps, as a recipe author writes them. Compiled and expanded exactly as a
+        # recipe would be, so an edited chain is held to the same rules as a proposed one.
+        errors = recipes._validate_steps(final)
+        if errors:
+            raise SystemExit("the revised steps are not valid format v1:\n  - "
+                             + "\n  - ".join(errors))
+        cand = st.candidate(args.candidate)
+        final = recipes.compile_steps(final)
+        if recipes.needs_dataset(final) or recipes.SAME_AS_PREVIOUS in json.dumps(final):
+            dataset = (SushiClient(args.base_url, token(args.prof))
+                       .dataset(int(cand["input_dataset_id"]))
+                       if recipes.needs_dataset(final) else None)
+            final, _ = recipes.resolve_parameters(final, dataset, cand["recipe_id"])
     st.set_steps(args.candidate, final)
     st.record_verdict(args.candidate, S.VERDICT_EDITED, args.actor,
                       proposed_steps=proposed, final_steps=st.steps(args.candidate),
@@ -319,11 +353,55 @@ def cmd_run(args, st: S.Store) -> int:
         time.sleep(args.poll)
 
 
-def cmd_recipes(args, st: S.Store) -> int:
+def recipe_catalog() -> list[dict]:
+    """Every recipe as the panel and a person should see it, including the ones that fail.
+
+    A recipe that does not validate is listed with its errors rather than dropped: a
+    catalog that silently shrinks is the failure that would go unnoticed longest.
+    """
+    out = [{"id": problem.split(":", 1)[0], "error": problem}
+           for problem in recipes._index()[1] if "filename must be" in problem]
     for rid in recipes.available():
-        r = recipes.load(rid)
-        print(f"{r['id']}@{r['version']}  {len(r['steps'])} steps: "
-              + " -> ".join(s["app_name"] for s in r["steps"]))
+        try:
+            r = recipes.load(rid)
+        except recipes.RecipeError as exc:
+            out.append({"id": rid, "error": str(exc)})
+            continue
+        steps = r["steps"]
+        out.append({
+            "id": r["id"], "version": str(r["version"]), "source": r["source"],
+            "author": r["author"], "description": r.get("description"), "match": r["match"],
+            # Automatic selection by `match` is the next build step; until then every
+            # recipe runs only when a person names it.
+            "auto_selectable": False,
+            "step_count": len(steps),
+            "chain": [{"seq": s["seq"], "app_name": s["app_name"],
+                       "depends_on_seq": s["depends_on_seq"]} for s in steps],
+            "derives_from_species": recipes.FROM_SPECIES in json.dumps(steps),
+            "constraints": len(r["constraints"]),
+            "gated_steps": [s["app_name"] for s in steps if "when" in s],
+        })
+    return out
+
+
+def cmd_recipes(args, st: S.Store) -> int:
+    catalog = recipe_catalog()
+    if args.json:
+        print(json.dumps({"recipes": catalog, "catalog_dir": str(recipes.catalog_dir() or ""),
+                          "fixture_dir": str(recipes.FIXTURE_DIR)}, indent=2))
+        return 0
+    print(f"fixtures: {recipes.FIXTURE_DIR}\ncatalog:  {recipes.catalog_dir() or '(none)'}\n")
+    for r in catalog:
+        if "error" in r:
+            print(f"INVALID {r['id']}: {r['error']}\n")
+            continue
+        seqs = {c["seq"]: c for c in r["chain"]}
+        parts = [f"{c['app_name']}" + (f"<-{seqs[c['depends_on_seq']]['app_name']}"
+                                       if c["depends_on_seq"] else "") for c in r["chain"]]
+        extra = [f"{r['constraints']} constraints"] if r["constraints"] else []
+        extra += [f"when on {', '.join(r['gated_steps'])}"] if r["gated_steps"] else []
+        print(f"{r['source']:<8} {r['id']}@{r['version']}  {r['step_count']} steps: "
+              + ", ".join(parts) + (f"  [{'; '.join(extra)}]" if extra else ""))
     return 0
 
 
@@ -402,7 +480,8 @@ def main() -> int:
     p.add_argument("--max-retries", type=int, default=1)
     p.set_defaults(fn=cmd_run)
 
-    p = sub.add_parser("recipes")
+    p = sub.add_parser("recipes", help="list the fixtures and the catalog, invalid ones included")
+    p.add_argument("--json", action="store_true", help="machine-readable, for the panel")
     p.set_defaults(fn=cmd_recipes)
 
     args = ap.parse_args()

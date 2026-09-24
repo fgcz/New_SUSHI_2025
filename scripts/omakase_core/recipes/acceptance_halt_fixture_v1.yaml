@@ -27,36 +27,40 @@
 #   python3 -m omakase_core.omakase ingest --recipe acceptance_halt_fixture --dataset 9 ...
 #
 # Expected end state: candidate CHAIN_HALTED, step 2 with no submission row at all.
+#
+# Format v1 since 2026-09-24 (was `version: v1` in the pre-v1 engine format; proven live as
+# candidate 2 on 2026-09-11, record in ~/.omakase/archive/20260911_sectionF_chain_and_halt).
 
+schema_version: 1
 id: acceptance_halt_fixture
-version: v1
+version: 1
+author: Masaomi Hatakeyama (engine fixture - fails on purpose, never a real recipe)
 description: >
   FIXTURE, NOT A RECIPE. Step 1 is aimed at a genome that does not exist so that it fails
   in SLURM, proving live that step 2 is never submitted. Never select this for real data.
 
-# No `always`, so `select()` can never reach it. It runs only when named.
+# Every list empty: it matches NO order, so automatic selection can never reach it.
 match:
-  never: true
+  service_type: []
+  sequencing_application: []
 
 steps:
-  - seq: 1
-    app_name: STARApp
-    depends_on_seq: null
-    parameters:
+  - app: STARApp
+    params:
       cores: 8
       ram: 30
       scratch: 100
       refBuild: Mus_musculus/GENCODE/GRCm39/Annotation/Release_THIS_BUILD_DOES_NOT_EXIST
       paired: true
       strandMode: both
-    # No retry_parameters on purpose. A FAILED SLURM state is not transient, so the runner
-    # must halt on the first failure; declaring a retry here would hide it if that rule
-    # ever broke.
+    # No retry_params on purpose. A FAILED SLURM state is not transient, so the runner must
+    # halt on the first failure; declaring a retry here would hide it if that rule broke.
 
-  - seq: 2
-    app_name: FeatureCountsApp
-    depends_on_seq: 1
-    parameters:
+  - app: FeatureCountsApp            # list order: waits for STAR, reads STAR's output
+    params:
       cores: 8
       ram: 20
       scratch: 10
+
+autostart: false
+autostart_blocked_by: Engine fixture that fails on purpose. Never run it on real data.

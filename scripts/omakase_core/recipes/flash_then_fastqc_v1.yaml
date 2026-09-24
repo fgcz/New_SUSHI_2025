@@ -9,34 +9,37 @@
 # endpoint answers "which apps could consume these columns"; it does not answer "which apps
 # will this backend run", and the two lists differ by an order of magnitude.
 #
-# The runner now checks `GET /api/v1/application_configs` before submitting, so a recipe
-# naming an unsubmittable app halts with a clear reason instead of a 422. This file is the
+# The runner checks `GET /api/v1/application_configs` before submitting, so a recipe naming
+# an unsubmittable app halts with a clear reason instead of a 422. This file is the
 # regression case in prose.
 #
-# `match` deliberately matches nothing, so `select()` can never pick it.
+# Format v1 since 2026-09-24 (was `version: v0-disabled`, `match: {disabled: true}`).
+# Every match list is empty, so automatic selection can never pick it.
 
+schema_version: 1
 id: flash_then_fastqc
-version: v0-disabled
+version: 1
+author: Masaomi Hatakeyama (engine fixture - disabled, kept as a record)
 description: >
   DISABLED. FlashApp is column-compatible with dataset 9 but is not in the backend's
   submittable allow-list. Kept as a record of the difference between the two app lists.
 
 match:
-  disabled: true
+  service_type: []
+  sequencing_application: []
 
 steps:
-  - seq: 1
-    app_name: FlashApp        # <- not submittable; the runner will halt here by design
-    depends_on_seq: null
-    parameters:
+  - app: FlashApp        # <- not submittable; the runner will halt here by design
+    params:
       cores: 4
       ram: 15
       scratch: 50
 
-  - seq: 2
-    app_name: FastqcApp
-    depends_on_seq: 1
-    parameters:
+  - app: FastqcApp
+    params:
       cores: 1
       ram: 15
       scratch: 10
+
+autostart: false
+autostart_blocked_by: Disabled - FlashApp is not in the backend's submittable allow-list.

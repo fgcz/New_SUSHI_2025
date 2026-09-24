@@ -1,107 +1,115 @@
 # The RNA-seq chain the 2026-09-10 meeting drew, in the shape it was drawn.
 #
-#     FastQC      ┐
-#     FastqScreen ┤ three independent steps, submitted in the same tick
-#     STAR        ┘ ──▶ FeatureCounts          (CountQC removed -- see below)
+#     fastqc       ┐
+#     fastqscreen  ┤ `after: []` = three independent steps, submitted in the same tick
+#     star         ┘ ──▶ featurecounts (`after: [star]`)       (CountQC removed -- see below)
 #
 # Every app here is inside the backend's submittable 18. Before 2026-09-11 the runner
 # submitted one step per tick, so this shape would have run strictly serially -- the same
 # results, four times the wall clock, and "in parallel" would have been untrue on a slide.
+# Proven live 2026-09-11: DONE in 6 min 31 s against 12 min 13 s of serial compute (record in
+# ~/.omakase/archive/20260911_parallel_meeting_shape).
+#
+# ## Why this recipe carries `id` and `after`
+#
+# Format v1 reads list order as dependency, which is right for a linear chain and wrong for
+# this one: in list order FeatureCounts would wait for FastQC and FastqScreen too, and each
+# QC step for the one above it. `after: []` starts a step with the chain; `after: [star]`
+# makes FeatureCounts wait for STAR alone.
 #
 # ## Where EdgeR is
 #
 # Missing, on purpose. The meeting named two judgements. The first -- STAR's reference
-# genome from the metadata -- is `refBuild: FROM_SPECIES` below, expanded from the dataset's
-# Species column before a human approves. The second is EdgeR's control-versus-target
-# grouping, which a person makes today by reading sample names, and which nothing here can
-# derive. Guessing it is precisely the failure mode, so EdgeR is absent rather than wrong.
+# genome from the metadata -- is `refBuild: "{{ reference_for(species) }}"` below, expanded
+# from the dataset's Species column before a human approves. The second is EdgeR's
+# control-versus-target grouping, which a person makes today by reading sample names, and
+# which nothing here can derive. Guessing it is precisely the failure mode, so EdgeR is
+# absent rather than wrong.
 #
 # ## What is still not automatic
 #
-# `match:` is TODO, so `select()` never reaches this recipe and it runs only when named:
-#
-#     --recipe rnaseq_meeting_shape
+# Every `match` list is empty, so automatic selection never reaches this recipe and it runs
+# only when named:   --recipe rnaseq_meeting_shape
 #
 # The real catalog is authored by a bioinformatician, by standing decision. The resource
 # values below are each app's own shipped defaults, which is the most defensible thing an
 # agent can leave behind -- not a tuning nobody reviewed.
 #
-# ## Why no step after step 1 names refBuild
+# ## Why no step after STAR names refBuild
 #
 # It travels through the data. STAR's output dataset carries `Species`, `refBuild`,
 # `paired` and `strandMode` as columns; FeatureCountsApp reads refBuild off its input
 # unconditionally (`FeatureCountsApp.rb:59`), and CountQCApp requires
 # `Name, Count, Species, refBuild, featureLevel, refFeatureFile` as columns -- all of which
 # FeatureCounts' output provides. The genome is decided once and cannot drift.
+#
+# Format v1 since 2026-09-24 (was `version: v2-no-countqc`, seq/depends_on_seq).
 
+schema_version: 1
 id: rnaseq_meeting_shape
-version: v2-no-countqc
+version: 2
+author: Masaomi Hatakeyama (engine fixture - not a bioinformatician-signed recipe)
 description: >
   QC and alignment side by side, then counting. The reference genome is derived from the
   dataset's Species column. EdgeR is deliberately absent: its control-versus-target grouping
   is a judgement nothing here can make. CountQC is removed for a measured reason, below.
 
-# No `always`, so select() cannot pick it. A real match block reads the order's service
-# type and sequencing application; writing it is a bioinformatician's job.
 match:
-  service_type: TODO
-  sequencing_application: TODO
+  service_type: []
+  sequencing_application: []
 
 steps:
-  - seq: 1
-    app_name: FastqcApp
-    depends_on_seq: null
-    parameters:
+  - id: fastqc
+    app: FastqcApp
+    after: []
+    params:
       cores: 1
       ram: 15
       scratch: 10
-    retry_parameters:
-      # ram is a selector offering [15, 30, 62]; 30 is the next rung, not 15 doubled by
-      # coincidence.
-      cores: 1
+    # ram is a selector offering [15, 30, 62]; 30 is the next rung, not 15 doubled by
+    # coincidence.
+    retry_params:
       ram: 30
       scratch: 20
 
-  - seq: 2
-    app_name: FastqScreenApp
-    depends_on_seq: null
+  - id: fastqscreen
+    app: FastqScreenApp
+    after: []
     # `name` defaults to FastqScreen_Result and is left alone: it names the report file,
     # and inventing one would be a guess with no benefit.
-    parameters:
+    params:
       cores: 8
       ram: 60
       scratch: 100
 
-  - seq: 3
-    app_name: STARApp
-    depends_on_seq: null
-    parameters:
+  - id: star
+    app: STARApp
+    after: []
+    params:
       cores: 8
       ram: 30
       scratch: 100
-      refBuild: FROM_SPECIES
+      refBuild: "{{ reference_for(species) }}"
       paired: true
       strandMode: both
-    retry_parameters:
-      # 60, not 62. STARApp offers ram ['30','40','60','330'] and nothing between.
-      cores: 8
+    # 60, not 62. STARApp offers ram ['30','40','60','330'] and nothing between.
+    retry_params:
       ram: 60
       scratch: 200
-      refBuild: FROM_SPECIES
-      paired: true
-      strandMode: both
 
-  - seq: 4
-    app_name: FeatureCountsApp
-    depends_on_seq: 3
-    parameters:
+  - id: featurecounts
+    app: FeatureCountsApp
+    after: [star]
+    params:
       cores: 8
       ram: 20
       scratch: 10
-    retry_parameters:
-      cores: 8
+    retry_params:
       ram: 40
       scratch: 20
+
+autostart: false
+autostart_blocked_by: Engine fixture. No bioinformatician has signed it off, and it matches no order.
 
 # CountQC was step 5 and is removed, with the reason measured rather than guessed.
 #

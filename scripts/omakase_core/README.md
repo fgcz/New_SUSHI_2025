@@ -88,11 +88,28 @@ This cost a live 422 to discover and is the trap most likely to bite the next pe
 | `GET /api/v1/application_configs` | the **18** this backend will actually run: one native (`Fastqc`) plus the 17 in `config.legacy_apps_allowlist` |
 
 `FlashApp` is in the first list and not the second, which is why
-`recipes/flash_then_fastqc.yaml` is disabled rather than deleted — it is the regression
+`recipes/flash_then_fastqc_v1.yaml` is disabled rather than deleted — it is the regression
 case in prose. The runner checks the second list before submitting and halts with a reason.
 
 The chain the 2026-09-10 meeting asked for is entirely inside the submittable 18: **STAR,
-FeatureCounts, CountQC, EdgeR.** See `recipes/star_then_featurecounts.yaml`.
+FeatureCounts, CountQC, EdgeR.** See `recipes/star_then_featurecounts_v1.yaml`.
+
+## Recipes: format v1, from two places
+
+Recipes are written in **format v1** (since 2026-09-24): Paul Gueguen's MR !1 format plus
+optional keys only — `app` / `params`, list order as dependency, `id` + `after` where a step
+must not wait for the one above, two templates, lists as multi-selects, `retry_params` as
+an overlay. The draft spec for Paul is `docs/omakase-recipe-format-v1/PROPOSAL.md`
+(untracked until he agrees); the engine's reading of it is `recipes.py`.
+
+| where | what | committed here? |
+|---|---|---|
+| `omakase_core/recipes/<id>_v<N>.yaml` | 5 engine fixtures; each matches no order and runs only when named | yes |
+| `$OMAKASE_CATALOG_DIR/recipes/` (default: the local clone `paul-scripts/Internal_Dev/omakase`) | the catalog — 12 recipes as of MR !1 — and its `references.yaml` | **no**: this repository is public and the catalog is Paul's, shared when he agrees |
+
+`python3 -m omakase_core.omakase recipes` lists both, invalid ones with their reasons.
+Recipes carrying `constraints` or a `when` are **declined at ingest** until those are
+evaluated (the next build step) — declined, not proposed as if they had been checked.
 
 ## The genome is derived, and the refusals are the feature
 
@@ -108,9 +125,12 @@ dataset's Species column   ->   /srv/GT/reference-favorite   ->   refBuild
                                   refBuild dropdown shows first)
 ```
 
-A recipe writes `refBuild: FROM_SPECIES`; the engine expands it **at proposal time**, so
-the human approving sees the real path, not the sentinel. Approving a placeholder would
-make the approval meaningless.
+A recipe writes `refBuild: "{{ reference_for(species) }}"`; the engine expands it **at
+proposal time**, so the human approving sees the real path, not the template. Approving a
+placeholder would make the approval meaningless. When the catalog's per-assay policy
+(`references.yaml`) lists the recipe, that family's build wins — spatial assays pin older
+builds on purpose, to stay paired with their probe sets — and the favourite farm above is
+the fallback for every recipe no family names.
 
 Four cases are refused rather than defaulted, and they are not rare: **39.2 %** of
 delivered datasets carry `NA` / blank Species and **5.7 %** carry more than one (measured
@@ -158,7 +178,7 @@ against a cluster: **a step fails for a non-transient reason and the next step i
 submitted.** That is what `afterany` gets wrong, and it is why the runner exists.
 
 Both halves are now also proven **live** (2026-09-11, fgcz-h-083): candidate 1 ran
-STAR → FeatureCounts to `DONE`, and candidate 2 — `recipes/acceptance_halt_fixture.yaml`,
+STAR → FeatureCounts to `DONE`, and candidate 2 — `recipes/acceptance_halt_fixture_v1.yaml`,
 aimed at a genome that does not exist — halted with step 2 never submitted. Details in
 `docs/omakase-prototype-design-delta.md` §F.
 

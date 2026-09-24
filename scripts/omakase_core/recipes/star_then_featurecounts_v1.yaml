@@ -1,0 +1,87 @@
+# The chain from the 2026-09-10 meeting, written down as far as it can honestly be.
+#
+# The meeting's RNA-seq example was: FastQC and FastqScreen and STAR alignment in
+# parallel, then featureCounts, then CountQC and EdgeR. Every one of those apps is inside
+# the backend's submittable set of 18, so the chain is not hypothetical -- it can be
+# submitted today.
+#
+# ## Since 2026-09-11: refBuild is derived, not typed in
+#
+# `refBuild: "{{ reference_for(species) }}"` is expanded at proposal time by reading the
+# input dataset's `Species` column. A recipe that the catalog's per-assay policy
+# (`references.yaml`) does not list — this one — falls back to the curated farm
+# `/srv/GT/reference-favorite`: five species, exactly one build each, maintained by the
+# genome team. See `omakase_core/reference.py`. The human sees the expanded value before
+# approving, and a dataset with no Species, with two species, or with a species the farm
+# does not carry is **refused at proposal time** rather than aligned against a guess.
+#
+# This is the first of the two judgements the meeting named. The second -- EdgeR's
+# control-vs-target grouping -- is still open and deliberately absent below.
+#
+# ## What is still missing, and it is not code
+#
+# A bioinformatician. By standing decision the real catalog is authored by hand and never
+# generated. Every `match` list below is empty, so automatic selection never reaches this
+# recipe; it runs only when named:  --recipe star_then_featurecounts
+# Proven live 2026-09-11 as candidate 1, DONE 11:59:39 (record in
+# ~/.omakase/archive/20260911_sectionF_chain_and_halt).
+#
+# The non-resource parameters are the app defaults as shipped, which is the most defensible
+# thing an agent can leave behind -- not a tuning nobody reviewed.
+#
+# Format v1 since 2026-09-24 (was `version: v1-derived-refbuild`, seq/depends_on_seq, and
+# `refBuild: FROM_SPECIES`).
+
+schema_version: 1
+id: star_then_featurecounts
+version: 1
+author: Masaomi Hatakeyama (engine fixture - not a bioinformatician-signed recipe)
+description: >
+  Align reads with STAR, then count reads per gene with featureCounts. The reference genome
+  is derived from the dataset's Species column; the chain refuses rather than guesses.
+
+match:
+  service_type: []
+  sequencing_application: []
+
+steps:
+  - app: STARApp
+    params:
+      cores: 8
+      # STARApp offers ram ['30','40','60','330'] and its own description says "30/40 GB is
+      # enough for human and mouse data". 30 is the app default, so it is what is asked for.
+      ram: 30
+      scratch: 100
+      # A wrong genome is worse than a refused submission: STAR will align mouse reads to a
+      # plant genome and return a directory full of near-zero counts, which looks like data.
+      refBuild: "{{ reference_for(species) }}"
+      paired: true
+      strandMode: both
+    # 60, not 62. `ram` is a *selector* on this app, and 62 is not one of the four values
+    # it offers -- asking for it is a submission that cannot be honoured.
+    retry_params:
+      ram: 60
+      scratch: 200
+
+  # List order: waits for STAR and reads STAR's output.
+  # No refBuild here, and that is not an omission. STAR's output dataset carries the
+  # columns `Species`, `refBuild`, `paired` and `strandMode`, and FeatureCountsApp reads
+  # refBuild off its input dataset unconditionally (`FeatureCountsApp.rb:59`). So the
+  # genome is decided once, at step 1, and travels through the data rather than through
+  # the recipe -- there is no second place for it to drift.
+  - app: FeatureCountsApp
+    params:
+      cores: 8
+      ram: 20
+      scratch: 10
+    retry_params:
+      ram: 40
+      scratch: 20
+
+  # CountQC and EdgeR come next in the meeting's example. EdgeR additionally needs to know
+  # which samples are controls and which are targets -- the second judgement the meeting
+  # named, and the one a person makes today by reading sample names. Not written here
+  # because guessing it is precisely the failure mode.
+
+autostart: false
+autostart_blocked_by: Engine fixture. No bioinformatician has signed it off, and it matches no order.
