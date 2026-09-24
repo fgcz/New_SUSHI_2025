@@ -34,6 +34,7 @@ Deliberate limits, each a refusal rather than a guess:
 * A template must be the whole value (`refBuild: "{{ reference_for(species) }}"`), never
   spliced into a longer string.
 * `when` and `constraints` are parsed and validated here, and evaluated by ingest.
+* Selection (`select`) evaluates `match` in match.py; zero or several matches abstain.
 """
 from __future__ import annotations
 
@@ -424,13 +425,44 @@ def compile_steps(steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
 # ------------------------------------------------------------------------- select
 
 
-def select(order: dict[str, Any], recipe_id: str | None = None) -> dict[str, Any]:
-    """Pick a recipe for an order. Named wins; automatic selection is the `match` step."""
+def explain(order: dict[str, Any], dataset: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """`match.evaluate` for every loadable recipe. Invalid recipes are skipped, not guessed."""
+    from . import match
+    out = []
+    for rid in available():
+        try:
+            recipe = load(rid)
+        except RecipeError:
+            continue
+        out.append(match.evaluate(recipe, order, dataset))
+    return out
+
+
+def select(order: dict[str, Any], recipe_id: str | None = None,
+           dataset: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Pick a recipe for an order: the named one, else the ONE whose `match` accepts it.
+
+    Zero matches and several matches are both refusals. The 2026-09-10 history measurement
+    put the most common chain at 17% of real analyses, so the system must abstain far more
+    often than it proposes; a tie is where design v0.3 §8 would one day let a model break
+    it, and until then a person chooses with --recipe.
+    """
     if recipe_id:
         return load(recipe_id)
+    from . import match
+    results = explain(order, dataset)
+    hits = [r for r in results if r["matches"]]
+    if len(hits) == 1:
+        return load(hits[0]["recipe"])
+    if hits:
+        raise RecipeError(
+            f"{len(hits)} recipes match order {order.get('id')} "
+            f"({', '.join(h['recipe'] for h in hits)}); abstaining - a person chooses with "
+            f"--recipe")
+    near = [match.describe(r) for r in results if match.order_level_ok(r)]
     raise RecipeError(
-        f"no recipe named for order {order.get('id')}, and automatic selection by `match` "
-        f"is not built yet; name one with --recipe")
+        f"no recipe matches order {order.get('id')} (checked {len(results)})"
+        + (": " + " | ".join(near) if near else "; see `omakase match` for every reason"))
 
 
 # ------------------------------------------------------------------------- expand

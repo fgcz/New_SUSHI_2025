@@ -39,7 +39,7 @@ if __package__ in (None, ""):  # allow `python omakase.py` as well as `-m`
     __package__ = "omakase_core"
 
 from . import evidence, gate, input_dataset, recipes, reference, store as S  # noqa: E402
-from . import profile as P                  # noqa: E402
+from . import match, profile as P           # noqa: E402
 from .runner import ChainRunner             # noqa: E402
 from .sushi import SushiClient              # noqa: E402
 
@@ -81,7 +81,12 @@ def cmd_ingest(args, st: S.Store) -> int:
     order_id = int(order["id"])
     dataset_id, found_by = _resolve_dataset(args, order)
 
-    recipe = recipes.select(order, args.recipe)
+    # Automatic selection needs the dataset: Species is a dataset column, not an order field.
+    dataset = (None if args.recipe else
+               SushiClient(args.base_url, token(args.prof)).dataset(dataset_id))
+    recipe = recipes.select(order, args.recipe, dataset)
+    print(f"recipe:   {recipe['id']}@{recipe['version']} "
+          + ("(named)" if args.recipe else "(the one recipe whose match accepts this order)"))
     _refuse_unevaluated(recipe)
     # Deterministic, not random: the same order always lands in the same arm, so a rerun
     # cannot quietly move it. A control candidate is never proposed on, which is the only
@@ -371,9 +376,9 @@ def recipe_catalog() -> list[dict]:
         out.append({
             "id": r["id"], "version": str(r["version"]), "source": r["source"],
             "author": r["author"], "description": r.get("description"), "match": r["match"],
-            # Automatic selection by `match` is the next build step; until then every
-            # recipe runs only when a person names it.
-            "auto_selectable": False,
+            # Reachable by automatic selection at all: some list in `match` is non-empty
+            # (format v1 rule 8). Whether it matches a given order is `omakase match`.
+            "auto_selectable": any(r["match"].get(k) for k in match.STRING_LISTS),
             "step_count": len(steps),
             "chain": [{"seq": s["seq"], "app_name": s["app_name"],
                        "depends_on_seq": s["depends_on_seq"]} for s in steps],
@@ -382,6 +387,26 @@ def recipe_catalog() -> list[dict]:
             "gated_steps": [s["app_name"] for s in steps if "when" in s],
         })
     return out
+
+
+def cmd_match(args, st: S.Store) -> int:
+    """Which recipes accept this order, and why the others do not. Writes nothing."""
+    event = json.load(Path(args.event).open(encoding="utf-8"))
+    P.check_env(event.get("env"), args.prof, f"event {args.event}")
+    order = event.get("order") or {}
+    dataset = None
+    if not args.order_only:
+        dataset_id, found_by = _resolve_dataset(args, order)
+        dataset = SushiClient(args.base_url, token(args.prof)).dataset(dataset_id)
+        print(f"input: {found_by}")
+    results = recipes.explain(order, dataset)
+    for r in sorted(results, key=lambda r: (not r["matches"], r["recipe"])):
+        print(match.describe(r))
+    hits = [r["recipe"] for r in results if r["matches"]]
+    print(f"\n{len(hits)} of {len(results)} recipes match"
+          + (" -> ingest would select it" if len(hits) == 1 else
+             " -> ingest would abstain" if hits else " -> ingest would decline"))
+    return 0
 
 
 def cmd_recipes(args, st: S.Store) -> int:
@@ -479,6 +504,14 @@ def main() -> int:
     p.add_argument("--poll", type=int, default=60)
     p.add_argument("--max-retries", type=int, default=1)
     p.set_defaults(fn=cmd_run)
+
+    p = sub.add_parser("match", help="evaluate every recipe's match against an order event")
+    p.add_argument("--event", required=True)
+    p.add_argument("--dataset", type=int, default=None, help="skip order -> dataset resolution")
+    p.add_argument("--order-only", action="store_true",
+                   help="no dataset at all: the species rules report 'needs the dataset'")
+    p.add_argument("--base-url", default=None, help="the profile's backend; others refused")
+    p.set_defaults(fn=cmd_match)
 
     p = sub.add_parser("recipes", help="list the fixtures and the catalog, invalid ones included")
     p.add_argument("--json", action="store_true", help="machine-readable, for the panel")

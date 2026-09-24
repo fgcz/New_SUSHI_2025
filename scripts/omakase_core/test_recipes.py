@@ -196,10 +196,10 @@ except R.RecipeError as exc:
 case("the same id in the fixtures and the catalog is refused, never merged")
 try:
     R.select({"id": 1})
-    raise AssertionError("unnamed selection did not refuse")
+    raise AssertionError("unnamed selection of an empty order did not refuse")
 except R.RecipeError as exc:
-    assert "name one with --recipe" in str(exc)
-case("select() without a name refuses until match evaluation exists")
+    assert "no recipe matches" in str(exc), str(exc)
+case("select() without a name falls to match evaluation, which declines an empty order")
 
 
 # --- the CLI
