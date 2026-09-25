@@ -98,6 +98,12 @@ Claude Code runs the same commands through its shell, so plain requests work, fo
   an agent should approve only when that person has said so.
 - "Run candidate 1 and tell me when it is done." → step 8
 
+## Another user running the demo
+
+Under their own account, with their own record and key: see
+[`scripts/omakase_demo/README.md`](../scripts/omakase_demo/README.md) (operator: issue a key
+with `issue_demo_key.sh`, check it with `selftest_key.sh`; user: steps 0-8).
+
 ## Where things are
 
 | What | Where |

@@ -1,0 +1,32 @@
+{
+  "detected_at": "2026-09-11T10:03:36+02:00",
+  "env": "TEST",
+  "env_added": "2026-09-24 by the profile split: order 35755 is a B-Fabric TEST order (dataset 9 on fgcz-h-083)",
+  "fixture": "HAND-BUILT, not produced by omakase_order_watch. Order 35755's real status on B-Fabric TEST is 'canceled'; no order in project 35611 has ever been at 'processed'. Written 2026-09-11 to exercise the CHAIN (acceptance \u00a7F). The TRIGGER was proven separately on 2026-09-10 against production's 30 processed orders. For a real end-to-end demo, set a 35611 order to 'processed' in B-Fabric test by hand and let the watcher fire. Shared copy for other users (scripts/omakase_demo/), 2026-09-25: statusmodifiedby removed.",
+  "order": {
+    "countdatasets": 57,
+    "countsamples": 0,
+    "created": "2024-07-09 09:09:38",
+    "id": 35755,
+    "instrument": null,
+    "libraryprotocol": null,
+    "modified": "2025-05-09 10:46:10",
+    "numberofsamples": null,
+    "project": {
+      "classname": "project",
+      "id": 35611
+    },
+    "sequencingapplication": null,
+    "servicetype": {
+      "classname": "servicetype",
+      "id": 188
+    },
+    "status": "canceled",
+    "statusmodified": "2025-05-09T10:46:10.603",
+    "technology": [
+      "Genomics"
+    ]
+  },
+  "schema": "omakase.order_processed.v1",
+  "trigger_status": "processed"
+}
