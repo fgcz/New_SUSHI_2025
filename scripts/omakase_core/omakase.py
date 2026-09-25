@@ -57,11 +57,24 @@ KEPT_ORDER_FIELDS = [
 
 
 def token(prof: P.Profile | None = None) -> str:
-    """The bearer for the profile's backend. Env first, then the MCP config, so no third
-    copy exists. Called without a profile it means the default one."""
-    name = (prof or P.get()).token_env
+    """The bearer for the profile's backend: env, then the profile's own token file, then the
+    MCP config. Called without a profile it means the default one.
+
+    A token file that others can read is refused rather than used: it holds a production
+    read credential, and ~/.omakase is group-writable.
+    """
+    prof = prof or P.get()
+    name = prof.token_env
     tok = os.environ.get(name)
     if tok:
+        return tok
+    if prof.token_file.exists():
+        mode = prof.token_file.stat().st_mode & 0o777
+        if mode & 0o077:
+            raise SystemExit(f"refusing {prof.token_file}: mode {mode:o}, must be 600")
+        tok = prof.token_file.read_text(encoding="utf-8").strip()
+        if not tok:
+            raise SystemExit(f"{prof.token_file} is empty")
         return tok
     try:
         return json.load(MCP_JSON.open())["mcpServers"]["sushi-chain"]["env"][name]

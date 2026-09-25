@@ -57,6 +57,16 @@ class Profile:
     def store_path(self) -> Path:
         return self.home / "omakase.sqlite3"
 
+    @property
+    def token_file(self) -> Path:
+        """The backend bearer for this profile alone, when it must not be shared.
+
+        Exists for production since 2026-09-25: 082 grants its all-projects read credential
+        to OMAKASE only, so the bearer lives here (mode 600, never printed) instead of in
+        .mcp.json, where the sushi-chain MCP — and so a hosted model — would present it too.
+        """
+        return self.home / "backend_token"
+
 
 PROFILES = {
     "test": Profile("test", "TEST", "http://fgcz-h-083.fgcz-net.unizh.ch:3010",

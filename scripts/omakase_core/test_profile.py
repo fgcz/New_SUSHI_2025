@@ -98,6 +98,32 @@ assert W.ingest_pending(state, test, runner=lambda *a: (_ for _ in ()).throw(Ass
 case("--ingest reconciles: only an event without an outcome is ingested, and only once")
 
 
+# --- the backend bearer: env, then the profile's own token file, then .mcp.json
+from omakase_core import omakase as O  # noqa: E402
+saved_082 = os.environ.pop("NEWSUSHI_TOKEN_082", None)
+tf = prod.token_file
+assert tf == ROOT / "production" / "backend_token"
+tf.parent.mkdir(parents=True, exist_ok=True)
+tf.write_text("fixture-bearer-not-real\n")
+tf.chmod(0o600)
+assert O.token(prod) == "fixture-bearer-not-real"
+case("production reads its own token file, whitespace stripped")
+os.environ["NEWSUSHI_TOKEN_082"] = "fixture-from-env"
+assert O.token(prod) == "fixture-from-env"
+os.environ.pop("NEWSUSHI_TOKEN_082")
+case("an explicit env var still wins over the file")
+tf.chmod(0o640)
+assert refuses(lambda: O.token(prod), SystemExit)
+case("a token file others can read is refused, not used")
+tf.chmod(0o600)
+tf.write_text("  \n")
+assert refuses(lambda: O.token(prod), SystemExit)
+case("an empty token file is refused")
+tf.unlink()
+if saved_082 is not None:
+    os.environ["NEWSUSHI_TOKEN_082"] = saved_082
+
+
 # --- the CLI
 def cli(*argv, env_extra=None):
     env = dict(os.environ, **(env_extra or {}))
