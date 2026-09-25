@@ -34,27 +34,54 @@ Claude Code (Bash)      ─┘         │                                   (Om
 
 ## The walkthrough
 
-Terminal commands run from the scripts directory:
+| # | Action | Web panel | What happens underneath |
+|---|---|---|---|
+| 1 | See the orders that can be proposed | OMAKASE tab, "Orders with an order record" | Reads local files only; B-Fabric is not queried. There is no list command yet |
+| 2 | See the recipes | the recipe drop-down on the order | Reads the recipe YAML files |
+| 3 | Would a recipe be chosen automatically? | choose "automatic", press Propose | Today: 0 of 17 match (every fixture's `match` is empty, the catalog's wording does not fit), so automatic declines |
+| 4 | Propose a named recipe | choose `rnaseq_meeting_shape`, press **Propose** | `GET /api/v1/projects/35611/datasets` finds the dataset whose `Order Id [B-Fabric]` column is 35755 (dataset 9); `GET /api/v1/datasets/9` reads `Species` = Mus musculus, which picks the genome from `/srv/GT/reference-favorite` (GRCm39, Release M37). Writes candidate + steps to SQLite, and a notification to `outbox/` (not e-mailed) |
+| 5 | Look at the proposal | the card under "Proposals awaiting a decision" | SQLite only |
+| 6 | Approve | type your name, press **Approve** | SQLite only. Nothing runs before this |
+| 7 | Try without submitting | **Dry run** | Prints what would be submitted |
+| 8 | Run the chain | **Run chain** | `POST /api/v1/jobs` for FastQC, FastqScreen and STAR together; the job manager hands them to SLURM; `GET /api/v1/jobs/:id` until COMPLETED; then FeatureCounts on STAR's output. About 11 minutes (10 min 55 s on 2026-09-25) |
+| 9 | See the result in Omics-Studio | — | <http://fgcz-h-083.fgcz-net.unizh.ch:4000/projects/35611/datasets> (sign in with B-Fabric TEST or LDAP). Outputs are named `omakase_c<candidate>_s<step>_<App>` |
+| 10 | Reset the demo | **Reset demo** (test profile only) | Moves the store, run logs and outbox to `~/.omakase/archive/demo_resets/<time>/`. Nothing is deleted. Refused while a chain runs. Candidate numbers restart at 1 |
+
+The same steps from a terminal. Run them from the scripts directory; `--profile test` is
+the default, so it is not written. Replace `1` with the candidate number that step 4
+prints.
 
 ```bash
 cd /srv/sushi/masa_test_new_sushi_20260527/scripts
-O() { python3 -m omakase_core.omakase "$@"; }   # the engine; --profile test is the default
-# A function, not O="python3 -m ...": zsh does not split an unquoted variable into words.
-EV=~/.omakase/test/fixtures/order_35755_chain_fixture.json
-```
 
-| # | Action | Web panel | Terminal | What happens underneath |
-|---|---|---|---|---|
-| 1 | See the orders that can be proposed | OMAKASE tab, "Orders with an order record" | `ls ~/.omakase/test/fixtures ~/.omakase/test/events` (no list command yet) | Reads local files only; B-Fabric is not queried |
-| 2 | See the recipes | the recipe drop-down on the order | `O recipes` | Reads the recipe YAML files |
-| 3 | Would a recipe be chosen automatically? | choose "automatic", press Propose | `O match --event $EV --dataset 9` | Today: 0 of 17 match (every fixture's `match` is empty, the catalog's wording does not fit), so automatic declines |
-| 4 | Propose a named recipe | choose `rnaseq_meeting_shape`, press **Propose** | `O ingest --event $EV --recipe rnaseq_meeting_shape` | `GET /api/v1/projects/35611/datasets` finds the dataset whose `Order Id [B-Fabric]` column is 35755 (dataset 9); `GET /api/v1/datasets/9` reads `Species` = Mus musculus, which picks the genome from `/srv/GT/reference-favorite` (GRCm39, Release M37). Writes candidate + steps to SQLite, and a notification to `outbox/` (not e-mailed) |
-| 5 | Look at the proposal | the card under "Proposals awaiting a decision" | `O show` (all) or `O show --candidate 1` | SQLite only |
-| 6 | Approve | type your name, press **Approve** | `O approve --candidate 1 --actor <your name>` | SQLite only. Nothing runs before this |
-| 7 | Try without submitting | **Dry run** | `O run --candidate 1 --dry-run` | Prints what would be submitted |
-| 8 | Run the chain | **Run chain** | `O run --candidate 1` | `POST /api/v1/jobs` for FastQC, FastqScreen and STAR together; the job manager hands them to SLURM; `GET /api/v1/jobs/:id` until COMPLETED; then FeatureCounts on STAR's output. About 11 minutes (10 min 55 s on 2026-09-25) |
-| 9 | See the result in Omics-Studio | — | — | <http://fgcz-h-083.fgcz-net.unizh.ch:4000/projects/35611/datasets> (sign in with B-Fabric TEST or LDAP). Outputs are named `omakase_c<candidate>_s<step>_<App>` |
-| 10 | Reset the demo | **Reset demo** (test profile only) | `bash ~/omakase_demo_reset.sh` | Moves the store, run logs and outbox to `~/.omakase/archive/demo_resets/<time>/`. Nothing is deleted. Refused while a chain runs. Candidate numbers restart at 1 |
+# 1. orders that can be proposed
+ls ~/.omakase/test/fixtures ~/.omakase/test/events
+
+# 2. recipes
+python3 -m omakase_core.omakase recipes
+
+# 3. would any recipe be chosen automatically?
+python3 -m omakase_core.omakase match --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json --dataset 9
+
+# 4. propose a named recipe
+python3 -m omakase_core.omakase ingest --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json --recipe rnaseq_meeting_shape
+
+# 5. all proposals, then one
+python3 -m omakase_core.omakase show
+python3 -m omakase_core.omakase show --candidate 1
+
+# 6. approve
+python3 -m omakase_core.omakase approve --candidate 1 --actor <your name>
+
+# 7. dry run
+python3 -m omakase_core.omakase run --candidate 1 --dry-run
+
+# 8. run the chain
+python3 -m omakase_core.omakase run --candidate 1
+
+# 10. reset the demo
+bash ~/omakase_demo_reset.sh
+```
 
 Worked example, 2026-09-25 12:00 (terminal, scratch record): order 35755 → dataset 9 →
 `rnaseq_meeting_shape@2` → approved → jobs 836 FastQC, 837 FastqScreen, 838+839 STAR,
@@ -64,7 +91,7 @@ Worked example, 2026-09-25 12:00 (terminal, scratch record): order 35755 → dat
 
 Claude Code runs the same commands through its shell, so plain requests work, for example:
 
-- "List the OMAKASE recipes." → `O recipes`
+- "List the OMAKASE recipes." → step 2
 - "Propose rnaseq_meeting_shape for order 35755 on the test profile." → step 4
 - "Show candidate 1." → step 5
 - "Approve candidate 1 as <your name>." → step 6. The approval records a person's name;
