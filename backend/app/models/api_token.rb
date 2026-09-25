@@ -68,12 +68,37 @@ class ApiToken < ActiveRecord::Base
             "is never saved; a persisted ApiToken's write authority comes from its " \
             "capabilities column"
     end
+    if env_all_projects?
+      raise ArgumentError, "an all-projects credential is read-only and cannot be granted write"
+    end
 
     @env_write_granted = true
   end
 
   def env_write_granted?
     @env_write_granted == true
+  end
+
+  # Read scope over EVERY project in this node's database, for the ENV READ
+  # credential configured with SUSHI_ENV_TOKEN_SCOPE=all (see
+  # EnvApiToken::ALL_PROJECTS). Same non-database channel and the same refusals as
+  # #grant_env_write!, plus one more: the two grants exclude each other in both
+  # orders, so a token that may write can never also be unscoped.
+  def grant_env_all_projects!
+    if persisted?
+      raise ArgumentError,
+            "all-projects scope is only for the ENV-provisioned credential, which is " \
+            "never saved; a persisted ApiToken's scope is its scope column"
+    end
+    if env_write_granted?
+      raise ArgumentError, "a credential that may write must name its projects"
+    end
+
+    @env_all_projects = true
+  end
+
+  def env_all_projects?
+    @env_all_projects == true
   end
 
   # Raised when the live project-membership resolver cannot answer (transport
@@ -300,11 +325,15 @@ class ApiToken < ActiveRecord::Base
   # Static-principal membership test (unchanged). Not used for `user` tokens;
   # user membership is tested against the live-resolved set (see allowed_projects).
   def in_scope?(project_number)
+    return project_number.to_i.positive? && Project.exists?(number: project_number.to_i) if env_all_projects?
+
     Array(scope).map(&:to_i).include?(project_number.to_i)
   end
 
   # The set of project numbers this token may currently act on.
   #   - static: the stored scope array.
+  #   - static, ENV all-projects: every project number in this node's database,
+  #             read per call so a project created after boot is included.
   #   - user:   the login's current FGCZ project membership, resolved live
   #             (W=0). An inactive/unknown login yields the empty set (→ 403).
   #
@@ -312,6 +341,9 @@ class ApiToken < ActiveRecord::Base
   # is scoped to the resolver call alone so parsing bugs are NOT masked as
   # infrastructure errors.
   def allowed_projects
+    if env_all_projects?
+      return Project.where.not(number: nil).distinct.pluck(:number).map(&:to_i).select(&:positive?)
+    end
     return Array(scope).map(&:to_i) unless user?
 
     raw =

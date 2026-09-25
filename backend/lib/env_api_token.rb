@@ -65,6 +65,21 @@ module EnvApiToken
   SHA256_HEX = /\A[0-9a-f]{64}\z/
   POSITIVE_INTEGER = /\A\d+\z/
 
+  # The one non-numeric scope, and only for the READ credential: every project in
+  # this node's database, resolved per request (ApiToken#allowed_projects), so a
+  # project created after boot is visible without a restart.
+  #
+  # Why it exists: OMAKASE phase 0 reads the production node to turn a finished
+  # B-Fabric order into a proposal, and the order that reaches it is typically the
+  # first data of a NEW project. A numeric list is a snapshot taken at boot, so it
+  # would be missing exactly the projects that matter most (measured 2026-09-25:
+  # the phase-0 read credential saw 1 project and got 403 on a real order's).
+  #
+  # Refused for the WRITE credential: a writer names its projects. Matched
+  # exactly after the usual surrounding-whitespace trim (lowercase, alone), so
+  # "ALL" or "all,35611" is malformed, not a wildcard.
+  ALL_PROJECTS = "all"
+
   # The name is not free text. It is interpolated into a log line and into the
   # synthetic login `apitoken:<name>`, and the provisioning rake task prints it
   # inside a copy-pasteable `export`. Restricting the charset closes log
@@ -72,7 +87,13 @@ module EnvApiToken
   # source, rather than escaping the same value in three places.
   NAME_FORMAT = /\A[A-Za-z0-9._-]{1,64}\z/
 
-  Config = Struct.new(:digest, :scope, :name)
+  # `all_projects` true means SCOPE_VAR was ALL_PROJECTS; `scope` is then empty.
+  Config = Struct.new(:digest, :scope, :name, :all_projects) do
+    # For log lines: what this credential may read, in words.
+    def scope_description
+      all_projects ? "all (every project in this node's database, resolved per request)" : scope.inspect
+    end
+  end
 
   class << self
     # The frozen READ credential, or nil when none is configured or the
@@ -173,12 +194,14 @@ module EnvApiToken
     def build(cfg, write:)
       token = ApiToken.new(name: cfg.name, principal: "static", scope: cfg.scope)
       token.grant_env_write! if write
+      token.grant_env_all_projects! if cfg.all_projects
       token
     end
 
     def parse!
-      read_errors, read_config = parse_credential(DIGEST_VAR, SCOPE_VAR, NAME_VAR)
-      write_errors, write_config = parse_credential(WRITE_DIGEST_VAR, WRITE_SCOPE_VAR, WRITE_NAME_VAR)
+      read_errors, read_config = parse_credential(DIGEST_VAR, SCOPE_VAR, NAME_VAR, allow_all: true)
+      write_errors, write_config = parse_credential(WRITE_DIGEST_VAR, WRITE_SCOPE_VAR, WRITE_NAME_VAR,
+                                                    allow_all: false)
 
       write_errors += collision_errors
       write_config = nil if write_errors.any?
@@ -225,9 +248,10 @@ module EnvApiToken
       errors
     end
 
-    # Parse one credential from its three variables.
+    # Parse one credential from its three variables. `allow_all` admits
+    # ALL_PROJECTS as the scope; only the READ credential passes it.
     # @return [Array(Array<String>, Config|nil)] errors and the frozen config
-    def parse_credential(digest_var, scope_var, name_var)
+    def parse_credential(digest_var, scope_var, name_var, allow_all:)
       digest_hex = ENV[digest_var].to_s.strip
       scope_raw  = ENV[scope_var].to_s.strip
       name       = ENV[name_var].to_s.strip
@@ -252,13 +276,20 @@ module EnvApiToken
       # "1,,2" and ",1" are malformed instead of quietly meaning [1, 2] and [1].
       # Same reasoning as the zero: an authority list should be parsed strictly or
       # not at all. Surrounding whitespace is still tolerated ("35611, 1001").
+      all_projects = scope_raw == ALL_PROJECTS
+      if all_projects && !allow_all
+        errors << "#{scope_var} may not be `#{ALL_PROJECTS}`: a credential that may " \
+                  "write must name its projects"
+      end
+
       fields = scope_raw.split(",", -1).map(&:strip)
       all_positive = fields.any? && fields.all? do |f|
         f.match?(POSITIVE_INTEGER) && f.to_i.positive?
       end
       scope = all_positive ? fields.map(&:to_i) : []
-      if scope.empty?
-        errors << "#{scope_var} must be a comma-separated list of positive project numbers"
+      if scope.empty? && !all_projects
+        errors << "#{scope_var} must be a comma-separated list of positive project numbers" +
+                  (allow_all ? ", or `#{ALL_PROJECTS}`" : "")
       end
 
       unless name.match?(NAME_FORMAT)
@@ -268,7 +299,7 @@ module EnvApiToken
 
       config =
         if errors.empty?
-          Config.new(digest_hex.dup.freeze, scope.freeze, name.dup.freeze).freeze
+          Config.new(digest_hex.dup.freeze, scope.freeze, name.dup.freeze, all_projects).freeze
         end
 
       [errors, config]

@@ -66,6 +66,24 @@ module ApiTokenAuthenticatable
     @api_token.present?
   end
 
+  # An all-projects credential (SUSHI_ENV_TOKEN_SCOPE=all) may not call an
+  # unpaginated list across its whole scope: on the production node
+  # `GET /api/v1/datasets` would load every dataset (~83k rows) into one
+  # response, on a 15 GB node with no swap. It lists per project instead.
+  # Renders the refusal and returns true when it applies; use
+  # `return if refuse_unbounded_listing!`.
+  def refuse_unbounded_listing!
+    return false unless token_authenticated? && @api_token.env_all_projects?
+
+    render json: {
+      error: 'action not permitted for this token',
+      message: 'an all-projects credential may not list across every project at once; ' \
+               'list per project (GET /api/v1/projects/:number/datasets) or read one ' \
+               'record by id'
+    }, status: :forbidden
+    true
+  end
+
   # Identity used for display and ownership. For a user principal, the LDAP login
   # (a non-persisted User is fine — we only read .login); for a static principal,
   # a synthetic service login.

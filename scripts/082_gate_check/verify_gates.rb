@@ -62,7 +62,9 @@ end
 puts "\n=== 1. the READ credential is configured and healthy ==="
 check(results, "EnvApiToken.enabled?", EnvApiToken.enabled?, true)
 check(results, "EnvApiToken.errors", EnvApiToken.errors, [])
-puts "        (scope #{EnvApiToken.config&.scope.inspect}, name #{EnvApiToken.config&.name.inspect})"
+read_scope = EnvApiToken.config.respond_to?(:scope_description) ? EnvApiToken.config.scope_description :
+             EnvApiToken.config&.scope.inspect
+puts "        (scope #{read_scope}, name #{EnvApiToken.config&.name.inspect})"
 
 puts "\n=== 2. the READ credential can never write, in either posture ==="
 read_token = EnvApiToken.send(:build, EnvApiToken.config, write: false)
@@ -131,6 +133,18 @@ check(results, "grant_env_write! refuses a PERSISTED record",
         e.class.name
       end,
       "ArgumentError")
+# SUSHI_ENV_TOKEN_SCOPE=all (2026-09-25) rides the same kind of non-database channel, so the
+# same refusal must hold for it. Skipped on code that predates it.
+if ApiToken.method_defined?(:grant_env_all_projects!)
+  check(results, "grant_env_all_projects! refuses a PERSISTED record",
+        begin
+          ApiToken.first&.grant_env_all_projects!
+          "no error raised"
+        rescue StandardError => e
+          e.class.name
+        end,
+        "ArgumentError")
+end
 
 puts "\n=== 7. the write-free path list has NOT grown ==="
 # NO_WRITE_PATHS is a CLAIM ABOUT THE HANDLER: a path listed there is asserted to write

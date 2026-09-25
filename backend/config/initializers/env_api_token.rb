@@ -13,7 +13,7 @@ Rails.application.config.after_initialize do
   if (config = EnvApiToken.config)
     Rails.logger.info(
       "EnvApiToken: ENV-provisioned API token ENABLED " \
-      "(name=#{config.name} scope=#{config.scope.inspect} " \
+      "(name=#{config.name} scope=#{config.scope_description} " \
       "principal=static capabilities=read-only)"
     )
   end
@@ -25,7 +25,7 @@ Rails.application.config.after_initialize do
   if (write = EnvApiToken.write_config)
     Rails.logger.warn(
       "EnvApiToken: WRITE credential ENABLED " \
-      "(name=#{write.name} scope=#{write.scope.inspect} principal=static) — " \
+      "(name=#{write.name} scope=#{write.scope_description} principal=static) — " \
       "this bearer value may CREATE rows. The Rack write policy " \
       "(SUSHI_WRITE_POLICY=#{ENV.fetch('SUSHI_WRITE_POLICY', '(unset)')}) is a " \
       "separate gate and must also permit the route."

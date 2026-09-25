@@ -135,6 +135,8 @@ module Api
       # GET /api/v1/jobs
       # List jobs (optionally filtered)
       def index
+        return if refuse_unbounded_listing!
+
         jobs = Job.all
 
         # Token requests: restrict to jobs whose input/next dataset is in a project

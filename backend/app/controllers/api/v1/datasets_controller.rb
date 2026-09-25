@@ -4,6 +4,8 @@ module Api
           # JWT authentication required (automatically checked by BaseController)
     
     def index
+      return if refuse_unbounded_listing!
+
       # Token requests are scoped to the token's projects; otherwise the existing
       # behavior (all when auth skipped, else the user's owned datasets).
         datasets = if token_authenticated?
