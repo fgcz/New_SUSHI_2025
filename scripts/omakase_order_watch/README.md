@@ -152,3 +152,33 @@ Measured the same day, read-only, and the reason the production loop is NOT runn
   dataset answered `GET /api/v1/projects/42326/datasets -> 403 Project not accessible`;
 * and the catalog's `match` wording accepts 0 of 1467 real orders
   (`scripts/omakase_match_audit/README.md`), so every ingest would decline anyway.
+
+## `--order`: one order, named by id (2026-09-29)
+
+```bash
+python3 -m omakase_order_watch.watch --profile production --order 42666
+```
+
+A person can put an order in front of OMAKASE without waiting for a tick. This also covers
+the orders `--seed` adopted on 2026-09-10, which are handled but have no record. The order is
+read from the profile's B-Fabric in one call, and the trigger does not change:
+
+| The order | Result | rc |
+|---|---|---|
+| at `processed` now | `events/order_<id>.json` written, with `"source": "named"` | 0 |
+| any other status | nothing written; the status is printed | 3 |
+| not in that B-Fabric | nothing written | 3 |
+| already has an event from a tick | kept as it is: a real detection is never replaced | 0 |
+
+Then choose a recipe for it with `omakase ingest --event <that file> --recipe <id>`, or with
+the panel's **Fetch** box and recipe menu. `--order` is a one-shot: it does not tick, it
+refuses `--seed`/`--ingest`/`--status`/`--once`/`--dry-run`, and it **never touches the state
+file**. A running loop rewrites that file after every tick, so a second writer would be undone;
+a later tick that detects the same order simply writes its own event over the named one.
+Events a tick writes now say `"source": "watcher"`; older ones carry no `source` and count as
+detections.
+
+Each profile runs on its own node only (`omakase_core/profile.py::check_host`): `test` on
+fgcz-h-083, `production` on fgcz-h-082. Started anywhere else, the watcher and the engine exit
+2 before opening a file. The reason: `~/.omakase/` is on NFS and visible from both nodes, and
+two nodes writing one SQLite store corrupt it. A scratch `OMAKASE_ROOT` (tests) is not checked.

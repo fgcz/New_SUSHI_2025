@@ -615,6 +615,12 @@ def main() -> int:
 
     args = ap.parse_args()
     args.prof = P.get(args.profile)
+    # Before the store is opened: opening it read-write is already a write over NFS.
+    try:
+        P.check_host(args.prof)
+    except P.HostMismatch as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
     if getattr(args, "base_url", None) is None:
         args.base_url = args.prof.backend
     elif args.base_url.rstrip("/") != args.prof.backend:

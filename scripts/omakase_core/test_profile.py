@@ -70,6 +70,19 @@ case("the other instance's env is refused")
 assert refuses(lambda: P.check_env(None, test, "x"))
 case("a file that records no env is refused")
 
+# --- each profile on its own node (the real home is NFS-shared by both)
+assert (test.host, prod.host) == ("fgcz-h-083", "fgcz-h-082")
+P.check_host(prod, hostname="fgcz-h-082.fgcz-net.unizh.ch", root=P.DEFAULT_ROOT)
+P.check_host(test, hostname="fgcz-h-083", root=P.DEFAULT_ROOT)
+case("a profile passes on its own node, short or fully qualified name")
+assert refuses(lambda: P.check_host(prod, hostname="fgcz-h-083", root=P.DEFAULT_ROOT),
+               P.HostMismatch)
+assert refuses(lambda: P.check_host(test, hostname="fgcz-h-082", root=P.DEFAULT_ROOT),
+               P.HostMismatch)
+case("a profile is refused on the other node when it would use the real home")
+P.check_host(prod, hostname="fgcz-h-083")      # ROOT is this test's scratch directory
+case("a scratch OMAKASE_ROOT is not host-checked (nothing there is shared)")
+
 # --- the watcher's state file and events
 new = W.load_state(ROOT / "none.json", test)
 assert new["env"] == "TEST"

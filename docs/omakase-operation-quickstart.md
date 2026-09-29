@@ -20,6 +20,9 @@ Claude Code (Bash)      ─┘         │                                   (Om
   through the backend API. It does not drive the OMAKASE engine today.
 - Test instance = B-Fabric **TEST** + the fgcz-h-083 backend and its **test database**.
   Nothing here touches production.
+- Since 2026-09-29 each profile runs on its own node only: `test` on fgcz-h-083,
+  `production` on fgcz-h-082 (its own panel on port 8771, with no chat). Run
+  elsewhere, the engine and the watcher exit 2 before opening a file.
 
 ## Limits of the test setup (as of 2026-09-25)
 
@@ -37,6 +40,7 @@ Claude Code (Bash)      ─┘         │                                   (Om
 | # | Action | Web panel | What happens underneath |
 |---|---|---|---|
 | 1 | See the orders that can be proposed | OMAKASE tab, "Orders with an order record" | Reads local files only; B-Fabric is not queried. There is no list command yet |
+| 1b | Add an order by its id | "Propose on a processed order by id": type the id, press **Fetch** | The order watcher reads that one order from B-Fabric and writes its record only if its status is `processed` now (anything else is declined). It then appears in step 1's list, marked `named` |
 | 2 | See the recipes | the recipe drop-down on the order | Reads the recipe YAML files |
 | 3 | Would a recipe be chosen automatically? | choose "automatic", press Propose | Today: 0 of 17 match (every fixture's `match` is empty, the catalog's wording does not fit), so automatic declines |
 | 4 | Propose a named recipe | choose `rnaseq_meeting_shape`, press **Propose** | `GET /api/v1/projects/35611/datasets` finds the dataset whose `Order Id [B-Fabric]` column is 35755 (dataset 9); `GET /api/v1/datasets/9` reads `Species` = Mus musculus, which picks the genome from `/srv/GT/reference-favorite` (GRCm39, Release M37). Writes candidate + steps to SQLite, and a notification to `outbox/` (not e-mailed) |
@@ -56,6 +60,9 @@ cd /srv/sushi/masa_test_new_sushi_20260527/scripts
 
 # 1. orders that can be proposed
 ls ~/.omakase/test/fixtures ~/.omakase/test/events
+
+# 1b. add an order by its id (a record is written only if it is processed now)
+python3 -m omakase_order_watch.watch --order <order id>
 
 # 2. recipes
 python3 -m omakase_core.omakase recipes

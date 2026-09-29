@@ -52,6 +52,12 @@ Usage:
     python watch.py --status                       # what has been seen so far
     python watch.py --profile production --ingest  # watch, then propose (or decline) each
                                                    # new order automatically
+    python watch.py --profile production --order 42666
+                                                   # one order by id: an event if it is
+                                                   # processed now, then pick a recipe
+
+Each profile runs on its own node only (test: fgcz-h-083, production: fgcz-h-082); see
+omakase_core/profile.py::check_host.
 
 Requires bfabricPy (present in gi_py3.12.8) and ~/.bfabricpy.yml.
 """
@@ -181,7 +187,15 @@ def fetch_orders(client: Bfabric, ids: list[int]) -> list[dict]:
 # --------------------------------------------------------------------- events
 
 
-def write_event(events_dir: Path, order: dict, env: str) -> Path:
+SOURCE_WATCHER = "watcher"   # a tick saw the order join the processed set
+SOURCE_NAMED = "named"       # a person asked for it by id (--order); see fetch_named
+
+
+def event_path(events_dir: Path, oid: int) -> Path:
+    return events_dir / f"order_{oid}.json"
+
+
+def write_event(events_dir: Path, order: dict, env: str, source: str = SOURCE_WATCHER) -> Path:
     events_dir.mkdir(parents=True, exist_ok=True)
     oid = int(order["id"])
     payload = {
@@ -189,11 +203,12 @@ def write_event(events_dir: Path, order: dict, env: str) -> Path:
         # Which B-Fabric instance the order id belongs to. omakase_core refuses to ingest
         # an event without it, or from the instance its profile does not pair with.
         "env": env,
+        "source": source,
         "detected_at": now_iso(),
         "trigger_status": TRIGGER_STATUS,
         "order": {k: order.get(k) for k in EVENT_FIELDS},
     }
-    path = events_dir / f"order_{oid}.json"
+    path = event_path(events_dir, oid)
     with path.open("w", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=2, sort_keys=True, default=str)
     os.chmod(path, 0o600)
@@ -258,6 +273,57 @@ def tick(client, state, query, events_dir, max_new, dry_run, seed=False) -> int:
         }
         log(f"  NEW order {oid} -> {path.name} (statusmodified={order.get('statusmodified')})")
     return len(new)
+
+
+# --------------------------------------------------------------------- named orders
+
+
+def fetch_named(client, ids: list[int], events_dir: Path, env: str) -> int:
+    """Write an event for each named order that is at `processed` right now. Returns the rc.
+
+    This is how a person puts an order in front of OMAKASE without waiting for a tick, or
+    one the watcher will never emit: the orders adopted by --seed on 2026-09-10 are handled
+    but carry no record. The trigger does not change - an order that is not `processed`
+    is declined, because "the data is available" is what that status means.
+
+    The state file is deliberately left alone. A running loop keeps its handled-set in
+    memory and rewrites the whole file after every tick, so a second writer here would be
+    silently undone; the event file alone is what ingest (and the panel) need. A later tick
+    that detects the same order simply writes its own event over this one.
+
+    rc 0 = every order has an event now; 3 = at least one was declined; nothing is retried.
+    """
+    orders = {int(o["id"]): o for o in fetch_orders(client, ids)}
+    declined = 0
+    for oid in ids:
+        order = orders.get(oid)
+        if order is None:
+            log(f"DECLINED order {oid}: not found in B-Fabric {env}")
+            declined += 1
+            continue
+        status = order.get("status")
+        if status != TRIGGER_STATUS:
+            log(f"DECLINED order {oid}: its status is {status!r}, not {TRIGGER_STATUS!r} - "
+                f"OMAKASE only starts from an order whose data is available")
+            declined += 1
+            continue
+        path = event_path(events_dir, oid)
+        existing = _read_event(path)
+        if existing is not None and existing.get("source", SOURCE_WATCHER) != SOURCE_NAMED:
+            # A real detection is never replaced by a hand-requested copy.
+            log(f"order {oid}: already detected by the watcher at "
+                f"{existing.get('detected_at')}; {path.name} kept as it is")
+            continue
+        path = write_event(events_dir, order, env, source=SOURCE_NAMED)
+        log(f"NAMED order {oid} -> {path} (statusmodified={order.get('statusmodified')})")
+    return 3 if declined else 0
+
+
+def _read_event(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 # --------------------------------------------------------------------- ingest
@@ -326,6 +392,9 @@ def main() -> int:
     ap.add_argument("--ingest", action="store_true",
                     help="after each tick, run `omakase ingest` (automatic recipe choice) on "
                          "every event not yet ingested; proposals and declines are recorded")
+    ap.add_argument("--order", type=int, action="append", default=None, metavar="ID",
+                    help="fetch this order (repeatable), write an event if it is processed "
+                         "now, and exit. No tick, and the state file is not touched")
     ap.add_argument("--state", type=Path, default=None,
                     help="default ~/.omakase/<profile>/order_watch_state.json")
     ap.add_argument("--events", type=Path, default=None,
@@ -337,8 +406,27 @@ def main() -> int:
         print(f"refused: --env {args.env} contradicts profile {prof.name!r} "
               f"(B-Fabric {prof.bfabric_env}); pass --profile instead", file=sys.stderr)
         return 2
+    try:
+        P.check_host(prof)
+    except P.HostMismatch as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 2
     args.state = args.state or prof.state_path
     args.events = args.events or prof.events_dir
+
+    if args.order:
+        conflicting = [flag for flag, on in (("--seed", args.seed), ("--ingest", args.ingest),
+                                             ("--status", args.status), ("--once", args.once),
+                                             ("--dry-run", args.dry_run)) if on]
+        if conflicting:
+            print(f"refused: --order is a one-shot fetch and does not combine with "
+                  f"{', '.join(conflicting)}", file=sys.stderr)
+            return 2
+        client = Bfabric.connect(config_file_env=prof.bfabric_env)
+        log(f"profile={prof.name} env={prof.bfabric_env} named order(s) {args.order} "
+            f"events={args.events}")
+        return fetch_named(client, args.order, args.events, prof.bfabric_env)
+
     try:
         state = load_state(args.state, prof)
     except P.EnvMismatch as exc:

@@ -12,20 +12,28 @@ A profile fixes the pair and gives it its own home under ~/.omakase/<profile>/, 
 cannot read each other's files, and `env` is written into every state file and event so a
 file that strays is refused instead of misread.
 
-    test        B-Fabric TEST        + fgcz-h-083 :3010   may submit (the test DB)
-    production  B-Fabric PRODUCTION  + fgcz-h-082 :3010   NEVER submits (phase 0: read only)
+    test        B-Fabric TEST        + fgcz-h-083 :3010   may submit (the test DB)   runs on fgcz-h-083
+    production  B-Fabric PRODUCTION  + fgcz-h-082 :3010   NEVER submits (phase 0)    runs on fgcz-h-082
 
 `test` is the default. Watching production is something a person asks for by name.
 Shared by both, never profile-specific: ~/.omakase/audit (the history audit, evidence only)
 and ~/.omakase/archive (records rescued from /tmp on 2026-09-24).
+
+Each profile also runs on its own node only (2026-09-29, `check_host`). The home directory
+is NFS-mounted on both nodes, so ~/.omakase/production/ was writable from fgcz-h-083 and
+fgcz-h-082 at once, and SQLite over NFS does not survive two writers. Binding the profile
+to the node that holds its backend also makes the address in the browser tell the truth:
+the node you opened is the node that acts.
 """
 from __future__ import annotations
 
 import os
+import socket
 from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(os.environ.get("OMAKASE_ROOT", str(Path.home() / ".omakase")))
+DEFAULT_ROOT = Path.home() / ".omakase"
+ROOT = Path(os.environ.get("OMAKASE_ROOT", str(DEFAULT_ROOT)))
 DEFAULT = "test"
 
 
@@ -36,6 +44,7 @@ class Profile:
     backend: str          # the SUSHI backend whose datasets carry this instance's order ids
     token_env: str        # env var (or .mcp.json key) holding that backend's bearer
     may_submit: bool      # False = this pair only reads; `run` is refused
+    host: str             # the only node this profile runs on (short hostname)
 
     @property
     def home(self) -> Path:
@@ -70,9 +79,9 @@ class Profile:
 
 PROFILES = {
     "test": Profile("test", "TEST", "http://fgcz-h-083.fgcz-net.unizh.ch:3010",
-                    "NEWSUSHI_TOKEN_083", may_submit=True),
+                    "NEWSUSHI_TOKEN_083", may_submit=True, host="fgcz-h-083"),
     "production": Profile("production", "PRODUCTION", "http://fgcz-h-082.fgcz-net.unizh.ch:3010",
-                          "NEWSUSHI_TOKEN_082", may_submit=False),
+                          "NEWSUSHI_TOKEN_082", may_submit=False, host="fgcz-h-082"),
 }
 
 HISTORY = ROOT / "audit" / "shapes_by_service_type.json"
@@ -80,6 +89,27 @@ HISTORY = ROOT / "audit" / "shapes_by_service_type.json"
 
 class EnvMismatch(Exception):
     """A state file or event belongs to the other B-Fabric instance, or does not say."""
+
+
+class HostMismatch(Exception):
+    """A profile was started on a node other than its own."""
+
+
+def check_host(prof: Profile, hostname: str | None = None, root: Path | None = None) -> None:
+    """Refuse to work on `prof`'s files from any node but `prof.host`.
+
+    Only the real home is guarded. A scratch OMAKASE_ROOT (every test, a throwaway demo)
+    is by construction not shared with the other node, so there is nothing to protect -
+    and it holds no production token either (that lives in the real home, see token_file).
+    """
+    if Path(root or ROOT).resolve() != DEFAULT_ROOT.resolve():
+        return
+    here = (hostname or socket.gethostname()).split(".")[0]
+    if here != prof.host:
+        raise HostMismatch(
+            f"profile {prof.name!r} runs on {prof.host} only, and this is {here}. Its files "
+            f"under {prof.home} are on NFS and visible from both nodes; two nodes writing "
+            f"one SQLite store corrupt it. Run this on {prof.host} instead.")
 
 
 def get(name: str | None = None) -> Profile:
