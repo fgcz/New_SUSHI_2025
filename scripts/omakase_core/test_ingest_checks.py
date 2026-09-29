@@ -100,8 +100,8 @@ args.dataset = 999
 try:
     O._resolve_dataset(args, order)
     raise AssertionError("an unreadable dataset was accepted")
-except O.SushiError:
-    pass
+except input_dataset.InputDatasetError as exc:
+    assert "cannot be read with this key" in str(exc)
 case("a named dataset in the order's project is used; another project's, or an unreadable one, is refused")
 
 print(f"{cases} cases, all pass")

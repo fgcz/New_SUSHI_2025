@@ -228,7 +228,14 @@ def _resolve_dataset(args, order: dict) -> tuple[int, str]:
         # The results land in the INPUT dataset's project folder on gStore, so a dataset
         # from another project would write this order's analysis into someone else's
         # project. Checked, not assumed; unverifiable is a refusal (2026-09-29).
-        ds = input_dataset._unwrap(client.dataset(int(args.dataset)))
+        try:
+            ds = input_dataset._unwrap(client.dataset(int(args.dataset)))
+        except SushiError as exc:
+            # 403 for a project this key may not read, 404 for no such dataset: either way
+            # its project cannot be verified, which is a refusal, not a crash.
+            raise input_dataset.InputDatasetError(
+                f"dataset {args.dataset} cannot be read with this key, so its project cannot "
+                f"be checked against order {order['id']}'s: {exc}") from None
         ds_project = ds.get("project_number")
         if project is None or ds_project is None or int(ds_project) != int(project):
             raise input_dataset.InputDatasetError(
