@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS checklist (
     assert_text  TEXT    NOT NULL,
     reason       TEXT,
     check_json   TEXT,
-    status       TEXT    NOT NULL,   -- PASS | FAIL | PENDING | CONFIRMED
+    status       TEXT    NOT NULL,   -- PASS | FAIL | PENDING | CONFIRMED | SKIPPED
     detail       TEXT,
     confirmed_by TEXT,
     confirmed_at TEXT,
@@ -382,12 +382,20 @@ class Store:
                  "note": r["note"]} for r in rows]
 
     def confirm_item(self, candidate_id: int, idx: int, actor: str,
-                     note: str | None = None) -> None:
-        """A named person takes responsibility for one open item. Recorded, never inferred."""
+                     note: str | None = None, skip: bool = False) -> None:
+        """A named person takes responsibility for one open item. Recorded, never inferred.
+
+        skip=True closes a step's `when` gate the other way - its condition does NOT hold
+        - as SKIPPED: that step and what depends on it are left out (runner.py). Only a
+        `when` gate can be skipped; a rule is confirmed or the chain is revised.
+        """
         cur = self.db.execute(
             "UPDATE checklist SET status=?, confirmed_by=?, confirmed_at=?, note=? "
             "WHERE candidate_id=? AND idx=? AND status IN (?, ?) "
-            "AND NOT (kind='MACHINE' AND severity='refuse')",
-            ("CONFIRMED", actor, now_iso(), note, candidate_id, idx, "PENDING", "FAIL"))
+            "AND NOT (kind='MACHINE' AND severity='refuse')"
+            + (" AND kind='WHEN'" if skip else ""),
+            ("SKIPPED" if skip else "CONFIRMED", actor, now_iso(), note, candidate_id, idx,
+             "PENDING", "FAIL"))
         if cur.rowcount != 1:
-            raise ValueError(f"candidate {candidate_id} has no open checklist item {idx}")
+            raise ValueError(f"candidate {candidate_id} has no open "
+                             + ("`when` gate" if skip else "checklist item") + f" {idx}")

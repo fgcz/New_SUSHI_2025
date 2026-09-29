@@ -30,7 +30,11 @@ from typing import Any
 
 MACHINE, MANUAL, WHEN = "MACHINE", "MANUAL", "WHEN"
 PASS, FAIL, PENDING, CONFIRMED = "PASS", "FAIL", "PENDING", "CONFIRMED"
+# A `when` gate a person closed because its condition does NOT hold: the step, and every
+# step that depends on it, is left out of the chain (runner.py), never submitted.
+SKIPPED = "SKIPPED"
 WHEN_BASE = 1000                         # item index of step N's `when` gate = 1000 + N
+PARAMS_BASE = 2000                       # item index of step N's unknown-parameter hold
 
 
 def compile_items(raw_constraints: list[dict], raw_steps: list[dict]) -> list[dict[str, Any]]:
@@ -93,31 +97,56 @@ def _version(text: str) -> tuple[int, ...] | None:
 
 def evaluate(expr: dict, params_by_seq: dict[int, dict | None],
              apps: dict[int, str]) -> tuple[bool, str]:
-    """(holds, why) for one check expression. Any doubt is a failure."""
+    """(holds, why) for one check expression. Any doubt is a failure.
+
+    Evaluated in three values - holds, fails, UNKNOWN (the app is not on the backend, the
+    key is neither a default nor set, the version will not parse) - and only a definite
+    "holds" passes. Two values were not enough: `not` turned an unknown into a pass, and an
+    unknown `if` condition read as "does not apply" and passed too (found 2026-09-29 with
+    Paul's recipes, whose SplitPipe and SpaceRanger are not on 083).
+    """
+    value, why = _eval3(expr, params_by_seq, apps)
+    if value is None:
+        return False, f"cannot be checked: {why}"
+    return value, why
+
+
+def _eval3(expr: dict, params_by_seq: dict[int, dict | None],
+           apps: dict[int, str]) -> tuple[bool | None, str]:
+    """(True | False | None=unknown, why)."""
     if "all" in expr:
-        parts = [evaluate(e, params_by_seq, apps) for e in expr["all"]]
-        bad = [w for ok, w in parts if not ok]
-        return (not bad, "; ".join(bad) if bad else "all hold")
+        parts = [_eval3(e, params_by_seq, apps) for e in expr["all"]]
+        if any(v is False for v, _ in parts):
+            return False, "; ".join(w for v, w in parts if v is False)
+        if any(v is None for v, _ in parts):
+            return None, "; ".join(w for v, w in parts if v is None)
+        return True, "all hold"
     if "any" in expr:
-        parts = [evaluate(e, params_by_seq, apps) for e in expr["any"]]
-        good = [w for ok, w in parts if ok]
-        return (bool(good), good[0] if good else "none holds: " + "; ".join(w for _, w in parts))
+        parts = [_eval3(e, params_by_seq, apps) for e in expr["any"]]
+        good = [w for v, w in parts if v is True]
+        if good:
+            return True, good[0]
+        if any(v is None for v, _ in parts):
+            return None, "; ".join(w for v, w in parts if v is None)
+        return False, "none holds: " + "; ".join(w for _, w in parts)
     if "not" in expr:
-        ok, why = evaluate(expr["not"], params_by_seq, apps)
-        return (not ok, f"not ({why})")
+        v, why = _eval3(expr["not"], params_by_seq, apps)
+        return (None if v is None else not v), f"not ({why})"
     if "if" in expr:
-        ok, why = evaluate(expr["if"], params_by_seq, apps)
-        if not ok:
+        v, why = _eval3(expr["if"], params_by_seq, apps)
+        if v is None:
+            return None, f"whether it applies is unknown ({why})"
+        if not v:
             return True, f"condition does not apply ({why})"
-        ok2, why2 = evaluate(expr["then"], params_by_seq, apps)
-        return ok2, f"{why}, so {why2}"
+        v2, why2 = _eval3(expr["then"], params_by_seq, apps)
+        return v2, f"{why}, so {why2}"
     seq, key = expr["step"], expr["param"]
     params = params_by_seq.get(seq)
     label = f"{apps.get(seq, f'step {seq}')}.{key}"
     if params is None:
-        return False, f"{apps.get(seq)} is not known to the backend, so {key} cannot be checked"
+        return None, f"{apps.get(seq)} is not known to the backend, so {key} cannot be checked"
     if key not in params:
-        return False, f"{label} is neither an app default nor set by the recipe"
+        return None, f"{label} is neither an app default nor set by the recipe"
     v = params[key]
     op = next(o for o in ("equals", "one_of", "contains", "matches", "version_at_least") if o in expr)
     want = expr[op]
@@ -132,7 +161,7 @@ def evaluate(expr: dict, params_by_seq: dict[int, dict | None],
     else:
         have = _version(v)
         if have is None:
-            return False, f"{label} = {v!r} carries no parsable version"
+            return None, f"{label} = {v!r} carries no parsable version"
         need = tuple(int(x) for x in want.split("."))
         width = max(len(have), len(need))
         ok = have + (0,) * (width - len(have)) >= need + (0,) * (width - len(need))

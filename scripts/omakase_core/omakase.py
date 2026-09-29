@@ -158,14 +158,62 @@ def cmd_ingest(args, st: S.Store) -> int:
 
 
 def _assess(recipe: dict, steps: list[dict], args) -> list[dict]:
-    """The recipe's checklist evaluated on these steps. Defaults are fetched only if needed."""
+    """The recipe's checklist evaluated on these steps, plus what the backend itself says.
+
+    Since 2026-09-29 the backend is always asked for every app's defaults, not only when a
+    MACHINE rule needs them, because two facts come from that answer:
+
+    * an app the backend does not serve. On an unconditional step the recipe is DECLINED
+      here, before a proposal exists - it used to be PROPOSED, run for hours, and halt at
+      that step. On a `when`-gated step the gate says so: that step can only be skipped.
+    * a parameter the app does not declare (Paul's `chemistry` on CellRangerMulti, found
+      2026-09-24). It becomes a hold before that step: a person confirms it is harmless or
+      revises the chain, instead of it being silently ignored by the job.
+
+    If the backend cannot be asked and no MACHINE rule needs it, the proposal is still made
+    and says so; the runner checks the app list again at submit.
+    """
     items = recipe.get("items") or []
+    apps = sorted({st_["app_name"] for st_ in steps})
     defaults: dict[str, dict | None] = {}
-    if any(i["kind"] == K.MACHINE for i in items):
+    try:
         client = SushiClient(args.base_url, token(args.prof))
-        for app in sorted({st_["app_name"] for st_ in steps}):
+        for app in apps:
             defaults[app] = client.app_defaults(app)
-    return K.assess(items, steps, defaults)
+    except SushiError as exc:
+        if any(i["kind"] == K.MACHINE for i in items):
+            raise
+        print(f"  note: the backend could not be asked for app defaults ({exc}); app "
+              f"availability and parameter names are not checked at proposal time")
+        return K.assess(items, steps, {})
+    assessed = K.assess(items, steps, defaults)
+    gates = {i["at_step_seq"]: i for i in assessed if i["kind"] == K.WHEN}
+    missing = []
+    for s in steps:
+        app_defaults = defaults.get(s["app_name"])
+        if app_defaults is None:
+            gate = gates.get(s["seq"])
+            if gate is None:
+                missing.append(f"step {s['seq']} {s['app_name']}")
+                continue
+            gate["detail"] = (f"{s['app_name']} is not available on this backend, so this step "
+                              f"can only be skipped")
+            continue
+        unknown = sorted({k for key in ("parameters", "retry_parameters")
+                          for k in (s.get(key) or {}) if k not in app_defaults})
+        if unknown:
+            assessed.append({
+                "idx": K.PARAMS_BASE + s["seq"], "kind": K.MANUAL, "severity": "hold",
+                "at_step_seq": s["seq"], "check": None, "status": K.PENDING, "detail": None,
+                "assert": f"step {s['seq']} ({s['app_name']}) sets {', '.join(unknown)}, which "
+                          f"{s['app_name']} on this backend does not declare",
+                "reason": "the job would ignore it, or fail; confirm it is harmless, or revise "
+                          "the chain to drop it"})
+    if missing:
+        raise recipes.RecipeError(
+            f"recipe {recipe['id']}@{recipe['version']} needs app(s) this backend does not "
+            f"serve: {', '.join(missing)}. Nothing was proposed.")
+    return assessed
 
 
 def _resolve_dataset(args, order: dict) -> tuple[int, str]:
@@ -174,10 +222,20 @@ def _resolve_dataset(args, order: dict) -> tuple[int, str]:
     `--dataset` is kept, and not only as a fallback: when an order resolves to more than
     one raw dataset the answer is genuinely a human's, and there has to be a way to give it.
     """
-    if args.dataset:
-        return int(args.dataset), f"named on the command line (--dataset {args.dataset})"
     client = SushiClient(args.base_url, token(args.prof))
     project = (order.get("project") or {}).get("id")
+    if args.dataset:
+        # The results land in the INPUT dataset's project folder on gStore, so a dataset
+        # from another project would write this order's analysis into someone else's
+        # project. Checked, not assumed; unverifiable is a refusal (2026-09-29).
+        ds = input_dataset._unwrap(client.dataset(int(args.dataset)))
+        ds_project = ds.get("project_number")
+        if project is None or ds_project is None or int(ds_project) != int(project):
+            raise input_dataset.InputDatasetError(
+                f"dataset {args.dataset} is in project {ds_project}, but order {order['id']} "
+                f"is in project {project}; a named dataset must be in the order's project")
+        return int(args.dataset), (f"named by a person (--dataset {args.dataset}, project "
+                                   f"{ds_project}, the order's)")
     return input_dataset.resolve(client, project, int(order["id"]))
 
 
@@ -309,17 +367,28 @@ def _require_confirmed_before_start(st: S.Store, cid: int) -> None:
 def cmd_confirm(args, st: S.Store) -> int:
     """A named person confirms open checklist items. Each confirmation is recorded."""
     items = st.checklist(args.candidate)
+    if args.skip and (args.all or len(args.item) != 1):
+        print("refused: --skip names exactly one `when` gate with --item", file=sys.stderr)
+        return 2
     targets = ([i["idx"] for i in K.open_items(items)] if args.all else args.item)
     if not targets:
         print(f"candidate {args.candidate}: nothing open to confirm")
         return 0
     for idx in targets:
-        st.confirm_item(args.candidate, idx, args.actor, args.note)
+        try:
+            st.confirm_item(args.candidate, idx, args.actor, args.note, skip=args.skip)
+        except ValueError as exc:
+            print(f"refused: {exc}", file=sys.stderr)
+            return 2
         st.record_transition(args.candidate, st.candidate(args.candidate)["state"],
                              st.candidate(args.candidate)["state"], args.actor,
-                             reason=f"checklist item {idx} confirmed"
+                             reason=f"checklist item {idx} "
+                                    + ("SKIPPED: its condition does not hold, so the step "
+                                       "and its dependants are left out" if args.skip
+                                       else "confirmed")
                                     + (f": {args.note}" if args.note else ""))
-    print(f"candidate {args.candidate}: {len(targets)} item(s) confirmed by {args.actor}")
+    print(f"candidate {args.candidate}: {len(targets)} item(s) "
+          f"{'skipped' if args.skip else 'confirmed'} by {args.actor}")
     _print_checklist(st.checklist(args.candidate))
     return 0
 
@@ -566,6 +635,8 @@ def main() -> int:
     p.add_argument("--item", type=int, action="append", default=[],
                    help="checklist index to confirm (repeatable)")
     p.add_argument("--all", action="store_true", help="every open item")
+    p.add_argument("--skip", action="store_true",
+                   help="close ONE `when` gate as not holding: its step and dependants are skipped")
     p.add_argument("--actor", required=True)
     p.add_argument("--note")
     p.set_defaults(fn=cmd_confirm)

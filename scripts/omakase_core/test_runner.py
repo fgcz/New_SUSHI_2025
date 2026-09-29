@@ -53,7 +53,7 @@ class FakeClient:
         self._next_ds_id += 1
         rec = {"dataset_id": dataset_id, "app_name": app_name,
                "parameters": dict(parameters), "job_id": self._next_job_id,
-               "output_dataset_id": self._next_ds_id}
+               "output_dataset_id": self._next_ds_id, "comment": next_dataset_comment}
         self.submits.append(rec)
         self.outcomes.setdefault(rec["job_id"], ["COMPLETED"])
         return {"job_ids": [rec["job_id"]], "output_dataset_id": rec["output_dataset_id"]}

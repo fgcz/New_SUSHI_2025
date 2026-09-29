@@ -138,4 +138,48 @@ except ValueError:
     pass
 case("an item cannot be confirmed twice")
 
+# --- three values: what cannot be evaluated never passes, not even under `not` or `if`
+unknown_app = {1: None}                       # the backend does not serve step 1's app
+assert not K.evaluate({"not": {"step": 1, "param": "p", "equals": "x"}}, unknown_app, {1: "SplitPipe"})[0]
+assert not K.evaluate({"if": {"step": 1, "param": "p", "equals": "x"},
+                       "then": {"step": 1, "param": "q", "equals": "y"}}, unknown_app, {1: "SpaceRanger"})[0]
+assert not K.evaluate({"not": {"step": 1, "param": "absent", "equals": "x"}}, {1: {"p": "1"}}, {1: "X"})[0]
+assert K.evaluate({"any": [{"step": 1, "param": "p", "equals": "1"},
+                           {"not": {"step": 1, "param": "absent", "equals": "x"}}]}, {1: {"p": "1"}}, {1: "X"})[0]
+ok, why = K.evaluate({"not": {"step": 1, "param": "p", "equals": "x"}}, unknown_app, {1: "SplitPipe"})
+assert why.startswith("cannot be checked")
+case("an unknown under `not` or as an `if` condition FAILS (was a pass); a definite `any` branch still wins")
+
+# --- skipping a `when` gate
+st2 = S.Store(tmp / "skip.sqlite3")
+cid2, _ = st2.upsert_candidate(43, 9, "demo", "1", project_number=35611)
+st2.set_steps(cid2, [{"seq": 1, "app_name": "FastqcApp", "depends_on_seq": None, "parameters": {}},
+                     {"seq": 2, "app_name": "FastqcApp", "depends_on_seq": 1, "parameters": {}},
+                     {"seq": 3, "app_name": "FastqcApp", "depends_on_seq": 2, "parameters": {}}])
+gated = K.assess(K.compile_items(
+    [{"assert": "a rule", "reason": "r"}],
+    [{"id": "s1", "app": "FastqcApp"}, {"id": "s2", "app": "FastqcApp", "after": ["s1"],
+                                        "when": "n_samples >= 2"},
+     {"id": "s3", "app": "FastqcApp", "after": ["s2"]}]), [], {})
+st2.set_checklist(cid2, gated)
+try:
+    st2.confirm_item(cid2, 0, "masaomi", skip=True)
+    raise AssertionError("a rule was skipped")
+except ValueError:
+    pass
+case("only a `when` gate can be skipped; a rule cannot")
+st2.confirm_item(cid2, 0, "masaomi")
+st2.confirm_item(cid2, K.WHEN_BASE + 2, "masaomi", "one sample", skip=True)
+assert {i["idx"]: i["status"] for i in st2.checklist(cid2)}[K.WHEN_BASE + 2] == K.SKIPPED
+st2.record_verdict(cid2, S.VERDICT_ACCEPTED, "alice", proposed_steps=[])
+st2.set_state(cid2, S.APPROVED, "alice", "approved")
+run2 = R.ChainRunner(st2, FakeClient({}, applicable={"Fastqc"}), log=lambda *_: None)
+for _ in range(8):
+    state = run2.tick(cid2)
+assert state == S.DONE and len(run2.client.submits) == 1, (state, run2.client.submits)
+assert "skipped by a person" in st2.transitions(cid2)[-1]["reason"]
+case("a skipped step and its dependant are never submitted, and the chain is DONE")
+assert run2.client.submits[0]["comment"].endswith("approved by alice")
+case("the submitted dataset's comment names who approved")
+
 print(f"{cases} cases, all pass")

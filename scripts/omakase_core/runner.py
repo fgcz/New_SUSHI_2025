@@ -56,6 +56,28 @@ class ChainRunner:
             raise RuntimeError(f"step {dep} completed but produced no output dataset")
         return int(parent["output_dataset_id"])
 
+    def _approver(self, candidate_id: int) -> str | None:
+        """Who released this chain: the latest ACCEPTED or EDITED verdict's actor."""
+        for v in reversed(self.st.verdicts(candidate_id)):
+            if v["verdict"] in (S.VERDICT_ACCEPTED, S.VERDICT_EDITED):
+                return v["actor"]
+        return None
+
+    def _skipped(self, candidate_id: int) -> set[int]:
+        """Steps a person took out: a `when` gate closed as SKIPPED, and every step that
+        depends on one (a step whose input will never exist cannot run either)."""
+        steps = {s["seq"]: s for s in self.st.steps(candidate_id)}
+        out = {i["at_step_seq"] for i in self.st.checklist(candidate_id)
+               if i["status"] == K.SKIPPED and i["at_step_seq"] is not None}
+        grew = True
+        while grew:
+            grew = False
+            for seq, s in steps.items():
+                if seq not in out and s.get("depends_on_seq") in out:
+                    out.add(seq)
+                    grew = True
+        return out
+
     def _ready_steps(self, candidate_id: int) -> list[dict]:
         """Every step that can be submitted right now, not just the first.
 
@@ -77,7 +99,10 @@ class ChainRunner:
         chain that trusted SLURM would run the child anyway.
         """
         ready = []
+        skipped = self._skipped(candidate_id)
         for step in self.st.steps(candidate_id):
+            if step["seq"] in skipped:
+                continue  # a person decided its condition does not hold
             sub = self.st.latest_submission(candidate_id, step["seq"])
             if sub is not None and sub["state"] not in (S.STEP_PENDING, S.STEP_RETRIED):
                 continue  # completed, failed, or still in flight
@@ -109,9 +134,12 @@ class ChainRunner:
         return out
 
     def _unfinished(self, candidate_id: int) -> list[dict]:
-        """Steps that have not reported COMPLETED. Empty means the chain is done."""
+        """Steps that have not reported COMPLETED, skipped ones aside. Empty = done."""
         out = []
+        skipped = self._skipped(candidate_id)
         for step in self.st.steps(candidate_id):
+            if step["seq"] in skipped:
+                continue
             sub = self.st.latest_submission(candidate_id, step["seq"])
             if sub is None or sub["state"] != S.STEP_COMPLETED:
                 out.append(step)
@@ -164,13 +192,18 @@ class ChainRunner:
 
         name = (f"omakase_c{candidate_id}_s{step['seq']}_{step['app_name']}"
                 f"{'_retry' + str(attempt - 1) if attempt > 1 else ''}")
+        # SUSHI records the submitter as the backend key (apitoken:<name>); the person who
+        # released the chain is only in this store. The output dataset's comment carries it
+        # into SUSHI too - a label, not an identity the backend verified.
+        approver = self._approver(candidate_id)
         try:
             res = self.client.submit(
                 dataset_id=dataset_id,
                 app_name=app,
                 parameters=params,
                 next_dataset_name=name,
-                next_dataset_comment=f"OMAKASE candidate {candidate_id} step {step['seq']}",
+                next_dataset_comment=f"OMAKASE candidate {candidate_id} step {step['seq']}"
+                                     + (f", approved by {approver}" if approver else ""),
             )
         except SushiError as exc:
             # The submit was refused or never completed. Measured 2026-09-11: with the
@@ -302,7 +335,9 @@ class ChainRunner:
                 return self.st.candidate(candidate_id)["state"]
 
         if not self._unfinished(candidate_id):
-            self.st.set_state(candidate_id, S.DONE, ACTOR, reason="every step COMPLETED")
+            skipped = sorted(self._skipped(candidate_id))
+            self.st.set_state(candidate_id, S.DONE, ACTOR, reason="every step COMPLETED"
+                              + (f" (step(s) {skipped} skipped by a person)" if skipped else ""))
             self.log(f"  candidate {candidate_id} DONE")
             return S.DONE
 
