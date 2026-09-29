@@ -1,35 +1,43 @@
 # OMAKASE — operating it by hand (test instance, fgcz-h-083)
 
-A pedestrian walkthrough: the same four actions from the web panel, from a terminal, and
-from Claude Code. Written 2026-09-25 for a hands-on session. That day, steps 2-8 were run
-from the terminal against a scratch record, the panel buttons were used on the live panel,
-and the reset was tested on a copy of the record.
+A pedestrian walkthrough: the same actions from the web panel, from a terminal, from
+Claude Code, and (since 2026-09-29) from the panel's chat. Written 2026-09-25 for a
+hands-on session. That day, steps 2-8 were run from the terminal against a scratch
+record, the panel buttons were used on the live panel, and the reset was tested on a copy
+of the record.
 
 ## What runs where
 
 ```
 Web panel (OMAKASE tab) ─┐
 Terminal (command line) ├─▶ OMAKASE engine (omakase_core, Python) ─▶ backend API :3010 ─▶ SUSHI apps
-Claude Code (Bash)      ─┘         │                                   (Omics-Studio)        job manager
-                                   └─ its own record: ~/.omakase/test/omakase.sqlite3         SLURM
+Claude Code (Bash)      ─┤         │                                   (Omics-Studio)        job manager
+Panel chat (omakase_*   ─┘         └─ its own record: ~/.omakase/test/omakase.sqlite3         SLURM
+  MCP tools, FGCZ vLLM)
 ```
 
-- The three entry points call **the same engine**; the web panel's buttons literally run
-  the command line. No language model is involved in proposing, approving or running.
-- The panel's chat box (and Hermes) is a different route: an AI submits single jobs
-  through the backend API. It does not drive the OMAKASE engine today.
+- The entry points call **the same engine**; the web panel's buttons literally run the
+  command line, and the chat's `omakase_*` tools call the same functions as the buttons.
+  No language model is involved in choosing a recipe, approving or running.
+- The chat (vLLM direct or hermes, both on the on-prem FGCZ vLLM) can read, fetch an order
+  and propose. Approve, reject, confirm and run are **requests**: nothing happens until a
+  person clicks **Allow**, and that person is recorded as the approver. The kairos-chain
+  tools that call a hosted LLM are never offered to it. See "From the panel's chat" below.
 - Test instance = B-Fabric **TEST** + the fgcz-h-083 backend and its **test database**.
   Nothing here touches production.
 - Since 2026-09-29 each profile runs on its own node only: `test` on fgcz-h-083,
   `production` on fgcz-h-082 (its own panel on port 8771, with no chat). Run
   elsewhere, the engine and the watcher exit 2 before opening a file.
 
-## Limits of the test setup (as of 2026-09-25)
+## Limits of the test setup (as of 2026-09-29)
 
 - One project only: the engine's key on 083 (`apitoken:chain`) is scoped to **p35611**.
-- One order only: **35755**, from a hand-made file
-  (`~/.omakase/test/fixtures/order_35755_chain_fixture.json`). On B-Fabric TEST that
-  order is actually `canceled`; the file stands in for "an order reached processed".
+- In practice one order: **35755**, the only order in p35611 whose data (dataset 9) is in
+  083's test database. Since 2026-09-25 13:35 it is `processed` on B-Fabric TEST, so its
+  real record can be fetched (step 1b); the hand-made file
+  (`~/.omakase/test/fixtures/order_35755_chain_fixture.json`) is the fallback if it is not.
+  Any other processed order can be fetched, but proposing on it declines (no data on 083)
+  or is refused (a project outside p35611).
 - The order list is local state, not a live view of B-Fabric.
 - A recipe can be proposed **once** per order + dataset + recipe version (a database
   UNIQUE constraint, on purpose). To show it again, reset the demo (below).
@@ -105,6 +113,46 @@ Claude Code runs the same commands through its shell, so plain requests work, fo
   an agent should approve only when that person has said so.
 - "Run candidate 1 and tell me when it is done." → step 8
 
+## From the panel's chat
+
+Keep the OMAKASE tab open on the left and type your name in its name box once (the browser
+remembers it): **Allow** records that name as the approver. Then write in the chat on the
+right. Each prompt below maps to one `omakase_*` tool, the panel control that does the same,
+and the command line underneath. The commands run from
+`/srv/sushi/masa_test_new_sushi_20260527/scripts`; replace `2` with the candidate number the
+propose step reports (candidate 1 on 2026-09-29 was an earlier `fastqc_only`, already DONE).
+
+| # | Prompt (English) | Tool | Panel | Command line |
+|---|---|---|---|---|
+| 1 | `What is the current OMAKASE status?` | `omakase_status` | the status card | `python3 -m omakase_core.omakase show` and `python3 -m omakase_order_watch.watch --status` |
+| 2 | `Which orders can OMAKASE propose on right now?` | `omakase_orders` | "Orders with an order record" | `ls ~/.omakase/test/events ~/.omakase/test/fixtures` (no list command) |
+| 3 | `Fetch order 35755 from B-Fabric.` | `omakase_fetch_order` | order id box, **Fetch** | `python3 -m omakase_order_watch.watch --order 35755` |
+| 4 | `Which recipes match order 35755, and why?` | `omakase_match` | "automatic", then Propose | `python3 -m omakase_core.omakase match --event ~/.omakase/test/events/order_35755.json` |
+| 5 | `List the available recipes.` | `omakase_recipes` | the recipe drop-down | `python3 -m omakase_core.omakase recipes` |
+| 6 | `Propose the recipe rnaseq_meeting_shape for order 35755.` | `omakase_propose` | choose the recipe, **Propose** | `python3 -m omakase_core.omakase ingest --event ~/.omakase/test/events/order_35755.json --recipe rnaseq_meeting_shape` |
+| 7 | `Show me the new proposal: the steps, parameters and genome.` | `omakase_show` | the proposal card | `python3 -m omakase_core.omakase show --candidate 2` |
+| 8 | `Please approve candidate 2.` | `omakase_request_approve` → a request card → **Allow** | **Approve** | `python3 -m omakase_core.omakase approve --candidate 2 --actor <your name>` |
+| 9 | `Do a dry run of candidate 2.` | `omakase_request_run` (dry run) → **Allow** | **Dry run** | `python3 -m omakase_core.omakase run --candidate 2 --dry-run` |
+| 10 | `Now run candidate 2 on the cluster.` | `omakase_request_run` → **Allow** | **Run chain** | `python3 -m omakase_core.omakase run --candidate 2` |
+| 11 | `What happened to my requests?` | `omakase_requests` | "Requests from the chat" | `ls ~/.omakase/test/chat_requests/` (one JSON file per request) |
+| 12 | `How is the run going? Show the latest log.` | `omakase_runs`, `omakase_show` | "Chain runs" | `ls -t ~/.omakase/test/runs/` and `tail -n 40` the newest `.log` |
+
+- Prompts 8-10 file a **request**; the model says "request … filed" and a card with
+  **Allow** / **Deny** appears under its answer (and in the OMAKASE tab). Nothing happens
+  until a person clicks. The command-line equivalents act at once: typing them is the
+  person's release.
+- Name the candidate number (prompts 7-10). It is the most reliable way to keep the model
+  on the proposal you mean.
+- Skip prompt 9 in a demo: on 2026-09-25 a dry run moved a candidate from APPROVED to
+  RUNNING, which is recorded and not yet investigated. Go 8 → 10.
+- Name the recipe (prompt 6). "Automatic" declines today: 0 of 17 recipes match.
+- A given order + dataset + recipe version can be proposed once. To show the same recipe
+  again, press **Reset demo** first.
+- The same prompts work in Japanese; the model answers in the language it was asked in.
+- vLLM direct answers in seconds. Through hermes a turn took 15-25 s on 2026-09-29,
+  because hermes first looks the tool up (`tool_search`). The request card appears only
+  after the answer.
+
 ## Another user starting their own instance
 
 Under their own account, with their own record, key and optionally their own panel: see
@@ -118,5 +166,6 @@ with `issue_demo_key.sh`, check it with `selftest_key.sh`; user: the terminal st
 |---|---|
 | Web panel | `http://fgcz-h-083.fgcz-net.unizh.ch:8770/?key=<access key>` (key from the panel's `.env`; the cookie remembers it) |
 | Engine code and its README | `scripts/omakase_core/` in this repository |
-| The record (SQLite), notifications, run logs | `~/.omakase/test/` |
+| The record (SQLite), notifications, run logs, chat requests | `~/.omakase/test/` |
+| The chat's OMAKASE tools | `kairos_agent/omakase_mcp.py` in `/srv/sushi/kairos_agent_server_dev` |
 | Omics-Studio (to see jobs and datasets) | `http://fgcz-h-083.fgcz-net.unizh.ch:4000` |
