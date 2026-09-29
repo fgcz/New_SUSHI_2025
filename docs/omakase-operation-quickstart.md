@@ -153,6 +153,13 @@ propose step reports (candidate 1 on 2026-09-29 was an earlier `fastqc_only`, al
   because hermes first looks the tool up (`tool_search`). The request card appears only
   after the answer.
 
+## A team on the shared panel
+
+Since 2026-09-29 each member gets their own panel key (`python3 -m kairos_agent.keys issue
+<name>`), and whoever holds the key is recorded as the approver; the shared token still types
+a name. The panel submits with its own backend key, `omakase-team-083`, over every 083 project,
+not the operator's `chain` key. Setup and limits: [`scripts/omakase_demo/TEAM.md`](../scripts/omakase_demo/TEAM.md).
+
 ## Another user starting their own instance
 
 Under their own account, with their own record, key and optionally their own panel: see

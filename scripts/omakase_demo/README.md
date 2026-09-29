@@ -1,5 +1,8 @@
 # Starting your own OMAKASE instance (fgcz-h-083, test instance)
 
+> Since 2026-09-29 a team normally shares ONE panel with a key per person, which records
+> who approves: see [TEAM.md](TEAM.md). This page is the other option, your own instance.
+
 Anyone in `SG_Employees` can run OMAKASE under their own account: their own record, their
 own backend key, their own approvals, and optionally their own web panel. Nothing here
 touches production; the backend is fgcz-h-083 with its **test database**, and B-Fabric is
