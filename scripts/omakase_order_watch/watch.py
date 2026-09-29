@@ -395,6 +395,9 @@ def main() -> int:
     ap.add_argument("--order", type=int, action="append", default=None, metavar="ID",
                     help="fetch this order (repeatable), write an event if it is processed "
                          "now, and exit. No tick, and the state file is not touched")
+    ap.add_argument("--list-processed", action="store_true",
+                    help="print the orders at status processed now, as JSON, and exit. "
+                         "Writes nothing (the panel's order picker)")
     ap.add_argument("--state", type=Path, default=None,
                     help="default ~/.omakase/<profile>/order_watch_state.json")
     ap.add_argument("--events", type=Path, default=None,
@@ -413,6 +416,23 @@ def main() -> int:
         return 2
     args.state = args.state or prof.state_path
     args.events = args.events or prof.events_dir
+
+    if args.list_processed:
+        # One id-only query and one batched read, like a tick; nothing is written. The fields
+        # are the allow-listed summary a person picks an order by - no customer free text.
+        client = Bfabric.connect(config_file_env=prof.bfabric_env)
+        ids, seconds = current_ids(client, build_query(args.project))
+        rows = []
+        for o in fetch_orders(client, sorted(ids)):
+            rows.append({"id": int(o["id"]), "project": (o.get("project") or {}).get("id"),
+                         "statusmodified": o.get("statusmodified"),
+                         "sequencingapplication": o.get("sequencingapplication"),
+                         "instrument": o.get("instrument"),
+                         "numberofsamples": o.get("numberofsamples")})
+        rows.sort(key=lambda r: -r["id"])
+        print(json.dumps({"env": prof.bfabric_env, "status": TRIGGER_STATUS,
+                          "seconds": round(seconds, 2), "orders": rows}, default=str))
+        return 0
 
     if args.order:
         conflicting = [flag for flag, on in (("--seed", args.seed), ("--ingest", args.ingest),

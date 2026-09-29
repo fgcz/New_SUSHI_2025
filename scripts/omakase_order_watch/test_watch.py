@@ -146,4 +146,35 @@ for flag in ("--seed", "--ingest", "--status", "--once", "--dry-run"):
     assert rc == 2 and "does not combine with " + flag in out, (flag, rc, out)
 case("--order refuses --seed, --ingest, --status, --once and --dry-run (rc 2), before B-Fabric")
 
+
+# --- --list-processed: the picker's list, and nothing written
+class FakeConnect:
+    @staticmethod
+    def connect(config_file_env=None):
+        assert config_file_env == "TEST"
+        return FakeList()
+
+
+class FakeList:
+    def read(self, endpoint, query, max_results=None, return_id_only=False):
+        rows = [order(201), order(202)]
+        if return_id_only:
+            assert query == {"status": "processed"}, query
+            return [{"id": r["id"]} for r in rows]
+        return [r for r in rows if r["id"] in query["id"]]
+
+
+real_bfabric, W.Bfabric = W.Bfabric, FakeConnect
+before = sorted(p.name for p in events.iterdir())
+state_before = state.read_bytes()
+out = io.StringIO()
+argv, sys.argv = sys.argv, ["watch.py", "--profile", "test", "--list-processed"]
+with redirect_stdout(out):
+    rc = W.main()
+sys.argv, W.Bfabric = argv, real_bfabric
+d = json.loads(out.getvalue())
+assert rc == 0 and d["env"] == "TEST" and [o["id"] for o in d["orders"]] == [202, 201]
+assert all("customer_free_text" not in o for o in d["orders"]) and d["orders"][0]["project"] == 35611
+assert sorted(p.name for p in events.iterdir()) == before and state.read_bytes() == state_before
+case("--list-processed prints the processed orders (newest first, no free text) and writes nothing")
 print(f"{cases} cases, all pass")

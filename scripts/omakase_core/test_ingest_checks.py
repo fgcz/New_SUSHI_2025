@@ -37,6 +37,13 @@ class FakeSushi:
     def app_defaults(self, app):
         return self.DEFAULTS.get(app)
 
+    def project_datasets(self, project):
+        if project != 35611:
+            raise O.SushiError("403 Project not accessible")
+        return [{"id": 9, "name": "ventricles_100k", "parent_id": None, "samples_count": 2},
+                {"id": 873, "name": "omakase_c1_s1_FastqcApp", "parent_id": 9, "samples_count": 2},
+                {"id": 825, "name": "tiny_tar", "parent_id": None, "samples_count": 1}]
+
     def dataset(self, ds):
         if ds not in self.DATASETS:
             raise O.SushiError(f"404 dataset {ds}")
@@ -104,4 +111,18 @@ except input_dataset.InputDatasetError as exc:
     assert "cannot be read with this key" in str(exc)
 case("a named dataset in the order's project is used; another project's, or an unreadable one, is refused")
 
+
+# --- `omakase datasets`: the choices for --dataset, raw ones first
+import io, json  # noqa: E402,E401
+from contextlib import redirect_stdout  # noqa: E402
+out = io.StringIO()
+with redirect_stdout(out):
+    rc = O.cmd_datasets(SimpleNamespace(base_url="x", prof=None, project=35611, all=False, json=True), None)
+d = json.loads(out.getvalue())
+assert rc == 0 and [x["id"] for x in d["datasets"]] == [825, 9] and all(x["raw"] for x in d["datasets"])
+out = io.StringIO()
+with redirect_stdout(out):
+    O.cmd_datasets(SimpleNamespace(base_url="x", prof=None, project=35611, all=True, json=True), None)
+assert [x["id"] for x in json.loads(out.getvalue())["datasets"]] == [825, 9, 873]
+case("datasets lists raw datasets first (newest first); --all adds the derived ones")
 print(f"{cases} cases, all pass")

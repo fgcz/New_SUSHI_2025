@@ -572,6 +572,29 @@ def cmd_match(args, st: S.Store) -> int:
     return 0
 
 
+def cmd_datasets(args, st: S.Store) -> int:
+    """A project's datasets as the backend lists them: what a person may name as the input
+    (`ingest --dataset`). Raw ones (no parent) first - those are what a recipe starts from;
+    the rest only with --all. Read-only; the store is not touched."""
+    client = SushiClient(args.base_url, token(args.prof))
+    rows = client.project_datasets(int(args.project))
+    out = [{"id": d.get("id"), "name": d.get("name"), "raw": not d.get("parent_id"),
+            "parent_id": d.get("parent_id"), "samples": d.get("samples_count"),
+            "app": d.get("sushi_app_name"), "created_at": d.get("created_at")}
+           for d in rows if args.all or not d.get("parent_id")]
+    out.sort(key=lambda d: (not d["raw"], -(d["id"] or 0)))
+    if args.json:
+        print(json.dumps({"project": int(args.project), "datasets": out,
+                          "raw_only": not args.all}, indent=1))
+        return 0
+    for d in out:
+        print(f"{d['id']:>7}  {'raw' if d['raw'] else 'derived':<8} {d['samples'] or '?':>4} "
+              f"sample(s)  {d['name']}")
+    print(f"{len(out)} dataset(s) in project {args.project}"
+          + ("" if args.all else " without a parent (add --all for every one)"))
+    return 0
+
+
 def cmd_recipes(args, st: S.Store) -> int:
     catalog = recipe_catalog()
     if args.json:
@@ -690,6 +713,12 @@ def main() -> int:
     p = sub.add_parser("recipes", help="list the fixtures and the catalog, invalid ones included")
     p.add_argument("--json", action="store_true", help="machine-readable, for the panel")
     p.set_defaults(fn=cmd_recipes)
+
+    p = sub.add_parser("datasets", help="a project's datasets, the choices for ingest --dataset")
+    p.add_argument("--project", type=int, required=True)
+    p.add_argument("--all", action="store_true", help="derived datasets too, not only raw ones")
+    p.add_argument("--json", action="store_true", help="machine-readable, for the panel")
+    p.set_defaults(fn=cmd_datasets)
 
     args = ap.parse_args()
     args.prof = P.get(args.profile)
