@@ -78,6 +78,26 @@ No restart is needed for issue or revoke: the panel re-reads the key file
 (`~/.kairos_agent/keys_fgcz-h-083.json`, per host, so a key for 083 never opens the 082
 production panel).
 
+## Part 2b — or let members take their own key from the first page
+
+The panel is reachable from inside FGCZ only, so a member without a key can take one
+themselves: opening `http://fgcz-h-083.fgcz-net.unizh.ch:8770/` shows **Get my key**; they
+type their login name and the page shows their personal link once (and signs that browser
+in). Switch it on and off without a restart:
+
+```bash
+cd /srv/sushi/kairos_agent_server_dev
+python3 -m kairos_agent.keys self-issue on       # offer the button
+python3 -m kairos_agent.keys self-issue status
+python3 -m kairos_agent.keys self-issue off      # close it once the team has its keys
+```
+
+What this trades: the name is **not verified** - anyone who can reach the page can take a key
+under a name nobody has used yet. What holds: a name is taken once, ever (a lost key means
+"ask Masa", who revokes and re-issues it with `keys issue`), 3 per address per hour, 50
+self-issued keys at most, and `keys list` shows which keys were self-issued and from which
+address. Switching it off leaves every issued key working.
+
 ## Part 3 — the member
 
 1. Open the URL once. The browser keeps a cookie; afterwards the plain address works.
