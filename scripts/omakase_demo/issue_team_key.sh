@@ -95,7 +95,7 @@ case "${1:-}" in
     done
     echo
     echo "Now restart the panel and hermes so they use it:"
-    echo "  bash ~/omakase_082_deploy/restart_chat_083.sh"
+    echo "  bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_chat_083.sh"
     ;;
   list)
     rake_list | grep "name=$NAME\$" || echo "(no $NAME key yet)"

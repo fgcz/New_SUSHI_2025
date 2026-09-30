@@ -6,8 +6,9 @@ day, read from the node (ports, screens, launchers), not from memory.
 
 Who this is for: the operator. Users read [083-demo-quickstart.md](083-demo-quickstart.md)
 (Omics-Studio) and [../scripts/omakase_demo/TEAM.md](../scripts/omakase_demo/TEAM.md)
-(the shared OMAKASE panel). The production counterpart is the kit in `~/omakase_082_deploy/`
-(`deploy_panel_082.sh`, `grant_write_082.sh`).
+(the shared OMAKASE panel). The scripts named below, and their production counterparts
+(`deploy_panel_082.sh`, `grant_write_082.sh`), are in
+[`scripts/omakase_deploy/`](../scripts/omakase_deploy/README.md).
 
 ## What runs on 083
 
@@ -23,9 +24,9 @@ Who this is for: the operator. Users read [083-demo-quickstart.md](083-demo-quic
 
 | Part | Port | Runs as | Started by | Log | Restart with |
 |---|---|---|---|---|---|
-| Backend (Rails, `RAILS_ENV=development`, `LEGACY_DATABASE=true`) | 0.0.0.0:3010 | masaomi, `nohup` | `run_backend_083.sh` (gitignored), called by `restart_backend_083.sh` | `/tmp/newsushi_3010.log`, `backend/log/development.log` | `bash ~/omakase_082_deploy/restart_backend_083.sh` |
+| Backend (Rails, `RAILS_ENV=development`, `LEGACY_DATABASE=true`) | 0.0.0.0:3010 | masaomi, `nohup` | `run_backend_083.sh` (gitignored), called by `restart_backend_083.sh` | `/tmp/newsushi_3010.log`, `backend/log/development.log` | `bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_backend_083.sh` |
 | Omics-Studio frontend (`next dev`) | 0.0.0.0:4000 | masaomi | by hand, `NEXT_PUBLIC_API_URL=http://fgcz-h-083.fgcz-net.unizh.ch:3010` | none (not in a screen, see Traps) | step 3 below |
-| OMAKASE panel (FastAPI) | 0.0.0.0:8770 | masaomi, screen `kairos-agent` | `/srv/sushi/kairos_agent_server_dev/run.sh` (reads `.env`) | `/tmp/kairos_agent_8770.screenlog` | `bash ~/omakase_082_deploy/restart_chat_083.sh` |
+| OMAKASE panel (FastAPI) | 0.0.0.0:8770 | masaomi, screen `kairos-agent` | `/srv/sushi/kairos_agent_server_dev/run.sh` (reads `.env`) | `/tmp/kairos_agent_8770.screenlog` | `bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_chat_083.sh` |
 | hermes gateway (chat relay) | 127.0.0.1:8642 | masaomi, screen `hermes-gateway` | `run_hermes_gateway.sh` (restarts hermes within 5 s if it dies) | `/tmp/hermes_gateway_8642.screenlog` | same script |
 | job_manager (`start_sushi_jobmanager.py -b`) | — | **trxcopy** | not ours to start | — | not ours (no sudo); only count it |
 | MySQL `sushi` (test DB) | socket | system | system | — | — |
@@ -73,7 +74,7 @@ The panel (`/srv/sushi/kairos_agent_server_dev`) is a local git repository with 
 ### 2. The backend
 
 ```bash
-bash ~/omakase_082_deploy/restart_backend_083.sh
+bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_backend_083.sh
 ```
 
 It exports `SUSHI_REQUIRE_AUTH=1`, `ENABLE_LDAP=1`, `BFABRICPY_CONFIG_ENV=TEST`,
@@ -106,7 +107,7 @@ screen -dmS omics-studio-083 -L -Logfile /tmp/omics_studio_4000.screenlog \
 ### 4. Permissions (after any code change)
 
 ```bash
-bash ~/omakase_082_deploy/fix_perms_083.sh
+bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/fix_perms_083.sh
 ```
 
 Removes GROUP write from the panel code, the engine code, `~/.omakase` and `~/.kairos_agent`.
@@ -128,7 +129,7 @@ project in 083's database at issue time, 90 days. The script writes it into the 
 ### 6. Panel and chat
 
 ```bash
-bash ~/omakase_082_deploy/restart_chat_083.sh
+bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_chat_083.sh
 ```
 
 Restarts hermes (screen `hermes-gateway` brings it back within 5 s with the current
@@ -186,9 +187,8 @@ A real sign-in to Omics-Studio in a browser after the backend restart of 2026-09
 
 ## Known loose ends (recorded, not fixed)
 
-- The restart scripts live in `~/omakase_082_deploy/`, outside the repository, in a directory
-  named for 082. They belong under `scripts/` (with `run_backend_083.sh` staying gitignored,
-  since it holds the secret handling).
+- ~~The restart scripts live outside the repository.~~ Moved to `scripts/omakase_deploy/` on
+  2026-09-30. `run_backend_083.sh` stays gitignored (it handles the pinned secret).
 - Omics-Studio :4000 is not in a screen and has no log (step 3).
 - Leftover processes from earlier experiments, all masaomi's and none serving the instance: a
   second `next dev` on :4090 (2026-08-14), and `socat` relays plus two mock vLLM servers

@@ -43,16 +43,16 @@ Run each on fgcz-h-083, in this order.
 
 ```bash
 # 1. the backend requires a key from now on (it ran without one since 2026-09-24)
-bash ~/omakase_082_deploy/restart_backend_083.sh
+bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_backend_083.sh
 
 # 2. only masaomi may change the code and records the panel runs
-bash ~/omakase_082_deploy/fix_perms_083.sh
+bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/fix_perms_083.sh
 
 # 3. the team's backend key (all 083 projects, 90 days); written into the panel's and hermes' .env
 bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_demo/issue_team_key.sh issue
 
 # 4. restart the panel and hermes so they pick it up
-bash ~/omakase_082_deploy/restart_chat_083.sh
+bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_chat_083.sh
 ```
 
 ## Part 2 — a key for each member
@@ -111,5 +111,5 @@ address. Switching it off leaves every issued key working.
 
 - The team key expires after 90 days, and new projects in 083 are not in its scope until
   it is refreshed: `bash .../issue_team_key.sh refresh` (a new key over all projects, the
-  old one revoked), then `bash ~/omakase_082_deploy/restart_chat_083.sh`.
+  old one revoked), then `bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/restart_chat_083.sh`.
 - Member keys: `keys issue` again after `keys revoke`, or when one expires.
