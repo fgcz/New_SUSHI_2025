@@ -73,7 +73,7 @@ needs to scale.
 usually has no registered dataset yet. That prints `DECLINED: …` and exits **3**, so a
 caller can tell "declined" from "failed" (2).
 
-Store defaults to `~/.omakase/<profile>/omakase.sqlite3` — `--profile test` (the default: B-Fabric TEST + the fgcz-h-083 backend) or `--profile production` (B-Fabric PRODUCTION + fgcz-h-082, read only: `run` is DECLINED). `ingest` DECLINES an event whose `env` is missing or belongs to the other instance. See `profile.py`. Tables are v0.3 §12 — `candidates`,
+Store defaults to `~/.omakase/<profile>/omakase.sqlite3` — `--profile test` (the default: B-Fabric TEST + the fgcz-h-083 backend) or `--profile production` (B-Fabric PRODUCTION + fgcz-h-082; since 2026-09-30 `run` submits only with a SEPARATE write credential, `~/.omakase/production/backend_write_token` (mode 600), which exists only while 082's operator grants writing — otherwise `run` is DECLINED, and a dry run is always DECLINED there. `omakase submits` says which it is). `ingest` DECLINES an event whose `env` is missing or belongs to the other instance. See `profile.py`. Tables are v0.3 §12 — `candidates`,
 `order_params`, `proposal_steps`, `transitions`, `submissions` — with two additions the
 stepped runner needs: `submissions.state/attempt/finished_at`, and
 `proposal_steps.retry_params_json`.
@@ -215,7 +215,7 @@ quietly becoming a default.
 ## Not in this slice
 
 The real recipe engine · notifications · QC tiers · the LLM path · the auto-approval
-clock · anything at all on fgcz-h-082.
+clock.
 
 Also not here: a dataset spanning **two** orders. `check_order_ids` leaves the scalar null
 in that case and fills an `order_ids` array instead, and the REST API does not expose that

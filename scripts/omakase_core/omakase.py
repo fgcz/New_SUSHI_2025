@@ -18,7 +18,8 @@ transition are ordinary code.
 
 Every command works inside one profile (omakase_core/profile.py): `test` by default,
 B-Fabric TEST paired with the fgcz-h-083 backend, files under ~/.omakase/test/. An event
-from the other B-Fabric instance is refused at ingest, and `production` never submits.
+from the other B-Fabric instance is refused at ingest, and `production` submits only with a
+separate write credential that 082's operator grants (`omakase submits` says whether it is there).
 
 Approval is explicit and human, every time. The deadline-driven auto-approval of design
 v0.3 §10 is deliberately not in this slice.
@@ -65,21 +66,65 @@ def token(prof: P.Profile | None = None) -> str:
     """
     prof = prof or P.get()
     name = prof.token_env
-    tok = os.environ.get(name)
+    tok = _env_or_file(name, prof.token_file)
     if tok:
-        return tok
-    if prof.token_file.exists():
-        mode = prof.token_file.stat().st_mode & 0o777
-        if mode & 0o077:
-            raise SystemExit(f"refusing {prof.token_file}: mode {mode:o}, must be 600")
-        tok = prof.token_file.read_text(encoding="utf-8").strip()
-        if not tok:
-            raise SystemExit(f"{prof.token_file} is empty")
         return tok
     try:
         return json.load(MCP_JSON.open())["mcpServers"]["sushi-chain"]["env"][name]
     except Exception as exc:  # noqa: BLE001
         raise SystemExit(f"no backend token: set {name} or make {MCP_JSON} readable ({exc})")
+
+
+def write_token(prof: P.Profile) -> str | None:
+    """The bearer `run` submits with, or None when this profile may not submit right now.
+
+    A profile without a separate writer (test) submits with its one bearer. One with a writer
+    (production) submits ONLY with that second bearer - env, then its own file - and never
+    falls back to the read bearer or to .mcp.json: the read credential cannot write, and a
+    key the sushi-chain MCP (and so a hosted model) holds must never become the writer.
+    """
+    if prof.write_token_env is None:
+        return token(prof)
+    return _env_or_file(prof.write_token_env, prof.write_token_file)
+
+
+def _env_or_file(name: str, path: Path) -> str | None:
+    """`$name`, else the contents of `path` (mode 600 enforced), else None."""
+    tok = os.environ.get(name)
+    if tok:
+        return tok
+    if not path.exists():
+        return None
+    mode = path.stat().st_mode & 0o777
+    if mode & 0o077:
+        raise SystemExit(f"refusing {path}: mode {mode:o}, must be 600")
+    tok = path.read_text(encoding="utf-8").strip()
+    if not tok:
+        raise SystemExit(f"{path} is empty")
+    return tok
+
+
+def submit_readiness(prof: P.Profile) -> dict:
+    """Whether `run` would submit on this profile now, and why - for a person and the panel.
+
+    Says which credential it looks for, never its value.
+    """
+    if not prof.may_submit:
+        return {"profile": prof.name, "can_submit": False,
+                "why": f"profile {prof.name!r} never submits"}
+    if prof.write_token_env is None:
+        return {"profile": prof.name, "can_submit": True,
+                "why": f"profile {prof.name!r} submits with its one backend key"}
+    present = bool(os.environ.get(prof.write_token_env)) or prof.write_token_file.exists()
+    if present:
+        return {"profile": prof.name, "can_submit": True,
+                "why": (f"a write credential is present ({prof.write_token_file} or "
+                        f"${prof.write_token_env}); the backend's scope decides which "
+                        f"projects it may write")}
+    return {"profile": prof.name, "can_submit": False,
+            "why": (f"no write credential: profile {prof.name!r} submits only with "
+                    f"{prof.write_token_file} (mode 600) or ${prof.write_token_env}, which "
+                    f"exists only while {prof.host}'s operator grants writing")}
 
 
 # ------------------------------------------------------------------------ commands
@@ -500,15 +545,37 @@ def cmd_labels(args, st: S.Store) -> int:
 
 
 def cmd_run(args, st: S.Store) -> int:
-    if not args.prof.may_submit:
-        # Phase 0 reads production and writes nothing anywhere. A dry run is refused too:
-        # it still walks the state machine, and a RUNNING candidate there would be a lie.
-        print(f"\nDECLINED: profile {args.prof.name!r} never submits "
-              f"(B-Fabric {args.prof.bfabric_env} is read-only in phase 0)", file=sys.stderr)
-        return 3
-    client = SushiClient(args.base_url, token(args.prof), dry_run=args.dry_run)
-    runner = ChainRunner(st, client, max_retries=args.max_retries)
+    prof = args.prof
     cid = args.candidate
+    ready = submit_readiness(prof)
+    if not ready["can_submit"]:
+        # A dry run is refused too: it still walks the state machine, and a RUNNING
+        # candidate on a profile that cannot submit would be a lie.
+        print(f"\nDECLINED: {ready['why']}", file=sys.stderr)
+        return 3
+    if prof.write_token_env is not None and args.dry_run:
+        # Same reason, where submitting is real: a dry run leaves the candidate RUNNING, and
+        # on production that state is read as "jobs are on the cluster".
+        print(f"\nDECLINED: no dry run on profile {prof.name!r}; it would leave the "
+              f"candidate RUNNING with nothing submitted", file=sys.stderr)
+        return 3
+    client = SushiClient(args.base_url, write_token(prof), dry_run=args.dry_run)
+    if prof.write_token_env is not None:
+        # The write credential names its projects. Ask it for the input dataset BEFORE the
+        # first tick, so a project outside its scope is a refusal with the state unchanged,
+        # not a chain halted by a 403 halfway through.
+        cand = st.candidate(cid)
+        if cand is None:
+            raise SystemExit(f"no candidate {cid}")
+        try:
+            client.dataset(int(cand["input_dataset_id"]))
+        except SushiError as exc:
+            print(f"\nDECLINED: the write credential cannot read input dataset "
+                  f"{cand['input_dataset_id']} (project {cand['project_number']}), so it may "
+                  f"not write there either; its scope is set on {prof.host}. Nothing was "
+                  f"changed.\n  {exc}", file=sys.stderr)
+            return 3
+    runner = ChainRunner(st, client, max_retries=args.max_retries)
     while True:
         state = runner.tick(cid)
         if state in S.TERMINAL_CANDIDATE_STATES:
@@ -592,6 +659,15 @@ def cmd_datasets(args, st: S.Store) -> int:
               f"sample(s)  {d['name']}")
     print(f"{len(out)} dataset(s) in project {args.project}"
           + ("" if args.all else " without a parent (add --all for every one)"))
+    return 0
+
+
+def cmd_submits(args, st: S.Store) -> int:
+    ready = submit_readiness(args.prof)
+    if args.json:
+        print(json.dumps(ready))
+    else:
+        print(("CAN SUBMIT: " if ready["can_submit"] else "DOES NOT SUBMIT: ") + ready["why"])
     return 0
 
 
@@ -713,6 +789,10 @@ def main() -> int:
     p = sub.add_parser("recipes", help="list the fixtures and the catalog, invalid ones included")
     p.add_argument("--json", action="store_true", help="machine-readable, for the panel")
     p.set_defaults(fn=cmd_recipes)
+
+    p = sub.add_parser("submits", help="whether `run` would submit on this profile now, and why")
+    p.add_argument("--json", action="store_true", help="machine-readable, for the panel")
+    p.set_defaults(fn=cmd_submits)
 
     p = sub.add_parser("datasets", help="a project's datasets, the choices for ingest --dataset")
     p.add_argument("--project", type=int, required=True)

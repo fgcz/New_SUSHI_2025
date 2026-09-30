@@ -12,12 +12,21 @@ A profile fixes the pair and gives it its own home under ~/.omakase/<profile>/, 
 cannot read each other's files, and `env` is written into every state file and event so a
 file that strays is refused instead of misread.
 
-    test        B-Fabric TEST        + fgcz-h-083 :3010   may submit (the test DB)   runs on fgcz-h-083
-    production  B-Fabric PRODUCTION  + fgcz-h-082 :3010   NEVER submits (phase 0)    runs on fgcz-h-082
+    test        B-Fabric TEST        + fgcz-h-083 :3010   may submit (the test DB)       runs on fgcz-h-083
+    production  B-Fabric PRODUCTION  + fgcz-h-082 :3010   submits ONLY with a separate   runs on fgcz-h-082
+                                                          write credential (see below)
 
 `test` is the default. Watching production is something a person asks for by name.
 Shared by both, never profile-specific: ~/.omakase/audit (the history audit, evidence only)
 and ~/.omakase/archive (records rescued from /tmp on 2026-09-24).
+
+Production submits since 2026-09-30, and only with a WRITE credential that is not the read one.
+082 grants OMAKASE an all-projects READ credential (`backend_token`), which the backend makes
+read-only by construction. Writing needs a second bearer, `backend_write_token`, which exists
+only while 082's operator grants it (`SUSHI_ENV_TOKEN_WRITE_*` + `SUSHI_WRITE_POLICY=submit_only`)
+and whose scope names the projects that may be written. No file, no submission: the switch is
+held by the person who runs 082, not by this code. `test` needs no second bearer, because its
+one key already writes the test DB.
 
 Each profile also runs on its own node only (2026-09-29, `check_host`). The home directory
 is NFS-mounted on both nodes, so ~/.omakase/production/ was writable from fgcz-h-083 and
@@ -45,6 +54,9 @@ class Profile:
     token_env: str        # env var (or .mcp.json key) holding that backend's bearer
     may_submit: bool      # False = this pair only reads; `run` is refused
     host: str             # the only node this profile runs on (short hostname)
+    # None = the read bearer also writes (test). Otherwise the env var of a SEPARATE write
+    # bearer; without it (or `write_token_file`) `run` is refused.
+    write_token_env: str | None = None
 
     @property
     def home(self) -> Path:
@@ -76,12 +88,22 @@ class Profile:
         """
         return self.home / "backend_token"
 
+    @property
+    def write_token_file(self) -> Path:
+        """The SEPARATE write bearer, for a profile whose read bearer cannot write.
+
+        Present only while the backend's operator grants writing (2026-09-30, production). Its
+        scope - which projects may be written - is decided on the backend, not here.
+        """
+        return self.home / "backend_write_token"
+
 
 PROFILES = {
     "test": Profile("test", "TEST", "http://fgcz-h-083.fgcz-net.unizh.ch:3010",
                     "NEWSUSHI_TOKEN_083", may_submit=True, host="fgcz-h-083"),
     "production": Profile("production", "PRODUCTION", "http://fgcz-h-082.fgcz-net.unizh.ch:3010",
-                          "NEWSUSHI_TOKEN_082", may_submit=False, host="fgcz-h-082"),
+                          "NEWSUSHI_TOKEN_082", may_submit=True, host="fgcz-h-082",
+                          write_token_env="NEWSUSHI_WRITE_TOKEN_082"),
 }
 
 HISTORY = ROOT / "audit" / "shapes_by_service_type.json"

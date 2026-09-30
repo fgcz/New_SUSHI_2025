@@ -28,6 +28,10 @@ Panel chat (omakase_*   ─┘         └─ its own record: ~/.omakase/test/om
 - Since 2026-09-29 each profile runs on its own node only: `test` on fgcz-h-083,
   `production` on fgcz-h-082 (its own panel on port 8771, with no chat). Run
   elsewhere, the engine and the watcher exit 2 before opening a file.
+- Since 2026-09-30 `production` can submit, but only with a second, write-only-for-its-projects
+  key in `~/.omakase/production/backend_write_token` (mode 600). 082's operator creates it
+  together with the backend's write grant; without the file, Run is declined. Check with
+  `python3 -m omakase_core.omakase --profile production submits`.
 
 ## Limits of the test setup (as of 2026-09-29)
 
