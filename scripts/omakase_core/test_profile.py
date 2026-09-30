@@ -50,7 +50,7 @@ assert P.get().name == "test" and P.get().bfabric_env == "TEST"
 case("default profile is test, paired with B-Fabric TEST")
 assert P.get("test").may_submit is True and P.get("test").write_token_env is None
 assert P.get("production").may_submit is True
-assert P.get("production").write_token_env == "NEWSUSHI_WRITE_TOKEN_082"
+assert P.get("production").write_token_env == "OMAKASE_WRITE_TOKEN_082"
 case("test submits with its one key; production only through a separate write credential")
 os.environ["OMAKASE_PROFILE"] = "production"
 assert P.get().name == "production"
@@ -140,7 +140,7 @@ if saved_082 is not None:
 
 
 # --- the write credential (2026-09-30): production submits only with a SECOND bearer
-saved_w = os.environ.pop("NEWSUSHI_WRITE_TOKEN_082", None)
+saved_w = os.environ.pop("OMAKASE_WRITE_TOKEN_082", None)
 wf = prod.write_token_file
 assert wf == ROOT / "production" / "backend_write_token"
 tf.write_text("fixture-read-bearer\n")
@@ -155,10 +155,10 @@ assert O.write_token(prod) == "fixture-write-bearer"
 assert O.token(prod) == "fixture-read-bearer"
 assert O.submit_readiness(prod)["can_submit"] is True
 case("with backend_write_token present production submits with it; reads keep the read key")
-os.environ["NEWSUSHI_WRITE_TOKEN_082"] = "fixture-write-from-env"
+os.environ["OMAKASE_WRITE_TOKEN_082"] = "fixture-write-from-env"
 assert O.write_token(prod) == "fixture-write-from-env"
-os.environ.pop("NEWSUSHI_WRITE_TOKEN_082")
-case("an explicit $NEWSUSHI_WRITE_TOKEN_082 wins over the file")
+os.environ.pop("OMAKASE_WRITE_TOKEN_082")
+case("an explicit $OMAKASE_WRITE_TOKEN_082 wins over the file")
 wf.chmod(0o640)
 assert refuses(lambda: O.write_token(prod), SystemExit)
 ready = O.submit_readiness(prod)
@@ -236,7 +236,7 @@ O.SushiClient, O.ChainRunner = real_client, real_runner
 pst.close()
 tf.unlink()
 if saved_w is not None:
-    os.environ["NEWSUSHI_WRITE_TOKEN_082"] = saved_w
+    os.environ["OMAKASE_WRITE_TOKEN_082"] = saved_w
 
 
 # --- the CLI
@@ -267,10 +267,10 @@ assert rc == 0 and "PROPOSED" in out, (rc, out)
 assert (ROOT / "test" / "omakase.sqlite3").exists()
 case("a TEST event under the test profile is PROPOSED, in ~/.omakase/test/")
 rc, out = cli("--profile", "production", "run", "--candidate", "1", "--dry-run",
-              env_extra={"NEWSUSHI_WRITE_TOKEN_082": ""})
+              env_extra={"OMAKASE_WRITE_TOKEN_082": ""})
 assert rc == 3 and "no write credential" in out, (rc, out)
 case("run is DECLINED under production without a write credential, dry run included (rc 3)")
-rc, out = cli("--profile", "production", "submits", env_extra={"NEWSUSHI_WRITE_TOKEN_082": ""})
+rc, out = cli("--profile", "production", "submits", env_extra={"OMAKASE_WRITE_TOKEN_082": ""})
 assert rc == 0 and out.startswith("DOES NOT SUBMIT: no write credential"), (rc, out)
 case("`omakase submits` says so, and why")
 rc, out = cli("ingest", "--event", event("TEST"), "--dataset", "9", "--recipe", "fastqc_only",

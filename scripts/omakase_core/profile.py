@@ -103,7 +103,7 @@ PROFILES = {
                     "NEWSUSHI_TOKEN_083", may_submit=True, host="fgcz-h-083"),
     "production": Profile("production", "PRODUCTION", "http://fgcz-h-082.fgcz-net.unizh.ch:3010",
                           "NEWSUSHI_TOKEN_082", may_submit=True, host="fgcz-h-082",
-                          write_token_env="NEWSUSHI_WRITE_TOKEN_082"),
+                          write_token_env="OMAKASE_WRITE_TOKEN_082"),
 }
 
 HISTORY = ROOT / "audit" / "shapes_by_service_type.json"

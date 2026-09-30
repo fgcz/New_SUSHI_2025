@@ -19,7 +19,7 @@ CLI = SCRIPTS / "bin" / "omakase_cli"
 ROOT = Path(tempfile.mkdtemp(prefix="omakase_cli_test_"))
 ELSEWHERE = Path(tempfile.mkdtemp(prefix="omakase_cli_cwd_"))
 ENV = {k: v for k, v in os.environ.items()
-       if k not in ("OMAKASE_PROFILE", "NEWSUSHI_WRITE_TOKEN_082", "OMAKASE_STORE")}
+       if k not in ("OMAKASE_PROFILE", "OMAKASE_WRITE_TOKEN_082", "OMAKASE_STORE")}
 ENV["OMAKASE_ROOT"] = str(ROOT)
 
 cases = 0
