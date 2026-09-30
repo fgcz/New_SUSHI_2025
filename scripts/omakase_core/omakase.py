@@ -115,7 +115,12 @@ def submit_readiness(prof: P.Profile) -> dict:
     if prof.write_token_env is None:
         return {"profile": prof.name, "can_submit": True,
                 "why": f"profile {prof.name!r} submits with its one backend key"}
-    present = bool(os.environ.get(prof.write_token_env)) or prof.write_token_file.exists()
+    try:
+        # The same checks `run` applies (mode 600, not empty), so the answer cannot say
+        # "submits" for a file `run` would then refuse. The value is read and dropped.
+        present = _env_or_file(prof.write_token_env, prof.write_token_file) is not None
+    except SystemExit as exc:
+        return {"profile": prof.name, "can_submit": False, "why": str(exc)}
     if present:
         return {"profile": prof.name, "can_submit": True,
                 "why": (f"a write credential is present ({prof.write_token_file} or "

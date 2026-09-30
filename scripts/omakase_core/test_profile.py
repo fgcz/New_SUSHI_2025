@@ -161,8 +161,10 @@ os.environ.pop("NEWSUSHI_WRITE_TOKEN_082")
 case("an explicit $NEWSUSHI_WRITE_TOKEN_082 wins over the file")
 wf.chmod(0o640)
 assert refuses(lambda: O.write_token(prod), SystemExit)
+ready = O.submit_readiness(prod)
+assert ready["can_submit"] is False and "must be 600" in ready["why"], ready
 wf.chmod(0o600)
-case("a write token file others can read is refused, not used")
+case("a write token file others can read is refused, not used - and not reported as ready")
 assert O.write_token(test) == O.token(test)
 assert O.submit_readiness(test)["can_submit"] is True
 case("test's write bearer IS its one bearer")
