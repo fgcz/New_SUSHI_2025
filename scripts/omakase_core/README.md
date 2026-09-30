@@ -37,6 +37,11 @@ python3 -m omakase_core.omakase run     --candidate 1 --dry-run
 python3 -m omakase_core.omakase run     --candidate 1
 ```
 
+Or from any directory, as a command (2026-09-30): `scripts/bin/omakase_cli <command> …` is
+exactly the long form above, and `omakase_cli watch …` is the order watcher. Put
+`scripts/bin` on PATH once (`docs/omakase-operation-quickstart.md`, "Setup, once");
+`test_cli.py` pins that it adds nothing of its own.
+
 `--dataset` is **optional since 2026-09-11**. Left out, the order is resolved to the one
 parentless dataset in its project carrying that order id — see below. Given, it wins, which
 is not only a fallback: when an order resolves to several raw datasets, which one to

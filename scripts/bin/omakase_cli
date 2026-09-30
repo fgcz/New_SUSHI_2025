@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""omakase_cli - OMAKASE as a command, from any directory.
+
+    omakase_cli <command> [options]           the engine:  python3 -m omakase_core.omakase
+    omakase_cli watch [options]               the watcher: python3 -m omakase_order_watch.watch
+    omakase_cli --profile production <command> ...
+
+It adds nothing of its own: it finds the scripts directory next to itself (following a
+symlink), puts it on the import path, and calls the same main() the long form calls - the
+same functions the panel's buttons use. Output, refusals and exit codes are unchanged:
+0 done, 2 refused, 3 declined (see omakase_core/omakase.py).
+
+Setup, once (bash or zsh):
+    export PATH=/srv/sushi/masa_test_new_sushi_20260527/scripts/bin:$PATH
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+PROG = "omakase_cli"
+SCRIPTS = Path(__file__).resolve().parent.parent
+GLOBAL_WITH_VALUE = ("--profile", "--store")   # the engine's options before the command
+
+
+def split_globals(argv: list[str]) -> tuple[list[str], str | None, list[str]]:
+    """(the options before the command, the command, everything after it)."""
+    i = 0
+    while i < len(argv):
+        arg = argv[i]
+        if arg in GLOBAL_WITH_VALUE:
+            i += 2
+        elif arg.startswith(tuple(o + "=" for o in GLOBAL_WITH_VALUE)):
+            i += 1
+        elif arg.startswith("-"):
+            # -h/--help, or an option this wrapper does not know: argparse answers it.
+            return argv, None, []
+        else:
+            return argv[:i], arg, argv[i + 1:]
+    return argv, None, []
+
+
+def main() -> int:
+    sys.path.insert(0, str(SCRIPTS))
+    argv = sys.argv[1:]
+    before, command, after = split_globals(argv)
+
+    if command == "watch":
+        if any(a == "--store" or a.startswith("--store=") for a in before):
+            print(f"{PROG}: --store belongs to the engine; the watcher takes --state and "
+                  f"--events (omakase_cli watch --help)", file=sys.stderr)
+            return 2
+        from omakase_order_watch import watch
+        sys.argv = [f"{PROG} watch", *before, *after]
+        return watch.main()
+
+    from omakase_core import omakase
+    if command is None and any(a in ("-h", "--help") for a in before):
+        print(f"{PROG}: every command below, plus `watch` (the order watcher: "
+              f"{PROG} watch --help). Same as python3 -m omakase_core.omakase, from any "
+              f"directory.\n")
+    sys.argv = [PROG, *argv]
+    return omakase.main()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

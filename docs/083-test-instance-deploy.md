@@ -158,7 +158,7 @@ in TEAM.md, Part 2.
 | panel requires a key | `curl -s -o /dev/null -w '%{http_code}\n' http://fgcz-h-083.fgcz-net.unizh.ch:8770/api/health` | `401` |
 | hermes | `ss -ltn 'sport = :8642'` | one `LISTEN` on 127.0.0.1 |
 | job_manager | `ps -eo user,args \| grep -c '[s]tart_sushi_jobmanager'` | `1` |
-| the engine | `cd /srv/sushi/masa_test_new_sushi_20260527/scripts && python3 -m omakase_core.omakase submits` | `CAN SUBMIT: profile 'test' submits with its one backend key` |
+| the engine | `omakase_cli submits` (PATH setup: [omakase-operation-quickstart.md](omakase-operation-quickstart.md)) | `CAN SUBMIT: profile 'test' submits with its one backend key` |
 | a person | open the panel with a member URL | `signed in as <name>` in the OMAKASE tab |
 
 A real sign-in to Omics-Studio in a browser after the backend restart of 2026-09-29 has

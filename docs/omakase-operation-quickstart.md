@@ -31,7 +31,26 @@ Panel chat (omakase_*   ─┘         └─ its own record: ~/.omakase/test/om
 - Since 2026-09-30 `production` can submit, but only with a second, write-only-for-its-projects
   key in `~/.omakase/production/backend_write_token` (mode 600). 082's operator creates it
   together with the backend's write grant; without the file, Run is declined. Check with
-  `python3 -m omakase_core.omakase --profile production submits`.
+  `omakase_cli --profile production submits`.
+
+## Setup, once: the `omakase_cli` command
+
+Every terminal command below is `omakase_cli`, callable from any directory. Put its
+directory on your PATH once, in `~/.zshrc` (zsh) or `~/.bashrc` (bash), then open a new
+terminal:
+
+```bash
+export PATH=/srv/sushi/masa_test_new_sushi_20260527/scripts/bin:$PATH
+```
+
+Check: `omakase_cli --help` lists the commands. The home directory is shared by fgcz-h-082
+and fgcz-h-083, so this one line serves both nodes.
+
+`omakase_cli` adds nothing of its own. `omakase_cli <command> …` is
+`python3 -m omakase_core.omakase <command> …`, and `omakase_cli watch …` is
+`python3 -m omakase_order_watch.watch …`, both run from
+`/srv/sushi/masa_test_new_sushi_20260527/scripts`. The output, the refusals and the exit codes
+are the same (0 done, 2 refused, 3 declined), and the long form keeps working.
 
 ## Limits of the test setup (as of 2026-09-29)
 
@@ -63,40 +82,38 @@ Panel chat (omakase_*   ─┘         └─ its own record: ~/.omakase/test/om
 | 9 | See the result in Omics-Studio | — | <http://fgcz-h-083.fgcz-net.unizh.ch:4000/projects/35611/datasets> (sign in with B-Fabric TEST or LDAP). Outputs are named `omakase_c<candidate>_s<step>_<App>` |
 | 10 | Reset the demo | **Reset demo** (test profile only) | Moves the store, run logs and outbox to `~/.omakase/archive/demo_resets/<time>/`. Nothing is deleted. Refused while a chain runs. Candidate numbers restart at 1 |
 
-The same steps from a terminal. Run them from the scripts directory; `--profile test` is
-the default, so it is not written. Replace `1` with the candidate number that step 4
-prints.
+The same steps from a terminal (after the one-time setup above; any directory).
+`--profile test` is the default, so it is not written. Replace `1` with the candidate
+number that step 4 prints.
 
 ```bash
-cd /srv/sushi/masa_test_new_sushi_20260527/scripts
-
 # 1. orders that can be proposed
 ls ~/.omakase/test/fixtures ~/.omakase/test/events
 
 # 1b. add an order by its id (a record is written only if it is processed now)
-python3 -m omakase_order_watch.watch --order <order id>
+omakase_cli watch --order <order id>
 
 # 2. recipes
-python3 -m omakase_core.omakase recipes
+omakase_cli recipes
 
 # 3. would any recipe be chosen automatically?
-python3 -m omakase_core.omakase match --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json --dataset 9
+omakase_cli match --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json --dataset 9
 
 # 4. propose a named recipe
-python3 -m omakase_core.omakase ingest --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json --recipe rnaseq_meeting_shape
+omakase_cli ingest --event ~/.omakase/test/fixtures/order_35755_chain_fixture.json --recipe rnaseq_meeting_shape
 
 # 5. all proposals, then one
-python3 -m omakase_core.omakase show
-python3 -m omakase_core.omakase show --candidate 1
+omakase_cli show
+omakase_cli show --candidate 1
 
 # 6. approve
-python3 -m omakase_core.omakase approve --candidate 1 --actor <your name>
+omakase_cli approve --candidate 1 --actor <your name>
 
 # 7. dry run
-python3 -m omakase_core.omakase run --candidate 1 --dry-run
+omakase_cli run --candidate 1 --dry-run
 
 # 8. run the chain
-python3 -m omakase_core.omakase run --candidate 1
+omakase_cli run --candidate 1
 
 # 10. reset the demo
 bash ~/omakase_demo_reset.sh
@@ -122,22 +139,21 @@ Claude Code runs the same commands through its shell, so plain requests work, fo
 Keep the OMAKASE tab open on the left and type your name in its name box once (the browser
 remembers it): **Allow** records that name as the approver. Then write in the chat on the
 right. Each prompt below maps to one `omakase_*` tool, the panel control that does the same,
-and the command line underneath. The commands run from
-`/srv/sushi/masa_test_new_sushi_20260527/scripts`; replace `2` with the candidate number the
-propose step reports (candidate 1 on 2026-09-29 was an earlier `fastqc_only`, already DONE).
+and the command line underneath (`omakase_cli`, see the one-time setup). Replace `2` with the
+candidate number the propose step reports (candidate 1 on 2026-09-29 was an earlier `fastqc_only`, already DONE).
 
 | # | Prompt (English) | Tool | Panel | Command line |
 |---|---|---|---|---|
-| 1 | `What is the current OMAKASE status?` | `omakase_status` | the status card | `python3 -m omakase_core.omakase show` and `python3 -m omakase_order_watch.watch --status` |
+| 1 | `What is the current OMAKASE status?` | `omakase_status` | the status card | `omakase_cli show` and `omakase_cli watch --status` |
 | 2 | `Which orders can OMAKASE propose on right now?` | `omakase_orders` | "Orders with an order record" | `ls ~/.omakase/test/events ~/.omakase/test/fixtures` (no list command) |
-| 3 | `Fetch order 35755 from B-Fabric.` | `omakase_fetch_order` | order id box, **Fetch** | `python3 -m omakase_order_watch.watch --order 35755` |
-| 4 | `Which recipes match order 35755, and why?` | `omakase_match` | "automatic", then Propose | `python3 -m omakase_core.omakase match --event ~/.omakase/test/events/order_35755.json` |
-| 5 | `List the available recipes.` | `omakase_recipes` | the recipe drop-down | `python3 -m omakase_core.omakase recipes` |
-| 6 | `Propose the recipe rnaseq_meeting_shape for order 35755.` | `omakase_propose` | choose the recipe, **Propose** | `python3 -m omakase_core.omakase ingest --event ~/.omakase/test/events/order_35755.json --recipe rnaseq_meeting_shape` |
-| 7 | `Show me the new proposal: the steps, parameters and genome.` | `omakase_show` | the proposal card | `python3 -m omakase_core.omakase show --candidate 2` |
-| 8 | `Please approve candidate 2.` | `omakase_request_approve` → a request card → **Allow** | **Approve** | `python3 -m omakase_core.omakase approve --candidate 2 --actor <your name>` |
-| 9 | `Do a dry run of candidate 2.` | `omakase_request_run` (dry run) → **Allow** | **Dry run** | `python3 -m omakase_core.omakase run --candidate 2 --dry-run` |
-| 10 | `Now run candidate 2 on the cluster.` | `omakase_request_run` → **Allow** | **Run chain** | `python3 -m omakase_core.omakase run --candidate 2` |
+| 3 | `Fetch order 35755 from B-Fabric.` | `omakase_fetch_order` | order id box, **Fetch** | `omakase_cli watch --order 35755` |
+| 4 | `Which recipes match order 35755, and why?` | `omakase_match` | "automatic", then Propose | `omakase_cli match --event ~/.omakase/test/events/order_35755.json` |
+| 5 | `List the available recipes.` | `omakase_recipes` | the recipe drop-down | `omakase_cli recipes` |
+| 6 | `Propose the recipe rnaseq_meeting_shape for order 35755.` | `omakase_propose` | choose the recipe, **Propose** | `omakase_cli ingest --event ~/.omakase/test/events/order_35755.json --recipe rnaseq_meeting_shape` |
+| 7 | `Show me the new proposal: the steps, parameters and genome.` | `omakase_show` | the proposal card | `omakase_cli show --candidate 2` |
+| 8 | `Please approve candidate 2.` | `omakase_request_approve` → a request card → **Allow** | **Approve** | `omakase_cli approve --candidate 2 --actor <your name>` |
+| 9 | `Do a dry run of candidate 2.` | `omakase_request_run` (dry run) → **Allow** | **Dry run** | `omakase_cli run --candidate 2 --dry-run` |
+| 10 | `Now run candidate 2 on the cluster.` | `omakase_request_run` → **Allow** | **Run chain** | `omakase_cli run --candidate 2` |
 | 11 | `What happened to my requests?` | `omakase_requests` | "Requests from the chat" | `ls ~/.omakase/test/chat_requests/` (one JSON file per request) |
 | 12 | `How is the run going? Show the latest log.` | `omakase_runs`, `omakase_show` | "Chain runs" | `ls -t ~/.omakase/test/runs/` and `tail -n 40` the newest `.log` |
 
