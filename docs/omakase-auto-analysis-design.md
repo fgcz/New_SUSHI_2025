@@ -27,7 +27,7 @@ does not have to order it).
 | # | Decision | One-line reason |
 |---|----------|-----------------|
 | **D1** | **No consent dialog. Data minimisation instead.** Only allow-listed, non-sensitive order parameters are read, and only the on-prem vLLM is used. The customer is informed, not asked. | If nothing sensitive ever leaves the field allow-list, and inference stays on-prem, there is nothing to obtain consent for. Simpler, and safer than a consent form nobody reads. |
-| **D2** | **A versioned recipe catalog decides the analysis. The LLM only assists.** | A rule can be reviewed, unit-tested and signed off by a bioinformatician. A prompt cannot. |
+| **D2** | **A versioned recipe catalog decides the analysis. The LLM only assists.** *Revised 2026-10-01:* an AI **may draft** new recipes and **propose updates** to existing ones; a bioinformatician **decides whether to adopt** each one and is accountable for it. Nothing an AI drafts runs until a named person has adopted it as a new version (§5.3). | A rule can be reviewed, unit-tested and signed off by a bioinformatician. A prompt cannot. Who drafts the rule does not change that; who adopts it does. |
 | **D3** | **QC is deterministic first; the LLM writes the verdict text.** | Reuses the existing SUSHI-MCP-server `loop_validation` discipline: the acting LLM's self-report is never evidence. |
 | **D4** | **The always-on part is plain code, not an LLM.** | Removes the "keep an agent alive" problem. LLMs and the skill-aware harness are invoked per event. |
 | **D5** | **4 hours = 4 *business* hours, armed only after the notice is verified.** | A Friday-17:00 order must not auto-start at 21:00 with nobody able to veto. |
@@ -380,7 +380,11 @@ v0.2 proposed back-testing the recipe engine against 12 months of historic SUSHI
 So the catalog is authored forward, not derived backward:
 
 ```
-  bioinformaticians write the recipe for each top order type   (current best practice)
+  a bioinformatician writes the recipe for a top order type    (current best practice)
+  — or an AI drafts one, or proposes an update to an existing one
+                              │
+                              ▼
+  a bioinformatician reviews it and decides whether to adopt it  (named, accountable)
                               │
                               ▼
   shadow mode on NEW orders — propose, write nothing, compare with what is actually run
@@ -391,6 +395,21 @@ So the catalog is authored forward, not derived backward:
 
 The recipe catalog is thus valuable in its own right: it is the first machine-readable
 record of current best practice per order type.
+
+**Revised 2026-10-01 (user decision): an AI may draft and update recipes.** Until then the
+rule was "hand-written, never agent-generated". Now an AI may write a new recipe or propose a
+new version of an existing one; a bioinformatician decides whether it is adopted and takes
+responsibility for it. What does **not** change:
+
+| Unchanged | Why |
+|---|---|
+| At run time the catalog decides, by plain code | Selection stays reproducible from `recipe_id@version`; no model picks an app chain on the fly |
+| An AI draft is never live by itself | Adoption by a named person is what turns a draft into a catalog version; the record keeps both the drafter and the adopter |
+| The data rule (§3, AI-usage policy) | A draft written from **real** order metadata, project descriptions or job history must come from the on-prem vLLM. A draft written only from public material (app definitions, published protocols, nf-core documentation) may use any approved tool |
+
+This is also the route for the 2026-09-30 request that recipes should not stay static: an
+improvement arrives as an AI-proposed new version that a human adopts, never as a recipe that
+changes itself.
 
 ---
 
