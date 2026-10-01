@@ -1,0 +1,112 @@
+# AI DRAFT - NOT ADOPTED. Bulk RNA-seq for UNSTRANDED libraries (Smart-seq2). Design decision D2 (revised 2026-10-01): an AI may
+# draft a recipe; a bioinformatician decides whether to adopt it and is accountable for it.
+# Until then the engine never selects it automatically and runs it by name only on the test
+# instance (fgcz-h-083). Review guide: drafts/REVIEW.md.
+#
+# ## Which orders it is for (measured, B-Fabric PRODUCTION, orders created 2025-10-01..2026-10-01)
+#
+# 199 orders had Sequencing Application "Transcriptome Sequencing", all of them service type
+# "High Throughput Sequencing (NGS)" (FGCZ makes the library, so the kit is recorded on all
+# 199). The kit below is 17 of them. Source: scripts/omakase_field_audit/.
+#
+# ## Why strandMode: both
+#
+# Smart-seq2 amplifies full-length cDNA with template switching and tagments it afterwards,
+# so a read carries no strand information (Picelli et al., Nat Protoc 2014,
+# https://doi.org/10.1038/nprot.2014.006). `both` is featureCounts strandSpecific = 0
+# (ezRun R/app-featureCounts.R:84-90). This one is from the method's published design, not
+# from a vendor page - the reviewer should confirm FGCZ's protocol does not add a stranded
+# step.
+#
+# ## What the data decides, not this file
+#
+# * refBuild: from the dataset's Species column via /srv/GT/reference-favorite (the curated
+#   build per species). An order whose dataset has no Species, two species, or an uncurated
+#   species is refused - nobody guesses a genome.
+# * paired: left out on purpose. The backend applies each app's own defaults before the
+#   recipe's parameters, and STARApp/FastqcApp set paired = "the dataset has a Read2 column"
+#   (STARApp.rb:139, FastqcApp.rb set_default_parameters). FeatureCounts then reads paired
+#   and strandMode from STAR's output columns (FeatureCountsApp.rb:68-72).
+#
+# ## Open questions for the reviewer (see drafts/REVIEW.md)
+#
+# Q1  Smart-seq2 is often used for low-input samples. Are the app-default STAR filters
+#     (cmdOptions, `--outFilterMatchNmin 30`) right for it?
+# Q2  Is a Smart-seq2 order at FGCZ bulk, or plate-based single-cell where each sample is a
+#     cell? This recipe assumes bulk; per-cell plates would need a different chain.
+# Q3  Fewer than 3 samples: CountQC failed inside its report on a 2-sample dataset
+#     (2026-09-11) and has no sample-count guard. The order cannot tell the real sample
+#     count (see `match` below), so a 1-2 sample order would reach CountQC and halt there.
+#     Drop CountQC, or accept that halt?
+# Q4  Resources are each app's shipped defaults; STAR 30 GB with one retry at 60 GB.
+#     Is 30 GB enough for GRCh38/GRCm39 on FGCZ's STAR indexes?
+# Q5  No differential expression step: the control-versus-treatment grouping is a judgement
+#     nothing here can make.
+
+schema_version: 1
+id: bulk_rnaseq_unstranded
+version: 1
+author: >
+  AI draft (Claude Opus 5.5 via Claude Code, 2026-10-01) - NOT adopted. Written from vendor
+  documentation, the SUSHI app definitions and aggregate B-Fabric order counts; no order
+  record or sample data was read.
+description: >
+  Bulk RNA-seq for unstranded Smart-seq2 libraries: FastQC, FastQ Screen
+  and STAR side by side, then featureCounts, then CountQC. Genome from the dataset's Species.
+
+match:
+  # No service_type rule: all 199 such orders are NGS service anyway, and a real order event
+  # carries the service type as an id without a name, which a service_type rule can never
+  # match (recorded 2026-10-01, not fixed).
+  sequencing_application: ["Transcriptome Sequencing"]
+  library_protocol:
+    - "Smartseq II"     # 17 orders
+  # 29 of 163 answered orders declare transgenes: the curated genome lacks them, so a person
+  # chooses. 36 orders do not answer; "unknown" is not "no", so they abstain too.
+  samples_contain_transgenes: false
+  species_in_reference_catalog: true
+  # No `samples` rule, on purpose (measured 2026-10-01): the order's `countsamples` counts
+  # every sample record - biological, library, pool, on-run, QC - a median 5.2x the
+  # biological samples over 25 orders, and the declared `numberofsamples` is missing on 83 of
+  # these 152 orders. A rule on it would test the wrong number. See REVIEW.md Q-samples.
+
+steps:
+  - id: fastqc
+    app: FastqcApp
+    after: []
+    params: {cores: 8, ram: 15, scratch: 100}
+    # FastqcApp offers ram [15, 30, 62].
+    retry_params: {ram: 30}
+
+  - id: fastqscreen
+    app: FastqScreenApp
+    after: []
+    params: {cores: 8, ram: 60, scratch: 100}
+
+  - id: star
+    app: STARApp
+    after: []
+    params:
+      cores: 8
+      ram: 30
+      scratch: 100
+      refBuild: "{{ reference_for(species) }}"
+      strandMode: both
+    # STARApp offers ram ['30','40','60','330']; 60 is the next rung that doubles.
+    retry_params: {ram: 60, scratch: 200}
+
+  - id: featurecounts
+    app: FeatureCountsApp
+    after: [star]
+    params: {cores: 8, ram: 20, scratch: 10}
+    retry_params: {ram: 40, scratch: 20}
+
+  - id: countqc
+    app: CountQCApp
+    after: [featurecounts]
+    params: {cores: 1, ram: 8, scratch: 10}
+    # CountQCApp offers ram ['8','12','50'].
+    retry_params: {ram: 12, scratch: 20}
+
+autostart: false
+autostart_blocked_by: Unadopted AI draft (design D2). A bioinformatician adopts it into the catalog first.

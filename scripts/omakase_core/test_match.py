@@ -30,6 +30,10 @@ os.environ["OMAKASE_CATALOG_DIR"] = str(CAT)
 
 from omakase_core import match as M, recipes as R  # noqa: E402
 
+# The real drafts/ directory holds AI drafts that would join every select() below.
+R.DRAFT_DIR = TMP / "drafts"
+R.DRAFT_DIR.mkdir()
+
 cases = 0
 
 
@@ -119,5 +123,62 @@ except R.RecipeError as exc:
 case("two matches -> abstain, never a guess")
 assert R.select(order(), "sc_b")["id"] == "sc_b"
 case("a named recipe is used as named, whatever match says")
+
+# --- fields added 2026-10-01 (scripts/omakase_field_audit/)
+rna = {"id": "bulk", "version": 1, "match": {
+    "sequencing_application": ["Transcriptome Sequencing"],
+    "library_protocol": ["Illumina Stranded mRNA Prep, Ligation"],
+    "read_configuration": ["Paired End 150 bp"],
+    "samples_contain_transgenes": False}}
+tx = order(sequencingapplication="Transcriptome Sequencing",
+           libraryprotocol="Illumina Stranded mRNA Prep, Ligation",
+           instrumentreadconfiguration="Paired End 150 bp", samplescontaintransgenes=False)
+assert M.evaluate(rna, tx)["matches"]
+assert not M.evaluate(rna, dict(tx, instrumentreadconfiguration="Single Read 100 bp"))["matches"]
+case("read_configuration is a string list like the others")
+assert not M.evaluate(rna, dict(tx, samplescontaintransgenes=True))["matches"]
+no_answer = dict(tx); del no_answer["samplescontaintransgenes"]
+r = M.evaluate(rna, no_answer)
+assert not r["matches"] and any("does not say" in why for _, _, why in r["checks"])
+assert M.evaluate(rna, dict(tx, samplescontaintransgenes="false"))["matches"]
+case("a boolean rule needs the order's exact answer; no answer is not 'no'")
+opt = {"id": "flex", "version": 1, "match": {"sequencing_application": ["BD Rhapsody"],
+                                             "library_protocol_option": ["FFPE"]}}
+assert M.evaluate(opt, order(libraryprotocoloption=["Human Probe Set v2", "FFPE"]))["matches"]
+assert not M.evaluate(opt, order(libraryprotocoloption=["Human Probe Set v2", "FF"]))["matches"]
+assert not M.evaluate(opt, order())["matches"]
+case("a list field on the order passes when ANY entry is in the recipe's list")
+assert R.validate({"id": "x", "version": 1, "author": "t", "autostart": False,
+                   "autostart_blocked_by": "t", "steps": [{"app": "FastqcApp"}],
+                   "match": {"sequencing_application": ["x"], "nuclei": "yes"}},
+                  Path("x_v1.yaml")) != []
+case("a boolean match key that is not true/false is refused at load")
+
+# --- drafts: measured by match, never selected automatically, named only on `test`
+for f in (CAT / "recipes").glob("*.yaml"):
+    f.unlink()
+(R.DRAFT_DIR / "bulk_v1.yaml").write_text(yaml.safe_dump({
+    "id": "bulk", "version": 1, "author": "AI draft", "match": rna["match"],
+    "steps": [{"app": "FastqcApp"}], "autostart": False, "autostart_blocked_by": "t"}))
+res = R.explain(tx)
+assert [x["source"] for x in res if x["recipe"] == "bulk"] == ["draft"]
+assert [x["matches"] for x in res if x["recipe"] == "bulk"] == [True]
+try:
+    R.select(tx)
+    raise AssertionError("a matching draft was selected automatically")
+except R.RecipeError as exc:
+    assert "unadopted draft(s) would match: bulk" in str(exc)
+case("a draft that matches is reported, never selected automatically")
+named = R.select(tx, "bulk")
+R.check_draft_allowed(named, "test")
+try:
+    R.check_draft_allowed(named, "production")
+    raise AssertionError("a draft was allowed on production")
+except R.RecipeError as exc:
+    assert "unadopted draft" in str(exc)
+put("bulk_adopted", rna["match"])
+R.check_draft_allowed(R.load("bulk_adopted"), "production")
+assert R.select(tx)["id"] == "bulk_adopted"
+case("a named draft runs on test only; an adopted copy in the catalog is selected and allowed")
 
 print(f"{cases} cases, all pass")

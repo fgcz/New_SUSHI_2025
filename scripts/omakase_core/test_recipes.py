@@ -192,7 +192,7 @@ try:
     R.load("fastqc_only")
     raise AssertionError("an id in both places was not refused")
 except R.RecipeError as exc:
-    assert "exists in both" in str(exc)
+    assert "exists in more than one" in str(exc)
 case("the same id in the fixtures and the catalog is refused, never merged")
 try:
     R.select({"id": 1})

@@ -225,6 +225,12 @@ Do not ask for permission to process sensitive data. **Never read it in the firs
   Instrument                ──────────►  Instrument
   Library Protocol          ──────────►  Library Protocol
   sample count / layout     ──────────►  sample count / layout
+  ── added 2026-10-01 (experiment settings; scripts/omakase_field_audit/) ──
+  Library Protocol Option   ──────────►  e.g. probe set, FFPE, TCR/BCR, hashing
+  Read Configuration        ──────────►  e.g. Paired End 150 bp (the "layout" above)
+  Nuclei (yes/no)           ──────────►  nuclei instead of cells
+  Samples contain transgenes ─────────►  the curated genome may not be enough
+  Storage Model             ──────────►  analysis requested, or data delivery only
   ─────────────────────────────────────────────────────────────
   customer name             ╳ never read
   contact details           ╳ never read

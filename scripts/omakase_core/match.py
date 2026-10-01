@@ -2,9 +2,16 @@
 
 A recipe (format v1) matches an order when EVERY constraint it writes is satisfied:
 
-    service_type / sequencing_application / instrument / library_protocol
+    service_type / sequencing_application / instrument / library_protocol /
+    library_protocol_option / read_configuration / storage_model
         the order's value, canonicalised, is one of the recipe's values, canonicalised.
-        An empty list does not constrain. An order without the field does not match.
+        `libraryprotocoloption` is a LIST on the order: it passes when ANY of its entries is
+        in the recipe's list. An empty list does not constrain. An order without the field
+        does not match.
+    nuclei / samples_contain_transgenes   (true or false)
+        the order states exactly that answer. An order that does not answer does not match:
+        "unknown" is not "no", and a recipe that needs "no transgenes" must not run on
+        samples nobody asked about.
     species                    the input DATASET's single Species is in the list
     species_in_reference_catalog: true
                                that Species resolves to a genome for THIS recipe
@@ -39,12 +46,20 @@ from typing import Any
 
 from . import reference
 
-# recipe key -> order field (B-Fabric `order` endpoint, verified on production 2026-09-24)
+# recipe key -> order field (B-Fabric `order` endpoint, verified on production 2026-09-24;
+# the last three and BOOL_FIELDS added 2026-10-01 from scripts/omakase_field_audit/)
 ORDER_FIELDS = {
     "service_type": "servicetype",            # a {classname, id} dict: needs a name
     "sequencing_application": "sequencingapplication",
     "instrument": "instrument",
     "library_protocol": "libraryprotocol",
+    "library_protocol_option": "libraryprotocoloption",   # a list on the order
+    "read_configuration": "instrumentreadconfiguration",
+    "storage_model": "storagemodel",
+}
+BOOL_FIELDS = {
+    "nuclei": "nuclei",
+    "samples_contain_transgenes": "samplescontaintransgenes",
 }
 STRING_LISTS = tuple(ORDER_FIELDS) + ("species",)
 SPECIES_RULES = ("species", "species_in_reference_catalog")
@@ -64,13 +79,33 @@ def canonical(text: Any) -> str:
 
 def order_value(order: dict, key: str) -> str | None:
     """The order's value for a recipe key, or None when it is absent or unnamed."""
+    values = order_values(order, key)
+    return " + ".join(values) if values else None
+
+
+def order_values(order: dict, key: str) -> list[str]:
+    """Every value the order gives for a recipe key: one for most fields, several for a list
+    field (`libraryprotocoloption`), none when absent or unnamed."""
     value = order.get(ORDER_FIELDS[key])
-    if isinstance(value, dict):
-        # service type arrives as {classname, id}; only a resolved name can be matched
-        value = value.get("name")
-    if value is None or str(value).strip() == "":
-        return None
-    return str(value)
+    items = value if isinstance(value, list) else [value]
+    out = []
+    for v in items:
+        if isinstance(v, dict):
+            # service type arrives as {classname, id}; only a resolved name can be matched
+            v = v.get("name")
+        if v is not None and str(v).strip() != "":
+            out.append(str(v))
+    return out
+
+
+def order_bool(order: dict, key: str) -> bool | None:
+    """True/False as the order states it; None when it does not say."""
+    value = order.get(BOOL_FIELDS[key])
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+        return value.strip().lower() == "true"
+    return None
 
 
 def sample_count(order: dict) -> int | None:
@@ -96,12 +131,23 @@ def evaluate(recipe: dict, order: dict, dataset: dict | None = None) -> dict[str
         wanted = m.get(key) or []
         if not wanted:
             continue
-        have = order_value(order, key)
-        if have is None:
+        have = order_values(order, key)
+        if not have:
             checks.append((key, False, f"the order has no {ORDER_FIELDS[key]}"))
             continue
-        ok = canonical(have) in {canonical(w) for w in wanted}
-        checks.append((key, ok, f"{have!r} " + ("is" if ok else "is not") + " in the list"))
+        allowed = {canonical(w) for w in wanted}
+        ok = any(canonical(h) in allowed for h in have)
+        shown = have[0] if len(have) == 1 else have
+        checks.append((key, ok, f"{shown!r} " + ("is" if ok else "is not") + " in the list"))
+    for key, field in BOOL_FIELDS.items():
+        if key not in m:
+            continue
+        have_b = order_bool(order, key)
+        if have_b is None:
+            checks.append((key, False, f"the order does not say ({field} absent)"))
+        else:
+            checks.append((key, have_b is m[key],
+                           f"the order says {have_b}, the recipe needs {m[key]}"))
     species, why_not = None, "Species is on the dataset, not the order"
     if dataset is not None and (m.get("species") or m.get("species_in_reference_catalog") is True):
         try:

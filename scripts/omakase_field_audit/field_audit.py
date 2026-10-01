@@ -443,6 +443,8 @@ def main(argv=None):
     ap.add_argument("--min-count", type=int, default=5)
     ap.add_argument("--orders", type=int, default=60, help="orders sampled by `samples`")
     ap.add_argument("--seed", type=int, default=20261001)
+    ap.add_argument("--where", action="append", default=[], metavar="FIELD=VALUE",
+                    help="keep only orders whose string FIELD equals VALUE (repeatable)")
     args = ap.parse_args(argv)
     if args.min_count < 5:
         ap.error("--min-count below 5 would print near-unique values")
@@ -451,6 +453,10 @@ def main(argv=None):
     orders, since = fetch_orders(client, args.months)
     names = service_type_names(client, orders)
     print(f"sequencing orders created after {since}: {len(orders)}")
+    for cond in args.where:
+        field, _, want = cond.partition("=")
+        orders = [o for o in orders if str(o.get(field) or "").strip() == want.strip()]
+        print(f"  where {field} == {want!r}: {len(orders)} orders")
     if args.mode == "inventory":
         gap = [in_gap(o) for o in orders]
         inventory(orders, gap)

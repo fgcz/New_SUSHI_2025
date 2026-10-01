@@ -113,6 +113,12 @@ EVENT_FIELDS = [
     "numberofsamples",
     "countsamples",
     "countdatasets",
+    # 2026-10-01: experiment settings the recipe `match` may read (scripts/omakase_field_audit/)
+    "libraryprotocoloption",
+    "instrumentreadconfiguration",
+    "nuclei",
+    "samplescontaintransgenes",
+    "storagemodel",
 ]
 
 _stop = False

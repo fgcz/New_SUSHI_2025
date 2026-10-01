@@ -54,6 +54,9 @@ KEPT_ORDER_FIELDS = [
     "id", "status", "statusmodified", "statusmodifiedby", "project", "servicetype",
     "technology", "sequencingapplication", "instrument", "libraryprotocol",
     "numberofsamples", "countsamples", "countdatasets",
+    # 2026-10-01: experiment settings, not people or free text (scripts/omakase_field_audit/)
+    "libraryprotocoloption", "instrumentreadconfiguration", "nuclei",
+    "samplescontaintransgenes", "storagemodel",
 ]
 
 
@@ -148,6 +151,7 @@ def cmd_ingest(args, st: S.Store) -> int:
     dataset = (None if args.recipe else
                SushiClient(args.base_url, token(args.prof)).dataset(dataset_id))
     recipe = recipes.select(order, args.recipe, dataset)
+    recipes.check_draft_allowed(recipe, args.prof.name)
     print(f"recipe:   {recipe['id']}@{recipe['version']} "
           + ("(named)" if args.recipe else "(the one recipe whose match accepts this order)"))
     # Expand and check BEFORE a candidate exists, so a refused recipe leaves nothing behind.
@@ -564,6 +568,14 @@ def cmd_run(args, st: S.Store) -> int:
         print(f"\nDECLINED: no dry run on profile {prof.name!r}; it would leave the "
               f"candidate RUNNING with nothing submitted", file=sys.stderr)
         return 3
+    cand = st.candidate(cid)
+    if cand is not None:
+        try:
+            current = recipes.load(cand["recipe_id"], int(cand["recipe_version"]))
+        except recipes.RecipeError:
+            current = None       # the stored steps still run; nothing to say about drafts
+        if current is not None:
+            recipes.check_draft_allowed(current, prof.name)
     client = SushiClient(args.base_url, write_token(prof), dry_run=args.dry_run)
     if prof.write_token_env is not None:
         # The write credential names its projects. Ask it for the input dataset BEFORE the
@@ -636,8 +648,12 @@ def cmd_match(args, st: S.Store) -> int:
         print(f"input: {found_by}")
     results = recipes.explain(order, dataset)
     for r in sorted(results, key=lambda r: (not r["matches"], r["recipe"])):
-        print(match.describe(r))
-    hits = [r["recipe"] for r in results if r["matches"]]
+        print(("[draft] " if r["source"] == recipes.DRAFT else "") + match.describe(r))
+    hits = [r["recipe"] for r in results if r["matches"] and r["source"] != recipes.DRAFT]
+    drafts = [r["recipe"] for r in results if r["matches"] and r["source"] == recipes.DRAFT]
+    if drafts:
+        print(f"unadopted draft(s) that would match: {', '.join(drafts)} "
+              f"(never selected automatically)")
     print(f"\n{len(hits)} of {len(results)} recipes match"
           + (" -> ingest would select it" if len(hits) == 1 else
              " -> ingest would abstain" if hits else " -> ingest would decline"))
@@ -682,7 +698,8 @@ def cmd_recipes(args, st: S.Store) -> int:
         print(json.dumps({"recipes": catalog, "catalog_dir": str(recipes.catalog_dir() or ""),
                           "fixture_dir": str(recipes.FIXTURE_DIR)}, indent=2))
         return 0
-    print(f"fixtures: {recipes.FIXTURE_DIR}\ncatalog:  {recipes.catalog_dir() or '(none)'}\n")
+    print(f"fixtures: {recipes.FIXTURE_DIR}\ndrafts:   {recipes.DRAFT_DIR}\n"
+          f"catalog:  {recipes.catalog_dir() or '(none)'}\n")
     for r in catalog:
         if "error" in r:
             print(f"INVALID {r['id']}: {r['error']}\n")

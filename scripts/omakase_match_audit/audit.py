@@ -100,12 +100,14 @@ def main() -> int:
     ap.add_argument("--months", type=float, default=12)
     ap.add_argument("--top", type=int, default=15)
     ap.add_argument("--json", type=Path)
+    ap.add_argument("--source", default="catalog", choices=["catalog", "draft"],
+                    help="which recipes to measure: the adopted catalog, or unadopted drafts")
     args = ap.parse_args()
 
     catalog = [recipes.load(i) for i in recipes.available()]
-    catalog = [r for r in catalog if r["source"] == "catalog"]
+    catalog = [r for r in catalog if r["source"] == args.source]
     if not catalog:
-        print("no catalog recipes found (OMAKASE_CATALOG_DIR)", file=sys.stderr)
+        print(f"no {args.source} recipes found", file=sys.stderr)
         return 2
     client = Bfabric.connect(config_file_env=args.env)
     processed = list(client.read("order", {"status": "processed"}, max_results=None))

@@ -14,10 +14,15 @@ his MR !1 format plus optional keys only, so his catalog loads without edits:
 
 Where recipes come from
 -----------------------
-Two directories, never merged by id (the same id in both is an error):
+Three directories, never merged by id (the same id in two of them is an error):
 
 * `recipes/` next to this file — the engine's own FIXTURES, committed here. They exercise
   the machinery; none is a signed-off recipe, and every one matches no order.
+* `drafts/` next to this file — recipes an AI DRAFTED and no bioinformatician has adopted
+  yet (design decision D2, revised 2026-10-01: an AI may draft, a bioinformatician adopts
+  and is accountable). `match` evaluates them so their reach can be measured, but `select`
+  NEVER picks one automatically, and ingest/run accept one by name only on the `test`
+  profile. Adoption = a bioinformatician moves it into the catalog under their name.
 * the CATALOG — `$OMAKASE_CATALOG_DIR`, default the local clone of Paul's MR at
   `paul-scripts/Internal_Dev/omakase` (gitignored). It is read, never copied into this
   repository: the repository is public on GitHub and the catalog is his work, shared when
@@ -49,6 +54,9 @@ import yaml
 from . import constraints, reference
 
 FIXTURE_DIR = Path(__file__).parent / "recipes"
+DRAFT_DIR = Path(__file__).parent / "drafts"
+DRAFT = "draft"
+DRAFT_PROFILES = ("test",)    # where an unadopted draft may be ingested and run by name
 DEFAULT_CATALOG = Path("/srv/sushi/masa_test_new_sushi_20260527/paul-scripts/Internal_Dev/omakase")
 
 # Internal sentinels the two templates compile to. They are expanded against the input
@@ -70,8 +78,9 @@ TOP_REQUIRED = ("id", "version", "author", "match", "steps", "autostart")
 STEP_KEYS = {"id", "after", "app", "params", "retry_params", "when", "note"}
 CONSTRAINT_KEYS = {"assert", "check", "at", "reason", "severity"}
 MATCH_LISTS = ("service_type", "sequencing_application", "instrument", "library_protocol",
-               "species")
-MATCH_KEYS = set(MATCH_LISTS) | {"species_in_reference_catalog", "samples"}
+               "library_protocol_option", "read_configuration", "storage_model", "species")
+MATCH_BOOLS = ("nuclei", "samples_contain_transgenes", "species_in_reference_catalog")
+MATCH_KEYS = set(MATCH_LISTS) | set(MATCH_BOOLS) | {"samples"}
 OPERATORS = {"equals", "one_of", "contains", "matches", "version_at_least"}
 
 
@@ -97,7 +106,7 @@ def reference_policy() -> Path | None:
 
 
 def _sources() -> list[tuple[str, Path]]:
-    out = [("fixture", FIXTURE_DIR)]
+    out = [("fixture", FIXTURE_DIR), (DRAFT, DRAFT_DIR)]
     root = catalog_dir()
     if root:
         out.append(("catalog", root / "recipes"))
@@ -117,7 +126,8 @@ def _index() -> tuple[dict[str, list[tuple[int, Path, str]]], list[str]]:
             found.setdefault(m["id"], []).append((int(m["version"]), path, source))
     for rid, entries in found.items():
         if len({src for _, _, src in entries}) > 1:
-            problems.append(f"recipe id {rid!r} exists in both the fixtures and the catalog")
+            problems.append(f"recipe id {rid!r} exists in more than one of the fixtures, "
+                            f"the drafts and the catalog")
     return found, problems
 
 
@@ -210,9 +220,9 @@ def _validate_match(match: Any) -> list[str]:
         if k in match and not (isinstance(match[k], list)
                                and all(isinstance(v, str) for v in match[k])):
             errs.append(f"match.{k} must be a list of strings (empty = do not constrain)")
-    if "species_in_reference_catalog" in match and \
-            not isinstance(match["species_in_reference_catalog"], bool):
-        errs.append("match.species_in_reference_catalog must be true or false")
+    for k in MATCH_BOOLS:
+        if k in match and not isinstance(match[k], bool):
+            errs.append(f"match.{k} must be true or false")
     samples = match.get("samples")
     if samples is not None and not (isinstance(samples, dict) and set(samples) == {"min", "max"}
                                     and all(isinstance(samples[k], int) and samples[k] >= 1
@@ -437,7 +447,9 @@ def explain(order: dict[str, Any], dataset: dict[str, Any] | None = None) -> lis
             recipe = load(rid)
         except RecipeError:
             continue
-        out.append(match.evaluate(recipe, order, dataset))
+        result = match.evaluate(recipe, order, dataset)
+        result["source"] = recipe["source"]
+        out.append(result)
     return out
 
 
@@ -454,7 +466,8 @@ def select(order: dict[str, Any], recipe_id: str | None = None,
         return load(recipe_id)
     from . import match
     results = explain(order, dataset)
-    hits = [r for r in results if r["matches"]]
+    hits = [r for r in results if r["matches"] and r["source"] != DRAFT]
+    drafts = [r["recipe"] for r in results if r["matches"] and r["source"] == DRAFT]
     if len(hits) == 1:
         return load(hits[0]["recipe"])
     if hits:
@@ -462,10 +475,22 @@ def select(order: dict[str, Any], recipe_id: str | None = None,
             f"{len(hits)} recipes match order {order.get('id')} "
             f"({', '.join(h['recipe'] for h in hits)}); abstaining - a person chooses with "
             f"--recipe")
-    near = [match.describe(r) for r in results if match.order_level_ok(r)]
+    near = [match.describe(r) for r in results
+            if match.order_level_ok(r) and r["source"] != DRAFT]
     raise RecipeError(
         f"no recipe matches order {order.get('id')} (checked {len(results)})"
-        + (": " + " | ".join(near) if near else "; see `omakase match` for every reason"))
+        + (": " + " | ".join(near) if near else "; see `omakase match` for every reason")
+        + (f"; unadopted draft(s) would match: {', '.join(drafts)} - never selected "
+           f"automatically, a bioinformatician adopts first" if drafts else ""))
+
+
+def check_draft_allowed(recipe: dict[str, Any], profile_name: str) -> None:
+    """An unadopted AI draft may be ingested or run by name on the test profile only."""
+    if recipe.get("source") == DRAFT and profile_name not in DRAFT_PROFILES:
+        raise RecipeError(
+            f"{recipe['id']}@{recipe['version']} is an unadopted draft "
+            f"({recipe.get('path')}); profile {profile_name!r} runs only adopted recipes - "
+            f"a bioinformatician adopts it into the catalog first")
 
 
 # ------------------------------------------------------------------------- expand
