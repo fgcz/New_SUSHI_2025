@@ -84,6 +84,26 @@ The other 47 of the 199 are left to a person on purpose: "I do not know" (15), T
 SMART-Seq Pico kits (17; UMI and trimming need a decision), and the two "Illumina Truseq …"
 entries (13; the names do not say "Stranded").
 
+## One run on the test instance (fgcz-h-083, 2026-10-01)
+
+`bulk_rnaseq_stranded_antisense` on dataset 9 (mouse, 2 samples, 100 000 reads each; its library
+kit is not recorded), approved by a person, run by the engine:
+
+| Step | Result |
+|---|---|
+| FastQC, STAR, featureCounts | COMPLETED; genome derived as GRCm39 (GENCODE M37); STAR 4 min, featureCounts 3 min after it |
+| featureCounts with `antisense` | **22 184** reads assigned per sample |
+| the same data with `both` (2026-09-15 run) | **42 752** assigned |
+| CountQC | FAILED inside its Quarto report, the same error as on 2026-09-11 → chain halted, as designed |
+
+Reading it: `antisense` keeps 52% of what `both` assigns. A correctly stranded setting keeps
+nearly all of it, a wrong one nearly none, so **this test library looks unstranded** — the
+parameter reaches featureCounts and visibly matters, which is the point of the per-kit split.
+It says nothing about whether the antisense draft is right for Illumina Stranded kits.
+
+On CountQC: dataset 9's two samples give **byte-identical** counts. The failure may come from
+zero variance between samples rather than from there being two. It cannot be told apart here.
+
 ## Open questions
 
 | # | Question | Draft(s) |
