@@ -50,9 +50,31 @@ class ReferenceError(RuntimeError):
     """Raised when no single reference build can be read off the curated farm."""
 
 
+# B-Fabric's annotation names carry the common name in brackets - "Mus musculus (house
+# mouse)" is the wording on 289 production datasets against 17 bare "Mus musculus" (species
+# snapshot of 082, 2026-08-21) - so a trailing "(...)" is dropped before comparing.
+_COMMON_NAME = re.compile(r"\s*\([^()]*\)\s*$")
+# Names, not a genome policy: each maps to the Latin name the farm is keyed by, and the farm
+# still decides the build. All five occur as Species values in that snapshot.
+SPECIES_ALIASES = {
+    "human": "homo sapiens",
+    "mouse": "mus musculus",
+    "rat": "rattus norvegicus",
+    "dog": "canis familiaris",
+    "canis lupus familiaris": "canis familiaris",
+}
+
+
 def _key(species: str) -> str:
-    """`Mus musculus`, `mus_musculus`, ` Mus  Musculus ` -> `mus musculus`."""
-    return re.sub(r"[\s_]+", " ", str(species)).strip().lower()
+    """`Mus musculus`, `mus_musculus`, ` Mus  Musculus `, `Mus musculus (house mouse)`,
+    `Mouse` -> `mus musculus`."""
+    k = re.sub(r"[\s_]+", " ", _COMMON_NAME.sub("", str(species))).strip().lower()
+    return SPECIES_ALIASES.get(k, k)
+
+
+def species_key(species: str) -> str:
+    """The comparison key for a Species value (see `_key`); for callers outside this module."""
+    return _key(species)
 
 
 def builds(root: Path | None = None) -> dict[str, list[str]]:
@@ -163,8 +185,8 @@ def resolve_per_assay(dataset: dict, recipe_id: str, policy_path: Path) -> tuple
             f"assay family {name!r} uses no reference genome ({policy_path.name}), so recipe "
             f"{recipe_id!r} must not ask for one")
     species = _one_species(species_of(dataset))
-    aliases = policy.get("species_aliases") or {}
-    directory = aliases.get(species) or aliases.get(species.strip())
+    aliases = {_key(k): v for k, v in (policy.get("species_aliases") or {}).items()}
+    directory = aliases.get(_key(species))
     if directory is None:
         raise ReferenceError(
             f"Species {species!r} is not in {policy_path.name}'s species_aliases; an unmatched "

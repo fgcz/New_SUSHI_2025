@@ -92,6 +92,23 @@ def main() -> int:
               reference.resolve_for_dataset(dataset("Mus musculus"), root)[1],
               True)
 
+        print("wording (2026-10-02: B-Fabric names carry the common name)")
+        mouse = "Mus_musculus/GENCODE/GRCm39/Annotation/Release_M37-2025-07-03"
+        check("'Mus musculus (house mouse)' -- 289 production datasets -- resolves",
+              reference.resolve(["Mus musculus (house mouse)"], root), mouse)
+        check("'Human' and 'Mouse' resolve through the alias table",
+              (reference.resolve(["Human"], root), reference.resolve(["Mouse"], root)),
+              ("Homo_sapiens/GENCODE/GRCh38.p14/Annotation/Release_48-2025-07-03", mouse))
+        check("the bracketed and the bare wording are ONE species, not two",
+              reference.resolve_for_dataset(
+                  dataset("Mus musculus (house mouse)", "Mus musculus"), root)[0], mouse)
+        refuses("an uncurated species with a common name is still refused",
+                lambda: reference.resolve(["Danio rerio (zebrafish)"], root), "not one of")
+        refuses("a bracket in the middle is not a common-name suffix",
+                lambda: reference.resolve(["Mus (house) musculus"], root), "not one of")
+        refuses("free text naming a cell type is not a species",
+                lambda: reference.resolve(["mouse Kupffer cells"], root), "not one of")
+
         print("refusals -- the reason this file exists")
         refuses("no Species column at all",
                 lambda: reference.resolve_for_dataset(dataset(None, None), root), "no usable")

@@ -164,14 +164,15 @@ added to the backend's allow-list — drafted so that decision and this review h
 | SARS-CoV-2 WGS, Amplicon, Small RNA | 27 / 26 / 12 | The history shows QC only on nearly all of them (25/26, 4/5, 6/10). Small RNA ran as an nf-core pipeline on 2 orders, which the backend cannot submit |
 | Long read (de novo, isoform, metagenomics on ONT/PacBio) | 31 / 17 / 18 | No long-read app among the 19 the backend submits |
 
-## A gap that limits every recipe: Species wording
+## Species wording (fixed 2026-10-02)
 
-The genome is derived from the dataset's `Species` column. Production datasets mostly say
-`Mus musculus (house mouse)` (289 datasets), `Homo sapiens (human)` (18), `Arabidopsis
-thaliana (thale cress)` (9) — B-Fabric's annotation names. The engine's resolver accepts only
-the bare Latin name, so those datasets are **refused** at the species step, and a `species:`
-rule fails the same way. Recorded 2026-10-02, not yet fixed; the order-level counts above
-do not include this step.
+The genome is derived from the dataset's `Species` column. Production datasets mostly carry
+B-Fabric's annotation names — `Mus musculus (house mouse)` on 289 datasets against 17 bare
+`Mus musculus`. Until 2026-10-02 the resolver refused those. It now drops a trailing
+"(common name)" and maps five names (`Human`, `Mouse`, `Rat`, `Dog`, `Canis lupus
+familiaris`) to the Latin names the curated farm is keyed by; which build each species gets
+is unchanged. Measured on the 082 snapshot (1376 datasets): **28.8% → 53.9%** resolve. The
+rest is blank / NA (39.2%) or a species with no curated build — still refused.
 
 ## Where things are
 

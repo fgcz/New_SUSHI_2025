@@ -97,6 +97,8 @@ assert M.evaluate(sp, order(), MOUSE)["matches"]
 assert not M.evaluate(sp, order(), {"samples": [{"Species": "Homo sapiens"}]})["matches"]
 assert not M.evaluate(sp, order(), {"samples": [{"Species": "NA"}]})["matches"]
 case("species with a dataset: in the list matches; another species or none does not")
+assert M.evaluate(sp, order(), {"samples": [{"Species": "Mus musculus (house mouse)"}]})["matches"]
+case("the species rule reads 'Mus musculus (house mouse)' as Mus musculus")
 cat_only = {"id": "sc_b", "version": 1, "match": {"sequencing_application": ["BD Rhapsody"],
                                                   "species_in_reference_catalog": True}}
 assert M.evaluate(cat_only, order(), MOUSE)["matches"]

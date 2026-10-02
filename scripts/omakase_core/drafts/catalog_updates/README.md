@@ -54,11 +54,10 @@ Of the 32 orders currently at status `processed` on production, 4 would now get 
 
 ## What this does not fix
 
-- **Species wording (engine and `references.yaml`).** Production datasets mostly say
-  `Mus musculus (house mouse)` (289 datasets), `Homo sapiens (human)` (18), `Arabidopsis
-  thaliana (thale cress)` (9). Neither the engine's resolver nor your `species_aliases`
-  accepts the parenthesised form, so those datasets are refused at the species step. Recorded
-  2026-10-02, not fixed.
+- **Species wording — fixed in the engine 2026-10-02.** Production datasets mostly say
+  `Mus musculus (house mouse)` (289 datasets). The engine now drops a trailing "(common name)"
+  before comparing, also when it looks a Species up in your `species_aliases`, so your table
+  needs no new entries for that form.
 - **Runnable on the test backend today:** sc_10x_3prime_gex, sc_10x_multiplexed,
   sc_10x_5prime_vdj, sc_10x_flex (all their apps are among the 19 the backend submits). The
   others need BDRhapsodySA, SplitPipe, SpaceRanger, VisiumQC, Visium/Spatial Seurat, Xenium

@@ -165,7 +165,7 @@ def evaluate(recipe: dict, order: dict, dataset: dict | None = None) -> dict[str
         elif species is None:
             checks.append((rule, False, why_not))
         elif rule == "species":
-            ok = canonical(species) in {canonical(x) for x in m["species"]}
+            ok = reference.species_key(species) in {reference.species_key(x) for x in m["species"]}
             checks.append((rule, ok, f"{species!r} " + ("is" if ok else "is not") + " in the list"))
         else:
             checks.append((rule,) + _in_catalog(recipe, dataset))
