@@ -357,6 +357,38 @@ def samplefields(client, orders, names, n_per_group, seed, min_count):
                 print(f"     {k:4}  {label}")
 
 
+def byapp(orders, names, fields, min_count):
+    """Per Sequencing Application (canonical form, so the 'Single-Cell - ' and 'Spatial - '
+    prefixes and the 'Experssion' typo fold together): value counts of the given drop-down
+    fields, values on at least min_count orders only."""
+    sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
+    from omakase_core.match import canonical
+    groups = defaultdict(list)
+    for o in orders:
+        groups[canonical(o.get("sequencingapplication") or "(none)")].append(o)
+    for app, pool in sorted(groups.items(), key=lambda kv: -len(kv[1])):
+        if len(pool) < min_count:
+            continue
+        wordings = Counter(str(o.get("sequencingapplication") or "(none)") for o in pool)
+        print(f"\n== {app}: {len(pool)} orders; wordings: "
+              + "; ".join(f"{w!r} {k}" for w, k in wordings.most_common() if k >= min_count))
+        for f in fields:
+            if f.lower() in NEVER_PRINT:
+                continue
+            c = Counter()
+            for o in pool:
+                v = o.get(f)
+                items = v if isinstance(v, list) else [v]
+                for x in items:
+                    if isinstance(x, dict):
+                        x = names.get(int(x["id"]), f"id={x['id']}") if f == "servicetype" else None
+                    c["(empty)" if x is None or str(x).strip() == "" else str(x).strip()] += 1
+            shown = [(v, k) for v, k in c.most_common() if k >= min_count]
+            print(f"   {f}: " + "; ".join(f"{v} {k}" for v, k in shown)
+                  + (f"  [+{sum(c.values()) - sum(k for _, k in shown)} in rarer values]"
+                     if sum(c.values()) > sum(k for _, k in shown) else ""))
+
+
 def nameshape(orders, names, field, min_count):
     """The SHAPE of a free-text field (letters -> a, digits -> 9, runs collapsed), and how
     often it equals the service type's name. Says whether the field is typed by a person
@@ -436,7 +468,7 @@ def samples(client, orders, n_orders, seed):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("mode", choices=["inventory", "values", "crosstab", "keywords", "samples",
-                                     "projects", "samplefields", "nameshape", "projectkeywords"])
+                                     "projects", "samplefields", "nameshape", "projectkeywords", "byapp"])
     ap.add_argument("fields", nargs="*")
     ap.add_argument("--env", default="PRODUCTION")
     ap.add_argument("--months", type=float, default=12)
@@ -469,6 +501,8 @@ def main(argv=None):
         keywords(orders, args.fields)
     elif args.mode == "projects":
         projects(client, orders, args.orders, args.seed)
+    elif args.mode == "byapp":
+        byapp(orders, names, args.fields, args.min_count)
     elif args.mode == "projectkeywords":
         projectkeywords(client, orders, names)
     elif args.mode == "nameshape":

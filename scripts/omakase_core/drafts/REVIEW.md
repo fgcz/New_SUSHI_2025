@@ -1,4 +1,4 @@
-# Review guide — three AI-drafted bulk RNA-seq recipes (2026-10-01)
+# Review guide — AI-drafted OMAKASE recipes (2026-10-01, extended 2026-10-02)
 
 **For:** a bioinformatician deciding whether OMAKASE may use these recipes.
 **Status:** AI drafts, **not adopted**. Nothing here runs on production until you adopt it.
@@ -8,7 +8,16 @@
 OMAKASE proposes an analysis chain for a finished sequencing order, a person approves it, and
 the engine runs it. *Which* chain is decided by recipes. Since 2026-10-01 (design decision D2)
 an AI may **draft** a recipe, and **a bioinformatician decides whether it is adopted and is
-accountable for it**. These three files are such drafts.
+accountable for it**. The files in this directory are such drafts:
+
+| Draft | Part of this guide | Runnable on the test backend today |
+|---|---|---|
+| `bulk_rnaseq_stranded_antisense`, `bulk_rnaseq_stranded_sense`, `bulk_rnaseq_unstranded` | Bulk RNA-seq (below) | yes |
+| `dna_wgs_alignment` | DNA: whole-genome alignment | yes |
+| `methylation_wgbs_bismark` | Methylation: WGBS / EM-seq | **no** — BismarkApp is not on the backend's allow-list |
+
+`catalog_updates/` is a separate proposal for the existing catalog's `match` blocks, written for
+its author (see its README).
 
 For each draft, one of:
 
@@ -22,7 +31,7 @@ How the engine treats a draft until then (enforced in code, tested):
 `omakase match` reports when a draft *would* match, automatic selection **never** picks one,
 and a person can run one by name **only on the test instance** (fgcz-h-083).
 
-## The three drafts
+## Bulk RNA-seq: the three drafts
 
 All three run the same five steps; only the strand setting and the kits they accept differ.
 
@@ -67,7 +76,7 @@ FGCZ orders named it in the last 12 months.
 - **Resources**: each app's shipped defaults (STAR 8 cores / 30 GB, one automatic retry at
   60 GB after an out-of-memory failure).
 
-## What was measured (B-Fabric PRODUCTION, orders created 2025-10-01 … 2026-10-01)
+## Bulk RNA-seq: what was measured (B-Fabric PRODUCTION, orders created 2025-10-01 … 2026-10-01)
 
 Read-only, counts only; no order text or sample data was read.
 
@@ -84,7 +93,7 @@ The other 47 of the 199 are left to a person on purpose: "I do not know" (15), T
 SMART-Seq Pico kits (17; UMI and trimming need a decision), and the two "Illumina Truseq …"
 entries (13; the names do not say "Stranded").
 
-## One run on the test instance (fgcz-h-083, 2026-10-01)
+## Bulk RNA-seq: one run on the test instance (fgcz-h-083, 2026-10-01)
 
 `bulk_rnaseq_stranded_antisense` on dataset 9 (mouse, 2 samples, 100 000 reads each; its library
 kit is not recorded), approved by a person, run by the engine:
@@ -104,7 +113,7 @@ It says nothing about whether the antisense draft is right for Illumina Stranded
 On CountQC: dataset 9's two samples give **byte-identical** counts. The failure may come from
 zero variance between samples rather than from there being two. It cannot be told apart here.
 
-## Open questions
+## Bulk RNA-seq: open questions
 
 | # | Question | Draft(s) |
 |---|---|---|
@@ -116,6 +125,53 @@ zero variance between samples rather than from there being two. It cannot be tol
 | Q-samples | CountQC failed inside its report on a 2-sample dataset (2026-09-11) and has no sample-count guard. The order cannot tell the true sample count: B-Fabric's `countsamples` counts every sample record (biological, library, pool, on-run, QC), a median 5.2× the biological samples over 25 orders. So a 1–2 sample order would reach CountQC and halt there. Keep CountQC? | all |
 | Q-resources | Is 30 GB enough for STAR on FGCZ's GRCh38 / GRCm39 indexes, with 60 GB as the retry? | all |
 | Q-DE | No differential-expression step: the control-versus-treatment grouping is a judgement nothing here can make. Agreed? | all |
+
+## DNA: `dna_wgs_alignment`
+
+FastQC, FastQ Screen and BWA-MEM side by side, then DnaBamStats. **No variant calling.**
+
+- **Orders:** "Whole Genome Sequencing", 44 in 12 months, all NGS service; 31 pass the order-level
+  rules (13 held back by transgenes: 5 yes, 8 no answer).
+- **Why it stops at alignment QC:** in the SUSHI execution history, 17 of 36 WGS orders got QC
+  only and the rest split by purpose — BWA 22%, DnaBamStats 25%, Kraken (metagenomics) 13%,
+  Mutect2 (somatic) 8%, GATK germline 5%. The order does not say which purpose, so the common
+  part is drafted and the rest left to a person.
+- **Why three species:** BWAApp builds a missing BWA index inside the shared reference tree
+  (hours). The index exists for Homo sapiens (GRCh38.p14), Mus musculus (GRCm39) and
+  Arabidopsis thaliana (TAIR10), not for dog or rat.
+- **Questions:** which variant caller, if any (GATK is not submittable; Mpileup is)? Is
+  200 GB scratch enough for a 30× human genome per sample?
+
+## Methylation: `methylation_wgbs_bismark`
+
+FastQC, FastQ Screen and Bismark (Bowtie2) side by side. Not runnable until BismarkApp is
+added to the backend's allow-list — drafted so that decision and this review happen together.
+
+- **Orders:** "Whole Genome Bisulfite Sequencing", 8 in 12 months; kit "NEB Enzymatic Methyl
+  Seq v2" on 6, which is the rule. Bismark ran on 63% of 11 WGBS orders in the history — the
+  most consistent DNA application.
+- **Why the kit is a rule:** EM-seq is directional, Bismark's default; BismarkApp has no
+  directionality switch, so a PBAT / non-directional kit must not reach this recipe.
+- **Why two species:** the Bisulfite_Genome index exists for human and mouse only.
+- **Questions:** turn on `EM_QC` (lambda / pUC19 controls)? extra trimming for EM-seq?
+  `deduplicate=true` (default) — confirm no amplicon bisulfite kit can match.
+
+## Not drafted, on purpose
+
+| Application | Orders | Why no draft |
+|---|---|---|
+| CRISPR Screen / Readout | 22 / 11 | MageckCountApp needs `libName`, the screen's sgRNA library, picked from a list. Nothing in the order says which library (kit = "Custom Primers" on all 22). A recipe would have to guess it |
+| SARS-CoV-2 WGS, Amplicon, Small RNA | 27 / 26 / 12 | The history shows QC only on nearly all of them (25/26, 4/5, 6/10). Small RNA ran as an nf-core pipeline on 2 orders, which the backend cannot submit |
+| Long read (de novo, isoform, metagenomics on ONT/PacBio) | 31 / 17 / 18 | No long-read app among the 19 the backend submits |
+
+## A gap that limits every recipe: Species wording
+
+The genome is derived from the dataset's `Species` column. Production datasets mostly say
+`Mus musculus (house mouse)` (289 datasets), `Homo sapiens (human)` (18), `Arabidopsis
+thaliana (thale cress)` (9) — B-Fabric's annotation names. The engine's resolver accepts only
+the bare Latin name, so those datasets are **refused** at the species step, and a `species:`
+rule fails the same way. Recorded 2026-10-02, not yet fixed; the order-level counts above
+do not include this step.
 
 ## Where things are
 

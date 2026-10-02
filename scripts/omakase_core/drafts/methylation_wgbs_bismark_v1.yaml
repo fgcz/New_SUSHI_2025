@@ -1,0 +1,77 @@
+# AI DRAFT - NOT ADOPTED. Whole-genome bisulfite / enzymatic methyl sequencing with Bismark.
+# Design decision D2 (2026-10-01): an AI may draft, a bioinformatician adopts and is
+# accountable. Never selected automatically until then. Review guide: drafts/REVIEW.md.
+#
+# NOT RUNNABLE TODAY: BismarkApp is not among the 19 apps the backend submits
+# (GET /api/v1/application_configs on fgcz-h-083, 2026-10-02). Ingest would decline it.
+# Drafted anyway so the review and the allow-list decision can happen together.
+#
+# ## Which orders (B-Fabric PRODUCTION, orders created 2025-10-02 .. 2026-10-02)
+#
+# "Whole Genome Bisulfite Sequencing": 8 orders, all NGS service, Paired End 150 bp,
+# kit "NEB Enzymatic Methyl Seq v2" on 6 (2 in rarer kits). Small, but the most consistent
+# history of any DNA application: Bismark ran on 63% of 11 WGBS orders (SUSHI history, 082).
+#
+# ## Why the kit is a rule here
+#
+# EM-seq libraries are directional, which is Bismark's default library mode; BismarkApp
+# exposes no directionality switch (only cmdOptions, default '--bowtie2'). A non-directional
+# or PBAT kit would need different options, so only the EM-seq kit is accepted.
+#
+# ## Why only two species
+#
+# Bismark reads <refBuild>/Sequence/WholeGenomeFasta/Bisulfite_Genome and builds it when
+# missing (ezRun app-mapping.R getBismarkReference). It exists for Homo sapiens (GRCh38.p14)
+# and Mus musculus (GRCm39), not for the other three curated builds (checked 2026-10-02).
+#
+# ## Open questions (drafts/REVIEW.md)
+#
+# Q1  EM_QC (lambda/pUC19 control plots) is off by default. EM-seq v2 includes those
+#     controls - turn it on?
+# Q2  Trimming: fastp with trimAdapter=true is the app default; does FGCZ trim extra bases
+#     for EM-seq (end-repair bias)?
+# Q3  deduplicate=true (app default) is right for WGBS/EM-seq, wrong for amplicon-based
+#     bisulfite kits - confirm none reach this recipe.
+
+schema_version: 1
+id: methylation_wgbs_bismark
+version: 1
+author: >
+  AI draft (Claude Opus 5.5 via Claude Code, 2026-10-02) - NOT adopted. Written from the
+  SUSHI app definitions, the reference tree and aggregate B-Fabric / SUSHI-history counts;
+  no order record or sample data was read.
+description: >
+  WGBS / EM-seq: FastQC, FastQ Screen and Bismark (Bowtie2) side by side. Directional
+  libraries only. Not runnable until BismarkApp is on the backend's allow-list.
+
+match:
+  sequencing_application: ["Whole Genome Bisulfite Sequencing"]   # 8
+  library_protocol: ["NEB Enzymatic Methyl Seq v2"]                 # 6
+  samples_contain_transgenes: false
+  species: ["Homo sapiens", "Mus musculus"]                         # a Bisulfite_Genome exists
+  species_in_reference_catalog: true
+
+steps:
+  - id: fastqc
+    app: FastqcApp
+    after: []
+    params: {cores: 8, ram: 15, scratch: 100}
+    retry_params: {ram: 30}
+
+  - id: fastqscreen
+    app: FastqScreenApp
+    after: []
+    params: {cores: 8, ram: 60, scratch: 100}
+
+  - id: bismark
+    app: BismarkApp
+    after: []
+    params:
+      cores: 8
+      ram: 60
+      scratch: 200
+      refBuild: "{{ reference_for(species) }}"
+    retry_params: {ram: 120, scratch: 400}
+
+autostart: false
+autostart_blocked_by: Unadopted AI draft (design D2), and BismarkApp is not submittable on the backend yet.

@@ -1,0 +1,122 @@
+# AI-DRAFTED UPDATE PROPOSAL - NOT ADOPTED (design D2, 2026-10-01).
+#
+# Replacement `match:` blocks for the recipes in Paul Gueguen's catalog (MR !1,
+# gitlab.bfabric.org/Genomics/paul-scripts, Internal_Dev/omakase/recipes/). Only the match
+# block changes; every step, parameter and constraint stays his. His files are NOT copied
+# into this (public) repository - `apply_to_copy.py` applies these blocks to a temporary copy
+# so they can be measured. Adopting = he edits his own files.
+#
+# Why: as written, his 12 recipes match 0 of 1467 real orders (measured 2026-09-24, question
+# Q8 of docs/omakase-recipe-format-v1/PROPOSAL.md), because B-Fabric's order form uses its
+# own wording. Every value below is copied from B-Fabric PRODUCTION, orders created
+# 2025-10-02 .. 2026-10-02 (scripts/omakase_field_audit/, mode `byapp`); counts are orders.
+#
+# Rules applied to every recipe (reasons in REVIEW.md "Catalog updates"):
+#   * sequencing_application: B-Fabric's own value. The engine folds the "Single-Cell - " /
+#     "Spatial - " prefixes and the "Experssion" typo, so one value covers both wordings.
+#   * instrument: the B-Fabric MODEL names for his platforms (Illumina -> NovaSeq X Plus,
+#     NextSeq2000, MiSeq i100 #1; AVITI -> Element Biosciences AVITI24; Xenium -> 10X
+#     Genomics Xenium). An order with no instrument then does not match (8 of 92 for 10x 3').
+#   * samples: REMOVED. B-Fabric's `countsamples` counts every sample record (biological,
+#     library, pool, on-run, QC; median 5.2x the biological samples over 25 orders), so a
+#     {min, max} rule would test the wrong number. His `budget.max_concurrent_samples` is
+#     untouched.
+#   * library_protocol / library_protocol_option: added only where they separate HIS
+#     variants (multiplexed or not, VDJ, CITE-seq, Visium v2 vs HD, BD WTA vs ATAC).
+#   * samples_contain_transgenes: false added to the reference-derived recipes - an order
+#     declaring transgenes needs a reference the curated build does not have. Proposed,
+#     his call.
+
+illumina_or_aviti: &illumina_or_aviti
+  - Illumina NovaSeq X Plus
+  - Illumina NextSeq2000
+  - Illumina MiSeq i100 #1
+  - Element Biosciences AVITI24
+
+recipes:
+  sc_10x_3prime_gex:
+    sequencing_application: ["10x Genomics - Universal 3' Gene Expression"]  # 50 + 42
+    instrument: *illumina_or_aviti
+    library_protocol_option: ["No multiplexing"]       # 62 of 92; OCM 24, hashing 6 go to sc_10x_multiplexed
+    samples_contain_transgenes: false                   # 14 of 92 declare transgenes
+    species_in_reference_catalog: true
+
+  sc_10x_multiplexed:
+    sequencing_application: ["10x Genomics - Universal 3' Gene Expression"]
+    instrument: *illumina_or_aviti
+    library_protocol_option:
+      - "On-Chip Multiplexing"                                                             # 24
+      - "Cell Hashing (Please upload CSV file with sample names and HTOs in \"Comment\"-section)"  # 6
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_10x_5prime_vdj:
+    sequencing_application: ["10x Genomics - Universal 5' Gene Expression"]  # 13 + 11
+    instrument: *illumina_or_aviti
+    library_protocol_option: ["TCR", "BCR"]             # 14, 7
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_10x_citeseq:
+    sequencing_application:
+      - "10x Genomics - Universal 3' Gene Expression"
+      - "10x Genomics - Universal 5' Gene Expression"
+    instrument: *illumina_or_aviti
+    library_protocol_option:
+      - "Cell Surface Protein (Please upload CSV file with protein and ADT information in \"Comment\"-section)"  # 9 on 5'
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_10x_flex:
+    sequencing_application: ["10x Genomics - Flex Gene Expression"]   # 13 (typo) + 11
+    instrument: *illumina_or_aviti
+    species: ["Homo sapiens", "Mus musculus"]           # his rule, unchanged
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_bd_rhapsody:
+    sequencing_application: ["BD Rhapsody"]             # 25 + 6
+    instrument: *illumina_or_aviti
+    library_protocol: ["Whole Transcriptome Analysis (WTA)"]   # 21; "ATAC-Seq (Multiome)" 6 is not WTA
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_parse_splitpipe:
+    sequencing_application: ["Parse"]                   # 13
+    instrument: *illumina_or_aviti
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_10x_multiome:
+    # Not seen on 5 or more orders in 12 months. The execution history (082) has
+    # "Single Cell Multiome (ATAC+GEX)" on 5 older orders; used here, unverified.
+    sequencing_application: ["Single Cell Multiome (ATAC+GEX)"]
+    instrument: *illumina_or_aviti
+    species: ["Homo sapiens", "Mus musculus"]
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  sc_10x_atac:
+    # No B-Fabric wording for single-cell ATAC alone was seen on 5 or more orders; left
+    # unmatchable on purpose (an empty match matches nothing) until someone names it.
+    sequencing_application: []
+
+  spatial_visium:
+    sequencing_application: ["10x Genomics Visium"]     # 32 + 23
+    instrument: *illumina_or_aviti
+    library_protocol: ["Visium v2 (probe-based)"]       # 7
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  spatial_visium_hd:
+    sequencing_application: ["10x Genomics Visium"]
+    instrument: *illumina_or_aviti
+    library_protocol: ["Visium HD (probe-based)"]       # 41; "Visium HD 3' (species agnostic)" 7 is not probe-based
+    species: ["Homo sapiens", "Mus musculus"]           # his rule, unchanged
+    samples_contain_transgenes: false
+    species_in_reference_catalog: true
+
+  spatial_xenium:
+    sequencing_application: ["10x Genomics Xenium"]     # 32
+    instrument: ["10X Genomics Xenium"]                 # 32
+    species_in_reference_catalog: false                 # his rule, unchanged

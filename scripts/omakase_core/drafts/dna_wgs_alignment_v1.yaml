@@ -1,0 +1,86 @@
+# AI DRAFT - NOT ADOPTED. Whole-genome DNA sequencing: QC, alignment, alignment QC.
+# Design decision D2 (2026-10-01): an AI may draft, a bioinformatician adopts and is
+# accountable. Never selected automatically until then. Review guide: drafts/REVIEW.md.
+#
+# ## Which orders (B-Fabric PRODUCTION, orders created 2025-10-02 .. 2026-10-02)
+#
+# "Whole Genome Sequencing": 44 orders, all NGS service, kit always recorded (NEB Ultra II
+# 18, Illumina Truseq Nano 18, 8 in rarer kits), Paired End 150 bp on 40. A DNA library has
+# no strand question, so the kit is not a rule here.
+#
+# ## Why the chain stops at alignment QC (evidence, SUSHI execution history on 082)
+#
+# Of 36 WGS orders in the history, 17 got QC only; the rest split across purposes: BWA 22%,
+# DnaBamStats 25%, Kraken (metagenomics) 13%, Mutect2 (somatic) 8%, GATK germline 5%.
+# Germline vs somatic vs metagenomic is a judgement the order does not record, so variant
+# calling is absent rather than guessed. Alignment + coverage QC is common to all of them.
+#
+# ## Why only three species
+#
+# BWAApp reads <refBuild>/Sequence/BWAIndex and BUILDS it when missing (ezRun
+# app-mapping.R getBWAReference, behind a lock file) - hours of work written into the shared
+# reference tree. Of the five curated builds, BWAIndex exists for Homo sapiens (GRCh38.p14),
+# Mus musculus (GRCm39) and Arabidopsis thaliana (TAIR10); NOT for Canis familiaris or
+# Rattus norvegicus (checked 2026-10-02).
+#
+# ## What the data decides
+#
+# refBuild from the dataset's Species (curated build); paired from the Read2 column
+# (BWAApp.rb:101); DnaBamStats reads refBuild and paired from BWA's output columns.
+#
+# ## Open questions (drafts/REVIEW.md)
+#
+# Q1  Variant calling: which default, if any (germline GATK is not submittable on the
+#     backend today; Mpileup is)?
+# Q2  Resources: BWA 8 cores / 30 GB / 200 GB scratch is the app default; a 30x human
+#     genome per sample may need more scratch.
+# Q3  markDuplicates and trimAdapter are left at the app defaults (true, true).
+
+schema_version: 1
+id: dna_wgs_alignment
+version: 1
+author: >
+  AI draft (Claude Opus 5.5 via Claude Code, 2026-10-02) - NOT adopted. Written from the
+  SUSHI app definitions, the reference tree and aggregate B-Fabric / SUSHI-history counts;
+  no order record or sample data was read.
+description: >
+  Whole-genome DNA: FastQC, FastQ Screen and BWA-MEM side by side, then DnaBamStats.
+  No variant calling - the order does not say germline, somatic or metagenomic.
+
+match:
+  sequencing_application: ["Whole Genome Sequencing"]     # 44
+  samples_contain_transgenes: false                         # 5 declare transgenes, 8 do not answer
+  species: ["Homo sapiens", "Mus musculus", "Arabidopsis thaliana"]   # a BWAIndex exists
+  species_in_reference_catalog: true
+
+steps:
+  - id: fastqc
+    app: FastqcApp
+    after: []
+    params: {cores: 8, ram: 15, scratch: 100}
+    retry_params: {ram: 30}
+
+  - id: fastqscreen
+    app: FastqScreenApp
+    after: []
+    params: {cores: 8, ram: 60, scratch: 100}
+
+  - id: bwa
+    app: BWAApp
+    after: []
+    params:
+      cores: 8
+      ram: 30
+      scratch: 200
+      refBuild: "{{ reference_for(species) }}"
+      algorithm: mem
+    retry_params: {ram: 60, scratch: 400}
+
+  - id: dnabamstats
+    app: DnaBamStatsApp
+    after: [bwa]
+    params: {cores: 8, ram: 50, scratch: 100}
+    retry_params: {ram: 100, scratch: 200}
+
+autostart: false
+autostart_blocked_by: Unadopted AI draft (design D2). A bioinformatician adopts it into the catalog first.
