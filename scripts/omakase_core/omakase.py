@@ -39,7 +39,7 @@ if __package__ in (None, ""):  # allow `python omakase.py` as well as `-m`
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     __package__ = "omakase_core"
 
-from . import evidence, gate, input_dataset, recipes, reference, store as S  # noqa: E402
+from . import evidence, gate, genome, input_dataset, recipes, reference, store as S  # noqa: E402
 from . import constraints as K, match, notify, profile as P  # noqa: E402
 from .runner import ChainRunner             # noqa: E402
 from .sushi import SushiClient, SushiError  # noqa: E402
@@ -155,8 +155,10 @@ def cmd_ingest(args, st: S.Store) -> int:
     print(f"recipe:   {recipe['id']}@{recipe['version']} "
           + ("(named)" if args.recipe else "(the one recipe whose match accepts this order)"))
     # Expand and check BEFORE a candidate exists, so a refused recipe leaves nothing behind.
-    steps, derived = _resolve_steps(recipe, args, dataset_id, dataset)
-    assessed = _assess(recipe, steps, args)
+    args.order_fields = order
+    args.sample_species = event.get("sample_species")
+    steps, derived, genome_items = _resolve_steps(recipe, args, dataset_id, dataset)
+    assessed = _assess(recipe, steps, args) + genome_items
     refused = K.refusals(assessed)
     if refused:
         raise recipes.RecipeError(
@@ -301,7 +303,7 @@ def _resolve_dataset(args, order: dict) -> tuple[int, str]:
 
 
 def _resolve_steps(recipe: dict, args, dataset_id: int,
-                   dataset: dict | None = None) -> tuple[list[dict], list[str]]:
+                   dataset: dict | None = None) -> tuple[list[dict], list[str], list[dict]]:
     """Expand the recipe's sentinels against the input dataset, before anyone approves.
 
     The dataset is only fetched when a sentinel is actually present, so the recipes that
@@ -310,10 +312,25 @@ def _resolve_steps(recipe: dict, args, dataset_id: int,
     """
     text = json.dumps(recipe["steps"])
     if recipes.FROM_SPECIES not in text and recipes.SAME_AS_PREVIOUS not in text:
-        return recipe["steps"], []
+        return recipe["steps"], [], []
     if dataset is None and recipes.needs_dataset(recipe["steps"]):
         dataset = SushiClient(args.base_url, token(args.prof)).dataset(dataset_id)
-    return recipes.resolve_parameters(recipe["steps"], dataset, recipe["id"])
+    if not recipes.needs_dataset(recipe["steps"]):
+        steps, notes = recipes.resolve_parameters(recipe["steps"], dataset, recipe["id"])
+        return steps, notes, []
+    # The genome: dataset Species, else the order's B-Fabric sample species, else (where
+    # allowed) the on-prem model's constrained suggestion, which comes with a hold a person
+    # must confirm. genome.py says why in that order.
+    order = getattr(args, "order_fields", None) or {}
+    build, how, item = genome.choose(
+        dataset, recipe["id"], recipes.reference_policy(),
+        sample_species=getattr(args, "sample_species", None), order=order,
+        allow_ai=genome.ai_allowed(args.prof.name),
+        record=genome.recorder(args.prof.home / "genome_suggestions",
+                               order.get("id"), dataset_id))
+    steps, notes = recipes.resolve_parameters(recipe["steps"], dataset, recipe["id"],
+                                              genome=(build, how))
+    return steps, notes, [item] if item else []
 
 
 def _seqs(expr) -> set[int]:
@@ -504,6 +521,8 @@ def cmd_revise(args, st: S.Store) -> int:
             "the revised chain breaks the recipe's rules:\n  "
             + "\n  ".join(K.describe(i) for i in refused))
     st.set_steps(args.candidate, final)
+    # A hold on a model-suggested genome survives the revision, or refuses it (genome.py).
+    assessed = genome.carry_over(st.checklist(args.candidate), assessed, final)
     st.set_checklist(args.candidate, assessed)   # re-assessed; earlier confirmations reset
     _require_confirmed_before_start(st, args.candidate)
     st.record_verdict(args.candidate, S.VERDICT_EDITED, args.actor,

@@ -502,7 +502,8 @@ def needs_dataset(steps: list[dict[str, Any]]) -> bool:
 
 
 def resolve_parameters(steps: list[dict[str, Any]], dataset: dict[str, Any] | None,
-                       recipe_id: str | None = None
+                       recipe_id: str | None = None,
+                       genome: tuple[str, str] | None = None
                        ) -> tuple[list[dict[str, Any]], list[str]]:
     """Expand both templates, before anyone approves. Returns (steps, notes).
 
@@ -516,6 +517,9 @@ def resolve_parameters(steps: list[dict[str, Any]], dataset: dict[str, Any] | No
     family lists it, and the curated favourite farm otherwise. `same_as_previous` takes the
     same key's (already expanded) value from the one upstream step, and refuses when that
     step does not set it — the app default is not known here. Retry values are expanded too.
+
+    `genome` = an already chosen `(refBuild, how)` (genome.choose, which adds the B-Fabric
+    sample fallback and the model's constrained suggestion); without it the dataset decides.
     """
     notes: list[str] = []
     resolved: str | None = None
@@ -530,6 +534,9 @@ def resolve_parameters(steps: list[dict[str, Any]], dataset: dict[str, Any] | No
             params = dict(params)
             for name, value in list(params.items()):
                 if value == FROM_SPECIES:
+                    if resolved is None and genome is not None:
+                        resolved, how = genome
+                        notes.append(how)
                     if resolved is None:
                         if dataset is None:
                             raise RecipeError("reference_for(species) needs the input dataset")

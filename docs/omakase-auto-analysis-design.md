@@ -369,6 +369,24 @@ owner. `species_in_reference_catalog: true` in the predicate above is therefore 
 gate, not a placeholder — 4.3% of delivered datasets name a species that is in the catalog
 but has no curated build, and those need a human to pick.
 
+**Genome selection order (2026-10-02, user decision; `scripts/omakase_core/genome.py`).**
+
+```
+1   the dataset's Species        (bracketed common names and five aliases folded)   rules
+1b  the order's B-Fabric sample species, only when the dataset carries none          rules
+2   hermes-agent on the FGCZ vLLM picks ONE curated species or UNKNOWN               model
+    → checked in code (a candidate? answered by the vLLM model?) → checklist hold 3000:
+      a named person confirms before the chain may start
+```
+
+Step 2 sends only allow-listed fields (Species values, sample species, Sequencing Application,
+library protocol options, recipe id) and can only choose among the curated species, so which
+build a species gets stays the farm's decision. It is on for the `test` profile and off for
+`production` (`OMAKASE_GENOME_AI` overrides). hermes runs with a credential-free HOME since
+2026-10-02, so it cannot reach a hosted model even when a request names one. On the 082
+snapshot (1376 datasets) the rules resolve 53.9%; step 2 addresses the ~7% whose Species is
+text the rules cannot read (e.g. "mouse Kupffer cells", a probe set), not the 39.2% blank.
+
 `refBuild` resolution is not cosmetic. Unresolved `ref_selector` params were reaching
 SLURM and polluting output rows until the `required_params` gate landed (`f3dfa9a`;
 13/16 allow-listed apps affected). Every proposal must be pre-validated against

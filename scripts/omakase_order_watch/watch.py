@@ -201,7 +201,36 @@ def event_path(events_dir: Path, oid: int) -> Path:
     return events_dir / f"order_{oid}.json"
 
 
-def write_event(events_dir: Path, order: dict, env: str, source: str = SOURCE_WATCHER) -> Path:
+def sample_species(client, order_id: int) -> list[str] | None:
+    """The distinct B-Fabric species names on the order's samples, most frequent first.
+
+    Only the `species` reference of each sample is kept; names, volumes and the rest of the
+    record are dropped here (design §3.1 allow-list). The names are B-Fabric's annotation
+    names, e.g. "Mus musculus (house mouse)". Measured 2026-10-01: at least one sample
+    carries a species on 44% of the Ready-made-Libraries gap orders and 72.5% of the
+    analysis-service orders. None = could not be read (the event is written without it).
+    """
+    try:
+        rows = list(client.read("sample", {"containerid": int(order_id)}, max_results=None))
+        ids = [int(r["species"]["id"]) for r in rows
+               if isinstance(r.get("species"), dict) and r["species"].get("id")]
+        if not ids:
+            return []
+        names = {int(a["id"]): a.get("name") for a in
+                 client.read("annotation", {"id": sorted(set(ids))[:100]}, max_results=None)}
+    except Exception as exc:  # noqa: BLE001 - a missing hint must never block the event
+        log(f"order {order_id}: sample species not read ({exc.__class__.__name__})")
+        return None
+    counts: dict[str, int] = {}
+    for i in ids:
+        name = names.get(i)
+        if name:
+            counts[name] = counts.get(name, 0) + 1
+    return sorted(counts, key=lambda n: -counts[n])
+
+
+def write_event(events_dir: Path, order: dict, env: str, source: str = SOURCE_WATCHER,
+                species: list[str] | None = None) -> Path:
     events_dir.mkdir(parents=True, exist_ok=True)
     oid = int(order["id"])
     payload = {
@@ -214,6 +243,10 @@ def write_event(events_dir: Path, order: dict, env: str, source: str = SOURCE_WA
         "trigger_status": TRIGGER_STATUS,
         "order": {k: order.get(k) for k in EVENT_FIELDS},
     }
+    if species is not None:
+        # B-Fabric's species on the order's samples: ingest's fallback when the input
+        # dataset carries no usable Species (omakase_core/genome.py, step 1b).
+        payload["sample_species"] = species
     path = event_path(events_dir, oid)
     with path.open("w", encoding="utf-8") as fh:
         json.dump(payload, fh, indent=2, sort_keys=True, default=str)
@@ -270,7 +303,8 @@ def tick(client, state, query, events_dir, max_new, dry_run, seed=False) -> int:
             log(f"  DRY RUN would emit event for order {oid} "
                 f"(statusmodified={order.get('statusmodified')})")
             continue
-        path = write_event(events_dir, order, state["env"])
+        path = write_event(events_dir, order, state["env"],
+                           species=sample_species(client, int(order["id"])))
         state["handled"][str(oid)] = {
             "first_seen": now_iso(),
             "statusmodified": order.get("statusmodified"),
@@ -320,7 +354,8 @@ def fetch_named(client, ids: list[int], events_dir: Path, env: str) -> int:
             log(f"order {oid}: already detected by the watcher at "
                 f"{existing.get('detected_at')}; {path.name} kept as it is")
             continue
-        path = write_event(events_dir, order, env, source=SOURCE_NAMED)
+        path = write_event(events_dir, order, env, source=SOURCE_NAMED,
+                           species=sample_species(client, oid))
         log(f"NAMED order {oid} -> {path} (statusmodified={order.get('statusmodified')})")
     return 3 if declined else 0
 
