@@ -63,6 +63,25 @@ Of the 32 orders currently at status `processed` on production, 4 would now get 
   others need BDRhapsodySA, SplitPipe, SpaceRanger, VisiumQC, Visium/Spatial Seurat, Xenium
   apps, CellRangerATAC/ARC or ScMultiOmics added to the backend's allow-list.
 
+## Tried on the test instance (fgcz-h-083, 2026-10-02)
+
+A SYNTHETIC event — order 35755's record with its order fields replaced by the real B-Fabric
+wording of a 10x 3′ single-plex order (`Single-Cell - 10x Genomics - Universal 3' Gene
+Expression`, NovaSeq X Plus, GEM-X (v4), "No multiplexing", no transgenes) — on dataset 825
+(`cellranger_tiny_tar`, Homo sapiens, 1 sample), with the proposal applied to a temporary
+copy of the catalog:
+
+| Step | Result |
+|---|---|
+| `omakase match` | 1 of 22 recipes accepts it: `sc_10x_3prime_gex@2`; the multiplexed, CITE-seq and VDJ variants refuse on `library_protocol_option` |
+| `omakase ingest` without naming a recipe | candidate 2 PROPOSED with `sc_10x_3prime_gex@2`; genome from your `references.yaml`: `10x_gex/Homo_sapiens` → GRCh38.p14 Release 48 |
+| checklist | your 5 rules as manual items (4 before start, 1 before CellRanger) + the `when: n_samples >= 2` gate on ScSeuratCombine |
+
+**Not run yet:** FastqScreen10xApp failed on this same dataset on 2026-09-29 (`Column not
+found in dataset: Read2`). The app screens `Read2` (`readFileToUse`), and unpacking
+`tinygex.tar` yields only `Read1`. That is the test data or the app's unpacking, not your
+recipe, but it would halt the chain at step 1 before CellRanger starts.
+
 ## Reproduce
 
 ```bash
