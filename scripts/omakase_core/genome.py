@@ -29,12 +29,13 @@ GENOME_ITEM = 3000              # checklist index of the "model-suggested genome
 
 
 def ai_allowed(profile_name: str) -> bool:
-    """On for `test`; off for `production` until someone decides otherwise.
-    OMAKASE_GENOME_AI=on|off overrides both."""
+    """On for both profiles (user decision 2026-10-02: production too). OMAKASE_GENOME_AI=off
+    switches it off. Where no hermes is reachable (fgcz-h-082 today) the step fails closed:
+    the order is refused exactly as without it."""
     flag = os.environ.get("OMAKASE_GENOME_AI", "").strip().lower()
     if flag in ("on", "off"):
         return flag == "on"
-    return profile_name == "test"
+    return profile_name in ("test", "production")
 
 
 def _resolve(species_values: list[str], recipe_id: str | None, policy) -> tuple[str, str]:

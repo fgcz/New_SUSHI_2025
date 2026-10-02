@@ -110,13 +110,11 @@ case("2: no answer -> refused as before the step existed")
 
 # --- the profile switch
 os.environ.pop("OMAKASE_GENOME_AI", None)
-assert G.ai_allowed("test") and not G.ai_allowed("production")
+assert G.ai_allowed("test") and G.ai_allowed("production") and not G.ai_allowed("scratch")
 os.environ["OMAKASE_GENOME_AI"] = "off"
-assert not G.ai_allowed("test")
-os.environ["OMAKASE_GENOME_AI"] = "on"
-assert G.ai_allowed("production")
+assert not G.ai_allowed("test") and not G.ai_allowed("production")
 os.environ.pop("OMAKASE_GENOME_AI")
-case("on for test, off for production, OMAKASE_GENOME_AI overrides both")
+case("on for test and production (2026-10-02), OMAKASE_GENOME_AI=off switches it off")
 
 # --- a revision cannot shed the hold
 steps = [{"seq": 1, "app_name": "STARApp", "parameters": {"refBuild": MOUSE}}]

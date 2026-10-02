@@ -381,8 +381,9 @@ but has no curated build, and those need a human to pick.
 
 Step 2 sends only allow-listed fields (Species values, sample species, Sequencing Application,
 library protocol options, recipe id) and can only choose among the curated species, so which
-build a species gets stays the farm's decision. It is on for the `test` profile and off for
-`production` (`OMAKASE_GENOME_AI` overrides). hermes runs with a credential-free HOME since
+build a species gets stays the farm's decision. It is on for both profiles since 2026-10-02
+(user decision; `OMAKASE_GENOME_AI=off` switches it off); where no hermes is reachable it fails
+closed and the order is refused as before. hermes runs with a credential-free HOME since
 2026-10-02, so it cannot reach a hosted model even when a request names one. On the 082
 snapshot (1376 datasets) the rules resolve 53.9%; step 2 addresses the ~7% whose Species is
 text the rules cannot read (e.g. "mouse Kupffer cells", a probe set), not the 39.2% blank.
