@@ -18,6 +18,7 @@ if __package__ in (None, ""):
     __package__ = "omakase_core"
 
 from . import constraints as K, genome as G, genome_ai as AI, reference as R  # noqa: E402
+REAL_VLLM_HTTP = AI._vllm_http          # the real transport, for the off-site refusal case
 
 TMP = Path(tempfile.mkdtemp(prefix="omakase_genome_test_"))
 FARM = TMP / "farm"
@@ -186,5 +187,54 @@ try:
 except AI.AiUnavailable as exc:
     assert "not vllm" in str(exc)
 case("genome_ai: refuses to ask at all when hermes' default provider is not vllm")
+
+# --- route C (2026-10-08): production asks the FGCZ vLLM directly; test keeps hermes
+os.environ.pop("OMAKASE_GENOME_AI_ROUTE", None)
+assert (AI.route_for("production"), AI.route_for("test")) == ("vllm", "hermes")
+os.environ["OMAKASE_GENOME_AI_ROUTE"] = "hermes"
+assert AI.route_for("production") == "hermes"
+os.environ.pop("OMAKASE_GENOME_AI_ROUTE")
+assert G.asker("production").keywords == {"route": "vllm"}
+case("route_for: vllm on production, hermes on test, OMAKASE_GENOME_AI_ROUTE overrides")
+
+
+def fake_vllm(reply, served=("DeepSeek-V4-Flash-DSpark",), answered="DeepSeek-V4-Flash-DSpark"):
+    sent = []
+
+    def _vllm_http(method, path, body=None, timeout=30):
+        sent.append((method, path, body))
+        if method == "GET":
+            return {"data": [{"id": m} for m in served]}
+        return {"id": "chatcmpl-1", "model": answered,
+                "choices": [{"message": {"content": reply}}]}
+    return _vllm_http, sent
+
+
+AI._vllm_http, sent = fake_vllm('{"species": "Homo sapiens", "reason": "Human Probe Set"}')
+got = AI.suggest({}, C, R.species_key, route="vllm")
+assert (got["species"], got["route"], got["session_id"]) == ("Homo sapiens", "vllm", "chatcmpl-1")
+assert sent[1][2]["model"] == "DeepSeek-V4-Flash-DSpark" and "provider" not in sent[1][2]
+case("genome_ai vllm: asks the one served model; the answer carries route and request id")
+for args, needle in (((('{"species": "Homo sapiens"}',), {"answered": "gpt-5"}), "not the FGCZ vLLM"),
+                     ((('{"species": "Homo sapiens"}',), {"served": ("a", "b")}), "serves 2 models"),
+                     ((('{"species": "Danio rerio"}',), {}), "not a candidate")):
+    AI._vllm_http, _ = fake_vllm(*args[0], **args[1])
+    try:
+        AI.suggest({}, C, R.species_key, route="vllm")
+        raise AssertionError(f"accepted: {args}")
+    except AI.AiUnavailable as exc:
+        assert needle in str(exc), (needle, str(exc))
+case("genome_ai vllm: another model, an ambiguous server, a non-candidate -> discarded")
+AI._vllm_http = REAL_VLLM_HTTP
+AI.VLLM_URL = "https://api.anthropic.com/v1"
+try:
+    AI.suggest({}, C, R.species_key, route="vllm")
+    raise AssertionError("an off-site host was contacted")
+except AI.AiUnavailable as exc:
+    assert "not an FGCZ node" in str(exc)
+AI.VLLM_URL = "http://fgcz-c-056.fgcz-net.unizh.ch:8000/v1"
+assert AI._ON_PREM.fullmatch("fgcz-c-056.fgcz-net.unizh.ch")
+assert not AI._ON_PREM.fullmatch("fgcz-c-056.evil.example")
+case("genome_ai vllm: an off-site OMAKASE_VLLM_URL is refused before any connection")
 
 print(f"{cases} cases, all pass")

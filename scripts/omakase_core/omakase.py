@@ -325,7 +325,7 @@ def _resolve_steps(recipe: dict, args, dataset_id: int,
     build, how, item = genome.choose(
         dataset, recipe["id"], recipes.reference_policy(),
         sample_species=getattr(args, "sample_species", None), order=order,
-        allow_ai=genome.ai_allowed(args.prof.name),
+        allow_ai=genome.ai_allowed(args.prof.name), ask=genome.asker(args.prof.name),
         record=genome.recorder(args.prof.home / "genome_suggestions",
                                order.get("id"), dataset_id))
     steps, notes = recipes.resolve_parameters(recipe["steps"], dataset, recipe["id"],

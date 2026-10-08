@@ -4,8 +4,8 @@
                                          recipe, else the curated favourite farm
     1b  the species on the order's B-Fabric samples (carried in the event by the watcher),
         only when the dataset carries NO usable Species - the same rules, other evidence
-    2   hermes-agent on the FGCZ vLLM picks ONE curated species (genome_ai.py), only when 1
-        and 1b cannot answer and only where allowed - and never final: the proposal gets
+    2   the FGCZ vLLM picks ONE curated species (genome_ai.py; via hermes on test, directly
+        on production), only when 1 and 1b cannot answer and only where allowed - and never final: the proposal gets
         checklist hold GENOME_ITEM, which a named person must confirm before the chain may
         start (constraints.py: an open before-start item refuses `approve`)
 
@@ -16,6 +16,7 @@ decision, never the model's.
 """
 from __future__ import annotations
 
+import functools
 import json
 import os
 import time
@@ -30,12 +31,18 @@ GENOME_ITEM = 3000              # checklist index of the "model-suggested genome
 
 def ai_allowed(profile_name: str) -> bool:
     """On for both profiles (user decision 2026-10-02: production too). OMAKASE_GENOME_AI=off
-    switches it off. Where no hermes is reachable (fgcz-h-082 today) the step fails closed:
-    the order is refused exactly as without it."""
+    switches it off. Where the model cannot be reached the step fails closed: the order is
+    refused exactly as without it."""
     flag = os.environ.get("OMAKASE_GENOME_AI", "").strip().lower()
     if flag in ("on", "off"):
         return flag == "on"
     return profile_name in ("test", "production")
+
+
+def asker(profile_name: str) -> Callable[..., dict]:
+    """genome_ai.suggest on this profile's route: hermes on test, the vLLM directly on
+    production (fgcz-h-082 runs no hermes; route C, user decision 2026-10-08)."""
+    return functools.partial(genome_ai.suggest, route=genome_ai.route_for(profile_name))
 
 
 def _resolve(species_values: list[str], recipe_id: str | None, policy) -> tuple[str, str]:
@@ -105,8 +112,9 @@ def choose(dataset: dict, recipe_id: str | None, policy, *, sample_species=None,
         "idx": GENOME_ITEM, "kind": K.MANUAL, "severity": "hold", "at_step_seq": None,
         "assert": (f"the genome was SUGGESTED by the on-prem model, not derived: "
                    f"{suggestion['species']} -> {build}. Confirm it fits this dataset"),
-        "reason": (f"{suggestion['model']} via hermes session {suggestion['session_id']} "
-                   f"({suggestion['prompt_version']}); evidence {json.dumps(evidence)}"),
+        "reason": (f"{suggestion['model']} via {suggestion.get('route', 'hermes')} "
+                   f"{suggestion['session_id']} ({suggestion['prompt_version']}); "
+                   f"evidence {json.dumps(evidence)}"),
         "check": None, "status": K.PENDING,
         "detail": f"model says: {suggestion['reason']}",
     }

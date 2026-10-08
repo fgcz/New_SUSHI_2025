@@ -59,6 +59,14 @@ checks the result instead of doing it.
    Then name the recipe and the dataset, Propose, check the derived genome, Approve, Run —
    the page asks a PRODUCTION confirm naming the dataset and the project first.
 
+The model-suggested genome (only when neither the dataset nor the order's B-Fabric samples
+name a curated species) asks the FGCZ vLLM DIRECTLY on 082, since 082 runs no hermes
+(route C, decided 2026-10-08; `genome_ai.route_for`). Nothing to install and no key. Check
+that 082 still reaches it - expect `200`:
+`ssh fgcz-h-082 'curl -s -o /dev/null -w "%{http_code}\n" --max-time 10 http://fgcz-c-056:8000/v1/models'`.
+Unreachable means only that such an order is refused, as before the step existed;
+`OMAKASE_GENOME_AI=off` switches the step off.
+
 To go back to read_only at any point:
 `ssh fgcz-h-082 'bash /srv/sushi/masa_test_new_sushi_20260527/scripts/omakase_deploy/revoke_write_082.sh'`
 (it refuses while a chain is running).
