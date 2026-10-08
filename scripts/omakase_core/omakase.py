@@ -449,8 +449,17 @@ def cmd_confirm(args, st: S.Store) -> int:
         print("refused: --skip names exactly one `when` gate with --item", file=sys.stderr)
         return 2
     targets = ([i["idx"] for i in K.open_items(items)] if args.all else args.item)
+    if args.all:
+        # A rule about what earlier steps produce waits for them (constraints.waits_for);
+        # --all confirms what can be confirmed now and names the rest.
+        not_done = st.not_completed(args.candidate)
+        waiting = {i["idx"]: K.waits_for(i, not_done) for i in items if i["idx"] in targets}
+        waiting = {idx: w for idx, w in waiting.items() if w}
+        targets = [idx for idx in targets if idx not in waiting]
+        for idx, w in waiting.items():
+            print(f"  left open: item {idx} waits for step(s) {w} to COMPLETE")
     if not targets:
-        print(f"candidate {args.candidate}: nothing open to confirm")
+        print(f"candidate {args.candidate}: nothing open to confirm now")
         return 0
     for idx in targets:
         try:

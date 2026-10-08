@@ -64,19 +64,8 @@ class ChainRunner:
         return None
 
     def _skipped(self, candidate_id: int) -> set[int]:
-        """Steps a person took out: a `when` gate closed as SKIPPED, and every step that
-        depends on one (a step whose input will never exist cannot run either)."""
-        steps = {s["seq"]: s for s in self.st.steps(candidate_id)}
-        out = {i["at_step_seq"] for i in self.st.checklist(candidate_id)
-               if i["status"] == K.SKIPPED and i["at_step_seq"] is not None}
-        grew = True
-        while grew:
-            grew = False
-            for seq, s in steps.items():
-                if seq not in out and s.get("depends_on_seq") in out:
-                    out.add(seq)
-                    grew = True
-        return out
+        """Steps a person took out (constraints.skipped_steps)."""
+        return K.skipped_steps(self.st.checklist(candidate_id), self.st.steps(candidate_id))
 
     def _ready_steps(self, candidate_id: int) -> list[dict]:
         """Every step that can be submitted right now, not just the first.

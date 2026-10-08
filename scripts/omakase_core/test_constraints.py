@@ -182,4 +182,53 @@ case("a skipped step and its dependant are never submitted, and the chain is DON
 assert run2.client.submits[0]["comment"].endswith("approved by alice")
 case("the submitted dataset's comment names who approved")
 
+# --- a rule before step N is confirmed on evidence: not before the earlier steps COMPLETED
+# The 2026-10-06 case: "the FastqScreen species agrees before CellRanger" was confirmed
+# before FastqScreen had run. Step 2 does not read step 1's output (after: []).
+st3 = S.Store(tmp / "evidence.sqlite3")
+cid3, _ = st3.upsert_candidate(44, 9, "demo", "1", project_number=35611)
+st3.set_steps(cid3, [{"seq": 1, "app_name": "FastqScreen10xApp", "depends_on_seq": None, "parameters": {}},
+                     {"seq": 2, "app_name": "CellRangerApp", "depends_on_seq": None, "parameters": {}},
+                     {"seq": 3, "app_name": "ScSeuratCombineApp", "depends_on_seq": 2, "parameters": {}}])
+held = K.assess(K.compile_items(
+    [{"assert": "the FastqScreen species agrees", "reason": "r", "at": {"before_step": "cr"}}],
+    [{"id": "fs", "app": "FastqScreen10xApp"}, {"id": "cr", "app": "CellRangerApp", "after": []},
+     {"id": "combine", "app": "ScSeuratCombineApp", "after": ["cr"], "when": "n_samples >= 2"}]), [], {})
+held.append({"idx": K.PARAMS_BASE + 2, "kind": K.MANUAL, "severity": "hold", "at_step_seq": 2,
+             "assert": "step 2 sets an undeclared key", "reason": "r", "check": None,
+             "status": K.PENDING, "detail": None})
+st3.set_checklist(cid3, held)
+try:
+    st3.confirm_item(cid3, 0, "masaomi")
+    raise AssertionError("a rule before step 2 was confirmed before step 1 had run")
+except ValueError as exc:
+    assert "1 (FastqScreen10xApp)" in str(exc) and "COMPLETED" in str(exc), exc
+case("a rule before step N is refused while step N-1 has not even been submitted")
+st3.confirm_item(cid3, K.PARAMS_BASE + 2, "masaomi")
+st3.confirm_item(cid3, K.WHEN_BASE + 3, "masaomi", "one sample", skip=True)
+case("a parameter hold and a `when` gate before a step may still be closed at once")
+sub = st3.open_submission(cid3, 1, 1, [856], 889)
+try:
+    st3.confirm_item(cid3, 0, "masaomi")
+    raise AssertionError("confirmed while step 1 was only SUBMITTED")
+except ValueError:
+    pass
+st3.close_submission(sub, S.STEP_FAILED)
+try:
+    st3.confirm_item(cid3, 0, "masaomi")
+    raise AssertionError("confirmed on a FAILED step 1")
+except ValueError:
+    pass
+case("a SUBMITTED or FAILED earlier step is not evidence")
+st3.close_submission(st3.open_submission(cid3, 1, 2, [857], 890), S.STEP_COMPLETED)
+st3.confirm_item(cid3, 0, "masaomi", "screen says Homo sapiens")
+assert {i["idx"]: i["status"] for i in st3.checklist(cid3)}[0] == K.CONFIRMED
+case("once step 1 COMPLETED (here on its retry) the rule may be confirmed")
+assert K.waits_for({"idx": 0, "kind": K.MANUAL, "at_step_seq": 3}, {2}) == [2]
+assert K.waits_for({"idx": 0, "kind": K.MANUAL, "at_step_seq": 3}, {3, 4}) == []
+assert K.waits_for({"idx": 0, "kind": K.MANUAL, "at_step_seq": None}, {1}) == []
+assert K.waits_for({"idx": 1, "kind": K.MACHINE, "at_step_seq": 3}, {1}) == []
+assert K.waits_for({"idx": K.WHEN_BASE + 3, "kind": K.WHEN, "at_step_seq": 3}, {1}) == []
+case("waits_for: only earlier unfinished steps; not for before-start, MACHINE or `when` items")
+
 print(f"{cases} cases, all pass")

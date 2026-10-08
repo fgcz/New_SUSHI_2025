@@ -24,6 +24,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
+from . import constraints as K
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS candidates (
     id                INTEGER PRIMARY KEY,
@@ -332,6 +334,17 @@ class Store:
         rows = self.submissions(candidate_id, step_seq)
         return rows[-1] if rows else None
 
+    def not_completed(self, candidate_id: int) -> set[int]:
+        """Steps whose latest submission is not COMPLETED (or that have none), skipped aside."""
+        steps = self.steps(candidate_id)
+        skipped = K.skipped_steps(self.checklist(candidate_id), steps)
+        out = set()
+        for s in steps:
+            sub = self.latest_submission(candidate_id, s["seq"])
+            if s["seq"] not in skipped and (sub is None or sub["state"] != STEP_COMPLETED):
+                out.add(s["seq"])
+        return out
+
     # ---------------------------------------------------------------- verdicts
 
     def record_verdict(self, candidate_id: int, verdict: str, actor: str,
@@ -388,7 +401,19 @@ class Store:
         skip=True closes a step's `when` gate the other way - its condition does NOT hold
         - as SKIPPED: that step and what depends on it are left out (runner.py). Only a
         `when` gate can be skipped; a rule is confirmed or the chain is revised.
+
+        A rule placed before step N is about what the earlier steps produce, so it is
+        refused until they have COMPLETED (constraints.waits_for).
         """
+        if not skip:
+            item = next((i for i in self.checklist(candidate_id) if i["idx"] == idx), None)
+            waits = K.waits_for(item, self.not_completed(candidate_id)) if item else []
+            if waits:
+                apps = {s["seq"]: s["app_name"] for s in self.steps(candidate_id)}
+                raise ValueError(
+                    f"candidate {candidate_id} item {idx} is checked on what step(s) "
+                    + ", ".join(f"{s} ({apps.get(s)})" for s in waits)
+                    + " produce, and they have not COMPLETED yet; confirm it once they have")
         cur = self.db.execute(
             "UPDATE checklist SET status=?, confirmed_by=?, confirmed_at=?, note=? "
             "WHERE candidate_id=? AND idx=? AND status IN (?, ?) "

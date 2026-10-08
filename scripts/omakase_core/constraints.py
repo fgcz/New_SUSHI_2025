@@ -15,6 +15,8 @@ step. What happens next is fixed in code:
     MACHINE fails, severity hold    -> FAIL, and like PENDING it needs a person to confirm
     anything unconfirmed before_submit -> `approve` is refused
     anything unconfirmed before step N -> the runner submits everything else and waits at N
+    a MANUAL rule before step N        -> may be confirmed only once the steps before N
+                                          have COMPLETED (waits_for, 2026-10-08)
 
 Effective parameters are the app's defaults as the backend resolves them, overlaid by the
 step's parameters, stringified exactly as submitted (booleans `true`/`false`). A rule about a
@@ -222,6 +224,39 @@ def open_items(checklist: list[dict], at_step_seq: int | None | str = "any") -> 
     if at_step_seq == "any":
         return waiting
     return [i for i in waiting if i["at_step_seq"] == at_step_seq]
+
+
+def skipped_steps(checklist: list[dict], steps: list[dict]) -> set[int]:
+    """Steps a person took out: a `when` gate closed as SKIPPED, and every step that
+    depends on one (a step whose input will never exist cannot run either)."""
+    by_seq = {s["seq"]: s for s in steps}
+    out = {i["at_step_seq"] for i in checklist
+           if i["status"] == SKIPPED and i["at_step_seq"] is not None}
+    grew = True
+    while grew:
+        grew = False
+        for seq, s in by_seq.items():
+            if seq not in out and s.get("depends_on_seq") in out:
+                out.add(seq)
+                grew = True
+    return out
+
+
+def waits_for(item: dict, not_completed: set[int]) -> list[int]:
+    """The earlier steps a recipe rule placed before step N waits for, before a person may
+    confirm it: every step before N that has not COMPLETED (skipped steps aside).
+
+    Such a rule is about what those steps produce - "the FastqScreen top species agrees
+    with the order before CellRanger" - so confirming it earlier confirms nothing. On
+    2026-10-06 exactly that rule was confirmed before FastqScreen had run, and CellRanger
+    went out with the screen; the user decided 2026-10-08 that the engine refuses it.
+    A `when` gate, a parameter hold (idx >= WHEN_BASE) and anything before the start are
+    about the proposal itself and may be confirmed at once.
+    """
+    n = item.get("at_step_seq")
+    if item["kind"] != MANUAL or n is None or item["idx"] >= WHEN_BASE:
+        return []
+    return sorted(seq for seq in not_completed if seq < n)
 
 
 def describe(item: dict) -> str:
